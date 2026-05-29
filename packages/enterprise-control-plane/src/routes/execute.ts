@@ -1,5 +1,6 @@
 import {
   buildSignedSecureExecutionEnvelope,
+  type SecureExecutionApiInterface,
   type SecureExecutionAttestationEvidence,
   type SecureExecutionCallerLock,
   type SecureExecutionRequest,
@@ -168,6 +169,137 @@ function sanitizeHeaders(headers: Record<string, string> | undefined): Record<st
     acc[key] = value;
     return acc;
   }, {});
+}
+
+function getHeaderValue(headers: Record<string, string>, name: string): string {
+  const expected = name.toLowerCase();
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === expected) return String(value || '');
+  }
+  return '';
+}
+
+function bodyBase64ToTextForDetection(bodyBase64?: string | null): string | null {
+  if (!bodyBase64) return null;
+  try {
+    const buffer = Buffer.from(bodyBase64, 'base64');
+    if (!buffer.length || buffer.length > 128 * 1024) return null;
+    return buffer.toString('utf8');
+  } catch {
+    return null;
+  }
+}
+
+function looksLikeGraphqlOperation(value: string): boolean {
+  const trimmed = value.trim();
+  return /^(query|mutation|subscription)\b|fragment\s+\w+\s+on\b|__schema|__type\b/i.test(trimmed);
+}
+
+function detectGraphqlBody(bodyBase64?: string | null): string[] {
+  const text = bodyBase64ToTextForDetection(bodyBase64);
+  if (!text) return [];
+  const trimmed = text.trim();
+  if (!trimmed) return [];
+
+  if (looksLikeGraphqlOperation(trimmed)) {
+    return ['body:graphql-document'];
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return [];
+    const record = parsed as Record<string, unknown>;
+    const signals: string[] = [];
+    if (typeof record.query === 'string') {
+      signals.push(looksLikeGraphqlOperation(record.query) ? 'body:query-operation' : 'body:query-field');
+    }
+    if (typeof record.operationName === 'string' && record.operationName.trim()) signals.push('body:operation-name');
+    if (record.variables && typeof record.variables === 'object' && !Array.isArray(record.variables)) signals.push('body:variables');
+    if (record.extensions && typeof record.extensions === 'object' && !Array.isArray(record.extensions)) signals.push('body:extensions');
+    return signals;
+  } catch {
+    return [];
+  }
+}
+
+function detectGraphqlQueryString(query: string): string[] {
+  if (!query) return [];
+  try {
+    const params = new URLSearchParams(query.startsWith('?') ? query.slice(1) : query);
+    const signals: string[] = [];
+    const graphqlQuery = params.get('query');
+    if (graphqlQuery) signals.push(looksLikeGraphqlOperation(graphqlQuery) ? 'query:operation' : 'query:query-param');
+    if (params.has('operationName')) signals.push('query:operation-name');
+    if (params.has('variables')) signals.push('query:variables');
+    return signals;
+  } catch {
+    return [];
+  }
+}
+
+function detectApiInterface(input: {
+  method: string;
+  upstreamPath: string;
+  query: string;
+  headers: Record<string, string>;
+  bodyBase64?: string | null;
+}): SecureExecutionApiInterface {
+  const signals: string[] = [];
+  const contentType = getHeaderValue(input.headers, 'content-type').toLowerCase();
+  const accept = getHeaderValue(input.headers, 'accept').toLowerCase();
+  const upstreamPath = input.upstreamPath.toLowerCase();
+
+  if (contentType.includes('application/graphql') || contentType.includes('application/graphql-response+json')) {
+    signals.push('header:graphql-content-type');
+  }
+  if (accept.includes('application/graphql-response+json')) {
+    signals.push('header:graphql-accept');
+  }
+  if (
+    upstreamPath === '/graphql'
+    || upstreamPath.endsWith('/graphql')
+    || upstreamPath.includes('/graphql/')
+    || upstreamPath === '/gql'
+    || upstreamPath.endsWith('/gql')
+    || upstreamPath.includes('/gql/')
+  ) {
+    signals.push('path:graphql-endpoint');
+  }
+
+  signals.push(...detectGraphqlQueryString(input.query));
+  signals.push(...detectGraphqlBody(input.bodyBase64));
+
+  const strongGraphqlSignal = signals.some((signal) => (
+    signal === 'header:graphql-content-type'
+    || signal === 'body:graphql-document'
+    || signal === 'body:query-operation'
+    || signal === 'query:operation'
+  ));
+
+  if (signals.length > 0) {
+    return {
+      protocol: 'graphql',
+      source: 'auto',
+      confidence: strongGraphqlSignal ? 'high' : 'medium',
+      signals: [...new Set(signals)].slice(0, 8),
+    };
+  }
+
+  return {
+    protocol: 'rest',
+    source: 'auto',
+    confidence: input.upstreamPath && input.upstreamPath !== '/' ? 'medium' : 'low',
+    signals: input.upstreamPath && input.upstreamPath !== '/'
+      ? ['fallback:http-path']
+      : ['fallback:http-request'],
+  };
+}
+
+function buildApiInterfaceAuditMetadata(apiInterface: SecureExecutionApiInterface): Record<string, unknown> {
+  return {
+    api_protocol: apiInterface.protocol,
+    api_interface: apiInterface,
+  };
 }
 
 function normalizeOrigin(value: string | null): string | null {
@@ -1205,6 +1337,8 @@ function buildExecutionAuditMetadata(
     provider: executionRequest.provider,
     method: executionRequest.method,
     upstream_path: executionRequest.upstreamPath,
+    api_protocol: executionRequest.apiInterface?.protocol || 'unknown',
+    api_interface: executionRequest.apiInterface || null,
     executor_status: responseStatus,
     secure_execution: {
       request_id: result.requestId || executionRequest.requestId,
@@ -1347,6 +1481,16 @@ export async function handleEnterpriseExecuteRoutes(
   if (parsedBody.value.body_base64 && !isBase64(parsedBody.value.body_base64)) {
     return Response.json({ error: 'body_base64 must be valid base64' }, { status: 400 });
   }
+  const safeHeaders = sanitizeHeaders(parsedBody.value.headers);
+  const normalizedQuery = normalizeQuery(parsedBody.value.query);
+  const apiInterface = detectApiInterface({
+    method,
+    upstreamPath,
+    query: normalizedQuery,
+    headers: safeHeaders,
+    bodyBase64: parsedBody.value.body_base64 || null,
+  });
+  const apiInterfaceAuditMetadata = buildApiInterfaceAuditMetadata(apiInterface);
 
   if (runtimeAuth) {
     const context = await getExecuteContext(env, projectId, slug);
@@ -1399,6 +1543,7 @@ export async function handleEnterpriseExecuteRoutes(
       slug,
       ...protectedSecret,
       ...authAuditMetadata,
+      ...apiInterfaceAuditMetadata,
     });
     return Response.json({ error: lockError }, { status: 403 });
   }
@@ -1420,6 +1565,7 @@ export async function handleEnterpriseExecuteRoutes(
       upstream_path: upstreamPath,
       ...protectedSecret,
       ...authAuditMetadata,
+      ...apiInterfaceAuditMetadata,
     });
     return Response.json({ error: runtimeScopeError }, { status: 403 });
   }
@@ -1441,6 +1587,7 @@ export async function handleEnterpriseExecuteRoutes(
       upstream_path: upstreamPath,
       ...protectedSecret,
       ...authAuditMetadata,
+      ...apiInterfaceAuditMetadata,
     });
     return Response.json({ error: executionPolicyError }, { status: 403 });
   }
@@ -1456,6 +1603,7 @@ export async function handleEnterpriseExecuteRoutes(
       slug,
       ...protectedSecret,
       ...authAuditMetadata,
+      ...apiInterfaceAuditMetadata,
     });
     return Response.json({ error: providerLockError }, { status: 403 });
   }
@@ -1479,6 +1627,7 @@ export async function handleEnterpriseExecuteRoutes(
       upstream_path: upstreamPath,
       ...protectedSecret,
       ...authAuditMetadata,
+      ...apiInterfaceAuditMetadata,
     });
     return Response.json({ error: providerExecutionPolicyError }, { status: 403 });
   }
@@ -1501,6 +1650,7 @@ export async function handleEnterpriseExecuteRoutes(
       upstream_path: upstreamPath,
       ...protectedSecret,
       ...authAuditMetadata,
+      ...apiInterfaceAuditMetadata,
       ...emailPolicyMetadata,
     });
     return Response.json({ error: projectEmailPolicyError }, { status: 403 });
@@ -1519,6 +1669,7 @@ export async function handleEnterpriseExecuteRoutes(
       upstream_path: upstreamPath,
       ...protectedSecret,
       ...authAuditMetadata,
+      ...apiInterfaceAuditMetadata,
       ...emailPolicyMetadata,
     });
     return Response.json({ error: providerEmailPolicyError }, { status: 403 });
@@ -1536,6 +1687,7 @@ export async function handleEnterpriseExecuteRoutes(
       rate_limit_per_minute: projectPolicy.rate_limit_per_minute,
       ...protectedSecret,
       ...authAuditMetadata,
+      ...apiInterfaceAuditMetadata,
       ...emailPolicyMetadata,
     });
     return Response.json({ error: projectRateLimitError }, { status: 429 });
@@ -1553,6 +1705,7 @@ export async function handleEnterpriseExecuteRoutes(
       rate_limit_per_minute: providerLockPolicy?.rate_limit_per_minute,
       ...protectedSecret,
       ...authAuditMetadata,
+      ...apiInterfaceAuditMetadata,
       ...emailPolicyMetadata,
     });
     return Response.json({ error: providerRateLimitError }, { status: 429 });
@@ -1568,13 +1721,14 @@ export async function handleEnterpriseExecuteRoutes(
     slug,
     method,
     upstreamPath,
-    query: normalizeQuery(parsedBody.value.query),
-    headers: sanitizeHeaders(parsedBody.value.headers),
+    query: normalizedQuery,
+    headers: safeHeaders,
     bodyBase64: parsedBody.value.body_base64 || null,
     issuedAt: new Date(now).toISOString(),
     expiresAt: new Date(now + 60_000).toISOString(),
     nonce: generateNonce(),
     callerLock,
+    apiInterface,
   };
 
   const envelope = await buildSignedSecureExecutionEnvelope({
@@ -1591,6 +1745,7 @@ export async function handleEnterpriseExecuteRoutes(
       status: 202,
       dryRun: true,
       message: 'Secure execution validated. Upstream provider dispatch was skipped.',
+      apiInterface,
       signedEnvelope: {
         keyId: envelope.keyId,
         signatureHash,
@@ -1614,6 +1769,7 @@ export async function handleEnterpriseExecuteRoutes(
           signed_envelope: dryRunData.signedEnvelope,
           ...protectedSecret,
           ...authAuditMetadata,
+          ...apiInterfaceAuditMetadata,
           ...buildExecutionAuditMetadata(executionRequest, 202, dryRunData),
           ...emailPolicyMetadata,
         },
@@ -1630,6 +1786,8 @@ export async function handleEnterpriseExecuteRoutes(
         slug: executionRequest.slug,
         method: executionRequest.method,
         upstream_path: executionRequest.upstreamPath,
+        api_protocol: apiInterface.protocol,
+        api_interface: apiInterface,
         caller_lock: callerLock,
         dry_run: true,
         auth_mode: authAuditMetadata.auth_mode,
@@ -1660,6 +1818,7 @@ export async function handleEnterpriseExecuteRoutes(
       metadata: {
         ...protectedSecret,
         ...authAuditMetadata,
+        ...apiInterfaceAuditMetadata,
         ...buildExecutionAuditMetadata(executionRequest, response.status, responseData),
         ...emailPolicyMetadata,
       },
@@ -1676,6 +1835,8 @@ export async function handleEnterpriseExecuteRoutes(
       slug: executionRequest.slug,
       method: executionRequest.method,
       upstream_path: executionRequest.upstreamPath,
+      api_protocol: apiInterface.protocol,
+      api_interface: apiInterface,
       caller_lock: callerLock,
       auth_mode: authAuditMetadata.auth_mode,
       execute_context_source: executeContextSource,

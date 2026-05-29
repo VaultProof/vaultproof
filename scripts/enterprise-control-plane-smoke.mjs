@@ -1043,6 +1043,9 @@ function installSupabaseStub() {
       if (!envelope?.signature || !envelope?.keyId) {
         throw new Error('Expected signed executor envelope');
       }
+      if (envelope.request.apiInterface?.protocol !== 'rest') {
+        throw new Error(`Expected REST API interface detection in executor envelope, got ${JSON.stringify(envelope.request.apiInterface)}`);
+      }
       if (envelope.request.callerLock?.origin === 'https://app.example.com'
         && envelope.request.callerLock?.customerGateway !== 'example-apim') {
         throw new Error('Expected caller lock metadata to be signed into executor envelope');
@@ -1149,9 +1152,15 @@ async function assertExecuteRoute() {
   if (payload?.execution?.providerRequestId !== 'req_executor_smoke_123') {
     throw new Error('Expected executor response to be preserved');
   }
+  if (payload?.request?.api_protocol !== 'rest' || payload?.request?.api_interface?.source !== 'auto') {
+    throw new Error(`Expected REST API interface detection in execute payload, got ${JSON.stringify(payload?.request?.api_interface)}`);
+  }
   const dispatchAudit = auditEvents.find((event) => event.event_type === 'enterprise_secure_execution_dispatched');
   if (!dispatchAudit) {
     throw new Error('Expected secure execution dispatch audit event');
+  }
+  if (dispatchAudit.metadata?.api_protocol !== 'rest' || dispatchAudit.metadata?.api_interface?.confidence !== 'medium') {
+    throw new Error(`Expected REST API interface metadata in dispatch audit, got ${JSON.stringify(dispatchAudit.metadata?.api_interface)}`);
   }
   if (dispatchAudit.metadata?.secure_execution?.provider_request_id !== 'req_executor_smoke_123') {
     throw new Error('Expected provider request id in execution audit metadata');
@@ -1180,12 +1189,16 @@ async function assertEnterpriseExecuteDryRun() {
       body: JSON.stringify({
         dry_run: true,
         method: 'POST',
-        upstream_path: '/v1/responses',
+        upstream_path: '/graphql',
         headers: {
           'content-type': 'application/json',
           authorization: 'should-be-dropped',
         },
-        body_base64: Buffer.from(JSON.stringify({ input: 'hello' })).toString('base64'),
+        body_base64: Buffer.from(JSON.stringify({
+          query: 'query Viewer { viewer { id } }',
+          operationName: 'Viewer',
+          variables: {},
+        })).toString('base64'),
       }),
     }),
     {
@@ -1205,6 +1218,9 @@ async function assertEnterpriseExecuteDryRun() {
   if (payload?.execution?.dryRun !== true || payload?.request?.dry_run !== true) {
     throw new Error(`Expected dry-run execution payload, got ${JSON.stringify(payload)}`);
   }
+  if (payload?.request?.api_protocol !== 'graphql' || payload?.request?.api_interface?.confidence !== 'high') {
+    throw new Error(`Expected GraphQL API interface detection in dry-run payload, got ${JSON.stringify(payload?.request?.api_interface)}`);
+  }
   if (payload?.execution?.signedEnvelope?.keyId !== 'enterprise-local' || !payload?.execution?.signedEnvelope?.signatureHash) {
     throw new Error(`Expected signed envelope metadata in dry-run payload, got ${JSON.stringify(payload?.execution)}`);
   }
@@ -1214,6 +1230,9 @@ async function assertEnterpriseExecuteDryRun() {
   }
   if (dryRunAudit.metadata?.dry_run !== true || !dryRunAudit.metadata?.signed_envelope?.signatureHash) {
     throw new Error(`Expected dry-run signed envelope evidence in audit metadata, got ${JSON.stringify(dryRunAudit.metadata)}`);
+  }
+  if (dryRunAudit.metadata?.api_protocol !== 'graphql' || !dryRunAudit.metadata?.api_interface?.signals?.includes('body:query-operation')) {
+    throw new Error(`Expected GraphQL API interface metadata in dry-run audit, got ${JSON.stringify(dryRunAudit.metadata?.api_interface)}`);
   }
 }
 
@@ -3339,7 +3358,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/inventory',
       title: 'API Inventory - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects/bootstrap', 'Inventory overview', 'inventoryOverviewPanel', 'inventoryCoverageChart', 'inventoryReviewChart', 'inventoryRiskTrafficChart', 'API inventory board', 'inventory-board-shadcn-polish', '.inventory-board-panel .inventory-record', '.inventory-board-panel .tag.good', 'add API key', 'manual API key', 'vaultproof_manual_api_keys', 'data-manual-key-field', 'key fingerprint', 'needs sealed ingest', 'import CSV/OpenAPI', 'inventoryImportForm', 'parseInventoryCsv', 'parseOpenApiInventoryHints', 'vaultproof_inventory_import', 'imported_api_hints', 'inventoryFilterForm', 'inventorySearch', 'inventoryStatusFilter', 'inventoryReviewFilter', 'inventoryRiskFilter', 'inventorySourceFilter', 'apply filters', 'clearInventoryFilters', 'copy filtered CSV', 'copyFilteredInventoryCsvBtn', 'copyFilteredInventoryCsv', 'copy-filtered-inventory-csv', 'filteredInventoryRows', 'inventoryBulkReviewForm', 'bulkInventoryReviewStatus', 'bulkInventoryNextReview', 'apply filtered review', 'applyInventoryBulkReview', 'bulk_reviewed_at', 'copy review brief', 'copyInventoryReviewBriefBtn', 'copyInventoryReviewBrief', 'copy-inventory-review-brief', 'inventoryReviewBrief', 'VaultProof API inventory review brief', 'Priority actions', 'inventoryRowMatchesFilters', 'vaultproof_api_inventory', 'data-inventory-field', 'business owner', 'technical owner', 'data sensitivity', 'review status', 'review due', 'copy inventory CSV', 'copyInventoryCsvBtn', 'copy-inventory-csv', 'inventoryEvidenceCsv', 'export_formats', 'copy inventory JSON', 'vaultproof_enterprise_api_inventory', '/app/control', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
+      required: ['/api/v1/enterprise/projects/bootstrap', 'Inventory overview', 'inventoryOverviewPanel', 'inventoryCoverageChart', 'inventoryReviewChart', 'inventoryRiskTrafficChart', 'Secret classifier', 'classifyInventorySecret', 'Proxy through VaultProof', 'Vault-only, rotate', 'Move to identity', 'secret_classification', 'recommended_handling', 'classifier_confidence', 'API inventory board', 'inventory-board-shadcn-polish', '.inventory-board-panel .inventory-record', '.inventory-board-panel .tag.good', 'add API key', 'manual API key', 'vaultproof_manual_api_keys', 'data-manual-key-field', 'key fingerprint', 'needs sealed ingest', 'import CSV/OpenAPI', 'inventoryImportForm', 'parseInventoryCsv', 'parseOpenApiInventoryHints', 'vaultproof_inventory_import', 'imported_api_hints', 'inventoryFilterForm', 'inventorySearch', 'inventoryStatusFilter', 'inventoryReviewFilter', 'inventoryRiskFilter', 'inventorySourceFilter', 'apply filters', 'clearInventoryFilters', 'copy filtered CSV', 'copyFilteredInventoryCsvBtn', 'copyFilteredInventoryCsv', 'copy-filtered-inventory-csv', 'filteredInventoryRows', 'inventoryBulkReviewForm', 'bulkInventoryReviewStatus', 'bulkInventoryNextReview', 'apply filtered review', 'applyInventoryBulkReview', 'bulk_reviewed_at', 'copy review brief', 'copyInventoryReviewBriefBtn', 'copyInventoryReviewBrief', 'copy-inventory-review-brief', 'inventoryReviewBrief', 'VaultProof API inventory review brief', 'Priority actions', 'inventoryRowMatchesFilters', 'vaultproof_api_inventory', 'data-inventory-field', 'business owner', 'technical owner', 'data sensitivity', 'review status', 'review due', 'copy inventory CSV', 'copyInventoryCsvBtn', 'copy-inventory-csv', 'inventoryEvidenceCsv', 'export_formats', 'copy inventory JSON', 'vaultproof_enterprise_api_inventory', '/app/control', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
     },
     {
       path: '/app/policy',

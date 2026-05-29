@@ -470,6 +470,36 @@ function objectOrEmpty(value: unknown): Record<string, unknown> {
     : {};
 }
 
+function normalizeApiProtocol(value: unknown): 'rest' | 'graphql' | 'unknown' {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    value = (value as Record<string, unknown>).protocol;
+  }
+  const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (normalized === 'graphql' || normalized === 'gql') return 'graphql';
+  if (normalized === 'rest' || normalized === 'http' || normalized === 'json') return 'rest';
+  return 'unknown';
+}
+
+function inferApiProtocolFromPath(value: unknown): 'rest' | 'graphql' | 'unknown' {
+  const path = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (!path) return 'unknown';
+  if (
+    path === '/graphql'
+    || path.endsWith('/graphql')
+    || path.includes('/graphql/')
+    || path === '/gql'
+    || path.endsWith('/gql')
+    || path.includes('/gql/')
+  ) return 'graphql';
+  return 'rest';
+}
+
+function getAccessLogApiProtocol(log: { upstream_path?: string | null; metadata?: unknown }): 'rest' | 'graphql' | 'unknown' {
+  const metadata = objectOrEmpty(log.metadata);
+  const fromMetadata = normalizeApiProtocol(metadata.api_protocol || metadata.api_interface);
+  return fromMetadata !== 'unknown' ? fromMetadata : inferApiProtocolFromPath(log.upstream_path);
+}
+
 function isProviderMaterialMode(value: unknown): value is ProviderMaterialMode {
   return value === 'sealed-live'
     || value === 'demo-placeholder'
@@ -661,6 +691,11 @@ function emptyKeyVisualSummary(totalProjects = 0): Record<string, unknown> {
       deniedCalls: 0,
       otherErrorCalls: 0,
       errorCalls: 0,
+    },
+    apiProtocolBreakdown: {
+      rest: 0,
+      graphql: 0,
+      unknown: 0,
     },
     projectCoverage: {
       totalProjects,
@@ -1047,6 +1082,11 @@ function buildOverviewStatsFromAccess(
     otherErrorCalls: Math.max(errorCalls - deniedCalls, 0),
     errorCalls,
   };
+  const apiProtocolBreakdown = accessOverview.recentLogs.reduce<Record<string, number>>((acc, log) => {
+    const protocol = getAccessLogApiProtocol(log);
+    acc[protocol] = (acc[protocol] || 0) + 1;
+    return acc;
+  }, { rest: 0, graphql: 0, unknown: 0 });
   const projectCoverage = {
     totalProjects: projectIds.length,
     withProviderSlots: providerSlotSummary.projectsWithSlots,
@@ -1092,6 +1132,7 @@ function buildOverviewStatsFromAccess(
     const endpoint = log.upstream_path || '';
     const method = (log.method || '').toUpperCase();
     const description = [method, endpoint].filter(Boolean).join(' ').trim() || (log.provider || log.slug || 'Proxy request');
+    const apiProtocol = getAccessLogApiProtocol(log);
     return {
       action: 'transparent_proxy',
       timestamp: log.timestamp,
@@ -1104,6 +1145,7 @@ function buildOverviewStatsFromAccess(
         status_code: log.status_code,
         endpoint,
         latency_ms: log.latency_ms,
+        api_protocol: apiProtocol,
       },
     };
   });
@@ -1121,6 +1163,7 @@ function buildOverviewStatsFromAccess(
     providerSlotSummary,
     providerUsage,
     trafficBreakdown,
+    apiProtocolBreakdown,
     projectCoverage,
     callTrend: accessOverview.callTrend,
     healthWindowDays,

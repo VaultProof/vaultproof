@@ -14,6 +14,16 @@ export interface SecureExecutionRequest {
   expiresAt: string;
   nonce: string;
   callerLock?: SecureExecutionCallerLock;
+  apiInterface?: SecureExecutionApiInterface;
+}
+
+export type SecureExecutionApiProtocol = 'rest' | 'graphql' | 'unknown';
+
+export interface SecureExecutionApiInterface {
+  protocol: SecureExecutionApiProtocol;
+  source: 'auto' | 'manual';
+  confidence: 'high' | 'medium' | 'low';
+  signals: string[];
 }
 
 export interface SecureExecutionCallerLock {

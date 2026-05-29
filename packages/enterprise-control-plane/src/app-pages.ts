@@ -4265,8 +4265,8 @@ ${renderDatalistOptions(ENTERPRISE_PROVIDER_SLOT_PRESETS.map((preset) => preset.
               <div id="inventoryReviewChart" class="inventory-chart-bars"><div class="empty">Loading review state...</div></div>
             </article>
             <article class="inventory-chart-card">
-              <div class="inventory-chart-title"><h3>Risk & traffic</h3><span id="inventoryRiskTrafficMeta" class="mini">attention signals</span></div>
-              <div id="inventoryRiskTrafficChart" class="inventory-chart-bars"><div class="empty">Loading risk signals...</div></div>
+              <div class="inventory-chart-title"><h3>Secret classifier</h3><span id="inventoryRiskTrafficMeta" class="mini">handling decisions</span></div>
+              <div id="inventoryRiskTrafficChart" class="inventory-chart-bars"><div class="empty">Loading classifier...</div></div>
             </article>
           </div>
         </section>
@@ -4749,6 +4749,149 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         var provider = String(slot.provider || slot.slug || '').trim().toLowerCase();
         var defaults = providerDefaults[provider] || providerDefaults[String(slot.slug || '').trim().toLowerCase()] || {};
         return defaults.demoPath || '/';
+      }
+      function normalizeApiProtocol(value) {
+        if (value && typeof value === 'object' && !Array.isArray(value)) value = value.protocol;
+        var normalized = String(value || '').trim().toLowerCase();
+        if (normalized === 'graphql' || normalized === 'graph_ql' || normalized === 'gql') return 'graphql';
+        if (normalized === 'rest' || normalized === 'http' || normalized === 'json') return 'rest';
+        return '';
+      }
+      function inferApiProtocolFromText(value) {
+        var text = String(value || '').trim().toLowerCase();
+        if (!text) return '';
+        if (text === '/graphql' || text.endsWith('/graphql') || text.indexOf('/graphql/') !== -1 || text === '/gql' || text.endsWith('/gql') || text.indexOf('/gql/') !== -1) return 'graphql';
+        if (text.indexOf('graphql') !== -1 || text.indexOf('operationname') !== -1) return 'graphql';
+        if (text.indexOf('/v') !== -1 || text.charAt(0) === '/' || text.indexOf('http') === 0 || text.indexOf('api') !== -1) return 'rest';
+        return '';
+      }
+      function apiProtocolLabel(value) {
+        var protocol = normalizeApiProtocol(value) || 'unknown';
+        if (protocol === 'graphql') return 'GraphQL';
+        if (protocol === 'rest') return 'REST';
+        return 'Unknown';
+      }
+      function apiProtocolTone(value) {
+        var protocol = normalizeApiProtocol(value);
+        if (protocol === 'graphql') return 'good';
+        if (protocol === 'rest') return '';
+        return 'warn';
+      }
+      function inventoryApiProtocol(row) {
+        row = row || {};
+        var annotation = row.annotation || {};
+        var provider = row.provider || {};
+        var manualKey = row.manual_key || {};
+        return normalizeApiProtocol(annotation.api_protocol || annotation.api_interface)
+          || inferApiProtocolFromText(provider.default_path || manualKey.upstream_scope || '')
+          || (row.provider || manualKey.provider ? 'rest' : 'unknown');
+      }
+      function classifierText(row) {
+        row = row || {};
+        var annotation = row.annotation || {};
+        var provider = row.provider || {};
+        var manualKey = row.manual_key || {};
+        var project = row.project || {};
+        return [
+          provider.provider,
+          provider.slug,
+          provider.default_path,
+          manualKey.provider,
+          manualKey.key_label,
+          manualKey.key_reference,
+          manualKey.key_location,
+          manualKey.upstream_scope,
+          annotation.business_service,
+          annotation.note,
+          project.name,
+          project.vp_proj_id
+        ].filter(Boolean).join(' ').toLowerCase();
+      }
+      function classifierHas(text, pattern) {
+        return pattern.test(String(text || ''));
+      }
+      function classifierProviderName(row) {
+        var provider = (row && row.provider) || {};
+        var manualKey = (row && row.manual_key) || {};
+        return String(provider.provider || provider.slug || manualKey.provider || '').trim().toLowerCase();
+      }
+      function classifierResult(secretType, recommendation, confidence, reason, signals) {
+        var typeLabels = {
+          external_provider_api_key: 'External provider key',
+          internal_api_key: 'Internal API key',
+          vault_only_secret: 'Vault-only secret',
+          webhook_signing_secret: 'Webhook signing secret',
+          database_application_secret: 'Database/app secret',
+          oauth_client_secret: 'OAuth client secret',
+          kms_or_encryption_key: 'KMS/encryption key',
+          secrets_platform_token: 'Secrets platform token',
+          unknown_secret: 'Unknown secret'
+        };
+        var recommendationLabels = {
+          proxy: 'Proxy through VaultProof',
+          vault_only: 'Vault-only, rotate',
+          move_to_identity: 'Move to identity',
+          review: 'Review handling',
+          inventory_only: 'Inventory only'
+        };
+        var recommendationTones = {
+          proxy: 'good',
+          vault_only: 'warn',
+          move_to_identity: 'warn',
+          review: 'bad',
+          inventory_only: ''
+        };
+        return {
+          secret_type: secretType,
+          secret_label: typeLabels[secretType] || 'Unknown secret',
+          recommendation: recommendation,
+          recommendation_label: recommendationLabels[recommendation] || 'Review handling',
+          tone: recommendationTones[recommendation] || '',
+          confidence: confidence || 'medium',
+          reason: reason,
+          signals: (signals || []).slice(0, 6)
+        };
+      }
+      function classifyInventorySecret(row) {
+        row = row || {};
+        var text = classifierText(row);
+        var providerName = classifierProviderName(row);
+        var knownProvider = Boolean(providerName && providerDefaults[providerName]);
+        var signals = [];
+
+        if (classifierHas(text, /(?:hashicorp[-\s]?vault|onepassword|1password|doppler|infisical|secret manager|secrets manager|key vault|vault token|kubernetes|k8s|service account token)/i)) {
+          signals.push('secrets-platform');
+          return classifierResult('secrets_platform_token', 'vault_only', 'high', 'This looks like access to a secrets platform or cluster control plane; keep it out of proxy traffic and rotate/least-privilege it.', signals);
+        }
+        if (classifierHas(text, /(?:webhook|whsec|svix|signing secret|signature secret|hmac secret)/i)) {
+          signals.push('webhook-signing');
+          return classifierResult('webhook_signing_secret', 'vault_only', 'high', 'Webhook signing secrets verify inbound messages; they should be stored and rotated, not proxied as outbound API traffic.', signals);
+        }
+        if (classifierHas(text, /(?:oauth|oidc|client secret|client_secret|gocspx|auth0|entra app secret|google client secret)/i)) {
+          signals.push('oauth-client-secret');
+          return classifierResult('oauth_client_secret', 'vault_only', 'high', 'OAuth client secrets belong in vault/secret-manager custody with rotation evidence, not the API proxy path.', signals);
+        }
+        if (classifierHas(text, /(?:database[-\s]?url|postgres|postgresql|mysql|mariadb|mongodb|mongo|redis|connection string|dsn|db password|jdbc:|rediss?:)/i)) {
+          signals.push('database-secret');
+          return classifierResult('database_application_secret', 'vault_only', 'high', 'Database and application connection secrets should use vault or dynamic credentials instead of the API proxy.', signals);
+        }
+        if (classifierHas(text, /(?:kms|hsm|encryption key|private key|public\/private key|certificate|cert\b|pem\b|rsa\b|ed25519|jwt secret|jwt signing|session secret|cookie secret)/i)) {
+          signals.push('key-material');
+          return classifierResult('kms_or_encryption_key', 'vault_only', 'high', 'Signing, encryption, certificate, and KMS material should stay in KMS/vault custody and never be proxied.', signals);
+        }
+        if (classifierHas(text, /(?:internal|private api|service-to-service|service token|microservice|intranet|corp api|custom api|internal-api|\.internal|\.local|cluster\.local|localhost|127\.0\.0\.1|10\.\d+\.|192\.168\.|172\.(?:1[6-9]|2\d|3[0-1])\.)/i)) {
+          signals.push('internal-api');
+          return classifierResult('internal_api_key', 'move_to_identity', 'high', 'Internal static API keys should usually move to IAM, OIDC, workload identity, or mTLS instead of VaultProof proxy.', signals);
+        }
+        if (knownProvider || row.provider) {
+          signals.push(knownProvider ? 'known-provider' : 'provider-slot');
+          return classifierResult('external_provider_api_key', 'proxy', knownProvider ? 'high' : 'medium', 'This looks like an outbound provider API key; VaultProof proxy is the right protection path.', signals);
+        }
+        if (classifierHas(text, /(?:api key|apikey|x-api-key|bearer token|token|provider key)/i)) {
+          signals.push('api-key-keyword');
+          return classifierResult('unknown_secret', 'review', 'medium', 'This looks like an API credential, but VaultProof needs owner/provider context before choosing proxy, vault-only, or identity migration.', signals);
+        }
+        return classifierResult('unknown_secret', 'inventory_only', 'low', 'Not enough metadata to classify the secret handling path yet.', ['metadata-incomplete']);
       }
       function toBase64Utf8(value) {
         return btoa(unescape(encodeURIComponent(value)));
@@ -5479,7 +5622,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           if (annotation.review_status === 'approved') statuses.push({ label: 'review approved', tone: 'good' });
           if (annotation.review_status === 'blocked') statuses.push({ label: 'blocked', tone: 'bad' });
           if (annotation.review_status === 'exception') statuses.push({ label: 'exception noted', tone: 'warn' });
-          return {
+          var manualRow = {
             id: record.id,
             project: {
               id: project.id,
@@ -5524,6 +5667,14 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             annotation: annotation,
             statuses: statuses
           };
+          var manualClass = classifyInventorySecret(manualRow);
+          if (manualClass.recommendation !== 'proxy') {
+            manualRow.statuses = statuses.filter(function(status) {
+              return status.label !== 'missing provider slot' && status.label !== 'needs sealed ingest';
+            });
+            manualRow.statuses.push({ label: manualClass.recommendation_label, tone: manualClass.tone || 'warn' });
+          }
+          return manualRow;
         });
       }
       function buildInventoryRows() {
@@ -5665,6 +5816,8 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         var traffic = row.traffic || {};
         var policy = row.policy || {};
         var defaultPath = row.provider ? provider.default_path : manualKey ? (manualKey.upstream_scope || 'manual scope not set') : 'not mapped';
+        var apiProtocol = inventoryApiProtocol(row);
+        var secretClass = classifyInventorySecret(row);
         var reviewStatus = annotation.review_status || 'needs_review';
         var risk = annotation.risk || '';
         var ownerPrimary = annotation.business_owner || annotation.technical_owner || 'owner unset';
@@ -5678,7 +5831,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             '<div class="inventory-identity"><div class="inventory-cell-label">API surface</div><div class="inventory-record-title">' + escapeHtml(row.project.name) + '</div>' +
               '<div class="inventory-record-sub">' + escapeHtml(providerLabel) + ' - ' + escapeHtml(row.project.vp_proj_id || row.project.id || 'project') + '</div>' +
               '<div class="inventory-record-sub">Scope: ' + escapeHtml(defaultPath) + '</div>' +
-              '<div class="inventory-status-list">' + renderInventoryStatusTags(row) + '</div></div>' +
+              '<div class="inventory-status-list"><span class="tag ' + apiProtocolTone(apiProtocol) + '">' + apiProtocolLabel(apiProtocol) + '</span><span class="tag">' + escapeHtml(secretClass.secret_label) + '</span><span class="tag ' + escapeHtml(secretClass.tone) + '">' + escapeHtml(secretClass.recommendation_label) + '</span>' + renderInventoryStatusTags(row) + '</div></div>' +
             '<div><div class="inventory-cell-label">Owner</div><div class="inventory-cell-value"><strong>' + escapeHtml(ownerPrimary) + '</strong>' + escapeHtml(ownerSecondary) + '</div></div>' +
             '<div><div class="inventory-cell-label">Policy</div><div class="inventory-cell-value"><span class="tag ' + (policy.complete ? 'good' : 'warn') + '">' + escapeHtml(policy.complete ? 'ready' : 'incomplete') + '</span><div class="inventory-record-sub">' + escapeHtml(policy.caller_lock_controls || 'policy not reported') + '</div></div></div>' +
             '<div><div class="inventory-cell-label">Traffic</div><div class="inventory-cell-value"><span class="tag ' + trafficTone + '">' + number(traffic.calls) + ' calls</span><div class="inventory-record-sub">' + number(traffic.errors) + ' errors - ' + number(traffic.denied) + ' denied - last ' + escapeHtml(rel(traffic.last_seen_at)) + '</div></div></div>' +
@@ -5724,6 +5877,13 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       }
       function inventorySummaryForRows(rows) {
         var inventoryRows = Array.isArray(rows) ? rows : [];
+        var graphqlRows = inventoryRows.filter(function(row) { return inventoryApiProtocol(row) === 'graphql'; }).length;
+        var restRows = inventoryRows.filter(function(row) { return inventoryApiProtocol(row) === 'rest'; }).length;
+        var classifiedRows = inventoryRows.map(classifyInventorySecret);
+        var handlingProxy = classifiedRows.filter(function(item) { return item.recommendation === 'proxy'; }).length;
+        var handlingVaultOnly = classifiedRows.filter(function(item) { return item.recommendation === 'vault_only'; }).length;
+        var handlingIdentity = classifiedRows.filter(function(item) { return item.recommendation === 'move_to_identity'; }).length;
+        var handlingReview = classifiedRows.filter(function(item) { return item.recommendation === 'review' || item.recommendation === 'inventory_only'; }).length;
         return {
           total: inventoryRows.length,
           protected: inventoryRows.filter(function(row) { return row.statuses.some(function(status) { return status.label === 'protected'; }); }).length,
@@ -5739,6 +5899,16 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           needs_review: inventoryRows.filter(function(row) { return !row.annotation || !row.annotation.review_status || row.annotation.review_status === 'needs_review'; }).length,
           high_risk: inventoryRows.filter(function(row) { return row.annotation && row.annotation.risk === 'high'; }).length,
           critical_risk: inventoryRows.filter(function(row) { return row.annotation && row.annotation.risk === 'critical'; }).length,
+          rest: restRows,
+          graphql: graphqlRows,
+          unknown_protocol: Math.max(inventoryRows.length - restRows - graphqlRows, 0),
+          handling_proxy: handlingProxy,
+          handling_vault_only: handlingVaultOnly,
+          handling_identity: handlingIdentity,
+          handling_review: handlingReview,
+          external_provider_keys: classifiedRows.filter(function(item) { return item.secret_type === 'external_provider_api_key'; }).length,
+          internal_api_keys: classifiedRows.filter(function(item) { return item.secret_type === 'internal_api_key'; }).length,
+          vault_only_secrets: classifiedRows.filter(function(item) { return item.recommendation === 'vault_only'; }).length,
           blocked: inventoryRows.filter(function(row) { return row.annotation && row.annotation.review_status === 'blocked'; }).length
         };
       }
@@ -5757,19 +5927,16 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         if (PAGE_MODE !== 'inventory') return;
         var rows = cachedInventoryRows || [];
         var summary = inventorySummaryForRows(rows);
-        var lowRisk = rows.filter(function(row) { return row.annotation && row.annotation.risk === 'low'; }).length;
-        var mediumRisk = rows.filter(function(row) { return row.annotation && row.annotation.risk === 'medium'; }).length;
-        var highOrCritical = summary.high_risk + summary.critical_risk;
         var attention = summary.blocked + summary.review_due + summary.policy_incomplete + summary.no_recent_traffic;
         text('inventoryOverviewMeta', summary.total ? number(attention) + ' attention signals' : 'metadata-only');
         text('inventorySurfaceTotal', number(summary.total));
-        text('inventorySurfaceSub', number(summary.manual_api_keys) + ' manual records, ' + number(summary.imported_api_hints) + ' imported hints, ' + number(summary.missing_provider_slot) + ' missing provider slots.');
+        text('inventorySurfaceSub', number(summary.handling_proxy) + ' proxy-ready, ' + number(summary.handling_vault_only) + ' vault-only, ' + number(summary.handling_identity) + ' identity migrations.');
         text('inventoryProtectedValue', number(summary.protected));
         text('inventoryReviewDueValue', number(summary.review_due));
         text('inventoryBlockedValue', number(summary.blocked));
         text('inventoryCoverageMeta', summary.total ? number(Math.round((summary.protected / summary.total) * 100)) + '% protected' : 'protection gaps');
         text('inventoryReviewMeta', summary.total ? number(summary.approved) + ' approved' : 'approval mix');
-        text('inventoryRiskTrafficMeta', highOrCritical || summary.no_recent_traffic ? number(highOrCritical + summary.no_recent_traffic) + ' attention' : 'clean');
+        text('inventoryRiskTrafficMeta', summary.handling_identity || summary.handling_review ? number(summary.handling_identity + summary.handling_review) + ' decisions' : 'classified');
         byId('inventoryCoverageChart').innerHTML = summary.total ? renderInventoryChartRows([
           { label: 'Protected', value: summary.protected, fill: '#8ab4f8' },
           { label: 'Missing slot', value: summary.missing_provider_slot, fill: '#f87171' },
@@ -5783,11 +5950,11 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           { label: 'Blocked', value: summary.blocked, fill: '#f87171' }
         ], summary.total) : '<div class="empty">No review state yet.</div>';
         byId('inventoryRiskTrafficChart').innerHTML = summary.total ? renderInventoryChartRows([
-          { label: 'Critical risk', value: summary.critical_risk, fill: '#ef4444' },
-          { label: 'High risk', value: summary.high_risk, fill: '#f59e0b' },
-          { label: 'Medium/low risk', value: mediumRisk + lowRisk, fill: '#8ab4f8' },
-          { label: 'No recent traffic', value: summary.no_recent_traffic, fill: '#a8b3c2' }
-        ], summary.total) : '<div class="empty">No risk or traffic signals yet.</div>';
+          { label: 'Proxy through VaultProof', value: summary.handling_proxy, fill: '#4ade80' },
+          { label: 'Vault-only / rotate', value: summary.handling_vault_only, fill: '#fbbf24' },
+          { label: 'Move to identity', value: summary.handling_identity, fill: '#f59e0b' },
+          { label: 'Review handling', value: summary.handling_review, fill: '#f87171' }
+        ], summary.total) : '<div class="empty">No classifier signals yet.</div>';
       }
       function inventoryFilterState() {
         return {
@@ -5808,6 +5975,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         var provider = row.provider || {};
         var manualKey = row.manual_key || {};
         var project = row.project || {};
+        var secretClass = classifyInventorySecret(row);
         return [
           row.id,
           project.name,
@@ -5831,6 +5999,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           annotation.risk,
           annotation.review_status,
           annotation.note,
+          inventoryApiProtocol(row),
+          secretClass.secret_label,
+          secretClass.recommendation_label,
+          secretClass.reason,
           (row.statuses || []).map(function(status) { return status.label || status; }).join(' ')
         ].filter(Boolean).join(' ').toLowerCase();
       }
@@ -5887,6 +6059,8 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           rows: cachedInventoryRows.map(function(row) {
             return {
               id: row.id,
+              api_protocol: inventoryApiProtocol(row),
+              secret_classification: classifyInventorySecret(row),
               project: row.project,
               provider: Object.assign({}, row.provider, { material_mode: displayMaterialMode(row.provider && row.provider.material_mode) }),
               manual_key: row.manual_key ? {
@@ -5961,6 +6135,11 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           'manual_key_reference',
           'key_location',
           'upstream_scope',
+          'api_protocol',
+          'secret_type',
+          'recommended_handling',
+          'classifier_confidence',
+          'classifier_reason',
           'business_owner',
           'technical_owner',
           'environment',
@@ -5986,6 +6165,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           var annotation = row.annotation || {};
           var traffic = row.traffic || {};
           var policy = row.policy || {};
+          var secretClass = classifyInventorySecret(row);
           lines.push([
             row.id,
             row.project && row.project.name,
@@ -5998,6 +6178,11 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             manualKey.key_reference || '',
             manualKey.key_location || '',
             manualKey.upstream_scope || provider.default_path || '',
+            inventoryApiProtocol(row),
+            secretClass.secret_type,
+            secretClass.recommendation,
+            secretClass.confidence,
+            secretClass.reason,
             annotation.business_owner || '',
             annotation.technical_owner || '',
             annotation.environment || '',
@@ -6029,7 +6214,11 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       function inventoryBriefActions(row) {
         var actions = [];
         var annotation = row.annotation || {};
-        if (!row.provider) actions.push(row.manual_key ? 'seal provider slot for protected execution' : 'create provider slot');
+        var secretClass = classifyInventorySecret(row);
+        if (secretClass.recommendation === 'proxy' && !row.provider) actions.push(row.manual_key ? 'seal provider slot for protected execution' : 'create provider slot');
+        if (secretClass.recommendation === 'vault_only') actions.push('keep out of proxy traffic; store and rotate through vault or customer secret manager');
+        if (secretClass.recommendation === 'move_to_identity') actions.push('replace the static internal key with IAM, OIDC, workload identity, or mTLS');
+        if (secretClass.recommendation === 'review' || secretClass.recommendation === 'inventory_only') actions.push('confirm secret type before choosing proxy, vault-only, or identity migration');
         if (!row.policy || !row.policy.complete) actions.push('complete caller-lock policy');
         if (Number((row.traffic || {}).calls || 0) === 0) actions.push('collect traffic or dry-run evidence');
         if (!annotation.business_owner || !annotation.technical_owner) actions.push('assign business and technical owners');
@@ -6041,9 +6230,12 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       }
       function inventoryBriefPriority(row) {
         var annotation = row.annotation || {};
+        var secretClass = classifyInventorySecret(row);
         var score = 0;
         if (annotation.review_status === 'blocked') score += 100;
-        if (!row.provider) score += 40;
+        if (secretClass.recommendation === 'review') score += 45;
+        if (secretClass.recommendation === 'move_to_identity') score += 35;
+        if (secretClass.recommendation === 'proxy' && !row.provider) score += 40;
         if (!row.policy || !row.policy.complete) score += 25;
         if ((row.statuses || []).some(function(status) { return status.label === 'review due'; })) score += 20;
         if (annotation.risk === 'critical') score += 18;
@@ -6075,6 +6267,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           '- Exceptions: ' + number(summary.exceptions),
           '- Blocked: ' + number(summary.blocked),
           '- Missing provider slot: ' + number(summary.missing_provider_slot),
+          '- Proxy through VaultProof: ' + number(summary.handling_proxy),
+          '- Vault-only / rotate: ' + number(summary.handling_vault_only),
+          '- Move to identity: ' + number(summary.handling_identity),
+          '- Needs handling review: ' + number(summary.handling_review),
           '- Needs sealed ingest: ' + number(summary.needs_sealed_ingest),
           '- Policy incomplete: ' + number(summary.policy_incomplete),
           '- No recent traffic: ' + number(summary.no_recent_traffic),
@@ -6108,7 +6304,8 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         renderInventoryOverview();
         byId('inventorySummaryList').innerHTML = [
             '<div class="row"><div><div class="row-title">Coverage</div><div class="row-sub">' + number(summary.missing_provider_slot) + ' missing provider slot, ' + number(summary.policy_incomplete) + ' policy incomplete, and ' + number(summary.no_recent_traffic) + ' without traffic evidence.</div></div><span class="tag ' + (summary.missing_provider_slot || summary.policy_incomplete ? 'warn' : 'good') + '">' + (summary.missing_provider_slot || summary.policy_incomplete ? 'review' : 'ready') + '</span></div>',
-            '<div class="row"><div><div class="row-title">Manual records</div><div class="row-sub">' + number(summary.manual_api_keys) + ' metadata-only manual key records; ' + number(summary.needs_sealed_ingest) + ' need sealed ingest before protected execution.</div></div><span class="tag warn">metadata</span></div>',
+            '<div class="row"><div><div class="row-title">Classifier decisions</div><div class="row-sub">' + number(summary.handling_proxy) + ' should proxy, ' + number(summary.handling_vault_only) + ' should stay vault-only, ' + number(summary.handling_identity) + ' should move toward IAM/OIDC/mTLS, and ' + number(summary.handling_review) + ' need human review.</div></div><span class="tag ' + (summary.handling_identity || summary.handling_review ? 'warn' : 'good') + '">classified</span></div>',
+            '<div class="row"><div><div class="row-title">Manual records</div><div class="row-sub">' + number(summary.manual_api_keys) + ' metadata-only manual key records; proxy-recommended records need sealed ingest before protected execution.</div></div><span class="tag warn">metadata</span></div>',
             '<div class="row"><div><div class="row-title">Imports</div><div class="row-sub">' + number(summary.imported_api_hints) + ' CSV/OpenAPI hints are saved locally and reviewed like manual records.</div></div><span class="tag good">safe import</span></div>',
             '<div class="row"><div><div class="row-title">Secret boundary</div><div class="row-sub">Inventory records exclude raw provider keys, encrypted shares, bearer tokens, OAuth secrets, SAML material, request bodies, response bodies, and customer payloads.</div></div><span class="tag good">redacted</span></div>'
         ].join('');
@@ -7110,7 +7307,8 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         byId('activityList').innerHTML = events.length ? events.map(function(event) {
           var meta = event.metadata || {};
           var project = event.project || {};
-          return '<div class="row"><div><div class="row-title">' + escapeHtml(event.description || event.event_type) + '</div><div class="row-sub">' + escapeHtml(rel(event.timestamp)) + ' - ' + escapeHtml(project.name || project.vp_proj_id || 'unknown project') + ' - ' + escapeHtml(meta.provider || meta.slug || 'unknown provider') + ' - ' + escapeHtml(meta.latency_ms == null ? 'latency n/a' : meta.latency_ms + 'ms') + (meta.provider_request_id ? ' - request ' + escapeHtml(meta.provider_request_id) : '') + '</div></div>' + statusTag(event.status) + '</div>';
+          var apiProtocol = normalizeApiProtocol(meta.api_protocol || meta.api_interface) || 'unknown';
+          return '<div class="row"><div><div class="row-title">' + escapeHtml(event.description || event.event_type) + '</div><div class="row-sub">' + escapeHtml(rel(event.timestamp)) + ' - ' + escapeHtml(project.name || project.vp_proj_id || 'unknown project') + ' - ' + escapeHtml(meta.provider || meta.slug || 'unknown provider') + ' - ' + escapeHtml(meta.latency_ms == null ? 'latency n/a' : meta.latency_ms + 'ms') + (meta.provider_request_id ? ' - request ' + escapeHtml(meta.provider_request_id) : '') + '</div><div class="inventory-status-list"><span class="tag ' + apiProtocolTone(apiProtocol) + '">' + apiProtocolLabel(apiProtocol) + '</span></div></div>' + statusTag(event.status) + '</div>';
         }).join('') : '<div class="empty">No runtime activity matches these filters.</div>';
       }
       function collectKeyRows() {
@@ -7254,7 +7452,17 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
           var materialLabel = displayMaterialMode(materialMode);
           var secretKind = slotIsEmailProvider(item.slot) ? 'email API key' : 'provider API key';
-          return '<div class="row"><div><div class="row-title">' + escapeHtml(item.slot.slug || item.slot.provider) + '</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - provider ' + escapeHtml(item.slot.provider) + ' - key id ' + escapeHtml(item.slot.key_id) + '</div><div><span class="tag good">active</span><span class="tag">' + escapeHtml(secretKind) + '</span><span class="tag ' + materialClass + '">' + materialLabel + '</span><span class="tag">' + (override ? 'provider override' : 'project policy') + '</span><span class="tag">rotation: manual checklist</span><span class="tag">SKR: executor-bound</span></div></div><div class="row-actions">' + action + '</div></div>';
+          var slotClass = classifyInventorySecret({
+            project: item.project,
+            provider: {
+              provider: item.slot.provider,
+              slug: item.slot.slug || item.slot.provider,
+              default_path: providerDemoPath(item.slot)
+            },
+            manual_key: null,
+            annotation: {}
+          });
+          return '<div class="row"><div><div class="row-title">' + escapeHtml(item.slot.slug || item.slot.provider) + '</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - provider ' + escapeHtml(item.slot.provider) + ' - key id ' + escapeHtml(item.slot.key_id) + '</div><div><span class="tag good">active</span><span class="tag">' + escapeHtml(secretKind) + '</span><span class="tag ' + escapeHtml(slotClass.tone) + '">' + escapeHtml(slotClass.recommendation_label) + '</span><span class="tag ' + materialClass + '">' + materialLabel + '</span><span class="tag">' + (override ? 'provider override' : 'project policy') + '</span><span class="tag">rotation: manual checklist</span><span class="tag">SKR: executor-bound</span></div></div><div class="row-actions">' + action + '</div></div>';
         }).join('') : '<div class="empty">No active provider slots found.</div>';
       }
       function syncProviderDefaults(force) {

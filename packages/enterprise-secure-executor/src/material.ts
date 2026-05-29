@@ -114,6 +114,8 @@ export class SupabaseExecutionResultRecorder implements EnterpriseExecutionResul
       latency_ms: 0,
       error: input.result.error || null,
       metadata: {
+        api_protocol: input.request.apiInterface?.protocol || 'unknown',
+        api_interface: input.request.apiInterface || null,
         upstream_request_id: input.result.providerRequestId || null,
         executed_via: 'enterprise_secure_executor',
         attestation: input.result.attestation || null,
