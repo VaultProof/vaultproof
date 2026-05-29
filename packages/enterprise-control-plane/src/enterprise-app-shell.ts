@@ -324,7 +324,7 @@ function enterpriseSidebarNavGroup(activePage: EnterpriseAppNavPage, group: Ente
 export function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, _subtitle = ENTERPRISE_SIDEBAR_SUBTITLE): string {
   const sidebarSubtitle = ENTERPRISE_SIDEBAR_SUBTITLE;
 
-  return `<aside class="sidebar enterprise-app-sidebar" data-enterprise-sidebar="universal">
+  return `<aside class="sidebar enterprise-app-sidebar" data-enterprise-sidebar="universal" data-ui-kit="shadcn-studio">
       <div class="sidebar-panel">
         <div class="brand">
           <div class="brand-title">VaultProof Enterprise</div>
@@ -347,37 +347,55 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     /* enterprise-universal-sidebar */
     :root {
       color-scheme: light;
-      --bg: #f5f7fb;
+      --background: #f8fafc;
+      --foreground: #0f172a;
+      --card: #ffffff;
+      --card-foreground: #0f172a;
+      --primary: #315f95;
+      --primary-foreground: #ffffff;
+      --secondary: #f1f5f9;
+      --secondary-foreground: #172033;
+      --muted-bg: #f1f5f9;
+      --muted-foreground: #64748b;
+      --accent-bg: #eef4fb;
+      --accent-foreground: #1f4f82;
+      --border: #e2e8f0;
+      --input: #e2e8f0;
+      --ring: #315f95;
+      --radius: 8px;
+      --bg: var(--background);
       --bg-mid: #e9eff5;
-      --bg-card: rgba(255, 255, 255, 0.92);
-      --paper: #ffffff;
-      --surface: #eef3f7;
-      --panel: rgba(255, 255, 255, 0.86);
-      --panel-strong: rgba(255, 255, 255, 0.98);
-      --card-bg: #ffffff;
-      --row-bg: #f8fafc;
-      --sidebar-bg: #18201f;
-      --sidebar-card-bg: #101615;
-      --sidebar-text: #ffffff;
-      --sidebar-muted: rgba(188, 216, 210, 0.74);
-      --sidebar-link: rgba(255, 255, 255, 0.88);
-      --sidebar-link-active-bg: rgba(49, 95, 149, 0.16);
-      --sidebar-link-active-border: rgba(111, 158, 213, 0.42);
-      --control-bg: rgba(255, 255, 255, 0.92);
-      --page-bg: #f5f7fb;
-      --line: rgba(26, 40, 52, 0.14);
-      --line-soft: rgba(26, 40, 52, 0.08);
-      --rule: 1px solid rgba(26, 40, 52, 0.14);
-      --hair: 1px solid rgba(26, 40, 52, 0.08);
-      --text: #17202a;
-      --text-muted: #526170;
-      --text-faint: #7a8794;
-      --muted: #526170;
-      --soft: #7a8794;
-      --nav-text: #526170;
-      --action-text: #17202a;
-      --gold: #315f95;
-      --accent: #315f95;
+      --bg-card: var(--card);
+      --paper: var(--card);
+      --surface: var(--muted-bg);
+      --panel: var(--card);
+      --panel-strong: var(--card);
+      --card-bg: var(--card);
+      --row-bg: var(--muted-bg);
+      --sidebar-bg: var(--card);
+      --sidebar-card-bg: var(--muted-bg);
+      --sidebar-text: var(--foreground);
+      --sidebar-muted: var(--muted-foreground);
+      --sidebar-link: var(--muted-foreground);
+      --sidebar-link-active-bg: var(--accent-bg);
+      --sidebar-link-active-border: rgba(49, 95, 149, 0.22);
+      --sidebar-link-active-text: var(--foreground);
+      --sidebar-accent: var(--primary);
+      --control-bg: var(--card);
+      --page-bg: var(--background);
+      --line: var(--border);
+      --line-soft: var(--border);
+      --rule: 1px solid var(--border);
+      --hair: 1px solid var(--border);
+      --text: var(--foreground);
+      --text-muted: var(--muted-foreground);
+      --text-faint: var(--muted-foreground);
+      --muted: var(--muted-foreground);
+      --soft: var(--muted-foreground);
+      --nav-text: var(--muted-foreground);
+      --action-text: var(--foreground);
+      --gold: var(--primary);
+      --accent: var(--primary);
       --accent-soft: rgba(49, 95, 149, 0.12);
       --green: #15803d;
       --red: #dc2626;
@@ -385,13 +403,13 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       --ok: #15803d;
       --warn: #b45309;
       --danger: #dc2626;
-      --ink: #ffffff;
-      --primary-bg: #315f95;
-      --primary-text:#ffffff;
-      --primary-border: #315f95;
+      --ink: var(--primary-foreground);
+      --primary-bg: var(--primary);
+      --primary-text: var(--primary-foreground);
+      --primary-border: var(--primary);
       --option-bg: #ffffff;
-      --option-text: #17202a;
-      --shadow: 0 18px 54px rgba(26, 40, 52, 0.10);
+      --option-text: var(--foreground);
+      --shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     }
     body {
       background: var(--page-bg) !important;
@@ -528,94 +546,94 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     .sidebar.enterprise-app-sidebar .sidebar-panel {
       background: var(--sidebar-bg);
       color: var(--sidebar-text);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 24px 70px rgba(26, 40, 52, 0.22);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
       overflow: visible;
     }
     .sidebar.enterprise-app-sidebar .brand {
-      margin-bottom: 14px;
-      padding: 4px 4px 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+      margin-bottom: 10px;
+      padding: 8px 8px 12px;
+      border-bottom: 1px solid var(--border);
     }
     .sidebar.enterprise-app-sidebar .brand-title {
       font-weight: 600;
       font-size: 16px;
       line-height: 1.12;
       letter-spacing: 0;
-      color: var(--sidebar-text, var(--text));
+      color: var(--sidebar-text);
     }
     .sidebar.enterprise-app-sidebar .brand-sub {
-      color: #6f9ed5;
+      color: var(--sidebar-muted);
       font-size: 12px;
       margin-top: 4px;
-      font-weight: 400;
-      letter-spacing: 0.16em;
+      font-weight: 500;
+      letter-spacing: 0;
       text-transform: uppercase;
     }
     .sidebar.enterprise-app-sidebar .workspace-card {
-      border: 1px solid rgba(255, 255, 255, 0.10);
-      background: rgba(255, 255, 255, 0.07);
-      border-radius: 8px;
-      padding: 16px;
-      margin: 0 0 18px;
+      border: 1px solid var(--border);
+      background: var(--sidebar-card-bg);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin: 0 0 12px;
     }
     .sidebar.enterprise-app-sidebar .workspace-kicker {
-      color: #6f9ed5;
+      color: var(--sidebar-accent);
       font-size: 11px;
-      font-weight: 400;
-      letter-spacing: 0.18em;
+      font-weight: 600;
+      letter-spacing: 0;
       text-transform: uppercase;
     }
     .sidebar.enterprise-app-sidebar .workspace-title {
       color: var(--sidebar-text);
-      font-size: 18px;
+      font-size: 15px;
       font-weight: 600;
-      margin-top: 12px;
+      margin-top: 8px;
     }
     .sidebar.enterprise-app-sidebar .workspace-card p {
-      color: rgba(255, 255, 255, 0.70) !important;
-      margin: 4px 0 14px;
-      font-size: 14px;
-      line-height: 1.5rem;
+      color: var(--sidebar-muted) !important;
+      margin: 4px 0 10px;
+      font-size: 13px;
+      line-height: 1.45;
     }
     .sidebar.enterprise-app-sidebar .workspace-card span {
       display: inline-flex;
-      color: rgba(255, 255, 255, 0.60);
-      border: 1px solid rgba(255, 255, 255, 0.10);
-      background: var(--sidebar-card-bg);
-      border-radius: 8px;
-      padding: 10px 12px;
+      color: var(--sidebar-muted);
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 8px 10px;
       font-size: 12px;
-      font-weight: 400;
-      line-height: 1.25rem;
+      font-weight: 500;
+      line-height: 1.3;
     }
     .sidebar.enterprise-app-sidebar .nav-groups {
       display: grid;
-      gap: 8px;
+      gap: 6px;
     }
     .sidebar.enterprise-app-sidebar .nav-group {
       margin: 0;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      background: transparent;
       overflow: hidden;
     }
     .sidebar.enterprise-app-sidebar .nav-group[open] {
-      background: rgba(255, 255, 255, 0.055);
-      border-color: rgba(111, 158, 213, 0.16);
+      background: var(--muted-bg);
+      border-color: var(--border);
     }
     .sidebar.enterprise-app-sidebar .nav-group.active-group {
-      border-color: rgba(111, 158, 213, 0.26);
+      border-color: var(--sidebar-link-active-border);
     }
     .sidebar.enterprise-app-sidebar .nav-group-summary {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      min-height: 42px;
-      padding: 11px 12px;
+      min-height: 38px;
+      padding: 9px 10px;
       cursor: pointer;
       list-style: none;
       user-select: none;
@@ -627,8 +645,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       content: "";
       width: 8px;
       height: 8px;
-      border-right: 1.5px solid rgba(255, 255, 255, 0.62);
-      border-bottom: 1.5px solid rgba(255, 255, 255, 0.62);
+      border-right: 1.5px solid var(--sidebar-muted);
+      border-bottom: 1.5px solid var(--sidebar-muted);
       transform: rotate(45deg);
       transition: transform 160ms ease;
       flex: 0 0 auto;
@@ -640,23 +658,23 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .sidebar.enterprise-app-sidebar .nav-group-summary:hover,
     .sidebar.enterprise-app-sidebar .nav-group.active-group > .nav-group-summary {
-      background: rgba(255, 255, 255, 0.06);
+      background: var(--accent-bg);
     }
     .sidebar.enterprise-app-sidebar .nav-label {
-      color: rgba(255, 255, 255, 0.35);
+      color: var(--sidebar-muted);
       font-size: 11px;
-      font-weight: 400;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.18em;
+      letter-spacing: 0;
       margin: 0;
     }
     .sidebar.enterprise-app-sidebar .active-group .nav-label {
-      color: #6f9ed5;
+      color: var(--sidebar-accent);
     }
     .sidebar.enterprise-app-sidebar .nav-group-count {
-      color: rgba(255, 255, 255, 0.48);
-      border: 1px solid rgba(255, 255, 255, 0.10);
-      background: rgba(16, 22, 21, 0.68);
+      color: var(--sidebar-muted);
+      border: 1px solid var(--border);
+      background: var(--card);
       border-radius: 999px;
       padding: 2px 7px;
       font-size: 11px;
@@ -665,16 +683,16 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .sidebar.enterprise-app-sidebar .nav-group-links {
       display: grid;
-      gap: 5px;
-      padding: 0 8px 8px;
+      gap: 4px;
+      padding: 0 6px 6px;
     }
     .sidebar.enterprise-app-sidebar .nav-link {
       display: block;
-      padding: 10px 12px;
-      border-radius: 8px;
+      padding: 9px 10px;
+      border-radius: var(--radius);
       color: var(--sidebar-link, var(--nav-text));
       margin: 0;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border: 1px solid transparent;
       text-decoration: none;
       font-size: 14px;
       font-weight: 600;
@@ -692,7 +710,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .sidebar.enterprise-app-sidebar .nav-link-blurb {
       display: block;
-      color: rgba(255, 255, 255, 0.55);
+      color: var(--sidebar-muted);
       font-size: 12px;
       font-weight: 400;
       line-height: 1.25rem;
@@ -702,35 +720,36 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     .sidebar.enterprise-app-sidebar .nav-link.active {
       background: var(--sidebar-link-active-bg, var(--panel));
       border-color: var(--sidebar-link-active-border, var(--line));
-      color: var(--sidebar-text, var(--text));
+      color: var(--sidebar-link-active-text, var(--text));
     }
     .sidebar.enterprise-app-sidebar .nav-link:hover .nav-link-blurb,
     .sidebar.enterprise-app-sidebar .nav-link.active .nav-link-blurb {
-      color: rgba(255, 255, 255, 0.55);
+      color: var(--sidebar-muted);
     }
     .sidebar.enterprise-app-sidebar .signout-link {
-      color: #ffd1c9;
+      color: var(--red);
     }
     .sidebar.enterprise-app-sidebar .signout-link:hover {
-      background: rgba(255, 209, 201, 0.12);
-      border-color: rgba(255, 209, 201, 0.26);
-      color: #ffffff;
+      background: rgba(220, 38, 38, 0.08);
+      border-color: rgba(220, 38, 38, 0.22);
+      color: var(--red);
     }
     .sidebar.enterprise-app-sidebar .nav-pill {
       font-size: 10px;
-      color: #6f9ed5;
-      border: 1px solid rgba(111, 158, 213, 0.34);
+      color: var(--accent-foreground);
+      border: 1px solid rgba(49, 95, 149, 0.22);
+      background: var(--accent-bg);
       border-radius: 999px;
       padding: 2px 7px;
-      font-weight: 400;
+      font-weight: 600;
       text-transform: uppercase;
     }
     .sidebar.enterprise-app-sidebar .nav-active-dot {
       width: 7px;
       height: 7px;
       border-radius: 999px;
-      background: #6f9ed5;
-      box-shadow: 0 0 0 4px rgba(111, 158, 213, 0.13);
+      background: var(--sidebar-accent);
+      box-shadow: 0 0 0 4px rgba(49, 95, 149, 0.12);
       flex: 0 0 auto;
     }
     @media (max-width: 980px) {

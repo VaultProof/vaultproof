@@ -55,6 +55,41 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     a { color: inherit; text-decoration: none; }
     ${ENTERPRISE_APP_SHELL_THEME}
     :root {
+      --background: #f8fafc;
+      --foreground: #0f172a;
+      --card: #ffffff;
+      --card-foreground: #0f172a;
+      --popover: #ffffff;
+      --popover-foreground: #0f172a;
+      --primary: #315f95;
+      --primary-foreground: #ffffff;
+      --secondary: #f1f5f9;
+      --secondary-foreground: #172033;
+      --muted-bg: #f1f5f9;
+      --muted-foreground: #64748b;
+      --accent-bg: #eef4fb;
+      --accent-foreground: #1f4f82;
+      --destructive: #dc2626;
+      --destructive-foreground: #ffffff;
+      --border: #e2e8f0;
+      --input: #e2e8f0;
+      --ring: #315f95;
+      --radius: 8px;
+      --bg: var(--background);
+      --page-bg: var(--background);
+      --panel: var(--card);
+      --panel-strong: var(--card);
+      --card-bg: var(--card);
+      --row-bg: var(--muted-bg);
+      --control-bg: var(--card);
+      --line: var(--border);
+      --line-soft: var(--border);
+      --text: var(--foreground);
+      --muted: var(--muted-foreground);
+      --soft: var(--muted-foreground);
+      --nav-text: var(--muted-foreground);
+      --action-text: var(--foreground);
+      --shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
       --gold: #315f95;
       --accent: #315f95;
       --accent-soft: rgba(49, 95, 149, 0.12);
@@ -62,8 +97,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       --primary-text: #ffffff;
       --primary-border: #315f95;
       --dashboard-rose: #315f95;
-      --sidebar-link-active-bg: rgba(49, 95, 149, 0.20);
-      --sidebar-link-active-border: rgba(111, 158, 213, 0.44);
+      --sidebar-link-active-bg: var(--accent-bg);
+      --sidebar-link-active-border: rgba(49, 95, 149, 0.22);
+      --sidebar-link-active-text: var(--foreground);
+      --sidebar-accent: var(--primary);
     }
     .enterprise-dashboard-main,
     .enterprise-dashboard-main * {
@@ -73,6 +110,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       padding: 0;
       max-width: none;
       width: 100%;
+      background: var(--background);
     }
     .enterprise-page-shell {
       background: transparent;
@@ -81,22 +119,21 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       padding: 0;
       box-shadow: none;
       display: grid;
-      gap: 16px;
+      gap: 20px;
     }
     .control-center-card {
-      border: 1px solid var(--line);
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 18px;
-      box-shadow: 0 20px 60px rgba(44, 48, 55, 0.08);
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     }
     .dashboard-hero {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
       gap: 18px;
-      padding: 4px 2px 10px;
-      border-bottom: 1px solid var(--line-soft);
+      padding: 2px 2px 0;
     }
     .hero-copy {
       display: grid;
@@ -104,15 +141,21 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       gap: 8px;
       min-width: 0;
     }
+    .hero-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
     .hero-status {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      color: var(--muted);
-      border: 1px solid var(--line-soft);
+      color: var(--muted-foreground);
+      border: 1px solid var(--border);
       border-radius: 999px;
-      padding: 8px 11px;
-      background: #ffffff;
+      padding: 5px 9px;
+      background: var(--card);
       font-size: 12px;
       white-space: nowrap;
     }
@@ -125,17 +168,17 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     }
     .eyebrow {
       display: inline-flex;
-      color: var(--dashboard-rose);
-      background: rgba(126, 80, 93, 0.08);
-      border: 1px solid rgba(126, 80, 93, 0.16);
+      color: var(--accent-foreground);
+      background: var(--accent-bg);
+      border: 1px solid rgba(49, 95, 149, 0.18);
       border-radius: 999px;
-      padding: 6px 9px;
+      padding: 5px 9px;
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.16em;
       font-weight: 600;
     }
-    h1 { color: var(--dashboard-ink); font-size: 1.875rem; font-weight: 650; letter-spacing: 0; line-height: 2.25rem; margin: 0; max-width: 760px; }
+    h1 { color: var(--foreground); font-size: 1.875rem; font-weight: 650; letter-spacing: 0; line-height: 2.25rem; margin: 0; max-width: 760px; }
     @media (min-width: 640px) {
       h1 { font-size: 2.25rem; }
     }
@@ -146,33 +189,34 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .hero-toolbar { margin-top: 18px; }
     select, button {
-      border: 1px solid var(--line);
-      background: var(--control-bg);
-      color: var(--text);
-      border-radius: 8px;
+      border: 1px solid var(--input);
+      background: var(--card);
+      color: var(--foreground);
+      border-radius: var(--radius);
       padding: 11px 12px;
       font: inherit;
     }
     option { background: var(--option-bg); color: var(--option-text); }
     button { cursor: pointer; }
     .primary {
-      background: var(--primary-bg, var(--gold));
-      color: var(--primary-text, var(--text));
-      border-color: var(--primary-border, var(--gold));
+      background: var(--primary);
+      color: var(--primary-foreground);
+      border-color: var(--primary);
       font-weight: 600;
     }
     .control-center-intro {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
       gap: 18px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
     .control-title {
-      font-size: 22px;
+      font-size: 14px;
       font-weight: 600;
       letter-spacing: 0;
       margin: 0;
+      color: var(--foreground);
     }
     .control-copy {
       color: var(--muted);
@@ -196,11 +240,11 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       min-width: 0;
     }
     .card {
-      border: 1px solid var(--line);
-      background: var(--card-bg);
-      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: var(--radius);
       padding: 18px;
-      box-shadow: 0 16px 42px rgba(44, 48, 55, 0.07);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     }
     .status-pill {
       display: inline-flex; align-items: center; gap: 8px;
@@ -210,8 +254,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .status-pill.warn { background: rgba(180, 83, 9, 0.10); color: var(--warn); border-color: rgba(180, 83, 9, 0.28); }
     .status-pill.bad { background: rgba(220, 38, 38, 0.12); color: var(--red); border-color: rgba(220, 38, 38, 0.28); }
     .attention-card {
-      border-color: rgba(49, 95, 149, 0.18);
-      background: linear-gradient(180deg, #ffffff, #f8fafc);
+      border-color: var(--border);
+      background: var(--card);
     }
     .attention-list {
       display: grid;
@@ -223,16 +267,16 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       gap: 14px;
       align-items: center;
       border: 1px solid var(--line-soft);
-      border-radius: 8px;
+      border-radius: var(--radius);
       padding: 13px;
       background: #ffffff;
     }
     .attention-row.warn { border-color: rgba(217, 119, 6, 0.28); background: #fffaf3; }
     .attention-row.bad { border-color: rgba(220, 38, 38, 0.24); background: #fff7f7; }
     .section-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
-    .section-title h2 { margin: 0; font-size: 19px; letter-spacing: 0; }
-    .section-title p { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
-    .mini { color: var(--muted); font-size: 13px; }
+    .section-title h2 { margin: 0; color: var(--foreground); font-size: 16px; font-weight: 600; letter-spacing: 0; }
+    .section-title p { margin: 4px 0 0; color: var(--muted-foreground); font-size: 13px; line-height: 1.45; }
+    .mini { color: var(--muted-foreground); font-size: 13px; }
     .list { display: grid; gap: 10px; }
     .business-card h2, .intent-card h3, .action-card h3 { margin: 0; letter-spacing: 0; }
     .business-card p, .intent-card p, .action-card p { margin: 8px 0 0; color: var(--muted); line-height: 1.5; font-size: 13px; }
@@ -240,50 +284,52 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 7px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
       margin-bottom: 16px;
-      background: #f8fafc;
+      background: var(--muted-bg);
     }
     .tab-button {
-      border-radius: 7px;
-      padding: 10px 12px;
-      color: var(--nav-text);
+      border-radius: 6px;
+      padding: 8px 11px;
+      color: var(--muted-foreground);
       background: transparent;
       border-color: transparent;
+      font-size: 13px;
     }
     .tab-button.active {
-      background: var(--primary-bg, var(--gold));
-      color: var(--primary-text, var(--text));
-      border-color: var(--primary-border, var(--gold));
+      background: var(--card);
+      color: var(--foreground);
+      border-color: var(--border);
       font-weight: 600;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
     }
     .tab-panel { display: grid; gap: 16px; }
     .tab-panel[hidden] { display: none; }
     .intent-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
     .intent-card, .action-card {
-      border: 1px solid var(--line-soft);
-      border-radius: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       padding: 16px;
-      background: var(--row-bg);
+      background: var(--card);
     }
     .rail-card {
       display: grid;
       gap: 12px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       padding: 16px;
-      background: #ffffff;
-      box-shadow: 0 16px 42px rgba(44, 48, 55, 0.07);
+      background: var(--card);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     }
     .overview-rail {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
     .rail-card.accent {
-      background: #2c3037;
-      border-color: #2c3037;
-      color: #ffffff;
+      background: var(--foreground);
+      border-color: var(--foreground);
+      color: var(--background);
     }
     .rail-card.accent .rail-title,
     .rail-card.accent .rail-value {
@@ -294,19 +340,19 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       color: rgba(255, 255, 255, 0.72);
     }
     .rail-title {
-      color: var(--dashboard-ink);
+      color: var(--foreground);
       font-size: 14px;
       font-weight: 700;
     }
     .rail-value {
-      color: var(--dashboard-ink);
+      color: var(--foreground);
       font-size: 28px;
       font-weight: 700;
       line-height: 1;
     }
     .rail-copy,
     .rail-meta {
-      color: var(--muted);
+      color: var(--muted-foreground);
       font-size: 13px;
       line-height: 1.45;
       margin: 0;
@@ -319,8 +365,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .action-card { display: flex; flex-direction: column; gap: 10px; min-height: 176px; }
     .action-card .action { margin-top: auto; align-self: flex-start; }
     .call-overview-card {
-      border-color: rgba(49, 95, 149, 0.20);
-      background: linear-gradient(180deg, #ffffff, #f8fbfc);
+      border-color: var(--border);
+      background: var(--card);
     }
     .call-overview-head {
       align-items: flex-start;
@@ -328,25 +374,26 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .timeframe-toggle {
       display: inline-flex;
       gap: 4px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       padding: 4px;
-      background: #f8fafc;
+      background: var(--muted-bg);
       flex: 0 0 auto;
     }
     .timeframe-button {
       border: 0;
       border-radius: 6px;
       background: transparent;
-      color: var(--muted);
+      color: var(--muted-foreground);
       padding: 8px 10px;
       min-width: 52px;
       font-size: 13px;
     }
     .timeframe-button.active {
-      background: var(--primary-bg);
-      color: var(--primary-text);
+      background: var(--card);
+      color: var(--foreground);
       font-weight: 650;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
     }
     .call-summary-grid {
       display: grid;
@@ -355,19 +402,19 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       margin-bottom: 14px;
     }
     .call-summary-item {
-      border: 1px solid var(--line-soft);
-      border-radius: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       padding: 12px;
-      background: #ffffff;
+      background: var(--muted-bg);
     }
     .call-summary-label {
-      color: var(--muted);
+      color: var(--muted-foreground);
       font-size: 12px;
       text-transform: uppercase;
       font-weight: 650;
     }
     .call-summary-value {
-      color: var(--dashboard-ink);
+      color: var(--foreground);
       display: block;
       font-size: 24px;
       font-weight: 720;
@@ -424,7 +471,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       text-align: center;
     }
     .donut-center strong { color: var(--dashboard-ink); font-size: 26px; line-height: 1; }
-    .donut-center span { color: var(--muted); font-size: 12px; }
+    .donut-center span { color: var(--muted-foreground); font-size: 12px; }
     .legend {
       display: grid;
       gap: 8px;
@@ -435,7 +482,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       grid-template-columns: 10px minmax(0, 1fr) auto;
       gap: 8px;
       align-items: center;
-      color: var(--muted);
+      color: var(--muted-foreground);
       font-size: 13px;
     }
     .legend-dot {
@@ -450,8 +497,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       min-height: 22px;
       border-radius: 999px;
       overflow: hidden;
-      background: #e7edf3;
-      border: 1px solid rgba(44, 48, 55, 0.08);
+      background: var(--muted-bg);
+      border: 1px solid var(--border);
     }
     .bar-segment {
       min-width: 0;
@@ -465,10 +512,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .provider-row {
       display: grid;
       gap: 8px;
-      border: 1px solid var(--line-soft);
-      border-radius: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       padding: 12px;
-      background: var(--row-bg);
+      background: var(--card);
     }
     .provider-row-head {
       display: grid;
@@ -477,19 +524,19 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       align-items: start;
     }
     .provider-name {
-      color: var(--dashboard-ink);
+      color: var(--foreground);
       font-size: 15px;
       font-weight: 650;
     }
     .provider-meta {
-      color: var(--muted);
+      color: var(--muted-foreground);
       font-size: 12px;
       margin-top: 3px;
     }
     .meter {
       height: 8px;
       border-radius: 999px;
-      background: #e7edf3;
+      background: var(--muted-bg);
       overflow: hidden;
     }
     .meter > span {
@@ -504,10 +551,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       gap: 10px;
     }
     .coverage-item {
-      border: 1px solid var(--line-soft);
-      border-radius: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       padding: 12px;
-      background: var(--row-bg);
+      background: var(--card);
     }
     .coverage-top {
       display: flex;
@@ -515,15 +562,15 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       justify-content: space-between;
       gap: 10px;
     }
-    .coverage-label { color: var(--muted); font-size: 13px; }
-    .coverage-value { color: var(--dashboard-ink); font-size: 20px; font-weight: 680; }
+    .coverage-label { color: var(--muted-foreground); font-size: 13px; }
+    .coverage-value { color: var(--foreground); font-size: 20px; font-weight: 680; }
     .coverage-item .meter { margin-top: 8px; }
     .trend-chart {
       min-height: 276px;
-      border: 1px solid var(--line-soft);
-      border-radius: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       padding: 14px;
-      background: #ffffff;
+      background: var(--card);
       overflow: hidden;
     }
     .trend-line-chart {
@@ -542,7 +589,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      color: var(--muted);
+      color: var(--muted-foreground);
       font-size: 11px;
       line-height: 1.2;
       text-align: right;
@@ -555,7 +602,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       overflow: visible;
     }
     .trend-grid-line {
-      stroke: var(--line-soft);
+      stroke: var(--border);
       stroke-width: 1;
     }
     .trend-area {
@@ -591,36 +638,92 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       background: var(--row-bg);
     }
     .row-title { font-weight: 600; }
-    .row-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
-    .tag { color: var(--blue); font-size: 12px; border: 1px solid rgba(37, 99, 235, 0.24); border-radius: 999px; padding: 5px 8px; }
-    .tag.good { color: var(--green); border-color: rgba(21, 128, 61, 0.24); }
-    .tag.warn { color: var(--warn); border-color: rgba(180, 83, 9, 0.30); }
-    .tag.bad { color: var(--red); border-color: rgba(220, 38, 38, 0.28); }
+    .row-sub { color: var(--muted-foreground); font-size: 13px; margin-top: 4px; }
+    .tag {
+      color: var(--accent-foreground);
+      font-size: 12px;
+      border: 1px solid rgba(49, 95, 149, 0.22);
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: var(--accent-bg);
+    }
+    .tag.good { color: var(--green); border-color: rgba(21, 128, 61, 0.24); background: rgba(21, 128, 61, 0.08); }
+    .tag.warn { color: var(--warn); border-color: rgba(180, 83, 9, 0.30); background: rgba(180, 83, 9, 0.08); }
+    .tag.bad { color: var(--red); border-color: rgba(220, 38, 38, 0.28); background: rgba(220, 38, 38, 0.08); }
     .empty, .error {
-      color: var(--muted);
-      border: 1px dashed var(--line);
-      border-radius: 8px;
+      color: var(--muted-foreground);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
       padding: 18px;
-      background: var(--row-bg);
+      background: var(--muted-bg);
     }
     .error { color: var(--red); border-color: rgba(220, 38, 38, 0.3); }
     .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-    .action { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; color: var(--action-text); background: var(--control-bg); }
+    .action { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; color: var(--foreground); background: var(--card); }
     .action.primary { color: var(--primary-text, var(--text)); }
     .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
     .feature-card {
       display: flex; flex-direction: column; gap: 10px;
-      min-height: 170px; border: 1px solid var(--line-soft);
-      border-radius: 8px; padding: 16px;
-      background: var(--card-bg);
+      min-height: 170px; border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px;
+      background: var(--card);
       transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
     }
     .feature-card:hover { transform: translateY(-2px); border-color: rgba(49, 95, 149, 0.32); background: var(--row-bg); }
     .feature-card h3 { margin: 0; font-size: 16px; line-height: 1.15; letter-spacing: 0; }
-    .feature-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; flex: 1; }
+    .feature-card p { margin: 0; color: var(--muted-foreground); font-size: 13px; line-height: 1.45; flex: 1; }
     .feature-tags { display: flex; gap: 6px; flex-wrap: wrap; }
     .feature-tag { color: var(--green); border: 1px solid rgba(21, 128, 61, 0.22); border-radius: 999px; padding: 4px 7px; font-size: 11px; }
     .feature-tag.pending { color: var(--warn); border-color: rgba(180, 83, 9, 0.30); }
+    .enterprise-dashboard-main .card,
+    .enterprise-dashboard-main .rail-card {
+      background: var(--card) !important;
+      border-color: var(--border) !important;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+      color: var(--foreground) !important;
+    }
+    .enterprise-dashboard-main .rail-card.accent {
+      background: var(--foreground) !important;
+      border-color: var(--foreground) !important;
+      color: var(--background) !important;
+    }
+    .enterprise-dashboard-main .tabbar {
+      background: var(--muted-bg) !important;
+      border-color: var(--border) !important;
+      box-shadow: none !important;
+    }
+    .enterprise-dashboard-main .tab-button {
+      color: var(--muted-foreground) !important;
+      background: transparent !important;
+      border-color: transparent !important;
+    }
+    .enterprise-dashboard-main .tab-button.active {
+      background: var(--card) !important;
+      color: var(--foreground) !important;
+      border-color: var(--border) !important;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+    }
+    .enterprise-dashboard-main .row,
+    .enterprise-dashboard-main .intent-card,
+    .enterprise-dashboard-main .action-card,
+    .enterprise-dashboard-main .feature-card {
+      background: var(--card) !important;
+      border-color: var(--border) !important;
+      color: var(--foreground) !important;
+    }
+    .enterprise-dashboard-main .call-summary-item,
+    .enterprise-dashboard-main .empty,
+    .enterprise-dashboard-main .error {
+      background: var(--muted-bg) !important;
+      border-color: var(--border) !important;
+      color: var(--muted-foreground) !important;
+    }
+    .enterprise-dashboard-main .primary,
+    .enterprise-dashboard-main .action.primary {
+      background: var(--primary) !important;
+      color: var(--primary-foreground) !important;
+      border-color: var(--primary) !important;
+    }
     @media (max-width: 980px) {
       .dashboard-hero { align-items: flex-start; flex-direction: column; }
       .toolbar { justify-content: flex-start; }
@@ -648,19 +751,20 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       <section class="enterprise-page-shell">
         <section class="dashboard-hero" aria-label="Enterprise control center overview">
           <div class="hero-copy">
-            <div class="eyebrow">Enterprise dashboard</div>
+            <div class="hero-row">
+              <div class="eyebrow">Enterprise dashboard</div>
+              <div class="hero-status"><span class="hero-status-dot"></span><span>Live workspace</span></div>
+            </div>
             <h1>API Key Security Overview</h1>
           </div>
-          <div class="hero-status"><span class="hero-status-dot"></span><span>Live workspace</span></div>
         </section>
 
       <div id="authNotice" class="error" style="display:none"></div>
 
-        <section class="control-center-card" aria-label="Enterprise control center">
+        <section class="control-center-card" aria-label="Enterprise control center" data-ui-kit="shadcn-studio">
           <div class="control-center-intro">
             <div>
               <h2 class="control-title">Control center</h2>
-              <p class="control-copy">Daily workspace view for API traffic, protected-key readiness, project coverage, runtime health, and customer-safe evidence signals.</p>
             </div>
           </div>
 
