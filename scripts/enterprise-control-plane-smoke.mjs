@@ -2830,6 +2830,8 @@ async function assertEnterpriseLoginRoute() {
     '--primary-bg: #8ab4f8',
     '--body: ui-sans-serif',
     'letter-spacing: 0 !important',
+    'border-radius: 8px',
+    'gap: 16px',
     '/app/login',
     '/app/dashboard',
     '/readiness',

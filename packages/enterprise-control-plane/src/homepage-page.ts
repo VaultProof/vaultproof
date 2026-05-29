@@ -87,7 +87,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       gap: 10px;
       min-height: 42px;
       padding: 0 20px;
-      border-radius: 7px;
+      border-radius: 8px;
       border: 0.5px solid var(--line);
       font: 500 14px/1 var(--body);
       transition: transform 180ms ease, background 180ms ease, color 180ms ease, border-color 180ms ease;
@@ -661,7 +661,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-btn {
       min-height: 46px;
-      border-radius: 0;
+      border-radius: 8px;
       border: 1px solid rgba(248, 250, 252, 0.18);
       font: 800 12px/1 var(--mono);
       box-shadow: none;
@@ -732,7 +732,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       color: var(--accent);
       background: rgba(138, 180, 248, 0.07);
       border: 1px solid rgba(138, 180, 248, 0.28);
-      border-radius: 0;
+      border-radius: 8px;
       padding: 8px 12px;
       font: 800 11px/1.2 var(--mono);
       text-transform: uppercase;
@@ -814,7 +814,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-final {
       background: rgba(17, 24, 39, 0.82);
       border: 1px solid rgba(248, 250, 252, 0.13);
-      border-radius: 0;
+      border-radius: 8px;
       box-shadow: 0 22px 80px rgba(0, 0, 0, 0.40);
     }
     .vp-feed-card {
@@ -822,7 +822,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       padding: 48px 20px 12px;
       background:
         linear-gradient(180deg, rgba(248, 250, 252, 0.035), transparent 46%),
-        rgba(1, 3, 2, 0.90);
+        rgba(11, 15, 20, 0.90);
     }
     .vp-feed-card::before {
       content: "";
@@ -946,7 +946,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-shard {
       border: 1px solid rgba(138, 180, 248, 0.24);
-      border-radius: 0;
+      border-radius: 6px;
       font-weight: 600;
     }
     .vp-region-strip span:nth-child(-n+3) {
@@ -968,17 +968,15 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-feature-grid,
     .vp-compliance-grid,
     .vp-belief-grid {
-      border-top: 1px solid rgba(248, 250, 252, 0.13);
-      border-left: 1px solid rgba(248, 250, 252, 0.13);
-      gap: 0;
+      border-top: 0;
+      border-left: 0;
+      gap: 16px;
     }
     .vp-card,
     .vp-compliance-card,
     .vp-belief {
-      border: 0;
-      border-right: 1px solid rgba(248, 250, 252, 0.13);
-      border-bottom: 1px solid rgba(248, 250, 252, 0.13);
-      border-radius: 0;
+      border: 1px solid rgba(248, 250, 252, 0.13);
+      border-radius: 8px;
       background: rgba(17, 24, 39, 0.70);
       box-shadow: none;
     }
@@ -1024,7 +1022,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       .vp-wire, .vp-beam { display: none; }
       .vp-region-strip { grid-template-columns: 1fr; }
       .vp-feature-grid, .vp-compliance-grid, .vp-belief-grid, .vp-footer-grid { grid-template-columns: 1fr; }
-      .vp-belief { border-right: 0; border-bottom: 1px solid var(--line); padding-left: 34px; }
+      .vp-belief { border: 1px solid var(--line); padding-left: 34px; }
       .vp-threat-row { grid-template-columns: 1fr; gap: 14px; }
       .vp-code-card pre { font-size: 12px; }
       .vp-footer-bottom { flex-direction: column; }
@@ -1057,7 +1055,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       .vp-wire, .vp-beam { display: none; }
       .vp-region-strip { grid-template-columns: 1fr; }
       .vp-feature-grid, .vp-compliance-grid, .vp-belief-grid, .vp-footer-grid { grid-template-columns: 1fr; }
-      .vp-belief { border-right: 0; border-bottom: 0.5px solid var(--line); padding-left: 0; }
+      .vp-belief { border: 1px solid var(--line); padding-left: 0; }
       .vp-threat-row { grid-template-columns: 1fr; gap: 14px; }
       .vp-code-card pre { font-size: 12px; }
       .vp-footer-bottom { flex-direction: column; }
