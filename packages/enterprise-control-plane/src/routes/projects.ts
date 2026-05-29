@@ -3,6 +3,7 @@ import {
   type AccessibleProjectSummary,
   authenticateUser,
   getAccessibleProject,
+  hasRequiredOrganizationRole,
   hasRequiredProjectRole,
   listAccessibleProjects,
   listOrganizationMemberships,
@@ -95,6 +96,13 @@ type CallerLockPolicy = {
   require_email_template_id?: boolean;
   provider_overrides?: Record<string, CallerLockPolicy>;
 };
+
+function generateProjectId(): string {
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  return `vp-proj-${hex}`;
+}
 
 function normalizeAllowedOrigins(raw: string | null | undefined): { ok: true; value: string | null } | { ok: false; error: string } {
   if (raw === undefined || raw === null || raw.trim() === '') {
@@ -1382,6 +1390,107 @@ export async function handleEnterpriseProjectRoutes(
   if (request.method === 'GET' && pathSegments.length === 1 && pathSegments[0] === 'projects') {
     const projects = await listAccessibleProjects(env, auth.userId, organizationId, memberships);
     return Response.json(await buildProjectsPayload(supabase, projects));
+  }
+
+  if (request.method === 'POST' && pathSegments.length === 1 && pathSegments[0] === 'projects') {
+    if (!membership) {
+      return Response.json({ error: 'Organization not found' }, { status: 404 });
+    }
+    if (!hasRequiredOrganizationRole(membership.organization_role, 'admin')) {
+      return Response.json({ error: 'Insufficient organization permissions' }, { status: 403 });
+    }
+
+    let body: ProjectWriteBody;
+    try {
+      body = (await request.json()) as ProjectWriteBody;
+    } catch {
+      body = {};
+    }
+
+    if (body.strict_origin !== undefined && typeof body.strict_origin !== 'boolean') {
+      return Response.json({ error: 'strict_origin must be a boolean' }, { status: 400 });
+    }
+
+    const allowedOrigins = normalizeAllowedOrigins(body.allowed_origins);
+    if (!allowedOrigins.ok) {
+      return Response.json({ error: allowedOrigins.error }, { status: 400 });
+    }
+    if (body.strict_origin && !allowedOrigins.value) {
+      return Response.json({ error: 'strict_origin requires allowed_origins' }, { status: 400 });
+    }
+
+    const callerLockPolicy = body.caller_lock_policy === undefined
+      ? { ok: true as const, value: {} as CallerLockPolicy }
+      : normalizeCallerLockPolicy(body.caller_lock_policy);
+    if (!callerLockPolicy.ok) {
+      return Response.json({ error: callerLockPolicy.error }, { status: 400 });
+    }
+
+    const vpProjId = generateProjectId();
+    const { data, error } = await supabase
+      .from('projects')
+      .insert({
+        user_id: auth.userId,
+        organization_id: membership.organization_id,
+        vp_proj_id: vpProjId,
+        name: body.name || null,
+        allowed_origins: allowedOrigins.value,
+        strict_origin: body.strict_origin ?? false,
+        caller_lock_policy: callerLockPolicy.value,
+      })
+      .select('id, organization_id, vp_proj_id, name, allowed_origins, strict_origin, caller_lock_policy, created_at, revoked_at')
+      .single();
+
+    if (error || !data) {
+      return Response.json({ error: 'Failed to create workload' }, { status: 500 });
+    }
+
+    const { error: memberError } = await supabase
+      .from('project_members')
+      .insert({
+        project_id: data.id,
+        user_id: auth.userId,
+        role: 'owner',
+      });
+
+    if (memberError) {
+      return Response.json({ error: 'Failed to initialize workload access' }, { status: 500 });
+    }
+
+    await writeGovernanceAuditEvent(env, {
+      organization_id: membership.organization_id,
+      project_id: data.id,
+      actor_user_id: auth.userId,
+      actor_email: auth.email,
+      event_type: 'project_created',
+      target_type: 'project',
+      target_id: data.id,
+      description: `Created workload ${data.name || data.vp_proj_id}`,
+      metadata: {
+        vp_proj_id: data.vp_proj_id,
+        allowed_origins: data.allowed_origins,
+        strict_origin: data.strict_origin,
+        caller_lock_policy: data.caller_lock_policy || {},
+        created_via: 'enterprise_workloads_page',
+      },
+    });
+
+    return Response.json({
+      project: {
+        id: data.id,
+        organization_id: data.organization_id,
+        vp_proj_id: data.vp_proj_id,
+        name: data.name,
+        allowed_origins: data.allowed_origins,
+        strict_origin: data.strict_origin,
+        caller_lock_policy: data.caller_lock_policy || {},
+        created_at: data.created_at,
+        revoked_at: data.revoked_at,
+        project_role: 'owner',
+        access_via: 'project',
+        provider_slots: [],
+      },
+    }, { status: 201 });
   }
 
   if (

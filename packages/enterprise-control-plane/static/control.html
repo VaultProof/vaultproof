@@ -295,7 +295,7 @@
           <a class="subnav-link" href="/app/settings">settings</a>
         </div>
 
-        <div class="action-strip">
+        <div class="action-strip control-action-strip">
           <span class="action-strip-label">operator handoff</span>
           <button type="button" class="btn-outline" id="copyControlReportBtn">copy report</button>
           <button type="button" class="btn-outline" id="downloadControlReportBtn">download report</button>
@@ -305,12 +305,12 @@
           <span class="action-msg" id="controlExportMsg"></span>
         </div>
 
-        <section class="invite-panel hidden" id="incomingInvitePanel">
+        <section class="invite-panel control-invite-panel hidden" id="incomingInvitePanel">
           <div class="panel-head">incoming invites<span class="panel-head-right" id="incomingInviteStatus">loading…</span></div>
           <div class="invite-list" id="incomingInviteList"><div class="empty">Loading invites…</div></div>
         </section>
 
-        <section class="banner">
+        <section class="banner control-hero-panel">
           <div>
             <div class="banner-kicker" id="segmentKicker">workspace type</div>
             <div class="banner-title" id="segmentTitle">Loading organization…</div>
@@ -322,23 +322,23 @@
           </div>
         </section>
 
-        <div class="kpi-grid">
-          <div class="kpi-cell">
+        <div class="kpi-grid control-kpi-grid">
+          <div class="kpi-cell control-kpi-card">
             <div class="kpi-label">organization</div>
             <div class="kpi-value" id="kpi-org">—</div>
             <div class="kpi-sub" id="kpi-org-sub">loading…</div>
           </div>
-          <div class="kpi-cell">
+          <div class="kpi-cell control-kpi-card">
             <div class="kpi-label">members</div>
             <div class="kpi-value" id="kpi-members">—</div>
             <div class="kpi-sub" id="kpi-members-sub">loading…</div>
           </div>
-          <div class="kpi-cell">
+          <div class="kpi-cell control-kpi-card">
             <div class="kpi-label">pending invites</div>
             <div class="kpi-value warn" id="kpi-invites">—</div>
             <div class="kpi-sub" id="kpi-invites-sub">loading…</div>
           </div>
-          <div class="kpi-cell">
+          <div class="kpi-cell control-kpi-card">
             <div class="kpi-label">security posture</div>
             <div class="kpi-value" id="kpi-posture">—</div>
             <div class="kpi-sub" id="kpi-posture-sub">loading…</div>
@@ -347,24 +347,24 @@
 
         <div class="grid">
           <div class="stack">
-            <section class="panel">
+            <section class="panel control-members-panel">
               <div class="panel-head">team access<span class="panel-head-right" id="membersStatus">loading…</span></div>
               <div class="member-grid" id="membersGrid"><div class="empty">Loading members…</div></div>
             </section>
 
-            <section class="panel">
+            <section class="panel control-policy-panel">
               <div class="panel-head">project policy<span class="panel-head-right" id="policyStatus">loading…</span></div>
               <div class="policy-list" id="policyList"><div class="empty">Loading project policy…</div></div>
             </section>
 
-            <section class="panel">
+            <section class="panel control-governance-panel">
               <div class="panel-head">recent governance<span class="panel-head-right" id="auditStatus">loading…</span></div>
               <div class="list" id="auditList"><div class="empty">Loading audit feed…</div></div>
             </section>
           </div>
 
           <div class="stack">
-            <section class="panel">
+            <section class="panel control-pilot-panel">
               <div class="panel-head">pilot kit<span class="panel-head-right" id="pilotKitStatus">loading…</span></div>
               <div class="resource-grid" id="pilotKitResources"><div class="empty">Loading pilot resources…</div></div>
               <div class="checklist-box">
@@ -373,17 +373,17 @@
               </div>
             </section>
 
-            <section class="panel">
+            <section class="panel control-execution-panel">
               <div class="panel-head">secure execution demo<span class="panel-head-right" id="secureExecutionStatus">loading…</span></div>
               <div class="exec-list" id="secureExecutionList"><div class="empty">Loading secure execution options…</div></div>
             </section>
 
-            <section class="panel">
+            <section class="panel control-health-panel">
               <div class="panel-head">runtime posture<span class="panel-head-right" id="healthStatus">loading…</span></div>
               <div class="list" id="healthList"><div class="empty">Loading project health…</div></div>
             </section>
 
-            <section class="panel">
+            <section class="panel control-alert-panel">
               <div class="panel-head">alert dispatch<span class="panel-head-right" id="dispatchStatus">loading…</span></div>
               <div class="list" id="dispatchList"><div class="empty">Loading alert delivery…</div></div>
             </section>

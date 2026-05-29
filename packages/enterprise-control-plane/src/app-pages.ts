@@ -784,6 +784,29 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
 
 const ENTERPRISE_INVENTORY_SHADCN_THEME = `
     /* inventory-board-shadcn-polish */
+    .inventory-overview-panel,
+    .inventory-command-panel,
+    .inventory-side-rail .inventory-panel {
+      background: var(--card, #111827) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22) !important;
+    }
+    .inventory-overview-card,
+    .inventory-chart-card,
+    .inventory-metric-card {
+      background: linear-gradient(180deg, rgba(21, 29, 41, 0.88), rgba(17, 24, 39, 0.96)) !important;
+      border-color: var(--line-soft, rgba(168, 179, 194, 0.12)) !important;
+      box-shadow: inset 0 1px 0 rgba(248, 250, 252, 0.04) !important;
+    }
+    .inventory-command-panel {
+      overflow: hidden;
+    }
+    .inventory-command-head {
+      margin: -18px -18px 16px !important;
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(21, 29, 41, 0.78), rgba(17, 24, 39, 0.92));
+      border-bottom: 1px solid var(--border, var(--line, #2a3442));
+    }
     .inventory-board-panel {
       overflow: hidden;
       background: var(--card, #111827) !important;
@@ -912,6 +935,931 @@ const ENTERPRISE_INVENTORY_SHADCN_THEME = `
         padding-right: 14px;
       }
       .inventory-board-panel .inventory-record {
+        padding: 14px !important;
+      }
+    }
+`;
+
+const ENTERPRISE_POLICY_SHADCN_THEME = `
+    /* policy-drift-shadcn-polish */
+    .policy-board-panel,
+    .policy-summary-panel,
+    .policy-workflow-panel {
+      background: var(--card, #111827) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22) !important;
+      overflow: hidden;
+    }
+    .policy-board-panel > .section-title,
+    .policy-summary-panel > .section-title,
+    .policy-workflow-panel > .section-title {
+      margin: -20px -20px 16px !important;
+      padding: 18px 20px !important;
+      background: linear-gradient(180deg, rgba(21, 29, 41, 0.78), rgba(17, 24, 39, 0.92));
+      border-bottom: 1px solid var(--border, var(--line, #2a3442));
+      align-items: flex-start;
+    }
+    .policy-board-panel > .section-title h2,
+    .policy-summary-panel > .section-title h2,
+    .policy-workflow-panel > .section-title h2 {
+      font-size: 1.125rem !important;
+      line-height: 1.6rem !important;
+      font-weight: 600 !important;
+    }
+    .policy-board-panel > .section-title .mini,
+    .policy-summary-panel > .section-title .mini,
+    .policy-workflow-panel > .section-title .mini {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border: 1px solid rgba(138, 180, 248, 0.22);
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: rgba(138, 180, 248, 0.10);
+      color: var(--accent, #8ab4f8) !important;
+      line-height: 1;
+    }
+    .policy-filters {
+      margin-bottom: 16px !important;
+      padding: 12px;
+      border: 1px solid var(--border, var(--line, #2a3442));
+      border-radius: 8px;
+      background: rgba(11, 15, 20, 0.28);
+    }
+    .policy-filters input,
+    .policy-filters select,
+    .policy-board-panel .inventory-field input,
+    .policy-board-panel .inventory-field select,
+    .policy-board-panel .inventory-field textarea {
+      min-height: 42px !important;
+      background: var(--background, #0b0f14) !important;
+      border-color: var(--border, var(--line, #2a3442)) !important;
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      box-shadow: none !important;
+    }
+    .policy-board-panel .inventory-field textarea {
+      min-height: 92px !important;
+      line-height: 1.5 !important;
+    }
+    .policy-board-panel .inventory-row,
+    .policy-summary-panel .row,
+    .policy-workflow-panel .row {
+      background: rgba(17, 24, 39, 0.92) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      border-radius: 8px !important;
+      padding: 16px !important;
+      box-shadow: none !important;
+    }
+    .policy-board-panel .inventory-row:hover,
+    .policy-summary-panel .row:hover,
+    .policy-workflow-panel .row:hover {
+      border-color: rgba(138, 180, 248, 0.34) !important;
+      background: var(--muted-bg, #151d29) !important;
+    }
+    .policy-board-panel .inventory-fields {
+      margin-top: 16px !important;
+      padding-top: 16px !important;
+      border-top: 1px solid var(--border, var(--line, #2a3442)) !important;
+      gap: 12px !important;
+    }
+    .policy-board-panel .inventory-field label {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      font-size: 0.8125rem !important;
+      font-weight: 500 !important;
+      letter-spacing: 0 !important;
+      text-transform: none !important;
+    }
+    .policy-board-panel .row-title,
+    .policy-summary-panel .row-title,
+    .policy-workflow-panel .row-title {
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      font-weight: 600 !important;
+    }
+    .policy-board-panel .row-sub,
+    .policy-summary-panel .row-sub,
+    .policy-workflow-panel .row-sub {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .policy-board-panel .tag,
+    .policy-summary-panel .tag,
+    .policy-workflow-panel .tag {
+      display: inline-flex !important;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px !important;
+      padding: 4px 8px !important;
+      background: rgba(168, 179, 194, 0.08) !important;
+      border-color: rgba(168, 179, 194, 0.18) !important;
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      line-height: 1;
+    }
+    .policy-board-panel .tag.good,
+    .policy-summary-panel .tag.good,
+    .policy-workflow-panel .tag.good {
+      background: rgba(74, 222, 128, 0.10) !important;
+      border-color: rgba(74, 222, 128, 0.24) !important;
+      color: var(--green, #4ade80) !important;
+    }
+    .policy-board-panel .tag.warn,
+    .policy-summary-panel .tag.warn,
+    .policy-workflow-panel .tag.warn {
+      background: rgba(251, 191, 36, 0.10) !important;
+      border-color: rgba(251, 191, 36, 0.26) !important;
+      color: var(--warn, #fbbf24) !important;
+    }
+    .policy-board-panel .tag.bad,
+    .policy-summary-panel .tag.bad,
+    .policy-workflow-panel .tag.bad {
+      background: rgba(248, 113, 113, 0.10) !important;
+      border-color: rgba(248, 113, 113, 0.26) !important;
+      color: var(--red, #f87171) !important;
+    }
+    .policy-board-panel .row-actions {
+      align-items: flex-start;
+    }
+    .policy-board-panel .row-actions a.tag,
+    .policy-workflow-panel button.tag,
+    .policy-workflow-panel a.tag {
+      min-height: 34px;
+      border-radius: 8px !important;
+      padding: 8px 10px !important;
+      justify-content: center;
+    }
+    @media (max-width: 760px) {
+      .policy-board-panel > .section-title,
+      .policy-summary-panel > .section-title,
+      .policy-workflow-panel > .section-title {
+        margin-left: -14px !important;
+        margin-right: -14px !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+        flex-direction: column;
+      }
+      .policy-board-panel .inventory-row,
+      .policy-summary-panel .row,
+      .policy-workflow-panel .row {
+        padding: 14px !important;
+      }
+    }
+`;
+
+const ENTERPRISE_ROLLOUT_SHADCN_THEME = `
+    /* rollout-manager-shadcn-polish */
+    .rollout-board-panel,
+    .rollout-summary-panel,
+    .rollout-workflow-panel {
+      background: var(--card, #111827) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22) !important;
+      overflow: hidden;
+    }
+    .rollout-board-panel > .section-title,
+    .rollout-summary-panel > .section-title,
+    .rollout-workflow-panel > .section-title {
+      margin: -20px -20px 16px !important;
+      padding: 18px 20px !important;
+      background: linear-gradient(180deg, rgba(21, 29, 41, 0.78), rgba(17, 24, 39, 0.92));
+      border-bottom: 1px solid var(--border, var(--line, #2a3442));
+      align-items: flex-start;
+    }
+    .rollout-board-panel > .section-title h2,
+    .rollout-summary-panel > .section-title h2,
+    .rollout-workflow-panel > .section-title h2 {
+      font-size: 1.125rem !important;
+      line-height: 1.6rem !important;
+      font-weight: 600 !important;
+    }
+    .rollout-board-panel > .section-title .mini,
+    .rollout-summary-panel > .section-title .mini,
+    .rollout-workflow-panel > .section-title .mini {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border: 1px solid rgba(138, 180, 248, 0.22);
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: rgba(138, 180, 248, 0.10);
+      color: var(--accent, #8ab4f8) !important;
+      line-height: 1;
+    }
+    .rollout-filters {
+      margin-bottom: 16px !important;
+      padding: 12px;
+      border: 1px solid var(--border, var(--line, #2a3442));
+      border-radius: 8px;
+      background: rgba(11, 15, 20, 0.28);
+    }
+    .rollout-filters input,
+    .rollout-filters select,
+    .rollout-board-panel .inventory-field input,
+    .rollout-board-panel .inventory-field select,
+    .rollout-board-panel .inventory-field textarea {
+      min-height: 42px !important;
+      background: var(--background, #0b0f14) !important;
+      border-color: var(--border, var(--line, #2a3442)) !important;
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      box-shadow: none !important;
+    }
+    .rollout-board-panel .inventory-field textarea {
+      min-height: 92px !important;
+      line-height: 1.5 !important;
+    }
+    .rollout-board-panel .inventory-row,
+    .rollout-summary-panel .row,
+    .rollout-workflow-panel .row {
+      background: rgba(17, 24, 39, 0.92) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      border-radius: 8px !important;
+      padding: 16px !important;
+      box-shadow: none !important;
+    }
+    .rollout-board-panel .inventory-row:hover,
+    .rollout-summary-panel .row:hover,
+    .rollout-workflow-panel .row:hover {
+      border-color: rgba(138, 180, 248, 0.34) !important;
+      background: var(--muted-bg, #151d29) !important;
+    }
+    .rollout-board-panel .inventory-fields {
+      margin-top: 16px !important;
+      padding-top: 16px !important;
+      border-top: 1px solid var(--border, var(--line, #2a3442)) !important;
+      gap: 12px !important;
+    }
+    .rollout-board-panel .inventory-field label {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      font-size: 0.8125rem !important;
+      font-weight: 500 !important;
+      letter-spacing: 0 !important;
+      text-transform: none !important;
+    }
+    .rollout-board-panel .row-title,
+    .rollout-summary-panel .row-title,
+    .rollout-workflow-panel .row-title {
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      font-weight: 600 !important;
+    }
+    .rollout-board-panel .row-sub,
+    .rollout-summary-panel .row-sub,
+    .rollout-workflow-panel .row-sub {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .rollout-board-panel .tag,
+    .rollout-summary-panel .tag,
+    .rollout-workflow-panel .tag {
+      display: inline-flex !important;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px !important;
+      padding: 4px 8px !important;
+      background: rgba(168, 179, 194, 0.08) !important;
+      border-color: rgba(168, 179, 194, 0.18) !important;
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      line-height: 1;
+    }
+    .rollout-board-panel .tag.good,
+    .rollout-summary-panel .tag.good,
+    .rollout-workflow-panel .tag.good {
+      background: rgba(74, 222, 128, 0.10) !important;
+      border-color: rgba(74, 222, 128, 0.24) !important;
+      color: var(--green, #4ade80) !important;
+    }
+    .rollout-board-panel .tag.warn,
+    .rollout-summary-panel .tag.warn,
+    .rollout-workflow-panel .tag.warn {
+      background: rgba(251, 191, 36, 0.10) !important;
+      border-color: rgba(251, 191, 36, 0.26) !important;
+      color: var(--warn, #fbbf24) !important;
+    }
+    .rollout-board-panel .tag.bad,
+    .rollout-summary-panel .tag.bad,
+    .rollout-workflow-panel .tag.bad {
+      background: rgba(248, 113, 113, 0.10) !important;
+      border-color: rgba(248, 113, 113, 0.26) !important;
+      color: var(--red, #f87171) !important;
+    }
+    .rollout-board-panel .row-actions {
+      align-items: flex-start;
+    }
+    .rollout-board-panel .row-actions button,
+    .rollout-board-panel .row-actions a.tag,
+    .rollout-workflow-panel button.tag,
+    .rollout-workflow-panel a.tag {
+      min-height: 34px;
+      border-radius: 8px !important;
+      padding: 8px 10px !important;
+      justify-content: center;
+    }
+    @media (max-width: 760px) {
+      .rollout-board-panel > .section-title,
+      .rollout-summary-panel > .section-title,
+      .rollout-workflow-panel > .section-title {
+        margin-left: -14px !important;
+        margin-right: -14px !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+        flex-direction: column;
+      }
+      .rollout-board-panel .inventory-row,
+      .rollout-summary-panel .row,
+      .rollout-workflow-panel .row {
+        padding: 14px !important;
+      }
+    }
+`;
+
+const ENTERPRISE_ALERTS_SHADCN_THEME = `
+    /* alerts-page-shadcn-polish */
+    .alerts-kpi-card,
+    .alerts-policy-panel,
+    .alerts-destinations-panel,
+    .alerts-delivery-panel,
+    .alerts-runs-panel {
+      background: var(--card, #111827) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22) !important;
+      overflow: hidden;
+    }
+    .alerts-kpi-card {
+      display: grid;
+      align-content: space-between;
+      min-height: 142px;
+      background: linear-gradient(180deg, rgba(21, 29, 41, 0.88), rgba(17, 24, 39, 0.96)) !important;
+      border-color: var(--line-soft, rgba(168, 179, 194, 0.12)) !important;
+      box-shadow: inset 0 1px 0 rgba(248, 250, 252, 0.04) !important;
+    }
+    .alerts-kpi-card .kpi-label {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      font-size: 0.75rem !important;
+      font-weight: 500 !important;
+      text-transform: none !important;
+    }
+    .alerts-kpi-card .kpi-value {
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      font-size: clamp(2.25rem, 4vw, 3.25rem) !important;
+      line-height: 1 !important;
+      font-weight: 600 !important;
+    }
+    .alerts-kpi-card .kpi-sub {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .alerts-policy-panel > .section-title,
+    .alerts-destinations-panel > .section-title,
+    .alerts-delivery-panel > .section-title,
+    .alerts-runs-panel > .section-title {
+      margin: -20px -20px 16px !important;
+      padding: 18px 20px !important;
+      background: linear-gradient(180deg, rgba(21, 29, 41, 0.78), rgba(17, 24, 39, 0.92));
+      border-bottom: 1px solid var(--border, var(--line, #2a3442));
+      align-items: flex-start;
+    }
+    .alerts-policy-panel > .section-title h2,
+    .alerts-destinations-panel > .section-title h2,
+    .alerts-delivery-panel > .section-title h2,
+    .alerts-runs-panel > .section-title h2 {
+      font-size: 1.125rem !important;
+      line-height: 1.6rem !important;
+      font-weight: 600 !important;
+    }
+    .alerts-policy-panel > .section-title .mini,
+    .alerts-destinations-panel > .section-title .mini,
+    .alerts-delivery-panel > .section-title .mini,
+    .alerts-runs-panel > .section-title .mini {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border: 1px solid rgba(138, 180, 248, 0.22);
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: rgba(138, 180, 248, 0.10);
+      color: var(--accent, #8ab4f8) !important;
+      line-height: 1;
+    }
+    .alerts-delivery-panel .filters {
+      margin-bottom: 16px !important;
+      padding: 12px;
+      border: 1px solid var(--border, var(--line, #2a3442));
+      border-radius: 8px;
+      background: rgba(11, 15, 20, 0.28);
+    }
+    .alerts-delivery-panel .filters input,
+    .alerts-delivery-panel .filters select {
+      min-height: 42px !important;
+      background: var(--background, #0b0f14) !important;
+      border-color: var(--border, var(--line, #2a3442)) !important;
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      box-shadow: none !important;
+    }
+    .alerts-policy-panel .row,
+    .alerts-destinations-panel .row,
+    .alerts-delivery-panel .row,
+    .alerts-runs-panel .row {
+      background: rgba(17, 24, 39, 0.92) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      border-radius: 8px !important;
+      padding: 16px !important;
+      box-shadow: none !important;
+    }
+    .alerts-policy-panel .row:hover,
+    .alerts-destinations-panel .row:hover,
+    .alerts-delivery-panel .row:hover,
+    .alerts-runs-panel .row:hover {
+      border-color: rgba(138, 180, 248, 0.34) !important;
+      background: var(--muted-bg, #151d29) !important;
+    }
+    .alerts-policy-panel .row-title,
+    .alerts-destinations-panel .row-title,
+    .alerts-delivery-panel .row-title,
+    .alerts-runs-panel .row-title {
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      font-weight: 600 !important;
+    }
+    .alerts-policy-panel .row-sub,
+    .alerts-destinations-panel .row-sub,
+    .alerts-delivery-panel .row-sub,
+    .alerts-runs-panel .row-sub {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .alerts-policy-panel .tag,
+    .alerts-destinations-panel .tag,
+    .alerts-delivery-panel .tag,
+    .alerts-runs-panel .tag {
+      display: inline-flex !important;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px !important;
+      padding: 4px 8px !important;
+      background: rgba(168, 179, 194, 0.08) !important;
+      border-color: rgba(168, 179, 194, 0.18) !important;
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      line-height: 1;
+    }
+    .alerts-policy-panel .tag.good,
+    .alerts-destinations-panel .tag.good,
+    .alerts-delivery-panel .tag.good,
+    .alerts-runs-panel .tag.good {
+      background: rgba(74, 222, 128, 0.10) !important;
+      border-color: rgba(74, 222, 128, 0.24) !important;
+      color: var(--green, #4ade80) !important;
+    }
+    .alerts-policy-panel .tag.warn,
+    .alerts-destinations-panel .tag.warn,
+    .alerts-delivery-panel .tag.warn,
+    .alerts-runs-panel .tag.warn {
+      background: rgba(251, 191, 36, 0.10) !important;
+      border-color: rgba(251, 191, 36, 0.26) !important;
+      color: var(--warn, #fbbf24) !important;
+    }
+    .alerts-policy-panel .tag.bad,
+    .alerts-destinations-panel .tag.bad,
+    .alerts-delivery-panel .tag.bad,
+    .alerts-runs-panel .tag.bad {
+      background: rgba(248, 113, 113, 0.10) !important;
+      border-color: rgba(248, 113, 113, 0.26) !important;
+      color: var(--red, #f87171) !important;
+    }
+    .alerts-panel-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 14px;
+    }
+    .alerts-panel-actions button {
+      min-height: 36px;
+      border-radius: 8px !important;
+      padding: 8px 10px !important;
+      justify-content: center;
+    }
+    @media (max-width: 760px) {
+      .alerts-policy-panel > .section-title,
+      .alerts-destinations-panel > .section-title,
+      .alerts-delivery-panel > .section-title,
+      .alerts-runs-panel > .section-title {
+        margin-left: -14px !important;
+        margin-right: -14px !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+        flex-direction: column;
+      }
+      .alerts-kpi-card,
+      .alerts-policy-panel .row,
+      .alerts-destinations-panel .row,
+      .alerts-delivery-panel .row,
+      .alerts-runs-panel .row {
+        padding: 14px !important;
+      }
+      .alerts-panel-actions {
+        justify-content: flex-start;
+      }
+    }
+`;
+
+const ENTERPRISE_VERIFIER_SHADCN_THEME = `
+    /* verifier-page-shadcn-polish */
+    .verifier-kpi-card,
+    .verifier-attestation-panel,
+    .verifier-model-panel,
+    .verifier-proof-panel {
+      background: var(--card, #111827) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22) !important;
+      overflow: hidden;
+    }
+    .verifier-kpi-grid {
+      gap: 14px !important;
+    }
+    .verifier-kpi-card {
+      display: grid;
+      align-content: space-between;
+      min-height: 142px;
+      background: linear-gradient(180deg, rgba(21, 29, 41, 0.88), rgba(17, 24, 39, 0.96)) !important;
+      border-color: var(--line-soft, rgba(168, 179, 194, 0.12)) !important;
+      box-shadow: inset 0 1px 0 rgba(248, 250, 252, 0.04) !important;
+    }
+    .verifier-kpi-card .kpi-label {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      font-size: 0.75rem !important;
+      font-weight: 500 !important;
+      text-transform: none !important;
+    }
+    .verifier-kpi-card .kpi-value {
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      font-size: clamp(2.25rem, 4vw, 3.25rem) !important;
+      line-height: 1 !important;
+      font-weight: 600 !important;
+    }
+    .verifier-kpi-card .kpi-sub {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .verifier-attestation-panel > .section-title,
+    .verifier-model-panel > .section-title,
+    .verifier-proof-panel > .section-title,
+    .verifier-model-panel .verifier-subsection-title,
+    .verifier-proof-panel .verifier-subsection-title {
+      margin: -20px -20px 16px !important;
+      padding: 18px 20px !important;
+      background: linear-gradient(180deg, rgba(21, 29, 41, 0.78), rgba(17, 24, 39, 0.92));
+      border-bottom: 1px solid var(--border, var(--line, #2a3442));
+      align-items: flex-start;
+    }
+    .verifier-model-panel .verifier-subsection-title,
+    .verifier-proof-panel .verifier-subsection-title {
+      margin-top: 18px !important;
+      border-top: 1px solid var(--border, var(--line, #2a3442));
+    }
+    .verifier-attestation-panel > .section-title h2,
+    .verifier-model-panel > .section-title h2,
+    .verifier-proof-panel > .section-title h2,
+    .verifier-model-panel .verifier-subsection-title h2,
+    .verifier-proof-panel .verifier-subsection-title h2 {
+      font-size: 1.125rem !important;
+      line-height: 1.6rem !important;
+      font-weight: 600 !important;
+    }
+    .verifier-attestation-panel .mini,
+    .verifier-model-panel .mini,
+    .verifier-proof-panel .mini {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .verifier-attestation-panel > .section-title .mini,
+    .verifier-model-panel > .section-title .mini,
+    .verifier-proof-panel > .section-title .mini,
+    .verifier-model-panel .verifier-subsection-title .mini,
+    .verifier-proof-panel .verifier-subsection-title .mini {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border: 1px solid rgba(138, 180, 248, 0.22);
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: rgba(138, 180, 248, 0.10);
+      color: var(--accent, #8ab4f8) !important;
+      line-height: 1;
+    }
+    .verifier-form {
+      padding: 12px !important;
+      border: 1px solid var(--border, var(--line, #2a3442));
+      border-radius: 8px;
+      background: rgba(11, 15, 20, 0.28);
+    }
+    .verifier-form input,
+    .verifier-form select,
+    .verifier-form textarea {
+      width: 100%;
+      min-height: 42px !important;
+      background: var(--background, #0b0f14) !important;
+      border-color: var(--border, var(--line, #2a3442)) !important;
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      box-shadow: none !important;
+    }
+    .verifier-form textarea {
+      min-height: 126px !important;
+      line-height: 1.5 !important;
+    }
+    .verifier-form button {
+      min-height: 38px !important;
+      border-radius: 8px !important;
+      padding: 8px 12px !important;
+      justify-content: center;
+    }
+    .verifier-attestation-panel .row,
+    .verifier-model-panel .row,
+    .verifier-proof-panel .row {
+      background: rgba(17, 24, 39, 0.92) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      border-radius: 8px !important;
+      padding: 16px !important;
+      box-shadow: none !important;
+    }
+    .verifier-attestation-panel .row:hover,
+    .verifier-model-panel .row:hover,
+    .verifier-proof-panel .row:hover {
+      border-color: rgba(138, 180, 248, 0.34) !important;
+      background: var(--muted-bg, #151d29) !important;
+    }
+    .verifier-attestation-panel .row-title,
+    .verifier-model-panel .row-title,
+    .verifier-proof-panel .row-title {
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      font-weight: 600 !important;
+    }
+    .verifier-attestation-panel .row-sub,
+    .verifier-model-panel .row-sub,
+    .verifier-proof-panel .row-sub {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .verifier-attestation-panel .tag,
+    .verifier-model-panel .tag,
+    .verifier-proof-panel .tag {
+      display: inline-flex !important;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px !important;
+      padding: 4px 8px !important;
+      background: rgba(168, 179, 194, 0.08) !important;
+      border-color: rgba(168, 179, 194, 0.18) !important;
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      line-height: 1;
+    }
+    .verifier-attestation-panel .tag.good,
+    .verifier-model-panel .tag.good,
+    .verifier-proof-panel .tag.good {
+      background: rgba(74, 222, 128, 0.10) !important;
+      border-color: rgba(74, 222, 128, 0.24) !important;
+      color: var(--green, #4ade80) !important;
+    }
+    .verifier-attestation-panel .tag.warn,
+    .verifier-model-panel .tag.warn,
+    .verifier-proof-panel .tag.warn {
+      background: rgba(251, 191, 36, 0.10) !important;
+      border-color: rgba(251, 191, 36, 0.26) !important;
+      color: var(--warn, #fbbf24) !important;
+    }
+    .verifier-attestation-panel .tag.bad,
+    .verifier-model-panel .tag.bad,
+    .verifier-proof-panel .tag.bad {
+      background: rgba(248, 113, 113, 0.10) !important;
+      border-color: rgba(248, 113, 113, 0.26) !important;
+      color: var(--red, #f87171) !important;
+    }
+    .verifier-model-panel .empty,
+    .verifier-proof-panel .empty {
+      background: rgba(11, 15, 20, 0.28) !important;
+      border-color: var(--border, var(--line, #2a3442)) !important;
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    @media (max-width: 760px) {
+      .verifier-attestation-panel > .section-title,
+      .verifier-model-panel > .section-title,
+      .verifier-proof-panel > .section-title,
+      .verifier-model-panel .verifier-subsection-title,
+      .verifier-proof-panel .verifier-subsection-title {
+        margin-left: -14px !important;
+        margin-right: -14px !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+        flex-direction: column;
+      }
+      .verifier-kpi-card,
+      .verifier-attestation-panel .row,
+      .verifier-model-panel .row,
+      .verifier-proof-panel .row {
+        padding: 14px !important;
+      }
+    }
+`;
+
+const ENTERPRISE_KEYS_SHADCN_THEME = `
+    /* provider-slots-shadcn-polish */
+    #keyOverviewPanel,
+    .keys-form-panel,
+    .keys-response-panel > .card,
+    .keys-email-panel > .card,
+    .keys-board-panel,
+    .keys-proxy-panel {
+      background: var(--card, #111827) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22) !important;
+    }
+    #keyOverviewPanel,
+    .keys-form-panel,
+    .keys-board-panel,
+    .keys-proxy-panel {
+      overflow: hidden;
+    }
+    #keyOverviewPanel > .section-title,
+    .keys-form-panel > .section-title,
+    .keys-board-panel > .section-title,
+    .keys-proxy-panel > .section-title,
+    .keys-response-panel .section-title,
+    .keys-email-panel .section-title {
+      margin: -20px -20px 16px !important;
+      padding: 18px 20px !important;
+      background: linear-gradient(180deg, rgba(21, 29, 41, 0.78), rgba(17, 24, 39, 0.92));
+      border-bottom: 1px solid var(--border, var(--line, #2a3442));
+      align-items: flex-start;
+    }
+    #keyOverviewPanel > .section-title h2,
+    .keys-form-panel > .section-title h2,
+    .keys-board-panel > .section-title h2,
+    .keys-proxy-panel > .section-title h2,
+    .keys-response-panel .section-title h2,
+    .keys-email-panel .section-title h2 {
+      font-size: 1.125rem !important;
+      line-height: 1.6rem !important;
+      font-weight: 600 !important;
+    }
+    #keyOverviewPanel > .section-title .mini,
+    .keys-form-panel > .section-title .mini,
+    .keys-board-panel > .section-title .mini,
+    .keys-proxy-panel > .section-title .mini,
+    .keys-response-panel .section-title .mini,
+    .keys-email-panel .section-title .mini {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border: 1px solid rgba(138, 180, 248, 0.22);
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: rgba(138, 180, 248, 0.10);
+      color: var(--accent, #8ab4f8) !important;
+      line-height: 1;
+    }
+    .key-total-card,
+    .key-chart-card,
+    .key-stat {
+      background: linear-gradient(180deg, rgba(21, 29, 41, 0.88), rgba(17, 24, 39, 0.96)) !important;
+      border-color: var(--line-soft, rgba(168, 179, 194, 0.12)) !important;
+      box-shadow: inset 0 1px 0 rgba(248, 250, 252, 0.04) !important;
+    }
+    .key-stat {
+      background: rgba(11, 15, 20, 0.32) !important;
+    }
+    .key-chart-track,
+    .key-donut {
+      background-color: rgba(168, 179, 194, 0.14) !important;
+    }
+    .key-donut-hole {
+      background: var(--bg, #0b0f14) !important;
+      border-color: var(--line-soft, rgba(168, 179, 194, 0.12)) !important;
+    }
+    .keys-provider-slot-form,
+    .keys-incident-form {
+      gap: 12px !important;
+      align-items: end;
+    }
+    .keys-provider-slot-form label,
+    .keys-incident-form label {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      font-size: 0.8125rem !important;
+      font-weight: 500 !important;
+      letter-spacing: 0 !important;
+      text-transform: none !important;
+    }
+    .keys-provider-slot-form input,
+    .keys-provider-slot-form select,
+    .keys-provider-slot-form textarea,
+    .keys-incident-form input,
+    .keys-incident-form select,
+    .keys-incident-form textarea {
+      min-height: 44px !important;
+      background: var(--background, #0b0f14) !important;
+      border-color: var(--border, var(--line, #2a3442)) !important;
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      box-shadow: none !important;
+    }
+    .keys-provider-slot-form textarea,
+    .keys-incident-form textarea {
+      min-height: 92px !important;
+      line-height: 1.5 !important;
+    }
+    .slot-form-actions {
+      padding-top: 2px;
+    }
+    .slot-form-actions button,
+    .keys-board-panel .row-actions button,
+    .keys-proxy-panel .row-actions button,
+    .keys-email-panel .row-actions button {
+      min-height: 36px;
+      border-radius: 8px !important;
+      padding: 8px 10px !important;
+      justify-content: center;
+    }
+    #keySystemSummaryList .row,
+    .keys-response-panel .row,
+    .keys-email-panel .row,
+    .keys-board-panel .row,
+    .keys-proxy-panel .row {
+      background: rgba(17, 24, 39, 0.92) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      border-radius: 8px !important;
+      padding: 16px !important;
+      box-shadow: none !important;
+    }
+    .keys-board-panel .row:hover,
+    .keys-proxy-panel .row:hover,
+    .keys-email-panel .row:hover {
+      border-color: rgba(138, 180, 248, 0.34) !important;
+      background: var(--muted-bg, #151d29) !important;
+    }
+    .keys-board-panel .row-title,
+    .keys-proxy-panel .row-title,
+    .keys-email-panel .row-title,
+    .keys-response-panel .row-title,
+    #keySystemSummaryList .row-title {
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      font-weight: 600 !important;
+    }
+    .keys-board-panel .row-sub,
+    .keys-proxy-panel .row-sub,
+    .keys-email-panel .row-sub,
+    .keys-response-panel .row-sub,
+    #keySystemSummaryList .row-sub {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .keys-board-panel .tag,
+    .keys-proxy-panel .tag,
+    .keys-email-panel .tag,
+    .keys-response-panel .tag,
+    #keySystemSummaryList .tag {
+      display: inline-flex !important;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px !important;
+      padding: 4px 8px !important;
+      background: rgba(168, 179, 194, 0.08) !important;
+      border-color: rgba(168, 179, 194, 0.18) !important;
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      line-height: 1;
+    }
+    .keys-board-panel .tag.good,
+    .keys-proxy-panel .tag.good,
+    .keys-email-panel .tag.good,
+    .keys-response-panel .tag.good,
+    #keySystemSummaryList .tag.good {
+      background: rgba(74, 222, 128, 0.10) !important;
+      border-color: rgba(74, 222, 128, 0.24) !important;
+      color: var(--green, #4ade80) !important;
+    }
+    .keys-board-panel .tag.warn,
+    .keys-proxy-panel .tag.warn,
+    .keys-email-panel .tag.warn,
+    .keys-response-panel .tag.warn,
+    #keySystemSummaryList .tag.warn {
+      background: rgba(251, 191, 36, 0.10) !important;
+      border-color: rgba(251, 191, 36, 0.26) !important;
+      color: var(--warn, #fbbf24) !important;
+    }
+    .keys-board-panel .tag.bad,
+    .keys-proxy-panel .tag.bad,
+    .keys-email-panel .tag.bad,
+    .keys-response-panel .tag.bad,
+    #keySystemSummaryList .tag.bad {
+      background: rgba(248, 113, 113, 0.10) !important;
+      border-color: rgba(248, 113, 113, 0.26) !important;
+      color: var(--red, #f87171) !important;
+    }
+    .keys-board-panel .row-actions,
+    .keys-proxy-panel .row-actions,
+    .keys-email-panel .row-actions {
+      align-items: flex-start;
+    }
+    @media (max-width: 760px) {
+      #keyOverviewPanel > .section-title,
+      .keys-form-panel > .section-title,
+      .keys-board-panel > .section-title,
+      .keys-proxy-panel > .section-title,
+      .keys-response-panel .section-title,
+      .keys-email-panel .section-title {
+        margin-left: -14px !important;
+        margin-right: -14px !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+        flex-direction: column;
+      }
+      #keySystemSummaryList .row,
+      .keys-response-panel .row,
+      .keys-email-panel .row,
+      .keys-board-panel .row,
+      .keys-proxy-panel .row {
         padding: 14px !important;
       }
     }
@@ -1169,6 +2117,299 @@ const ENTERPRISE_CONTROL_PAGE_THEME = `
       }
       .subnav { width: 100%; }
       .subnav-link { flex: 1 1 130px; text-align: center; }
+    }
+`;
+
+const ENTERPRISE_CONTROL_SHADCN_THEME = `
+    /* control-page-shadcn-polish */
+    .page .main .page-header {
+      margin-bottom: 18px !important;
+      padding: 20px !important;
+      background: var(--card, var(--paper, #111827)) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18) !important;
+    }
+    .page .main .page-heading::before {
+      border-color: rgba(138, 180, 248, 0.22) !important;
+      background: rgba(138, 180, 248, 0.10) !important;
+      color: var(--accent, #8ab4f8) !important;
+      font-weight: 500 !important;
+      letter-spacing: 0 !important;
+      text-transform: none !important;
+    }
+    .page .main .page-title {
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      font-size: clamp(2rem, 4vw, 2.6rem) !important;
+      line-height: 1.08 !important;
+      font-weight: 600 !important;
+    }
+    .page .main .page-meta,
+    .page .main .page-desc {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .page .main .org-switcher {
+      min-width: 280px;
+      padding: 12px !important;
+      background: rgba(17, 24, 39, 0.92) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      border-radius: 8px !important;
+    }
+    .page .main .org-select {
+      min-height: 42px !important;
+      background: var(--background, #0b0f14) !important;
+      border-color: var(--border, var(--line, #2a3442)) !important;
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      box-shadow: none !important;
+    }
+    .page .main .subnav {
+      width: max-content !important;
+      max-width: 100% !important;
+      padding: 6px !important;
+      background: var(--surface, #151d29) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      border-radius: 8px !important;
+      box-shadow: none !important;
+    }
+    .page .main .subnav-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      border-radius: 8px !important;
+      border-color: transparent !important;
+      background: transparent !important;
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      font-weight: 500 !important;
+    }
+    .page .main .subnav-link.active {
+      background: var(--primary-bg, #8ab4f8) !important;
+      border-color: var(--primary-border, #8ab4f8) !important;
+      color: var(--primary-text, #08111f) !important;
+      box-shadow: none !important;
+    }
+    .page .main .control-action-strip,
+    .page .main .control-invite-panel,
+    .page .main .control-hero-panel,
+    .page .main .control-members-panel,
+    .page .main .control-policy-panel,
+    .page .main .control-governance-panel,
+    .page .main .control-pilot-panel,
+    .page .main .control-execution-panel,
+    .page .main .control-health-panel,
+    .page .main .control-alert-panel {
+      background: var(--card, #111827) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22) !important;
+      overflow: hidden;
+    }
+    .page .main .control-action-strip {
+      gap: 10px !important;
+      padding: 14px !important;
+      background: rgba(17, 24, 39, 0.92) !important;
+    }
+    .page .main .control-action-strip .btn-outline {
+      min-height: 36px;
+      padding: 8px 10px !important;
+      background: var(--surface, #151d29) !important;
+      border-color: var(--border, var(--line, #2a3442)) !important;
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      border-radius: 8px !important;
+    }
+    .page .main .control-hero-panel {
+      grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+      gap: 18px !important;
+      padding: 22px !important;
+      background: linear-gradient(180deg, rgba(21, 29, 41, 0.86), rgba(17, 24, 39, 0.96)) !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.20) !important;
+    }
+    .page .main .control-hero-panel .banner-title {
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      font-size: clamp(1.5rem, 3vw, 2.25rem) !important;
+      line-height: 1.12 !important;
+      font-weight: 600 !important;
+    }
+    .page .main .control-hero-panel .banner-note {
+      padding: 16px !important;
+      background: rgba(11, 15, 20, 0.28) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      border-radius: 8px !important;
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .page .main .control-kpi-grid {
+      gap: 14px !important;
+      margin-bottom: 18px !important;
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      overflow: visible !important;
+    }
+    .page .main .control-kpi-card {
+      display: grid;
+      align-content: space-between;
+      min-height: 142px;
+      padding: 18px !important;
+      background: linear-gradient(180deg, rgba(21, 29, 41, 0.88), rgba(17, 24, 39, 0.96)) !important;
+      border: 1px solid var(--line-soft, rgba(168, 179, 194, 0.12)) !important;
+      border-radius: 8px !important;
+      box-shadow: inset 0 1px 0 rgba(248, 250, 252, 0.04) !important;
+    }
+    .page .main .control-kpi-card + .control-kpi-card {
+      border-left: 1px solid var(--line-soft, rgba(168, 179, 194, 0.12)) !important;
+    }
+    .page .main .control-kpi-card .kpi-label {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      font-size: 0.75rem !important;
+      font-weight: 500 !important;
+      text-transform: none !important;
+    }
+    .page .main .control-kpi-card .kpi-value {
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      font-size: clamp(2.25rem, 4vw, 3.25rem) !important;
+      line-height: 1 !important;
+      font-weight: 600 !important;
+    }
+    .page .main .control-kpi-card .kpi-value.ok {
+      color: var(--green, #4ade80) !important;
+    }
+    .page .main .control-kpi-card .kpi-value.warn {
+      color: var(--warn, #fbbf24) !important;
+    }
+    .page .main .control-kpi-card .kpi-value.danger {
+      color: var(--red, #f87171) !important;
+    }
+    .page .main .control-kpi-card .kpi-sub {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .page .main .control-invite-panel > .panel-head,
+    .page .main .control-members-panel > .panel-head,
+    .page .main .control-policy-panel > .panel-head,
+    .page .main .control-governance-panel > .panel-head,
+    .page .main .control-pilot-panel > .panel-head,
+    .page .main .control-execution-panel > .panel-head,
+    .page .main .control-health-panel > .panel-head,
+    .page .main .control-alert-panel > .panel-head {
+      min-height: 54px;
+      padding: 16px 18px !important;
+      background: linear-gradient(180deg, rgba(21, 29, 41, 0.78), rgba(17, 24, 39, 0.92)) !important;
+      border-bottom: 1px solid var(--border, var(--line, #2a3442)) !important;
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      font-size: 0.8125rem !important;
+      font-weight: 500 !important;
+      text-transform: none !important;
+    }
+    .page .main .panel-head-right {
+      color: var(--accent, #8ab4f8) !important;
+      font-weight: 500 !important;
+    }
+    .page .main .control-members-panel .member-card,
+    .page .main .control-policy-panel .policy-card,
+    .page .main .control-policy-panel .policy-provider-card,
+    .page .main .control-pilot-panel .resource-card,
+    .page .main .control-pilot-panel .checklist-box,
+    .page .main .control-execution-panel .exec-card,
+    .page .main .control-governance-panel .list-row,
+    .page .main .control-health-panel .list-row,
+    .page .main .control-alert-panel .list-row,
+    .page .main .control-invite-panel .invite-row {
+      background: rgba(17, 24, 39, 0.92) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      border-radius: 8px !important;
+      box-shadow: none !important;
+    }
+    .page .main .control-governance-panel .list-row,
+    .page .main .control-health-panel .list-row,
+    .page .main .control-alert-panel .list-row,
+    .page .main .control-invite-panel .invite-row {
+      padding: 14px !important;
+      border-bottom: 1px solid var(--border, var(--line, #2a3442)) !important;
+    }
+    .page .main .control-governance-panel .list-row:last-child,
+    .page .main .control-health-panel .list-row:last-child,
+    .page .main .control-alert-panel .list-row:last-child,
+    .page .main .control-invite-panel .invite-row:last-child {
+      border-bottom: 1px solid var(--border, var(--line, #2a3442)) !important;
+    }
+    .page .main .control-members-panel .member-card:hover,
+    .page .main .control-policy-panel .policy-card:hover,
+    .page .main .control-policy-panel .policy-provider-card:hover,
+    .page .main .control-pilot-panel .resource-card:hover,
+    .page .main .control-pilot-panel .checklist-box:hover,
+    .page .main .control-execution-panel .exec-card:hover,
+    .page .main .control-governance-panel .list-row:hover,
+    .page .main .control-health-panel .list-row:hover,
+    .page .main .control-alert-panel .list-row:hover {
+      border-color: rgba(138, 180, 248, 0.34) !important;
+      background: var(--muted-bg, #151d29) !important;
+    }
+    .page .main .control-policy-panel .policy-input,
+    .page .main .control-policy-panel .policy-textarea {
+      min-height: 42px !important;
+      background: var(--background, #0b0f14) !important;
+      border-color: var(--border, var(--line, #2a3442)) !important;
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      box-shadow: none !important;
+    }
+    .page .main .control-policy-panel .policy-textarea {
+      min-height: 92px !important;
+      line-height: 1.5 !important;
+    }
+    .page .main .control-policy-panel .policy-actions button,
+    .page .main .control-execution-panel .exec-actions button,
+    .page .main .control-pilot-panel .resource-link {
+      min-height: 34px;
+      border-radius: 8px !important;
+      padding: 8px 10px !important;
+    }
+    .page .main .control-pilot-panel .resource-link {
+      display: inline-flex;
+      align-items: center;
+      width: max-content;
+      background: rgba(138, 180, 248, 0.10) !important;
+      border: 1px solid rgba(138, 180, 248, 0.24);
+      color: var(--accent, #8ab4f8) !important;
+      text-decoration: none !important;
+    }
+    .page .main .member-project,
+    .page .main .pill {
+      background: rgba(168, 179, 194, 0.08) !important;
+      border-color: rgba(168, 179, 194, 0.18) !important;
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    .page .main .pill.ok {
+      background: rgba(74, 222, 128, 0.10) !important;
+      border-color: rgba(74, 222, 128, 0.24) !important;
+      color: var(--green, #4ade80) !important;
+    }
+    .page .main .pill.warn {
+      background: rgba(251, 191, 36, 0.10) !important;
+      border-color: rgba(251, 191, 36, 0.26) !important;
+      color: var(--warn, #fbbf24) !important;
+    }
+    .page .main .pill.danger {
+      background: rgba(248, 113, 113, 0.10) !important;
+      border-color: rgba(248, 113, 113, 0.26) !important;
+      color: var(--red, #f87171) !important;
+    }
+    .page .main .empty {
+      background: rgba(11, 15, 20, 0.28) !important;
+      border: 1px dashed var(--border, var(--line, #2a3442)) !important;
+      border-radius: 8px !important;
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
+    @media (max-width: 760px) {
+      .page .main .control-hero-panel,
+      .page .main .control-kpi-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .page .main .subnav {
+        width: 100% !important;
+      }
+      .page .main .subnav-link {
+        flex: 1 1 130px;
+      }
     }
 `;
 
@@ -1469,7 +2710,7 @@ const ENTERPRISE_ORG_PAGE_THEME = `
 `;
 
 const ENTERPRISE_STATIC_PAGE_THEMES: Partial<Record<EnterpriseAppNavPage, string>> = {
-  control: ENTERPRISE_CONTROL_PAGE_THEME,
+  control: `${ENTERPRISE_CONTROL_PAGE_THEME}${ENTERPRISE_CONTROL_SHADCN_THEME}`,
   org: ENTERPRISE_ORG_PAGE_THEME,
 };
 
@@ -2198,6 +3439,7 @@ function renderEnterpriseAuditPage(): string {
         if (!orgs.length) {
           select.innerHTML = '<option value="">No orgs</option>';
           select.disabled = true;
+          currentOrgRole = '';
           return;
         }
         select.disabled = false;
@@ -2357,6 +3599,7 @@ function renderEnterpriseAlertsPage(): string {
     @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two, .slot-form { grid-template-columns: 1fr; } .slot-form .wide { grid-column: auto; } }
     ${ENTERPRISE_APP_SHELL_THEME}
     ${ENTERPRISE_STATIC_APP_POLISH_THEME}
+    ${ENTERPRISE_ALERTS_SHADCN_THEME}
   </style>
 </head>
 <body>
@@ -2380,24 +3623,24 @@ function renderEnterpriseAlertsPage(): string {
       <div id="notice" class="notice error" style="display:none"></div>
 
       <section class="grid kpis">
-        <div class="card"><div class="kpi-label">destinations</div><div class="kpi-value" id="kpiDestinations">...</div><div class="kpi-sub" id="kpiEnabled">loading</div></div>
-        <div class="card"><div class="kpi-label">policy</div><div class="kpi-value" id="kpiPolicy">...</div><div class="kpi-sub" id="kpiSeverity">minimum severity</div></div>
-        <div class="card"><div class="kpi-label">deliveries</div><div class="kpi-value" id="kpiDeliveries">...</div><div class="kpi-sub">filtered delivery logs</div></div>
-        <div class="card"><div class="kpi-label">dispatch runs</div><div class="kpi-value" id="kpiRuns">...</div><div class="kpi-sub" id="kpiCooldown">policy cadence</div></div>
+        <div class="card alerts-kpi-card"><div class="kpi-label">destinations</div><div class="kpi-value" id="kpiDestinations">...</div><div class="kpi-sub" id="kpiEnabled">loading</div></div>
+        <div class="card alerts-kpi-card"><div class="kpi-label">policy</div><div class="kpi-value" id="kpiPolicy">...</div><div class="kpi-sub" id="kpiSeverity">minimum severity</div></div>
+        <div class="card alerts-kpi-card"><div class="kpi-label">deliveries</div><div class="kpi-value" id="kpiDeliveries">...</div><div class="kpi-sub">filtered delivery logs</div></div>
+        <div class="card alerts-kpi-card"><div class="kpi-label">dispatch runs</div><div class="kpi-value" id="kpiRuns">...</div><div class="kpi-sub" id="kpiCooldown">policy cadence</div></div>
       </section>
 
       <section class="grid two">
-        <div class="card">
+        <div class="card alerts-policy-panel">
           <div class="section-title"><h2>Dispatch policy</h2><span id="policyMeta" class="mini"></span></div>
           <div id="policyDetails" class="list"><div class="empty">Loading policy...</div></div>
         </div>
-        <div class="card">
+        <div class="card alerts-destinations-panel">
           <div class="section-title"><h2>Destinations</h2><span id="destinationMeta" class="mini"></span></div>
           <div id="destinationList" class="list"><div class="empty">Loading destinations...</div></div>
         </div>
       </section>
 
-      <section class="card" style="margin-top:16px">
+      <section class="card alerts-delivery-panel" style="margin-top:16px">
         <div class="section-title"><h2>Delivery logs</h2><span id="deliveryMeta" class="mini"></span></div>
         <form id="deliveryFilterForm" class="filters">
           <select id="activityWindow" aria-label="Activity window">
@@ -2426,13 +3669,13 @@ function renderEnterpriseAlertsPage(): string {
           <button class="primary" type="submit">apply</button>
         </form>
         <div id="deliveryList" class="list"><div class="empty">Loading delivery logs...</div></div>
-        <div style="margin-top:14px"><button id="loadMoreDeliveriesBtn" type="button" style="display:none">load older deliveries</button></div>
+        <div class="alerts-panel-actions"><button id="loadMoreDeliveriesBtn" type="button" style="display:none">load older deliveries</button></div>
       </section>
 
-      <section class="card" style="margin-top:16px">
+      <section class="card alerts-runs-panel" style="margin-top:16px">
         <div class="section-title"><h2>Dispatch runs</h2><span id="runMeta" class="mini"></span></div>
         <div id="runList" class="list"><div class="empty">Loading dispatch runs...</div></div>
-        <div style="margin-top:14px"><button id="loadMoreRunsBtn" type="button" style="display:none">load older runs</button></div>
+        <div class="alerts-panel-actions"><button id="loadMoreRunsBtn" type="button" style="display:none">load older runs</button></div>
       </section>
     </main>
   </div>
@@ -2633,12 +3876,12 @@ function renderEnterpriseAlertsPage(): string {
 }
 
 function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inventory' | 'policy' | 'rollout' | 'keys'): string {
-  const pageTitle = pageName === 'activity' ? 'Activity' : pageName === 'projects' ? 'Projects' : pageName === 'inventory' ? 'API Inventory' : pageName === 'policy' ? 'Policy Drift' : pageName === 'rollout' ? 'Rollout Manager' : 'Provider Slots';
-  const pageKicker = pageName === 'activity' ? 'runtime feed' : pageName === 'projects' ? 'project inventory' : pageName === 'inventory' ? 'api inventory' : pageName === 'policy' ? 'accepted risk' : pageName === 'rollout' ? 'workload cutover' : 'secrets posture';
+  const pageTitle = pageName === 'activity' ? 'Activity' : pageName === 'projects' ? 'Workloads' : pageName === 'inventory' ? 'API Inventory' : pageName === 'policy' ? 'Policy Drift' : pageName === 'rollout' ? 'Rollout Manager' : 'Provider Slots';
+  const pageKicker = pageName === 'activity' ? 'runtime feed' : pageName === 'projects' ? 'protected apps' : pageName === 'inventory' ? 'api inventory' : pageName === 'policy' ? 'accepted risk' : pageName === 'rollout' ? 'workload cutover' : 'secrets posture';
   const pageLead = pageName === 'activity'
     ? 'Review secure proxy/runtime events, status codes, latency, provider request IDs, and attestation evidence hints.'
     : pageName === 'projects'
-      ? 'Track enterprise projects, provider coverage, caller-lock policy, traffic health, and quick links into Control.'
+      ? 'Create protected workloads for customer apps, then track provider coverage, caller-lock policy, traffic health, and quick links into Control.'
       : pageName === 'inventory'
         ? 'Map every API surface, owner, protection state, policy control, traffic signal, and review decision without storing secrets.'
         : pageName === 'policy'
@@ -2687,6 +3930,19 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 14px; background: rgba(248,250,252,.84); }
     .row-title { font-weight: 780; letter-spacing: -.02em; }
     .row-sub { color: var(--muted); font-size: 13px; margin-top: 5px; line-height: 1.45; }
+    .workload-create-panel { grid-column: 1 / -1; overflow: hidden; background: linear-gradient(180deg, rgba(21,29,41,.88), rgba(17,24,39,.96)) !important; border-color: var(--line) !important; }
+    .workload-create-head { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; margin-bottom: 16px; }
+    .workload-create-head h2 { margin: 0; font-size: 20px; letter-spacing: -.02em; }
+    .workload-create-head p { margin: 6px 0 0; color: var(--muted); max-width: 680px; line-height: 1.55; }
+    .workload-create-form { display: grid; gap: 14px; }
+    .workload-form-grid { display: grid; grid-template-columns: minmax(220px, 1.2fr) minmax(160px, .7fr) minmax(170px, .7fr) minmax(130px, .55fr); gap: 12px; align-items: end; }
+    .workload-form-grid label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; min-width: 0; }
+    .workload-form-grid .wide { grid-column: span 2; }
+    .workload-form-grid input, .workload-form-grid select { width: 100%; min-width: 0; }
+    .workload-toggle { align-self: stretch; min-height: 42px; display: flex !important; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 11px 12px; background: var(--surface); color: var(--text); text-transform: none !important; letter-spacing: 0 !important; font-weight: 600 !important; }
+    .workload-toggle input { width: 16px; min-width: 16px; height: 16px; }
+    .workload-create-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .workload-create-note { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
     .inventory-row { display: grid; gap: 14px; border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 14px; background: rgba(248,250,252,.84); }
     .inventory-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: start; }
     .inventory-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
@@ -2730,14 +3986,35 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .inventory-metric-card { border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 12px; background: rgba(248,250,252,.74); }
     .inventory-metric-card strong { display: block; font-size: 24px; letter-spacing: -.04em; }
     .inventory-metric-card span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; }
+    .inventory-overview-panel { border: 1px solid var(--line); border-radius: 8px; padding: 18px; background: var(--card); box-shadow: 0 18px 48px rgba(0,0,0,.22); }
+    .inventory-overview-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
+    .inventory-overview-head h2 { margin: 0; font-size: 20px; letter-spacing: -.02em; }
+    .inventory-overview-head p { margin: 6px 0 0; color: var(--muted); max-width: 720px; line-height: 1.55; }
+    .inventory-overview-grid { display: grid; grid-template-columns: minmax(230px, .86fr) repeat(3, minmax(220px, 1fr)); gap: 14px; align-items: stretch; }
+    .inventory-overview-card, .inventory-chart-card { border: 1px solid var(--line-soft); border-radius: 8px; padding: 15px; background: rgba(11,15,20,.28); min-width: 0; }
+    .inventory-overview-total { display: grid; gap: 14px; align-content: space-between; }
+    .inventory-overview-value { font-size: clamp(44px, 6vw, 72px); line-height: .9; letter-spacing: -.06em; font-weight: 850; color: var(--text); }
+    .inventory-overview-sub { color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .inventory-overview-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .inventory-overview-stat { border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px; background: rgba(21,29,41,.72); }
+    .inventory-overview-stat strong { display: block; color: var(--text); font-size: 22px; letter-spacing: -.04em; }
+    .inventory-overview-stat span { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; font-weight: 850; }
+    .inventory-chart-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .inventory-chart-title h3 { margin: 0; font-size: 15px; letter-spacing: -.01em; }
+    .inventory-chart-bars { display: grid; gap: 10px; }
+    .inventory-chart-row { display: grid; gap: 6px; }
+    .inventory-chart-head { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; }
+    .inventory-chart-head strong { color: var(--text); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .inventory-chart-track { height: 10px; border-radius: 999px; background: rgba(168,179,194,.14); overflow: hidden; }
+    .inventory-chart-fill { display: block; height: 100%; width: var(--width, 0%); border-radius: inherit; background: var(--fill, var(--gold)); }
     .key-overview-panel { overflow: hidden; }
     .key-overview-grid { display: grid; grid-template-columns: minmax(230px, .86fr) minmax(0, 1.35fr) minmax(230px, .86fr); gap: 16px; align-items: stretch; }
-    .key-total-card, .key-chart-card { border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 16px; background: rgba(248,250,252,.78); min-width: 0; }
+    .key-total-card, .key-chart-card { border: 1px solid var(--line-soft); border-radius: 8px; padding: 16px; background: linear-gradient(180deg, rgba(21,29,41,.88), rgba(17,24,39,.96)); box-shadow: inset 0 1px 0 rgba(248,250,252,.04); min-width: 0; }
     .key-total-card { display: grid; align-content: space-between; gap: 18px; }
     .key-total-value { font-size: clamp(44px, 7vw, 82px); line-height: .9; letter-spacing: -.06em; font-weight: 850; color: var(--text); }
     .key-total-sub { color: var(--muted); line-height: 1.45; font-size: 13px; }
     .key-stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .key-stat { border: 1px solid rgba(26,40,52,.10); border-radius: 8px; padding: 12px; background: rgba(255,255,255,.55); }
+    .key-stat { border: 1px solid var(--line-soft); border-radius: 8px; padding: 12px; background: rgba(11,15,20,.32); }
     .key-stat strong { display: block; font-size: 24px; letter-spacing: -.04em; }
     .key-stat span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 850; }
     .key-chart-title { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 12px; }
@@ -2746,16 +4023,17 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .key-chart-row { display: grid; gap: 6px; }
     .key-chart-head { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; }
     .key-chart-head strong { color: var(--text); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .key-chart-track { height: 12px; border-radius: 999px; background: rgba(26,40,52,.10); overflow: hidden; }
+    .key-chart-track { height: 12px; border-radius: 999px; background: rgba(168,179,194,.14); overflow: hidden; }
     .key-chart-fill { display: block; height: 100%; width: var(--width, 0%); border-radius: inherit; background: var(--fill, var(--gold)); }
     .key-donut-wrap { display: grid; place-items: center; gap: 12px; }
-    .key-donut { width: 150px; aspect-ratio: 1; border-radius: 999px; display: grid; place-items: center; background: conic-gradient(var(--green) 0deg, var(--green) 1deg, rgba(26,40,52,.10) 1deg 360deg); box-shadow: inset 0 0 0 1px rgba(26,40,52,.10); }
-    .key-donut-hole { width: 86px; aspect-ratio: 1; border-radius: 999px; display: grid; place-items: center; text-align: center; background: rgba(255,255,255,.96); border: 1px solid rgba(26,40,52,.10); font-weight: 850; line-height: 1.1; }
+    .key-donut { width: 150px; aspect-ratio: 1; border-radius: 999px; display: grid; place-items: center; background: conic-gradient(var(--green) 0deg, var(--green) 1deg, rgba(168,179,194,.14) 1deg 360deg); box-shadow: inset 0 0 0 1px var(--line-soft), 0 16px 32px rgba(0,0,0,.18); }
+    .key-donut-hole { width: 86px; aspect-ratio: 1; border-radius: 999px; display: grid; place-items: center; text-align: center; background: var(--bg); border: 1px solid var(--line-soft); color: var(--text); font-weight: 850; line-height: 1.1; }
     .key-donut-hole span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; margin-top: 3px; }
     .key-legend { display: grid; gap: 8px; width: 100%; }
     .key-legend-row { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; }
     .key-legend-row strong { color: var(--text); }
     .key-legend-dot { width: 9px; height: 9px; border-radius: 999px; display: inline-block; margin-right: 7px; vertical-align: middle; background: var(--dot, var(--gold)); }
+    .key-overview-panel .empty { background: rgba(11,15,20,.32); border-color: var(--line-soft); color: var(--muted); }
     .row-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: start; }
     .slot-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     .slot-form label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
@@ -2771,11 +4049,14 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
     .empty, .notice { color: var(--muted); border: 1px dashed rgba(26,40,52,.22); border-radius: 8px; padding: 18px; background: rgba(248,250,252,.78); }
     .notice.error { color: var(--red); border-color: rgba(220,38,38,.3); }
     @media (max-width: 1360px) { .inventory-record-main, .inventory-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .inventory-table-head { display: none; } .inventory-cell-label { display: block; } .inventory-record-actions { justify-content: flex-start; } }
-    @media (max-width: 1100px) { .filters, .kpis, .two, .inventory-fields, .slot-form, .keys-provider-slot-form, .keys-incident-form, .key-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .key-chart-card:last-child { grid-column: 1 / -1; } .inventory-filter-grid #inventorySearch { grid-column: auto; } }
-    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two, .inventory-head, .inventory-fields, .slot-form, .keys-provider-slot-form, .keys-incident-form, .keys-incident-layout, .inventory-filter-grid, .inventory-bulk-review, .inventory-command-actions, .inventory-record-main, .inventory-detail-grid, .inventory-side-rail, .key-overview-grid, .key-stat-grid { grid-template-columns: 1fr; } .key-chart-card:last-child { grid-column: auto; } .inventory-field.wide, .slot-form .wide, .inventory-filter-grid #inventorySearch { grid-column: auto; } .inventory-command-head, .inventory-board-head { flex-direction: column; } .inventory-export-row { justify-content: flex-start; } }
+    @media (max-width: 1100px) { .filters, .kpis, .two, .inventory-fields, .slot-form, .workload-form-grid, .keys-provider-slot-form, .keys-incident-form, .inventory-overview-grid, .key-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .key-chart-card:last-child { grid-column: 1 / -1; } .inventory-filter-grid #inventorySearch { grid-column: auto; } }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .filters, .kpis, .two, .inventory-head, .inventory-fields, .slot-form, .workload-form-grid, .keys-provider-slot-form, .keys-incident-form, .keys-incident-layout, .inventory-filter-grid, .inventory-bulk-review, .inventory-command-actions, .inventory-record-main, .inventory-detail-grid, .inventory-side-rail, .inventory-overview-grid, .inventory-overview-stats, .key-overview-grid, .key-stat-grid { grid-template-columns: 1fr; } .key-chart-card:last-child { grid-column: auto; } .inventory-field.wide, .slot-form .wide, .workload-form-grid .wide, .inventory-filter-grid #inventorySearch { grid-column: auto; } .inventory-command-head, .inventory-board-head, .inventory-overview-head, .workload-create-head { flex-direction: column; } .inventory-export-row { justify-content: flex-start; } }
     ${ENTERPRISE_APP_SHELL_THEME}
     ${ENTERPRISE_STATIC_APP_POLISH_THEME}
     ${pageName === 'inventory' ? ENTERPRISE_INVENTORY_SHADCN_THEME : ''}
+    ${pageName === 'keys' ? ENTERPRISE_KEYS_SHADCN_THEME : ''}
+    ${pageName === 'policy' ? ENTERPRISE_POLICY_SHADCN_THEME : ''}
+    ${pageName === 'rollout' ? ENTERPRISE_ROLLOUT_SHADCN_THEME : ''}
   </style>
 </head>
 <body>
@@ -2791,6 +4072,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
         </div>
         <div class="toolbar">
           <select id="orgSelect" aria-label="Organization"><option>Loading org...</option></select>
+          ${pageName === 'projects' ? '<button id="focusWorkloadCreate" class="primary" type="button">create workload</button>' : ''}
           ${pageName === 'keys' ? '<button id="openProviderSlotForm" class="primary" type="button">add slot</button><button id="copyExposureResponseReportBtn" type="button">copy incident report</button>' : ''}
           ${pageName === 'inventory' ? '<button id="openManualApiKeyForm" class="primary" type="button">add API key</button><button id="openInventoryImportForm" type="button">import CSV/OpenAPI</button>' : ''}
           ${pageName === 'policy' ? '<button id="copyPolicyBriefBtn" type="button">copy drift brief</button><button id="copyPolicyJsonBtn" class="primary" type="button">copy policy JSON</button>' : ''}
@@ -2833,7 +4115,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       </section>` : ''}
 
       ${pageName === 'keys' ? `
-      <section id="providerSlotFormPanel" class="card keys-form-panel" style="display:none;margin-bottom:16px">
+      <section id="providerSlotFormPanel" class="card keys-form-panel keys-slot-form-panel" style="display:none;margin-bottom:16px">
         <div class="section-title"><h2>Add provider slot</h2><span class="mini">placeholder material</span></div>
         <form id="providerSlotForm">
           <div class="slot-form keys-provider-slot-form">
@@ -2870,12 +4152,13 @@ ${renderDatalistOptions(ENTERPRISE_PROVIDER_SLOT_PRESETS.map((preset) => preset.
         </form>
       </section>` : ''}
 
+      ${pageName !== 'policy' ? `
       <section class="grid kpis">
-        <div class="card"><div class="kpi-label">projects</div><div class="kpi-value" id="kpiProjects">...</div><div class="kpi-sub">active scopes</div></div>
+        <div class="card"><div class="kpi-label">workloads</div><div class="kpi-value" id="kpiProjects">...</div><div class="kpi-sub">active scopes</div></div>
         <div class="card"><div class="kpi-label">provider slots</div><div class="kpi-value" id="kpiKeys">...</div><div class="kpi-sub" id="kpiProviders">active providers</div></div>
         <div class="card"><div class="kpi-label">calls</div><div class="kpi-value" id="kpiCalls">...</div><div class="kpi-sub">all-time proxy logs</div></div>
         <div class="card"><div class="kpi-label">denied</div><div class="kpi-value" id="kpiDenied">...</div><div class="kpi-sub">401 / 403 / 429</div></div>
-      </section>
+      </section>` : ''}
 
       <section id="activityPanel" class="card" style="display:none">
         <div class="section-title"><h2>Runtime activity</h2><span id="activityMeta" class="mini"></span></div>
@@ -2893,17 +4176,100 @@ ${renderDatalistOptions(ENTERPRISE_PROVIDER_SLOT_PRESETS.map((preset) => preset.
       </section>
 
       <section id="projectsPanel" class="grid two" style="display:none">
+        <section id="workloadCreatePanel" class="card workload-create-panel">
+          <div class="workload-create-head">
+            <div>
+              <h2>Create workload</h2>
+              <p>Set up the app, service, agent, or environment that will use protected provider APIs through VaultProof. Org admins create the workload; provider keys stay on the Provider Slots page.</p>
+            </div>
+            <span id="workloadCreateRole" class="tag">org admin</span>
+          </div>
+          <form id="workloadCreateForm" class="workload-create-form">
+            <div class="workload-form-grid">
+              <label class="wide">Workload name
+                <input id="workloadName" required maxlength="120" placeholder="Production AI support agent" />
+              </label>
+              <label>First provider
+                <input id="workloadProvider" list="providerSlotOptions" maxlength="64" placeholder="openai, deepl, resend" />
+              </label>
+              <label>Rate limit / min
+                <input id="workloadRateLimit" type="number" min="1" max="60000" placeholder="120" />
+              </label>
+              <label class="wide">Allowed origins
+                <input id="workloadOrigins" placeholder="https://app.example.com, https://admin.example.com" />
+              </label>
+              <label>Gateway
+                <input id="workloadGateway" maxlength="96" placeholder="vaultproof-managed" />
+              </label>
+              <label>Client class
+                <select id="workloadClientClass">
+                  <option value="">not set</option>
+                  <option value="browser">browser</option>
+                  <option value="server">server</option>
+                  <option value="agent">agent</option>
+                  <option value="ci">CI/CD</option>
+                </select>
+              </label>
+              <label class="workload-toggle">
+                <input id="workloadStrictOrigin" type="checkbox" />
+                Enforce strict origin lock
+              </label>
+            </div>
+            <div class="workload-create-actions">
+              <button id="createWorkloadBtn" class="primary" type="submit">create workload</button>
+              <p class="workload-create-note">After creation, add provider slots and tighten policy in Control before production traffic.</p>
+            </div>
+            <datalist id="providerSlotOptions">
+${renderDatalistOptions(ENTERPRISE_PROVIDER_SLOT_PRESETS.map((preset) => preset.id))}
+            </datalist>
+          </form>
+        </section>
         <div class="card">
-          <div class="section-title"><h2>Project inventory</h2><span id="projectMeta" class="mini"></span></div>
-          <div id="projectList" class="list"><div class="empty">Loading projects...</div></div>
+          <div class="section-title"><h2>Workload inventory</h2><span id="projectMeta" class="mini"></span></div>
+          <div id="projectList" class="list"><div class="empty">Loading workloads...</div></div>
         </div>
         <div class="card">
-          <div class="section-title"><h2>Project health</h2><span id="healthMeta" class="mini"></span></div>
+          <div class="section-title"><h2>Workload health</h2><span id="healthMeta" class="mini"></span></div>
           <div id="healthList" class="list"><div class="empty">Loading health...</div></div>
         </div>
       </section>
 
       <section id="inventoryPanel" class="inventory-page" style="display:none">
+        <section id="inventoryOverviewPanel" class="inventory-overview-panel">
+          <div class="inventory-overview-head">
+            <div>
+              <h2>Inventory overview</h2>
+              <p>Start here: coverage, review state, and risk/traffic gaps before digging into individual API surfaces.</p>
+            </div>
+            <span id="inventoryOverviewMeta" class="tag good">metadata-only</span>
+          </div>
+          <div class="inventory-overview-grid">
+            <article class="inventory-overview-card inventory-overview-total">
+              <div>
+                <div class="kpi-label">API surfaces</div>
+                <div id="inventorySurfaceTotal" class="inventory-overview-value">...</div>
+                <div id="inventorySurfaceSub" class="inventory-overview-sub">Loading API inventory coverage.</div>
+              </div>
+              <div class="inventory-overview-stats">
+                <div class="inventory-overview-stat"><strong id="inventoryProtectedValue">0</strong><span>protected</span></div>
+                <div class="inventory-overview-stat"><strong id="inventoryReviewDueValue">0</strong><span>review due</span></div>
+                <div class="inventory-overview-stat"><strong id="inventoryBlockedValue">0</strong><span>blocked</span></div>
+              </div>
+            </article>
+            <article class="inventory-chart-card">
+              <div class="inventory-chart-title"><h3>Coverage</h3><span id="inventoryCoverageMeta" class="mini">protection gaps</span></div>
+              <div id="inventoryCoverageChart" class="inventory-chart-bars"><div class="empty">Loading coverage...</div></div>
+            </article>
+            <article class="inventory-chart-card">
+              <div class="inventory-chart-title"><h3>Review state</h3><span id="inventoryReviewMeta" class="mini">approval mix</span></div>
+              <div id="inventoryReviewChart" class="inventory-chart-bars"><div class="empty">Loading review state...</div></div>
+            </article>
+            <article class="inventory-chart-card">
+              <div class="inventory-chart-title"><h3>Risk & traffic</h3><span id="inventoryRiskTrafficMeta" class="mini">attention signals</span></div>
+              <div id="inventoryRiskTrafficChart" class="inventory-chart-bars"><div class="empty">Loading risk signals...</div></div>
+            </article>
+          </div>
+        </section>
         <div id="inventoryImportFormPanel" class="card" style="display:none;grid-column:1/-1">
           <div class="section-title"><h2>Import CSV/OpenAPI</h2><span class="mini">metadata only</span></div>
           <form id="inventoryImportForm">
@@ -3108,7 +4474,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       </section>
 
       <section id="policyPanel" class="grid two" style="display:none">
-        <div class="card" style="grid-column:1/-1">
+        <div class="card policy-board-panel" style="grid-column:1/-1">
           <div class="section-title"><h2>Policy drift board</h2><span id="policyMeta" class="mini">accepted-risk records</span></div>
           <form id="policyFilterForm" class="filters policy-filters">
             <input id="policySearch" type="search" placeholder="Search control, project, provider, owner..." />
@@ -3145,18 +4511,18 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           </form>
           <div id="policyList" class="list"><div class="empty">Loading policy drift...</div></div>
         </div>
-        <div class="card">
+        <div class="card policy-summary-panel">
           <div class="section-title"><h2>Exception evidence</h2><span class="mini">no secrets</span></div>
           <div id="policySummaryList" class="list"></div>
         </div>
-        <div class="card">
+        <div class="card policy-workflow-panel">
           <div class="section-title"><h2>Review workflow</h2><span class="mini">paid-user ready</span></div>
           <div id="policyWorkflowList" class="list"></div>
         </div>
       </section>
 
       <section id="rolloutPanel" class="grid two" style="display:none">
-        <div class="card" style="grid-column:1/-1">
+        <div class="card rollout-board-panel" style="grid-column:1/-1">
           <div class="section-title"><h2>Integration rollout board</h2><span id="rolloutMeta" class="mini">workload cutover</span></div>
           <form id="rolloutFilterForm" class="filters rollout-filters">
             <input id="rolloutSearch" type="search" placeholder="Search workload, project, provider, owner..." />
@@ -3201,18 +4567,18 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           </form>
           <div id="rolloutList" class="list"><div class="empty">Loading integration rollout...</div></div>
         </div>
-        <div class="card">
+        <div class="card rollout-summary-panel">
           <div class="section-title"><h2>Rollout evidence</h2><span class="mini">no secrets</span></div>
           <div id="rolloutSummaryList" class="list"></div>
         </div>
-        <div class="card">
+        <div class="card rollout-workflow-panel">
           <div class="section-title"><h2>Cutover workflow</h2><span class="mini">customer-safe</span></div>
           <div id="rolloutWorkflowList" class="list"></div>
         </div>
       </section>
 
       ${pageName === 'keys' ? `
-      <section id="exposureResponsePanel" class="grid keys-incident-layout" style="display:none;margin-bottom:16px">
+      <section id="exposureResponsePanel" class="grid keys-incident-layout keys-response-panel" style="display:none;margin-bottom:16px">
         <div class="card keys-exposure-form-card">
           <div class="section-title"><h2>Key exposure response</h2><span id="exposureResponseMeta" class="mini">incident mode</span></div>
           <form id="exposureResponseForm" class="slot-form keys-incident-form">
@@ -3253,7 +4619,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         </div>
       </section>
 
-      <section id="emailKeyDemoPanel" class="grid two" style="display:none;margin-bottom:16px">
+      <section id="emailKeyDemoPanel" class="grid two keys-email-panel" style="display:none;margin-bottom:16px">
         <div class="card">
           <div class="section-title"><h2>Email API key walkthrough</h2><span class="mini">required for pilot</span></div>
           <div id="emailKeyDemoList" class="list"></div>
@@ -3269,13 +4635,13 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         </div>
       </section>` : ''}
 
-      <section id="keysPanel" class="card" style="display:none">
+      <section id="keysPanel" class="card keys-board-panel" style="display:none">
         <div class="section-title"><h2>Provider slots</h2><span id="keyMeta" class="mini"></span></div>
         <div id="keyList" class="list"><div class="empty">Loading provider slots...</div></div>
       </section>
 
       ${pageName === 'keys' ? `
-      <section id="apiProxyTestPanel" class="card" style="display:none;margin-top:16px">
+      <section id="apiProxyTestPanel" class="card keys-proxy-panel" style="display:none;margin-top:16px">
         <div class="section-title"><h2>Customer API proxy test kit</h2><span id="apiProxyTestMeta" class="mini">copy-safe</span></div>
         <div id="apiProxyTestList" class="list"><div class="empty">Loading self-test kit...</div></div>
       </section>` : ''}
@@ -3288,6 +4654,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       var ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
       var token = localStorage.getItem('vaultproof_token') || '';
       var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
+      var currentOrgRole = '';
       var cachedProjects = [];
       var cachedOverview = {};
       var cachedInventoryRows = [];
@@ -3507,6 +4874,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           || orgs.find(function(org) { return org.kind && org.kind !== 'personal'; })
           || orgs[0];
         currentOrgId = selected ? selected.id : '';
+        currentOrgRole = selected ? (selected.role || '') : '';
         if (currentOrgId) {
           localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, currentOrgId);
           select.value = currentOrgId;
@@ -3551,6 +4919,79 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           inventoryImportProject.innerHTML = '<option value="">Unassigned import records</option>' + cachedProjects.map(function(project) {
             return '<option value="' + escapeHtml(project.id) + '">' + escapeHtml(project.name || project.vp_proj_id) + ' - ' + escapeHtml(project.project_role || 'member') + '</option>';
           }).join('');
+        }
+      }
+      function canCreateWorkload(role) {
+        return ['owner', 'admin', 'security_admin', 'platform_admin'].indexOf(String(role || '')) !== -1;
+      }
+      function syncWorkloadCreateState() {
+        var panel = byId('workloadCreatePanel');
+        if (!panel) return;
+        var allowed = canCreateWorkload(currentOrgRole);
+        var roleBadge = byId('workloadCreateRole');
+        if (roleBadge) {
+          roleBadge.className = 'tag ' + (allowed ? 'good' : 'warn');
+          roleBadge.textContent = allowed ? 'org admin' : ((currentOrgRole || 'viewer') + ' access');
+        }
+        ['workloadName', 'workloadProvider', 'workloadRateLimit', 'workloadOrigins', 'workloadGateway', 'workloadClientClass', 'workloadStrictOrigin', 'createWorkloadBtn'].forEach(function(id) {
+          var el = byId(id);
+          if (el) el.disabled = !allowed;
+        });
+        var note = panel.querySelector('.workload-create-note');
+        if (note && !allowed) note.textContent = 'Only organization owners/admins, security admins, and platform admins can create workloads.';
+        if (note && allowed) note.textContent = 'After creation, add provider slots and tighten policy in Control before production traffic.';
+      }
+      async function submitWorkloadCreateForm(event) {
+        event.preventDefault();
+        if (!canCreateWorkload(currentOrgRole)) {
+          notice('Only organization admins can create workloads.');
+          return;
+        }
+        var name = (byId('workloadName').value || '').trim();
+        var origins = (byId('workloadOrigins').value || '').trim();
+        var provider = (byId('workloadProvider').value || '').trim().toLowerCase();
+        var gateway = (byId('workloadGateway').value || '').trim().toLowerCase();
+        var clientClass = (byId('workloadClientClass').value || '').trim().toLowerCase();
+        var rateLimitValue = (byId('workloadRateLimit').value || '').trim();
+        var strictOrigin = byId('workloadStrictOrigin').checked === true;
+        if (!name) {
+          notice('Add a workload name first.');
+          return;
+        }
+        if (strictOrigin && !origins) {
+          notice('Strict origin lock needs at least one allowed origin.');
+          return;
+        }
+        var callerLockPolicy = {};
+        if (provider) callerLockPolicy.allowed_providers = [provider];
+        if (gateway) callerLockPolicy.allowed_customer_gateways = [gateway];
+        if (clientClass) callerLockPolicy.allowed_client_classes = [clientClass];
+        if (rateLimitValue) {
+          var rateLimit = Number(rateLimitValue);
+          if (!Number.isInteger(rateLimit) || rateLimit < 1 || rateLimit > 60000) {
+            notice('Rate limit must be a whole number between 1 and 60000.');
+            return;
+          }
+          callerLockPolicy.rate_limit_per_minute = rateLimit;
+        }
+        try {
+          byId('createWorkloadBtn').disabled = true;
+          await fetchJson('/api/v1/enterprise/projects', {
+            method: 'POST',
+            body: JSON.stringify({
+              name: name,
+              allowed_origins: origins || null,
+              strict_origin: strictOrigin,
+              caller_lock_policy: callerLockPolicy
+            })
+          });
+          byId('workloadCreateForm').reset();
+          notice('Workload created. Add its provider slot next, then tighten policy in Control.');
+          await reload();
+        } catch (error) {
+          notice(error && error.message ? error.message : 'Workload creation failed.');
+        } finally {
+          syncWorkloadCreateState();
         }
       }
       function inventoryStorageKey() {
@@ -4304,6 +5745,50 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       function inventorySummary() {
         return inventorySummaryForRows(cachedInventoryRows);
       }
+      function renderInventoryChartRows(items, total) {
+        var denominator = Math.max(1, Number(total || 0));
+        return items.map(function(item) {
+          var value = Number(item.value || 0);
+          var width = Math.max(value > 0 ? 3 : 0, Math.min(100, Math.round((value / denominator) * 100)));
+          return '<div class="inventory-chart-row"><div class="inventory-chart-head"><strong>' + escapeHtml(item.label) + '</strong><span>' + number(value) + '</span></div><div class="inventory-chart-track"><span class="inventory-chart-fill" style="--width:' + width + '%;--fill:' + escapeHtml(item.fill || 'var(--gold)') + '"></span></div></div>';
+        }).join('');
+      }
+      function renderInventoryOverview() {
+        if (PAGE_MODE !== 'inventory') return;
+        var rows = cachedInventoryRows || [];
+        var summary = inventorySummaryForRows(rows);
+        var lowRisk = rows.filter(function(row) { return row.annotation && row.annotation.risk === 'low'; }).length;
+        var mediumRisk = rows.filter(function(row) { return row.annotation && row.annotation.risk === 'medium'; }).length;
+        var highOrCritical = summary.high_risk + summary.critical_risk;
+        var attention = summary.blocked + summary.review_due + summary.policy_incomplete + summary.no_recent_traffic;
+        text('inventoryOverviewMeta', summary.total ? number(attention) + ' attention signals' : 'metadata-only');
+        text('inventorySurfaceTotal', number(summary.total));
+        text('inventorySurfaceSub', number(summary.manual_api_keys) + ' manual records, ' + number(summary.imported_api_hints) + ' imported hints, ' + number(summary.missing_provider_slot) + ' missing provider slots.');
+        text('inventoryProtectedValue', number(summary.protected));
+        text('inventoryReviewDueValue', number(summary.review_due));
+        text('inventoryBlockedValue', number(summary.blocked));
+        text('inventoryCoverageMeta', summary.total ? number(Math.round((summary.protected / summary.total) * 100)) + '% protected' : 'protection gaps');
+        text('inventoryReviewMeta', summary.total ? number(summary.approved) + ' approved' : 'approval mix');
+        text('inventoryRiskTrafficMeta', highOrCritical || summary.no_recent_traffic ? number(highOrCritical + summary.no_recent_traffic) + ' attention' : 'clean');
+        byId('inventoryCoverageChart').innerHTML = summary.total ? renderInventoryChartRows([
+          { label: 'Protected', value: summary.protected, fill: '#8ab4f8' },
+          { label: 'Missing slot', value: summary.missing_provider_slot, fill: '#f87171' },
+          { label: 'Needs sealed ingest', value: summary.needs_sealed_ingest, fill: '#fbbf24' },
+          { label: 'Policy incomplete', value: summary.policy_incomplete, fill: '#f59e0b' }
+        ], summary.total) : '<div class="empty">No API surfaces yet.</div>';
+        byId('inventoryReviewChart').innerHTML = summary.total ? renderInventoryChartRows([
+          { label: 'Approved', value: summary.approved, fill: '#4ade80' },
+          { label: 'Needs review', value: summary.needs_review, fill: '#fbbf24' },
+          { label: 'Exception', value: summary.exceptions, fill: '#93c5fd' },
+          { label: 'Blocked', value: summary.blocked, fill: '#f87171' }
+        ], summary.total) : '<div class="empty">No review state yet.</div>';
+        byId('inventoryRiskTrafficChart').innerHTML = summary.total ? renderInventoryChartRows([
+          { label: 'Critical risk', value: summary.critical_risk, fill: '#ef4444' },
+          { label: 'High risk', value: summary.high_risk, fill: '#f59e0b' },
+          { label: 'Medium/low risk', value: mediumRisk + lowRisk, fill: '#8ab4f8' },
+          { label: 'No recent traffic', value: summary.no_recent_traffic, fill: '#a8b3c2' }
+        ], summary.total) : '<div class="empty">No risk or traffic signals yet.</div>';
+      }
       function inventoryFilterState() {
         return {
           search: ((byId('inventorySearch') && byId('inventorySearch').value) || '').trim().toLowerCase(),
@@ -4620,19 +6105,13 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       function renderInventorySummary() {
         if (PAGE_MODE !== 'inventory') return;
         var summary = inventorySummary();
-        byId('inventorySummaryList').innerHTML =
-          '<div class="inventory-summary-metrics">' +
-            '<div class="inventory-metric-card"><strong>' + number(summary.total) + '</strong><span>surfaces</span></div>' +
-            '<div class="inventory-metric-card"><strong>' + number(summary.protected) + '</strong><span>protected</span></div>' +
-            '<div class="inventory-metric-card"><strong>' + number(summary.review_due) + '</strong><span>review due</span></div>' +
-            '<div class="inventory-metric-card"><strong>' + number(summary.blocked) + '</strong><span>blocked</span></div>' +
-          '</div>' +
-          [
+        renderInventoryOverview();
+        byId('inventorySummaryList').innerHTML = [
             '<div class="row"><div><div class="row-title">Coverage</div><div class="row-sub">' + number(summary.missing_provider_slot) + ' missing provider slot, ' + number(summary.policy_incomplete) + ' policy incomplete, and ' + number(summary.no_recent_traffic) + ' without traffic evidence.</div></div><span class="tag ' + (summary.missing_provider_slot || summary.policy_incomplete ? 'warn' : 'good') + '">' + (summary.missing_provider_slot || summary.policy_incomplete ? 'review' : 'ready') + '</span></div>',
             '<div class="row"><div><div class="row-title">Manual records</div><div class="row-sub">' + number(summary.manual_api_keys) + ' metadata-only manual key records; ' + number(summary.needs_sealed_ingest) + ' need sealed ingest before protected execution.</div></div><span class="tag warn">metadata</span></div>',
             '<div class="row"><div><div class="row-title">Imports</div><div class="row-sub">' + number(summary.imported_api_hints) + ' CSV/OpenAPI hints are saved locally and reviewed like manual records.</div></div><span class="tag good">safe import</span></div>',
             '<div class="row"><div><div class="row-title">Secret boundary</div><div class="row-sub">Inventory records exclude raw provider keys, encrypted shares, bearer tokens, OAuth secrets, SAML material, request bodies, response bodies, and customer payloads.</div></div><span class="tag good">redacted</span></div>'
-          ].join('');
+        ].join('');
         byId('inventoryWorkflowList').innerHTML = [
           '<div class="row"><div><div class="row-title">1. Import or add metadata</div><div class="row-sub">Bring in CSV/OpenAPI hints or add one manual API record. Keep raw keys out of the inventory.</div></div><button class="tag good" type="button" data-action="open-inventory-import">import</button></div>',
           '<div class="row"><div><div class="row-title">2. Seal the real key</div><div class="row-sub">Move the selected provider behind VaultProof once ownership, scope, and risk are known.</div></div><a class="tag good" href="/app/keys">provider slots</a></div>',
@@ -4646,6 +6125,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         if (panel) panel.style.display = PAGE_MODE === 'inventory' ? 'grid' : 'none';
         if (PAGE_MODE !== 'inventory') return;
         cachedInventoryRows = buildInventoryRows();
+        renderInventoryOverview();
         renderInventoryList();
         renderInventorySummary();
       }
@@ -5600,7 +7080,8 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       function renderProjects() {
         byId('projectsPanel').style.display = PAGE_MODE === 'projects' ? 'grid' : 'none';
         if (PAGE_MODE !== 'projects') return;
-        text('projectMeta', cachedProjects.length + ' active projects');
+        syncWorkloadCreateState();
+        text('projectMeta', cachedProjects.length + ' active workloads');
         var projectList = byId('projectList');
         projectList.innerHTML = cachedProjects.length ? cachedProjects.map(function(project) {
           var policy = project.caller_lock_policy || {};
@@ -5608,13 +7089,13 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           var liveSlots = (project.provider_slots || []).filter(function(slot) { return slot.material_mode === 'sealed-live'; }).length;
           var demoSlots = (project.provider_slots || []).filter(function(slot) { return slot.material_mode === 'demo-placeholder'; }).length;
           return '<div class="row"><div><div class="row-title">' + escapeHtml(project.name || project.vp_proj_id) + '</div><div class="row-sub">' + escapeHtml(project.vp_proj_id) + ' - ' + escapeHtml(project.project_role) + ' via ' + escapeHtml(project.access_via) + ' - created ' + escapeHtml(rel(project.created_at)) + '</div><div><span class="tag ' + (project.strict_origin ? 'good' : 'warn') + '">' + (project.strict_origin ? 'strict origin' : 'origin relaxed') + '</span><span class="tag">' + providers.length + ' provider slots</span><span class="tag ' + (liveSlots ? 'good' : 'warn') + '">' + liveSlots + ' live sealed</span><span class="tag ' + (demoSlots ? 'warn' : '') + '">' + demoSlots + ' placeholder</span><span class="tag">' + (policy.rate_limit_per_minute ? policy.rate_limit_per_minute + '/min' : 'no project rate cap') + '</span></div></div><a class="tag" href="/app/control">control</a></div>';
-        }).join('') : '<div class="empty">No active enterprise projects yet.</div>';
+        }).join('') : '<div class="empty">No active enterprise workloads yet. Create the first workload above, then add a provider slot.</div>';
         var health = Array.isArray(cachedOverview.projectHealth) ? cachedOverview.projectHealth : [];
         text('healthMeta', (cachedOverview.healthWindowDays || 7) + 'd window');
         byId('healthList').innerHTML = health.length ? health.map(function(project) {
           var cls = project.denied || project.errors ? 'bad' : project.calls ? 'good' : 'warn';
           return '<div class="row"><div><div class="row-title">' + escapeHtml(project.name || project.vp_proj_id) + '</div><div class="row-sub">calls ' + number(project.calls) + ' - errors ' + number(project.errors) + ' - denied ' + number(project.denied) + ' - last ' + escapeHtml(rel(project.lastActivity)) + '</div></div><span class="tag ' + cls + '">' + (project.calls ? 'traffic' : 'idle') + '</span></div>';
-        }).join('') : '<div class="empty">No project health data yet.</div>';
+        }).join('') : '<div class="empty">No workload health data yet.</div>';
       }
       async function renderActivity() {
         byId('activityPanel').style.display = PAGE_MODE === 'activity' ? 'block' : 'none';
@@ -5691,7 +7172,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             var a = liveDeg;
             var b = liveDeg + placeholderDeg;
             var c = liveDeg + placeholderDeg + mixedDeg;
-            donut.style.background = 'conic-gradient(#15803d 0deg ' + a + 'deg, #b45309 ' + a + 'deg ' + b + 'deg, #2563eb ' + b + 'deg ' + c + 'deg, #dc2626 ' + c + 'deg 360deg)';
+            donut.style.background = 'conic-gradient(#4ade80 0deg ' + a + 'deg, #fbbf24 ' + a + 'deg ' + b + 'deg, #8ab4f8 ' + b + 'deg ' + c + 'deg, #f87171 ' + c + 'deg 360deg)';
           } else {
             donut.style.background = 'conic-gradient(rgba(82,97,112,.22) 0deg 360deg)';
           }
@@ -5699,10 +7180,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         var legend = byId('keyStatusLegend');
         if (legend) {
           legend.innerHTML = [
-            '<div class="key-legend-row"><span><i class="key-legend-dot" style="--dot:#15803d"></i>Live sealed</span><strong>' + number(summary.live) + '</strong></div>',
-            '<div class="key-legend-row"><span><i class="key-legend-dot" style="--dot:#b45309"></i>Placeholder</span><strong>' + number(summary.placeholder) + '</strong></div>',
-            '<div class="key-legend-row"><span><i class="key-legend-dot" style="--dot:#2563eb"></i>Mixed</span><strong>' + number(summary.mixed) + '</strong></div>',
-            '<div class="key-legend-row"><span><i class="key-legend-dot" style="--dot:#dc2626"></i>Missing</span><strong>' + number(summary.missing) + '</strong></div>'
+            '<div class="key-legend-row"><span><i class="key-legend-dot" style="--dot:#4ade80"></i>Live sealed</span><strong>' + number(summary.live) + '</strong></div>',
+            '<div class="key-legend-row"><span><i class="key-legend-dot" style="--dot:#fbbf24"></i>Placeholder</span><strong>' + number(summary.placeholder) + '</strong></div>',
+            '<div class="key-legend-row"><span><i class="key-legend-dot" style="--dot:#8ab4f8"></i>Mixed</span><strong>' + number(summary.mixed) + '</strong></div>',
+            '<div class="key-legend-row"><span><i class="key-legend-dot" style="--dot:#f87171"></i>Missing</span><strong>' + number(summary.missing) + '</strong></div>'
           ].join('');
         }
         var providerRows = Object.keys(summary.providers).map(function(provider) {
@@ -5716,7 +7197,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         if (chart) {
           chart.innerHTML = providerRows.length ? providerRows.slice(0, 10).map(function(row, index) {
             var width = maxCount ? Math.max(8, Math.round((row.count / maxCount) * 100)) : 0;
-            var fill = index === 0 ? '#315f95' : index === 1 ? '#15803d' : index === 2 ? '#b45309' : '#2563eb';
+            var fill = index === 0 ? '#8ab4f8' : index === 1 ? '#4ade80' : index === 2 ? '#fbbf24' : '#93c5fd';
             return '<div class="key-chart-row"><div class="key-chart-head"><strong>' + escapeHtml(row.provider) + '</strong><span>' + number(row.count) + ' ' + (row.count === 1 ? 'key' : 'keys') + '</span></div><div class="key-chart-track"><span class="key-chart-fill" style="--width:' + width + '%;--fill:' + fill + '"></span></div></div>';
           }).join('') : '<div class="empty">No protected API keys are visible yet. Add a provider slot to start the key inventory.</div>';
         }
@@ -5758,9 +7239,9 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             var materialMode = item.slot.material_mode || 'missing';
             var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
             var materialLabel = displayMaterialMode(materialMode);
-            var action = '<button type="button" class="primary" data-action="email-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">protected email dry-run</button><button type="button" data-action="email-deny-test" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">blocked recipient test</button>';
+            var action = '<div class="row-actions"><button type="button" class="primary" data-action="email-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">protected email dry-run</button><button type="button" data-action="email-deny-test" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">blocked recipient test</button></div>';
             return '<div class="row"><div><div class="row-title">' + escapeHtml(emailProviderLabel(item.slot.provider)) + ' protected send</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - path ' + escapeHtml(emailDemoPath(item.slot)) + ' - material ' + escapeHtml(materialLabel) + '</div><div><span class="tag ' + materialClass + '">' + escapeHtml(materialLabel) + '</span><span class="tag good">no raw key in browser</span><span class="tag">audit evidence</span><span class="tag warn">recipient allowlist</span></div></div>' + action + '</div>';
-          }).join('') : '<div class="row"><div><div class="row-title">No email provider key protected yet</div><div class="row-sub">Create a Resend, SendGrid, Mailgun, Postmark, or AWS SES provider slot, then run protected email dry-run before the customer walkthrough.</div><div><span class="tag warn">required for pilot</span><span class="tag">raw keys stay out</span></div></div><button type="button" class="primary" data-action="prefill-email-slot">create resend slot</button></div>';
+          }).join('') : '<div class="row"><div><div class="row-title">No email provider key protected yet</div><div class="row-sub">Create a Resend, SendGrid, Mailgun, Postmark, or AWS SES provider slot, then run protected email dry-run before the customer walkthrough.</div><div><span class="tag warn">required for pilot</span><span class="tag">raw keys stay out</span></div></div><div class="row-actions"><button type="button" class="primary" data-action="prefill-email-slot">create resend slot</button></div></div>';
         }
         byId('keyList').innerHTML = rows.length ? rows.map(function(item) {
           var policy = item.project.caller_lock_policy || {};
@@ -5773,7 +7254,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
           var materialLabel = displayMaterialMode(materialMode);
           var secretKind = slotIsEmailProvider(item.slot) ? 'email API key' : 'provider API key';
-          return '<div class="row"><div><div class="row-title">' + escapeHtml(item.slot.slug || item.slot.provider) + '</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - provider ' + escapeHtml(item.slot.provider) + ' - key id ' + escapeHtml(item.slot.key_id) + '</div><div><span class="tag good">active</span><span class="tag">' + escapeHtml(secretKind) + '</span><span class="tag ' + materialClass + '">' + materialLabel + '</span><span class="tag">' + (override ? 'provider override' : 'project policy') + '</span><span class="tag">rotation: manual checklist</span><span class="tag">SKR: executor-bound</span></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">' + action + '</div></div>';
+          return '<div class="row"><div><div class="row-title">' + escapeHtml(item.slot.slug || item.slot.provider) + '</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - provider ' + escapeHtml(item.slot.provider) + ' - key id ' + escapeHtml(item.slot.key_id) + '</div><div><span class="tag good">active</span><span class="tag">' + escapeHtml(secretKind) + '</span><span class="tag ' + materialClass + '">' + materialLabel + '</span><span class="tag">' + (override ? 'provider override' : 'project policy') + '</span><span class="tag">rotation: manual checklist</span><span class="tag">SKR: executor-bound</span></div></div><div class="row-actions">' + action + '</div></div>';
         }).join('') : '<div class="empty">No active provider slots found.</div>';
       }
       function syncProviderDefaults(force) {
@@ -6257,6 +7738,17 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           renderActivity().catch(function(error) { notice(error && error.message ? error.message : 'Activity failed to load.'); });
         });
       }
+      if (byId('focusWorkloadCreate')) {
+        byId('focusWorkloadCreate').addEventListener('click', function() {
+          var panel = byId('workloadCreatePanel');
+          var input = byId('workloadName');
+          if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (input && input.focus) window.setTimeout(function() { input.focus(); }, 200);
+        });
+      }
+      if (byId('workloadCreateForm')) {
+        byId('workloadCreateForm').addEventListener('submit', submitWorkloadCreateForm);
+      }
       if (byId('openProviderSlotForm')) {
         byId('openProviderSlotForm').addEventListener('click', function() { setProviderSlotFormVisible(true); });
       }
@@ -6716,6 +8208,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
     @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar { flex-direction: column; } .kpis, .two, .launch-check-row, .go-evidence-row, .onboarding-evidence-row, .row, .review-filters, .scanner-form, .scanner-fields, .scanner-head, .release-form, .release-fields, .release-head, .tester-form, .tester-fields, .tester-head, .entitlement-form, .pilot-success-form { grid-template-columns: 1fr; } .go-evidence-row > span:last-child:not(.onboarding-controls) { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .go-status { width: auto; } .row-actions { justify-content: flex-start; } }
     ${ENTERPRISE_APP_SHELL_THEME}
     ${ENTERPRISE_STATIC_APP_POLISH_THEME}
+    ${pageName === 'verifier' ? ENTERPRISE_VERIFIER_SHADCN_THEME : ''}
   </style>
 </head>
 <body>
@@ -6738,11 +8231,11 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
 
       <div id="notice" class="notice error" style="display:none"></div>
 
-      <section id="supportKpis" class="grid kpis">
-        <div class="card"><div class="kpi-label">production</div><div class="kpi-value" id="kpiProduction">...</div><div class="kpi-sub">control plane + executor</div></div>
-        <div class="card"><div class="kpi-label">projects</div><div class="kpi-value" id="kpiProjects">...</div><div class="kpi-sub">active scopes</div></div>
-        <div class="card"><div class="kpi-label">members</div><div class="kpi-value" id="kpiMembers">...</div><div class="kpi-sub" id="kpiOrgRole">org role</div></div>
-        <div class="card"><div class="kpi-label">calls</div><div class="kpi-value" id="kpiCalls">...</div><div class="kpi-sub">proxy traffic</div></div>
+      <section id="supportKpis" class="grid kpis${pageName === 'verifier' ? ' verifier-kpi-grid' : ''}">
+        <div class="card${pageName === 'verifier' ? ' verifier-kpi-card' : ''}"><div class="kpi-label">production</div><div class="kpi-value" id="kpiProduction">...</div><div class="kpi-sub">control plane + executor</div></div>
+        <div class="card${pageName === 'verifier' ? ' verifier-kpi-card' : ''}"><div class="kpi-label">projects</div><div class="kpi-value" id="kpiProjects">...</div><div class="kpi-sub">active scopes</div></div>
+        <div class="card${pageName === 'verifier' ? ' verifier-kpi-card' : ''}"><div class="kpi-label">members</div><div class="kpi-value" id="kpiMembers">...</div><div class="kpi-sub" id="kpiOrgRole">org role</div></div>
+        <div class="card${pageName === 'verifier' ? ' verifier-kpi-card' : ''}"><div class="kpi-label">calls</div><div class="kpi-value" id="kpiCalls">...</div><div class="kpi-sub">proxy traffic</div></div>
       </section>
 
       <section id="launchPanel" class="grid two" style="display:none">
@@ -7767,15 +9260,15 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         </div>
       </section>
 
-      <section id="verifierPanel" class="grid two" style="display:none">
-        <div class="card" style="grid-column:1/-1">
+      <section id="verifierPanel" class="grid two verifier-board" style="display:none">
+        <div class="card verifier-attestation-panel" style="grid-column:1/-1">
           <div class="section-title"><h2>Shared pilot attestation</h2><span class="mini">one confidential runtime proof</span></div>
           <p class="mini">Pilot proof records use the shared VaultProof Enterprise confidential runtime attestation. That proves the VaultProof verifier/control path is running with the expected GCP confidential posture; it does not mean VaultProof ran the customer model.</p>
           <div id="verifierAttestationList" class="list" style="margin-top:12px"></div>
         </div>
-        <div class="card">
+        <div class="card verifier-model-panel">
           <div class="section-title"><h2>Register external model</h2><span class="mini">VaultProof does not run it</span></div>
-          <form id="verifierModelForm" class="list">
+          <form id="verifierModelForm" class="list verifier-form verifier-model-form">
             <select id="verifierModelProjectSelect" aria-label="Verifier model project"><option value="">Loading projects...</option></select>
             <input id="verifierModelRef" placeholder="model ref, for example fraud-xgb-v1" />
             <input id="verifierModelName" placeholder="display name, for example Fraud Score XGBoost v1" />
@@ -7791,12 +9284,12 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             <input id="verifierProofSystems" value="vaultproof-manifest-v1,external-verifier,tee-attestation" aria-label="Allowed proof systems" />
             <button class="primary" type="submit">save model</button>
           </form>
-          <div class="section-title" style="margin-top:18px"><h2>Model registry</h2><span class="mini">allowed models</span></div>
+          <div class="section-title verifier-subsection-title" style="margin-top:18px"><h2>Model registry</h2><span class="mini">allowed models</span></div>
           <div id="verifierModelList" class="list"></div>
         </div>
-        <div class="card">
+        <div class="card verifier-proof-panel">
           <div class="section-title"><h2>Submit proof bundle</h2><span class="mini">verify evidence only</span></div>
-          <form id="verifierProofForm" class="list">
+          <form id="verifierProofForm" class="list verifier-form verifier-proof-form">
             <select id="verifierProofProjectSelect" aria-label="Proof project"><option value="">Loading projects...</option></select>
             <select id="verifierProofModelSelect" aria-label="Proof model"><option value="">Register a model first</option></select>
             <select id="verifierProofSystem" aria-label="Proof system">
@@ -7811,7 +9304,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             <textarea id="verifierProofBundle" placeholder='{"proof_system":"vaultproof-manifest-v1","model_ref":"fraud-xgb-v1","claimed_output_hash":"sha256:..."}'></textarea>
             <button class="primary" type="submit">verify proof bundle</button>
           </form>
-          <div class="section-title" style="margin-top:18px"><h2>Proof verification evidence</h2><span class="mini">latest checks</span></div>
+          <div class="section-title verifier-subsection-title" style="margin-top:18px"><h2>Proof verification evidence</h2><span class="mini">latest checks</span></div>
           <div id="verifierEvidenceList" class="list"></div>
         </div>
       </section>
@@ -13501,6 +14994,381 @@ function escapeHtml(value: string): string {
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;');
+}
+
+function readinessObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function readinessBoolean(value: unknown): boolean {
+  return value === true;
+}
+
+function readinessArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.map((item) => String(item)).filter(Boolean) : [];
+}
+
+function readinessDisplayValue(value: unknown): string {
+  if (typeof value === 'boolean') return value ? 'ready' : 'not ready';
+  if (value === null || value === undefined || value === '') return 'not configured';
+  return String(value);
+}
+
+function readinessTone(value: unknown): 'good' | 'warn' | 'bad' {
+  if (value === true) return 'good';
+  if (value === false || value === null || value === undefined || value === '') return 'bad';
+  return 'warn';
+}
+
+function readinessStatusTone(status: string): 'good' | 'warn' | 'bad' {
+  if (['ready', 'ok', 'production ready', 'demo ready'].includes(status.toLowerCase())) return 'good';
+  if (['hold', 'blocked', 'not ready', 'degraded'].includes(status.toLowerCase())) return 'bad';
+  return 'warn';
+}
+
+function readinessRow(title: string, detail: string, status: string, tone: 'good' | 'warn' | 'bad' = readinessStatusTone(status)): string {
+  return `<div class="readiness-row">
+        <div>
+          <div class="row-title">${escapeHtml(title)}</div>
+          <div class="row-sub">${escapeHtml(detail)}</div>
+        </div>
+        <span class="tag ${tone}">${escapeHtml(status)}</span>
+      </div>`;
+}
+
+function readinessCheckRow(title: string, detail: string, value: unknown): string {
+  return readinessRow(title, detail, readinessDisplayValue(value), readinessTone(value));
+}
+
+function readinessBlockerRows(blockers: string[], emptyText: string): string {
+  if (!blockers.length) {
+    return readinessRow('No blockers reported', emptyText, 'clear', 'good');
+  }
+  return blockers.map((blocker, index) => readinessRow(`Blocker ${index + 1}`, blocker, 'fix', 'bad')).join('');
+}
+
+function readinessNextActionRows(readiness: Record<string, unknown>, productionBlockers: string[]): string {
+  if (readinessBoolean(readiness.production_ready)) {
+    return [
+      readinessRow('Share evidence', 'Open Evidence and Security Review to package this readiness state for the customer.', 'ready', 'good'),
+      readinessRow('Keep monitoring current', 'Review Alerts and Activity before live traffic or a customer review.', 'monitor', 'good'),
+    ].join('');
+  }
+
+  const actions = [
+    readinessRow('Clear production blockers', productionBlockers.length ? `${productionBlockers.length} production blocker(s) need attention before paid traffic.` : 'Production readiness is not green yet.', 'hold', 'bad'),
+    readinessRow('Review runtime setup', 'Open Control, Provider Slots, and Runbooks to finish executor signing, key custody, caller lock, and traffic proof.', 'next', 'warn'),
+    readinessRow('Export evidence after fixes', 'Return here, then open Evidence and Security Review when readiness is green.', 'evidence', 'warn'),
+  ];
+  return actions.join('');
+}
+
+export function renderEnterpriseReadinessPage(
+  readiness: Record<string, unknown>,
+  env: EnterpriseControlPlaneEnv = {},
+): string {
+  const controlPlane = readinessObject(readiness.control_plane);
+  const executor = readinessObject(readiness.executor);
+  const executorHealth = readinessObject(executor.health);
+  const demoBlockers = readinessArray(readiness.demo_blockers);
+  const productionBlockers = readinessArray(readiness.production_blockers);
+  const productionReady = readinessBoolean(readiness.production_ready);
+  const demoReady = readinessBoolean(readiness.demo_ready);
+  const runtimeTier = readinessDisplayValue(readiness.runtime_tier);
+  const dedicatedRuntime = readinessBoolean(readiness.customer_dedicated_runtime);
+  const jsonText = JSON.stringify(readiness, null, 2);
+
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Readiness - VaultProof Enterprise</title>
+  <style>
+    ${ENTERPRISE_RENDERED_APP_BASE_THEME}
+    .main { padding: 30px; max-width: 1380px; width: 100%; }
+    .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 18px; border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 20px; box-shadow: 0 18px 48px rgba(0,0,0,.18); }
+    .kicker { color: var(--soft); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; font-weight: 600; }
+    h1 { margin: 8px 0 8px; color: var(--text); font-size: clamp(34px, 5vw, 56px); line-height: 1; font-weight: 650; }
+    .lead { color: var(--muted); line-height: 1.6; max-width: 780px; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .toolbar a, .toolbar button, .primary { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; padding: 0 14px; background: var(--surface, #151d29); color: var(--text); font: inherit; font-weight: 500; }
+    .primary, button.primary { background: var(--primary-bg); color: var(--primary-text); border-color: var(--primary-border); font-weight: 600; }
+    .grid { display: grid; gap: 16px; }
+    .readiness-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
+    .readiness-layout { grid-template-columns: minmax(0, 1.1fr) minmax(320px, .72fr); align-items: start; }
+    .readiness-rail { display: grid; gap: 16px; }
+    .card { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 20px; box-shadow: 0 18px 48px rgba(0,0,0,.22); overflow: hidden; }
+    .card > .section-title { margin: -20px -20px 16px; padding: 18px 20px; background: linear-gradient(180deg, rgba(21,29,41,.78), rgba(17,24,39,.92)); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .section-title h2 { margin: 0; font-size: 18px; line-height: 1.4; font-weight: 650; }
+    .mini { display: inline-flex; align-items: center; min-height: 26px; border: 1px solid rgba(138,180,248,.22); border-radius: 999px; padding: 4px 8px; background: rgba(138,180,248,.10); color: var(--accent, #8ab4f8); font-size: 13px; line-height: 1; }
+    .kpi-card { border: 1px solid var(--line-soft); border-radius: 8px; padding: 16px; background: linear-gradient(180deg, rgba(21,29,41,.88), rgba(17,24,39,.96)); box-shadow: inset 0 1px 0 rgba(248,250,252,.04); }
+    .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+    .kpi-value { margin-top: 8px; color: var(--text); font-size: 28px; font-weight: 650; line-height: 1; }
+    .kpi-sub { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .list { display: grid; gap: 10px; }
+    .readiness-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 14px; align-items: start; border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: rgba(17,24,39,.92); }
+    .readiness-row:hover { border-color: rgba(138,180,248,.34); background: var(--muted-bg, #151d29); }
+    .row-title { color: var(--text); font-weight: 600; }
+    .row-sub { color: var(--muted); font-size: 13px; line-height: 1.5; margin-top: 5px; }
+    .tag { display: inline-flex; align-items: center; min-height: 26px; border-radius: 999px; padding: 4px 8px; background: rgba(168,179,194,.08); border: 1px solid rgba(168,179,194,.18); color: var(--muted); font-size: 12px; line-height: 1; white-space: nowrap; }
+    .tag.good { background: rgba(74,222,128,.10); border-color: rgba(74,222,128,.24); color: var(--green); }
+    .tag.warn { background: rgba(251,191,36,.10); border-color: rgba(251,191,36,.26); color: var(--warn); }
+    .tag.bad { background: rgba(248,113,113,.10); border-color: rgba(248,113,113,.26); color: var(--red); }
+    .json-box { width: 100%; min-height: 240px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: var(--bg); color: var(--text); font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    @media (max-width: 1100px) { .readiness-kpis, .readiness-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar, .card > .section-title { flex-direction: column; } .readiness-kpis, .readiness-layout { grid-template-columns: 1fr; } .readiness-row { grid-template-columns: 1fr; } }
+    ${ENTERPRISE_APP_SHELL_THEME}
+    ${ENTERPRISE_STATIC_APP_POLISH_THEME}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    ${renderEnterpriseAppSidebar('readiness', 'production gate')}
+    <main class="main readiness-human-page">
+      <div class="topbar">
+        <div>
+          <div class="kicker">production readiness</div>
+          <h1>Readiness</h1>
+          <p class="lead">A readable production gate for the enterprise control plane, secure executor, runtime tier, origin lock, and blockers. The machine JSON is still available when you need to export or automate checks.</p>
+        </div>
+        <div class="toolbar">
+          <a href="/readiness?format=json">machine JSON</a>
+          <button id="copyReadinessJsonBtn" class="primary" type="button">copy JSON</button>
+          <a class="primary" href="/app/evidence">evidence</a>
+        </div>
+      </div>
+
+      <section class="grid readiness-kpis">
+        <div class="kpi-card"><div class="kpi-label">Production</div><div class="kpi-value">${productionReady ? 'Ready' : 'Hold'}</div><div class="kpi-sub">${productionReady ? 'Production traffic gate is clear.' : `${productionBlockers.length} blocker(s) before paid traffic.`}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Demo</div><div class="kpi-value">${demoReady ? 'Ready' : 'Hold'}</div><div class="kpi-sub">${demoReady ? 'Guided demo path is usable.' : `${demoBlockers.length} blocker(s) before demo.`}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Runtime tier</div><div class="kpi-value">${escapeHtml(runtimeTier)}</div><div class="kpi-sub">${dedicatedRuntime ? 'Customer-dedicated runtime.' : 'Shared demo runtime tier.'}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Security profile</div><div class="kpi-value">${escapeHtml(readinessDisplayValue(readiness.security_profile))}</div><div class="kpi-sub">${escapeHtml(readinessDisplayValue(readiness.hostname))}</div></div>
+      </section>
+
+      <section class="grid readiness-layout">
+        <div class="grid">
+          <section class="card">
+            <div class="section-title"><h2>Readiness summary</h2><span class="mini">${escapeHtml(readinessDisplayValue(readiness.status))}</span></div>
+            <div class="list">
+              ${readinessRow('Production traffic', productionReady ? 'The production gate is clear for this readiness snapshot.' : 'Hold paid/customer production traffic until blockers are cleared.', productionReady ? 'ready' : 'hold', productionReady ? 'good' : 'bad')}
+              ${readinessRow('Guided demo', demoReady ? 'Demo-critical services are configured and reachable.' : 'Demo path still has configuration or executor blockers.', demoReady ? 'ready' : 'hold', demoReady ? 'good' : 'bad')}
+              ${readinessRow('Runtime isolation', dedicatedRuntime ? 'This environment reports a customer-dedicated production runtime.' : 'This environment reports shared demo runtime; use this for guided pilots until dedicated runtime is ready.', dedicatedRuntime ? 'dedicated' : 'shared demo', dedicatedRuntime ? 'good' : 'warn')}
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="section-title"><h2>Control plane</h2><span class="mini">${escapeHtml(readinessDisplayValue(controlPlane.cloud_provider))}</span></div>
+            <div class="list">
+              ${readinessCheckRow('Supabase service role', 'Required for organization, membership, session, audit, and enterprise API access.', controlPlane.supabase_configured)}
+              ${readinessCheckRow('Secure executor URL', 'The control plane must know where to send signed runtime execution requests.', controlPlane.executor_configured)}
+              ${readinessCheckRow('Executor signing', 'Control-plane-to-executor request signing must be configured before trusted execution.', controlPlane.signing_configured)}
+              ${readinessCheckRow('Origin lock', 'Enterprise edge/origin lock protects the control plane from direct public bypass.', controlPlane.origin_lock_configured)}
+              ${readinessRow('Origin lock policy', readinessBoolean(controlPlane.origin_lock_required) ? 'Origin lock is required in this environment.' : 'Origin lock is optional for this environment.', readinessBoolean(controlPlane.origin_lock_required) ? 'required' : 'optional', readinessBoolean(controlPlane.origin_lock_required) ? 'good' : 'warn')}
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="section-title"><h2>Secure executor</h2><span class="mini">${escapeHtml(readinessDisplayValue(executor.status))}</span></div>
+            <div class="list">
+              ${readinessCheckRow('Executor reachable', 'The control plane can reach the secure executor health endpoint.', executor.reachable)}
+              ${readinessCheckRow('Secure execution', 'Executor reports secure execution readiness.', executorHealth.secure_execution_ready)}
+              ${readinessCheckRow('Signature verification', 'Executor verifies signed control-plane requests.', executorHealth.signature_verification_ready)}
+              ${readinessCheckRow('Material resolver', 'Executor can resolve protected provider material without exposing raw keys.', executorHealth.execution_material_resolver_ready)}
+              ${readinessCheckRow('Key release', 'Executor key release path is configured.', executorHealth.key_release_ready)}
+              ${readinessCheckRow('Attestation evidence', 'Runtime attestation evidence is ready for production proof.', executorHealth.attestation_evidence_ready)}
+              ${readinessCheckRow('Replay protection', 'Replay protection is active for runtime execution.', executorHealth.replay_protection_ready)}
+              ${readinessCheckRow('Executor production', 'Executor reports production-ready status.', executorHealth.production_ready)}
+              ${readinessRow('Executor blockers', 'Public readiness exposes the blocker count without raw executor internals.', `${readinessDisplayValue(executorHealth.production_blocker_count)} blocker(s)`, Number(executorHealth.production_blocker_count || 0) ? 'bad' : 'good')}
+            </div>
+          </section>
+        </div>
+
+        <aside class="readiness-rail">
+          <section class="card">
+            <div class="section-title"><h2>Production blockers</h2><span class="mini">${productionBlockers.length ? 'hold' : 'clear'}</span></div>
+            <div class="list">${readinessBlockerRows(productionBlockers, 'No production blockers are reported in this readiness snapshot.')}</div>
+          </section>
+
+          <section class="card">
+            <div class="section-title"><h2>Demo blockers</h2><span class="mini">${demoBlockers.length ? 'hold' : 'clear'}</span></div>
+            <div class="list">${readinessBlockerRows(demoBlockers, 'No demo blockers are reported in this readiness snapshot.')}</div>
+          </section>
+
+          <section class="card">
+            <div class="section-title"><h2>Next actions</h2><span class="mini">operator path</span></div>
+            <div class="list">${readinessNextActionRows(readiness, productionBlockers)}</div>
+          </section>
+
+          <section class="card">
+            <div class="section-title"><h2>Machine JSON</h2><span class="mini">summary only</span></div>
+            <textarea id="readinessJson" class="json-box" readonly>${escapeHtml(jsonText)}</textarea>
+          </section>
+        </aside>
+      </section>
+    </main>
+  </div>
+  <script>
+    (function() {
+      var readinessJson = ${JSON.stringify(jsonText)};
+      var button = document.getElementById('copyReadinessJsonBtn');
+      if (button) {
+        button.addEventListener('click', function() {
+          navigator.clipboard.writeText(readinessJson).then(function() {
+            button.textContent = 'copied';
+            window.setTimeout(function() { button.textContent = 'copy JSON'; }, 1400);
+          }).catch(function() {
+            var box = document.getElementById('readinessJson');
+            if (box) box.focus();
+          });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>`;
+
+  return injectEnterpriseAnalytics(html, env, 'readiness');
+}
+
+export function renderEnterpriseHealthPage(
+  health: Record<string, unknown>,
+  env: EnterpriseControlPlaneEnv = {},
+): string {
+  const status = readinessDisplayValue(health.status);
+  const ok = status.toLowerCase() === 'ok';
+  const originLockRequired = readinessBoolean(health.origin_lock_required);
+  const originLockConfigured = readinessBoolean(health.origin_lock_configured);
+  const jsonText = JSON.stringify(health, null, 2);
+
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Health - VaultProof Enterprise</title>
+  <style>
+    ${ENTERPRISE_RENDERED_APP_BASE_THEME}
+    .main { padding: 30px; max-width: 1180px; width: 100%; }
+    .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 18px; border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 20px; box-shadow: 0 18px 48px rgba(0,0,0,.18); }
+    .kicker { color: var(--soft); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; font-weight: 600; }
+    h1 { margin: 8px 0 8px; color: var(--text); font-size: clamp(34px, 5vw, 56px); line-height: 1; font-weight: 650; }
+    .lead { color: var(--muted); line-height: 1.6; max-width: 740px; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .toolbar a, .toolbar button, .primary { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; padding: 0 14px; background: var(--surface, #151d29); color: var(--text); font: inherit; font-weight: 500; }
+    .primary, button.primary { background: var(--primary-bg); color: var(--primary-text); border-color: var(--primary-border); font-weight: 600; }
+    .grid { display: grid; gap: 16px; }
+    .health-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
+    .health-layout { grid-template-columns: minmax(0, 1fr) minmax(320px, .72fr); align-items: start; }
+    .card { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 20px; box-shadow: 0 18px 48px rgba(0,0,0,.22); overflow: hidden; }
+    .card > .section-title { margin: -20px -20px 16px; padding: 18px 20px; background: linear-gradient(180deg, rgba(21,29,41,.78), rgba(17,24,39,.92)); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .section-title h2 { margin: 0; font-size: 18px; line-height: 1.4; font-weight: 650; }
+    .mini { display: inline-flex; align-items: center; min-height: 26px; border: 1px solid rgba(138,180,248,.22); border-radius: 999px; padding: 4px 8px; background: rgba(138,180,248,.10); color: var(--accent, #8ab4f8); font-size: 13px; line-height: 1; }
+    .kpi-card { border: 1px solid var(--line-soft); border-radius: 8px; padding: 16px; background: linear-gradient(180deg, rgba(21,29,41,.88), rgba(17,24,39,.96)); box-shadow: inset 0 1px 0 rgba(248,250,252,.04); }
+    .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+    .kpi-value { margin-top: 8px; color: var(--text); font-size: 28px; font-weight: 650; line-height: 1; }
+    .kpi-sub { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .list { display: grid; gap: 10px; }
+    .health-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 14px; align-items: start; border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: rgba(17,24,39,.92); }
+    .health-row:hover { border-color: rgba(138,180,248,.34); background: var(--muted-bg, #151d29); }
+    .row-title { color: var(--text); font-weight: 600; }
+    .row-sub { color: var(--muted); font-size: 13px; line-height: 1.5; margin-top: 5px; }
+    .tag { display: inline-flex; align-items: center; min-height: 26px; border-radius: 999px; padding: 4px 8px; background: rgba(168,179,194,.08); border: 1px solid rgba(168,179,194,.18); color: var(--muted); font-size: 12px; line-height: 1; white-space: nowrap; }
+    .tag.good { background: rgba(74,222,128,.10); border-color: rgba(74,222,128,.24); color: var(--green); }
+    .tag.warn { background: rgba(251,191,36,.10); border-color: rgba(251,191,36,.26); color: var(--warn); }
+    .tag.bad { background: rgba(248,113,113,.10); border-color: rgba(248,113,113,.26); color: var(--red); }
+    .json-box { width: 100%; min-height: 220px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: var(--bg); color: var(--text); font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    @media (max-width: 1000px) { .health-kpis, .health-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .topbar, .card > .section-title { flex-direction: column; } .health-kpis, .health-layout { grid-template-columns: 1fr; } .health-row { grid-template-columns: 1fr; } }
+    ${ENTERPRISE_APP_SHELL_THEME}
+    ${ENTERPRISE_STATIC_APP_POLISH_THEME}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    ${renderEnterpriseAppSidebar('health', 'service health')}
+    <main class="main health-human-page">
+      <div class="topbar">
+        <div>
+          <div class="kicker">control-plane health</div>
+          <h1>Health</h1>
+          <p class="lead">A readable status page for quick operator checks. Load balancers and monitors can still use the compact JSON response with <code>?format=json</code>.</p>
+        </div>
+        <div class="toolbar">
+          <a href="/health?format=json">machine JSON</a>
+          <button id="copyHealthJsonBtn" class="primary" type="button">copy JSON</button>
+          <a class="primary" href="/app/readiness">readiness</a>
+        </div>
+      </div>
+
+      <section class="grid health-kpis">
+        <div class="kpi-card"><div class="kpi-label">Status</div><div class="kpi-value">${escapeHtml(status)}</div><div class="kpi-sub">${ok ? 'Control plane is responding.' : 'Control plane reported attention state.'}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Executor</div><div class="kpi-value">${readinessBoolean(health.executor_configured) ? 'Configured' : 'Missing'}</div><div class="kpi-sub">Secure executor base URL.</div></div>
+        <div class="kpi-card"><div class="kpi-label">Database</div><div class="kpi-value">${readinessBoolean(health.supabase_configured) ? 'Configured' : 'Missing'}</div><div class="kpi-sub">Supabase service role path.</div></div>
+        <div class="kpi-card"><div class="kpi-label">Origin lock</div><div class="kpi-value">${originLockConfigured ? 'Configured' : 'Missing'}</div><div class="kpi-sub">${originLockRequired ? 'Required for this environment.' : 'Optional for this environment.'}</div></div>
+      </section>
+
+      <section class="grid health-layout">
+        <div class="grid">
+          <section class="card">
+            <div class="section-title"><h2>Service status</h2><span class="mini">${escapeHtml(readinessDisplayValue(health.service))}</span></div>
+            <div class="list">
+              <div class="health-row"><div><div class="row-title">Control plane response</div><div class="row-sub">The enterprise control plane responded to this health check route.</div></div><span class="tag ${ok ? 'good' : 'bad'}">${escapeHtml(status)}</span></div>
+              <div class="health-row"><div><div class="row-title">Hostname</div><div class="row-sub">${escapeHtml(readinessDisplayValue(health.hostname))}</div></div><span class="tag">host</span></div>
+              <div class="health-row"><div><div class="row-title">Route</div><div class="row-sub">${escapeHtml(readinessDisplayValue(health.path))}</div></div><span class="tag">path</span></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="section-title"><h2>Dependencies</h2><span class="mini">configuration</span></div>
+            <div class="list">
+              <div class="health-row"><div><div class="row-title">Secure executor</div><div class="row-sub">Configured means the control plane has an executor base URL. Use Readiness for deeper executor checks.</div></div><span class="tag ${readinessTone(health.executor_configured)}">${readinessDisplayValue(health.executor_configured)}</span></div>
+              <div class="health-row"><div><div class="row-title">Supabase</div><div class="row-sub">Configured means enterprise organization/session APIs can use the service-role path.</div></div><span class="tag ${readinessTone(health.supabase_configured)}">${readinessDisplayValue(health.supabase_configured)}</span></div>
+              <div class="health-row"><div><div class="row-title">Origin lock</div><div class="row-sub">Configured means Front Door ID or a custom origin-lock secret is present.</div></div><span class="tag ${readinessTone(health.origin_lock_configured)}">${readinessDisplayValue(health.origin_lock_configured)}</span></div>
+              <div class="health-row"><div><div class="row-title">Origin lock policy</div><div class="row-sub">${originLockRequired ? 'Origin lock is required in this environment.' : 'Origin lock is not required for this health route.'}</div></div><span class="tag ${originLockRequired ? 'good' : 'warn'}">${originLockRequired ? 'required' : 'optional'}</span></div>
+            </div>
+          </section>
+        </div>
+
+        <aside class="grid">
+          <section class="card">
+            <div class="section-title"><h2>Operator path</h2><span class="mini">next</span></div>
+            <div class="list">
+              <div class="health-row"><div><div class="row-title">Need production detail?</div><div class="row-sub">Open Readiness for executor health, key release, attestation, replay protection, and blockers.</div></div><a class="tag good" href="/app/readiness">readiness</a></div>
+              <div class="health-row"><div><div class="row-title">Need customer evidence?</div><div class="row-sub">Open Evidence after health and readiness are in the expected state.</div></div><a class="tag" href="/app/evidence">evidence</a></div>
+            </div>
+          </section>
+          <section class="card">
+            <div class="section-title"><h2>Machine JSON</h2><span class="mini">monitor-safe</span></div>
+            <textarea id="healthJson" class="json-box" readonly>${escapeHtml(jsonText)}</textarea>
+          </section>
+        </aside>
+      </section>
+    </main>
+  </div>
+  <script>
+    (function() {
+      var healthJson = ${JSON.stringify(jsonText)};
+      var button = document.getElementById('copyHealthJsonBtn');
+      if (button) {
+        button.addEventListener('click', function() {
+          navigator.clipboard.writeText(healthJson).then(function() {
+            button.textContent = 'copied';
+            window.setTimeout(function() { button.textContent = 'copy JSON'; }, 1400);
+          }).catch(function() {
+            var box = document.getElementById('healthJson');
+            if (box) box.focus();
+          });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>`;
+
+  return injectEnterpriseAnalytics(html, env, 'health');
 }
 
 export function renderEnterprisePlannedAppPage(pageName: string, env: EnterpriseControlPlaneEnv = {}): string | null {

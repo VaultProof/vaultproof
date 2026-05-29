@@ -81,8 +81,8 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
       {
         page: 'projects',
         href: '/app/projects',
-        label: 'Projects',
-        blurb: 'Project inventory, usage, and provider slot posture.',
+        label: 'Workloads',
+        blurb: 'Protected apps, usage, policy, and provider slot posture.',
       },
       {
         page: 'inventory',
@@ -107,17 +107,15 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
       },
       {
         page: 'readiness',
-        href: '/readiness',
+        href: '/app/readiness',
         label: 'Readiness',
         blurb: 'Production gate for runtime, executor, and key custody.',
-        external: true,
       },
       {
         page: 'health',
-        href: '/health',
+        href: '/app/health',
         label: 'Health',
         blurb: 'Lightweight status for the control plane and edge.',
-        external: true,
       },
       {
         page: 'activity',

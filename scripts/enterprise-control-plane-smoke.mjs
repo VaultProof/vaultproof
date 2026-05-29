@@ -725,6 +725,24 @@ function installSupabaseStub() {
       }]);
     }
 
+    if (url.includes('/rest/v1/projects') && method === 'POST') {
+      const body = JSON.parse(init?.body || '{}');
+      activeProject = {
+        id: 'proj_created_123',
+        organization_id: body.organization_id || 'org_123',
+        name: body.name || null,
+        vp_proj_id: body.vp_proj_id || 'vp-proj-created',
+        allowed_origins: body.allowed_origins || null,
+        strict_origin: body.strict_origin === true,
+        caller_lock_policy: body.caller_lock_policy || {},
+        revoked_at: null,
+        created_at: body.created_at || '2026-04-27T12:00:00.000Z',
+        project_role: 'owner',
+        access_via: 'project',
+      };
+      return jsonResponse(activeProject, 201);
+    }
+
     if (url.includes('/rest/v1/project_keys') && method === 'GET') {
       projectKeyGetCalls += 1;
       if (projectKeyRevoked) return jsonResponse([]);
@@ -2265,6 +2283,57 @@ async function assertEnterpriseProjectOverviewRollup() {
   }
 }
 
+async function assertEnterpriseCreateWorkload() {
+  installSupabaseStub();
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    executorBaseUrl: 'https://executor.internal',
+    executorSigningKeyId: 'enterprise-local',
+    executorSigningSecret: 'local-secret',
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
+
+  const createResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/projects', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-organization': 'org_123',
+      },
+      body: JSON.stringify({
+        name: 'Production AI support agent',
+        allowed_origins: 'https://app.example.com',
+        strict_origin: true,
+        caller_lock_policy: {
+          allowed_providers: ['openai'],
+          allowed_customer_gateways: ['vaultproof-managed'],
+          allowed_client_classes: ['browser'],
+          rate_limit_per_minute: 120,
+        },
+      }),
+    }),
+    env,
+  );
+  const createPayload = await createResponse.json();
+  if (createResponse.status !== 201 || createPayload?.project?.name !== 'Production AI support agent') {
+    throw new Error(`Expected workload creation to succeed, got ${createResponse.status} ${JSON.stringify(createPayload)}`);
+  }
+  if (createPayload.project.strict_origin !== true || createPayload.project.allowed_origins !== 'https://app.example.com') {
+    throw new Error(`Expected workload origin policy to persist, got ${JSON.stringify(createPayload.project)}`);
+  }
+  if (createPayload.project.caller_lock_policy?.rate_limit_per_minute !== 120) {
+    throw new Error(`Expected workload caller-lock policy to persist, got ${JSON.stringify(createPayload.project.caller_lock_policy)}`);
+  }
+  if (updatedProjectAccess?.role !== 'owner' || updatedProjectAccess?.user_id !== 'user_123') {
+    throw new Error(`Expected workload creator to receive owner project access, got ${JSON.stringify(updatedProjectAccess)}`);
+  }
+  if (!auditEvents.find((event) => event.event_type === 'project_created' && event.metadata?.created_via === 'enterprise_workloads_page')) {
+    throw new Error('Expected workload creation governance audit event');
+  }
+}
+
 async function assertEnterpriseEmergencyRevoke() {
   installSupabaseStub();
   activeProject = fakeProject;
@@ -3249,6 +3318,11 @@ async function assertEnterpriseLoginRoute() {
   if (!alertsHtml.includes('/api/v1/enterprise/alerts/test-send') || alertsHtml.includes('Test-send API is planned') || alertsHtml.includes('https://init.vaultproof.dev')) {
     throw new Error('Expected enterprise alerts page to use enterprise test-send API and avoid B2C APIs');
   }
+  for (const required of ['alerts-page-shadcn-polish', 'alerts-kpi-card', 'alerts-policy-panel', 'alerts-destinations-panel', 'alerts-delivery-panel', 'alerts-runs-panel']) {
+    if (!alertsHtml.includes(required)) {
+      throw new Error(`Expected enterprise alerts page to include shadcn alerts surface ${required}`);
+    }
+  }
   assertDashboardShellTheme('/app/alerts', alertsHtml);
 
   const operationsPages = [
@@ -3259,28 +3333,28 @@ async function assertEnterpriseLoginRoute() {
     },
     {
       path: '/app/projects',
-      title: 'Projects - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects/bootstrap', 'Project inventory'],
+      title: 'Workloads - VaultProof Enterprise',
+      required: ['/api/v1/enterprise/projects/bootstrap', '/api/v1/enterprise/projects', 'Create workload', 'workloadCreateForm', 'Workload inventory'],
     },
     {
       path: '/app/inventory',
       title: 'API Inventory - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects/bootstrap', 'API inventory board', 'inventory-board-shadcn-polish', '.inventory-board-panel .inventory-record', '.inventory-board-panel .tag.good', 'add API key', 'manual API key', 'vaultproof_manual_api_keys', 'data-manual-key-field', 'key fingerprint', 'needs sealed ingest', 'import CSV/OpenAPI', 'inventoryImportForm', 'parseInventoryCsv', 'parseOpenApiInventoryHints', 'vaultproof_inventory_import', 'imported_api_hints', 'inventoryFilterForm', 'inventorySearch', 'inventoryStatusFilter', 'inventoryReviewFilter', 'inventoryRiskFilter', 'inventorySourceFilter', 'apply filters', 'clearInventoryFilters', 'copy filtered CSV', 'copyFilteredInventoryCsvBtn', 'copyFilteredInventoryCsv', 'copy-filtered-inventory-csv', 'filteredInventoryRows', 'inventoryBulkReviewForm', 'bulkInventoryReviewStatus', 'bulkInventoryNextReview', 'apply filtered review', 'applyInventoryBulkReview', 'bulk_reviewed_at', 'copy review brief', 'copyInventoryReviewBriefBtn', 'copyInventoryReviewBrief', 'copy-inventory-review-brief', 'inventoryReviewBrief', 'VaultProof API inventory review brief', 'Priority actions', 'inventoryRowMatchesFilters', 'vaultproof_api_inventory', 'data-inventory-field', 'business owner', 'technical owner', 'data sensitivity', 'review status', 'review due', 'copy inventory CSV', 'copyInventoryCsvBtn', 'copy-inventory-csv', 'inventoryEvidenceCsv', 'export_formats', 'copy inventory JSON', 'vaultproof_enterprise_api_inventory', '/app/control', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
+      required: ['/api/v1/enterprise/projects/bootstrap', 'Inventory overview', 'inventoryOverviewPanel', 'inventoryCoverageChart', 'inventoryReviewChart', 'inventoryRiskTrafficChart', 'API inventory board', 'inventory-board-shadcn-polish', '.inventory-board-panel .inventory-record', '.inventory-board-panel .tag.good', 'add API key', 'manual API key', 'vaultproof_manual_api_keys', 'data-manual-key-field', 'key fingerprint', 'needs sealed ingest', 'import CSV/OpenAPI', 'inventoryImportForm', 'parseInventoryCsv', 'parseOpenApiInventoryHints', 'vaultproof_inventory_import', 'imported_api_hints', 'inventoryFilterForm', 'inventorySearch', 'inventoryStatusFilter', 'inventoryReviewFilter', 'inventoryRiskFilter', 'inventorySourceFilter', 'apply filters', 'clearInventoryFilters', 'copy filtered CSV', 'copyFilteredInventoryCsvBtn', 'copyFilteredInventoryCsv', 'copy-filtered-inventory-csv', 'filteredInventoryRows', 'inventoryBulkReviewForm', 'bulkInventoryReviewStatus', 'bulkInventoryNextReview', 'apply filtered review', 'applyInventoryBulkReview', 'bulk_reviewed_at', 'copy review brief', 'copyInventoryReviewBriefBtn', 'copyInventoryReviewBrief', 'copy-inventory-review-brief', 'inventoryReviewBrief', 'VaultProof API inventory review brief', 'Priority actions', 'inventoryRowMatchesFilters', 'vaultproof_api_inventory', 'data-inventory-field', 'business owner', 'technical owner', 'data sensitivity', 'review status', 'review due', 'copy inventory CSV', 'copyInventoryCsvBtn', 'copy-inventory-csv', 'inventoryEvidenceCsv', 'export_formats', 'copy inventory JSON', 'vaultproof_enterprise_api_inventory', '/app/control', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
     },
     {
       path: '/app/policy',
       title: 'Policy Drift - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects/bootstrap', 'Policy drift board', 'Exception evidence', 'accepted-risk records', 'vaultproof_policy_exceptions', 'policyFilterForm', 'policySearch', 'policySeverityFilter', 'policyStatusFilter', 'policyControlFilter', 'clearPolicyFilters', 'policyRowMatchesFilters', 'filteredPolicyRows', 'copy drift brief', 'copyPolicyBriefBtn', 'copyPolicyBrief', 'copy-policy-brief', 'policyDriftBrief', 'VaultProof policy drift review brief', 'data-policy-field', 'exception owner', 'accepted-risk reason', 'compensating control', 'expiration date', 'copy policy JSON', 'vaultproof_enterprise_policy_drift', 'strict-origin-missing', 'gateway-lock-missing', '/app/control', '/app/inventory', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review'],
+      required: ['/api/v1/enterprise/projects/bootstrap', 'policy-drift-shadcn-polish', 'policy-board-panel', 'policy-summary-panel', 'policy-workflow-panel', 'Policy drift board', 'Exception evidence', 'accepted-risk records', 'vaultproof_policy_exceptions', 'policyFilterForm', 'policySearch', 'policySeverityFilter', 'policyStatusFilter', 'policyControlFilter', 'clearPolicyFilters', 'policyRowMatchesFilters', 'filteredPolicyRows', 'copy drift brief', 'copyPolicyBriefBtn', 'copyPolicyBrief', 'copy-policy-brief', 'policyDriftBrief', 'VaultProof policy drift review brief', 'data-policy-field', 'exception owner', 'accepted-risk reason', 'compensating control', 'expiration date', 'copy policy JSON', 'vaultproof_enterprise_policy_drift', 'strict-origin-missing', 'gateway-lock-missing', '/app/control', '/app/inventory', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review'],
     },
     {
       path: '/app/rollout',
       title: 'Rollout Manager - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects/bootstrap', 'Integration rollout board', 'Rollout evidence', 'workload cutover', 'vaultproof_integration_rollouts', 'rolloutFilterForm', 'rolloutSearch', 'rolloutStatusFilter', 'rolloutModeFilter', 'rolloutTestFilter', 'rolloutBlockerFilter', 'clearRolloutFilters', 'rolloutRowMatchesFilters', 'filteredRolloutRows', 'copy rollout brief', 'copyRolloutBriefBtn', 'copyRolloutBrief', 'copy-rollout-brief', 'rolloutBrief', 'VaultProof integration rollout brief', 'data-rollout-field', 'application/workload', 'integration mode', 'app owner', 'gateway owner', 'canary percent', 'rollback path', 'copy rollout JSON', 'copy snippet', 'vaultproof_enterprise_integration_rollout', 'YOUR_VAULTPROOF_SESSION_JWT', '/app/control', '/app/inventory', '/app/policy', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review'],
+      required: ['/api/v1/enterprise/projects/bootstrap', 'rollout-manager-shadcn-polish', 'rollout-board-panel', 'rollout-summary-panel', 'rollout-workflow-panel', 'Integration rollout board', 'Rollout evidence', 'workload cutover', 'vaultproof_integration_rollouts', 'rolloutFilterForm', 'rolloutSearch', 'rolloutStatusFilter', 'rolloutModeFilter', 'rolloutTestFilter', 'rolloutBlockerFilter', 'clearRolloutFilters', 'rolloutRowMatchesFilters', 'filteredRolloutRows', 'copy rollout brief', 'copyRolloutBriefBtn', 'copyRolloutBrief', 'copy-rollout-brief', 'rolloutBrief', 'VaultProof integration rollout brief', 'data-rollout-field', 'application/workload', 'integration mode', 'app owner', 'gateway owner', 'canary percent', 'rollback path', 'copy rollout JSON', 'copy snippet', 'vaultproof_enterprise_integration_rollout', 'YOUR_VAULTPROOF_SESSION_JWT', '/app/control', '/app/inventory', '/app/policy', '/app/keys', '/app/activity', '/app/evidence', '/app/security-review'],
     },
     {
       path: '/app/keys',
       title: 'Provider Slots - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects', 'Key inventory', 'keyOverviewPanel', 'protected API keys in system', 'keyProviderChart', 'keyStatusDonut', 'keySystemSummaryList', 'Provider breakdown', 'Readiness mix', 'add slot', 'create slot', 'Extra headers JSON', 'slotExtraHeaders', 'generic-bearer', 'generic-header', 'minimax', 'deepl', 'deepl-pro', 'DeepL-Auth-Key {key}', 'api-free.deepl.com', 'api.deepl.com', 'github', 'notion', 'cloudflare', 'anthropic-version', 'apikey', 'x-algolia-application-id', 'emergency revoke', 'live sealed material', 'placeholder material', 'Customer API proxy test kit', 'copy dry-run request', 'copy blocked-recipient request', 'YOUR_VAULTPROOF_SESSION_JWT', 'Email API key walkthrough', 'protected email dry-run', 'blocked recipient test', 'Policy denial evidence', 'resend', 'sendgrid', 'postmark', 'brevo', 'mailersend', 'sendinblue', 'sparkpost', 'mailtrap', 'supabase', 'algolia', 'shopify', 'grafana', 'weaviate', 'langfuse', 'azure-openai', 'nvidia', 'sambanova', 'fal', 'brave-search', 'serper', 'unstructured', 'qdrant', 'turso', 'netlify', 'digitalocean', 'heroku', 'fly', 'railway', 'terraform-cloud', 'pulumi', 'fastly', 'tailscale', 'azure-management', 'gcp-resource-manager', 'microsoft-graph', 'google-workspace', 'bitbucket', 'circleci', 'buildkite', 'dockerhub', 'quay', 'npm-registry', 'betterstack', 'logsnag', 'raygun', 'semgrep', 'sonarcloud', 'elasticsearch', 'elastic-cloud', 'meilisearch', 'typesense', 'kubernetes', 'hashicorp-vault', 'onepassword-connect', 'doppler', 'infisical', 'segment', 'plausible', 'hume', 'runpod', 'webflow', 'salesforce', 'zoho-crm', 'zoom', 'facebook-graph', 'linkedin', 'wordpress', 'okta', 'opsgenie', 'axiom', 'rollbar', 'asana', 'monday', 'clickup', 'figma', 'zendesk', 'jira', 'adyen', 'chargebee', 'x-figma-token', 'SSWS {key}', 'GenieKey {key}', 'ApiKey {key}', 'x-vault-token', 'circle-token', 'Zoho-oauthtoken {key}', 'fastly-key', 'application/vnd.heroku+json; version=3'],
+      required: ['/api/v1/enterprise/projects', 'provider-slots-shadcn-polish', 'keys-board-panel', 'keys-proxy-panel', 'Key inventory', 'keyOverviewPanel', 'protected API keys in system', 'keyProviderChart', 'keyStatusDonut', 'keySystemSummaryList', 'Provider breakdown', 'Readiness mix', 'add slot', 'create slot', 'Extra headers JSON', 'slotExtraHeaders', 'generic-bearer', 'generic-header', 'minimax', 'deepl', 'deepl-pro', 'DeepL-Auth-Key {key}', 'api-free.deepl.com', 'api.deepl.com', 'github', 'notion', 'cloudflare', 'anthropic-version', 'apikey', 'x-algolia-application-id', 'emergency revoke', 'live sealed material', 'placeholder material', 'Customer API proxy test kit', 'copy dry-run request', 'copy blocked-recipient request', 'YOUR_VAULTPROOF_SESSION_JWT', 'Email API key walkthrough', 'protected email dry-run', 'blocked recipient test', 'Policy denial evidence', 'resend', 'sendgrid', 'postmark', 'brevo', 'mailersend', 'sendinblue', 'sparkpost', 'mailtrap', 'supabase', 'algolia', 'shopify', 'grafana', 'weaviate', 'langfuse', 'azure-openai', 'nvidia', 'sambanova', 'fal', 'brave-search', 'serper', 'unstructured', 'qdrant', 'turso', 'netlify', 'digitalocean', 'heroku', 'fly', 'railway', 'terraform-cloud', 'pulumi', 'fastly', 'tailscale', 'azure-management', 'gcp-resource-manager', 'microsoft-graph', 'google-workspace', 'bitbucket', 'circleci', 'buildkite', 'dockerhub', 'quay', 'npm-registry', 'betterstack', 'logsnag', 'raygun', 'semgrep', 'sonarcloud', 'elasticsearch', 'elastic-cloud', 'meilisearch', 'typesense', 'kubernetes', 'hashicorp-vault', 'onepassword-connect', 'doppler', 'infisical', 'segment', 'plausible', 'hume', 'runpod', 'webflow', 'salesforce', 'zoho-crm', 'zoom', 'facebook-graph', 'linkedin', 'wordpress', 'okta', 'opsgenie', 'axiom', 'rollbar', 'asana', 'monday', 'clickup', 'figma', 'zendesk', 'jira', 'adyen', 'chargebee', 'x-figma-token', 'SSWS {key}', 'GenieKey {key}', 'ApiKey {key}', 'x-vault-token', 'circle-token', 'Zoho-oauthtoken {key}', 'fastly-key', 'application/vnd.heroku+json; version=3'],
     },
   ];
   for (const page of operationsPages) {
@@ -3308,6 +3382,13 @@ async function assertEnterpriseLoginRoute() {
       }
       if (html.indexOf('id="apiProxyTestPanel"') < html.indexOf('id="keysPanel"')) {
         throw new Error('Expected customer API proxy test kit to render at the bottom of the keys page');
+      }
+    }
+    if (page.path === '/app/policy') {
+      for (const removedKpiId of ['id="kpiProjects"', 'id="kpiKeys"', 'id="kpiCalls"', 'id="kpiDenied"']) {
+        if (html.includes(removedKpiId)) {
+          throw new Error(`Expected policy page to omit shared KPI card ${removedKpiId}`);
+        }
       }
     }
     assertDashboardShellTheme(page.path, html);
@@ -3386,7 +3467,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/verifier',
       title: 'AI Proof Verifier - VaultProof Enterprise',
-      required: ['Model registry', 'Register external model', 'Submit proof bundle', 'Shared pilot attestation', 'Shared enterprise runtime attestation', 'verify evidence only', '/api/v1/enterprise/verifier', 'VaultProof does not run it'],
+      required: ['verifier-page-shadcn-polish', 'verifier-kpi-card', 'verifier-attestation-panel', 'verifier-model-panel', 'verifier-proof-panel', 'verifier-form', 'Model registry', 'Register external model', 'Submit proof bundle', 'Shared pilot attestation', 'Shared enterprise runtime attestation', 'verify evidence only', '/api/v1/enterprise/verifier', 'VaultProof does not run it'],
     },
     {
       path: '/app/runbooks',
@@ -3447,6 +3528,11 @@ async function assertEnterpriseLoginRoute() {
   }
   if (!controlHtml.includes('control-dashboard-theme')) {
     throw new Error('Expected control page to include the dashboard-matched control theme');
+  }
+  for (const required of ['control-page-shadcn-polish', 'control-kpi-card', 'control-hero-panel', 'control-members-panel', 'control-policy-panel', 'control-pilot-panel', 'control-execution-panel', 'control-alert-panel']) {
+    if (!controlHtml.includes(required)) {
+      throw new Error(`Expected enterprise control page to include shadcn control surface ${required}`);
+    }
   }
   if (
     !controlHtml.includes('enterprise-static-canonical-org-url')
@@ -3663,6 +3749,8 @@ async function assertEnterpriseAppLinkCrawl() {
     '/app/policy',
     '/app/rollout',
     '/app/keys',
+    '/app/readiness',
+    '/app/health',
     '/app/verifier',
     '/app/evidence',
     '/app/docs',
@@ -3739,6 +3827,8 @@ async function assertEnterpriseMixpanelAnalytics() {
     ['/app/policy', 'policy'],
     ['/app/rollout', 'rollout'],
     ['/app/keys', 'keys'],
+    ['/app/readiness', 'readiness'],
+    ['/app/health', 'health'],
     ['/app/verifier', 'verifier'],
     ['/app/evidence', 'evidence'],
     ['/app/docs', 'docs'],
@@ -4993,6 +5083,147 @@ async function assertEnterpriseReadinessRoute() {
   if (payload?.executor?.health?.production_blocker_count !== 3) {
     throw new Error(`Expected public readiness to expose only executor blocker count, got ${JSON.stringify(payload.executor?.health)}`);
   }
+
+  const htmlResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/readiness', {
+      headers: {
+        accept: 'text/html',
+      },
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      enterpriseRuntimeTier: 'shared-demo',
+      executorBaseUrl: 'https://executor.internal',
+      executorSigningKeyId: 'enterprise-local',
+      executorSigningSecret: 'local-secret',
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  const html = await htmlResponse.text();
+  if (
+    htmlResponse.status !== 200
+    || !html.includes('Readiness - VaultProof Enterprise')
+    || !html.includes('readiness-human-page')
+    || !html.includes('Readiness summary')
+    || !html.includes('Production blockers')
+    || !html.includes('Secure executor')
+    || !html.includes('Machine JSON')
+    || !html.includes('/readiness?format=json')
+  ) {
+    throw new Error(`Expected readiness browser route to render readable HTML, got ${htmlResponse.status}`);
+  }
+  if (html.includes('accepted_key_ids') || html.includes('key_release_hardware_bound')) {
+    throw new Error('Expected readable readiness page to use public summary JSON only');
+  }
+
+  const appResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/app/readiness'),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      enterpriseRuntimeTier: 'shared-demo',
+      executorBaseUrl: 'https://executor.internal',
+      executorSigningKeyId: 'enterprise-local',
+      executorSigningSecret: 'local-secret',
+    },
+  );
+  const appHtml = await appResponse.text();
+  if (appResponse.status !== 200 || !appHtml.includes('Readiness - VaultProof Enterprise') || !appHtml.includes('aria-current="page"')) {
+    throw new Error(`Expected /app/readiness to render readable app page, got ${appResponse.status}`);
+  }
+
+  const forcedJsonResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/readiness?format=json', {
+      headers: {
+        accept: 'text/html',
+      },
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      enterpriseRuntimeTier: 'shared-demo',
+      executorBaseUrl: 'https://executor.internal',
+      executorSigningKeyId: 'enterprise-local',
+      executorSigningSecret: 'local-secret',
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  const forcedJson = await forcedJsonResponse.json();
+  if (forcedJsonResponse.status !== 200 || forcedJson?.detail !== 'summary') {
+    throw new Error(`Expected readiness format=json to keep machine JSON, got ${forcedJsonResponse.status}`);
+  }
+}
+
+async function assertEnterpriseHealthRoute() {
+  const env = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    executorBaseUrl: 'https://executor.internal',
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+    originLockSecret: 'origin-lock-secret',
+    originLockRequired: true,
+  };
+
+  const jsonResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/health'),
+    env,
+  );
+  const jsonPayload = await jsonResponse.json();
+  if (
+    jsonResponse.status !== 200
+    || jsonPayload?.status !== 'ok'
+    || jsonPayload?.service !== 'vaultproof-enterprise-control-plane'
+    || jsonPayload?.origin_lock_configured !== true
+    || jsonPayload?.origin_lock_required !== true
+  ) {
+    throw new Error(`Expected health route default to stay machine JSON, got ${jsonResponse.status} ${JSON.stringify(jsonPayload)}`);
+  }
+
+  const htmlResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/health', {
+      headers: {
+        accept: 'text/html',
+      },
+    }),
+    env,
+  );
+  const html = await htmlResponse.text();
+  if (
+    htmlResponse.status !== 200
+    || !html.includes('Health - VaultProof Enterprise')
+    || !html.includes('health-human-page')
+    || !html.includes('Service status')
+    || !html.includes('Dependencies')
+    || !html.includes('Machine JSON')
+    || !html.includes('/health?format=json')
+  ) {
+    throw new Error(`Expected health browser route to render readable HTML, got ${htmlResponse.status}`);
+  }
+
+  const appResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/app/health'),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      executorBaseUrl: 'https://executor.internal',
+    },
+  );
+  const appHtml = await appResponse.text();
+  if (appResponse.status !== 200 || !appHtml.includes('Health - VaultProof Enterprise') || !appHtml.includes('aria-current="page"')) {
+    throw new Error(`Expected /app/health to render readable app page, got ${appResponse.status}`);
+  }
+
+  const forcedJsonResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/health?format=json', {
+      headers: {
+        accept: 'text/html',
+      },
+    }),
+    env,
+  );
+  const forcedJson = await forcedJsonResponse.json();
+  if (forcedJsonResponse.status !== 200 || forcedJson?.status !== 'ok' || forcedJson?.service !== 'vaultproof-enterprise-control-plane') {
+    throw new Error(`Expected health format=json to keep machine JSON, got ${forcedJsonResponse.status}`);
+  }
 }
 
 async function assertFrontDoorOriginLock() {
@@ -5065,6 +5296,7 @@ await assertEnterpriseAppLinkCrawl();
 await assertInternalAdminConsole();
 await assertEnterpriseMixpanelAnalytics();
 await assertEnterpriseReadinessRoute();
+await assertEnterpriseHealthRoute();
 await assertFrontDoorOriginLock();
 await assertExecuteRoute();
 await assertEnterpriseExecuteDryRun();
@@ -5079,6 +5311,7 @@ await assertEnterpriseExecutionPolicy();
 await assertEnterpriseProviderExecutionPolicy();
 await assertEnterpriseRateLimitPolicy();
 await assertEnterpriseProjectOverviewRollup();
+await assertEnterpriseCreateWorkload();
 await assertEnterpriseCreateProviderSlot();
 await assertEnterpriseEmergencyRevoke();
 await assertEnterpriseAuditCsvExport();

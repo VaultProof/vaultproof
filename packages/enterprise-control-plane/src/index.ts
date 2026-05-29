@@ -7,7 +7,13 @@ import {
   isInternalAdminHostname,
   type EnterpriseControlPlaneEnv,
 } from './config.js';
-import { renderEnterpriseControlPage, renderEnterpriseOrgPage, renderEnterprisePlannedAppPage } from './app-pages.js';
+import {
+  renderEnterpriseControlPage,
+  renderEnterpriseHealthPage,
+  renderEnterpriseOrgPage,
+  renderEnterprisePlannedAppPage,
+  renderEnterpriseReadinessPage,
+} from './app-pages.js';
 import { renderEnterpriseDashboardPage } from './dashboard-page.js';
 import { renderEnterpriseHomepage } from './homepage-page.js';
 import {
@@ -200,8 +206,8 @@ function verifyOriginLock(request: Request, env: EnterpriseControlPlaneEnv): Res
   );
 }
 
-function buildHealthResponse(hostname: string, url: URL, env: EnterpriseControlPlaneEnv): Response {
-  return Response.json({
+function buildHealthPayload(hostname: string, url: URL, env: EnterpriseControlPlaneEnv): Record<string, unknown> {
+  return {
     status: 'ok',
     service: 'vaultproof-enterprise-control-plane',
     hostname,
@@ -210,6 +216,14 @@ function buildHealthResponse(hostname: string, url: URL, env: EnterpriseControlP
     supabase_configured: Boolean(env.supabaseUrl && env.supabaseServiceRoleKey),
     origin_lock_configured: Boolean(env.azureFrontDoorId?.trim() || env.originLockSecret?.trim()),
     origin_lock_required: env.originLockRequired === true,
+  };
+}
+
+function buildHealthResponse(hostname: string, url: URL, env: EnterpriseControlPlaneEnv): Response {
+  return Response.json(buildHealthPayload(hostname, url, env), {
+    headers: {
+      'cache-control': 'no-store',
+    },
   });
 }
 
@@ -437,6 +451,26 @@ function buildPublicEnterpriseReadiness(readiness: Record<string, unknown>): Rec
   };
 }
 
+function requestWantsReadinessHtml(request: Request, url: URL): boolean {
+  const format = (url.searchParams.get('format') || '').trim().toLowerCase();
+  if (format === 'html') return true;
+  if (format === 'json') return false;
+  if (url.pathname.endsWith('.json')) return false;
+
+  const accept = request.headers.get('accept') || '';
+  return accept.includes('text/html') && !accept.includes('application/json');
+}
+
+function requestWantsHealthHtml(request: Request, url: URL): boolean {
+  const format = (url.searchParams.get('format') || '').trim().toLowerCase();
+  if (format === 'html') return true;
+  if (format === 'json') return false;
+  if (url.pathname.endsWith('.json')) return false;
+
+  const accept = request.headers.get('accept') || '';
+  return accept.includes('text/html') && !accept.includes('application/json');
+}
+
 async function handleEnterpriseControlPlaneRequestInner(
   request: Request,
   env: EnterpriseControlPlaneEnv = {},
@@ -456,7 +490,18 @@ async function handleEnterpriseControlPlaneRequestInner(
 
   const internalAdminSurface = isInternalAdminHostname(hostname, env) || isInternalAdminPreviewPath(url, env);
 
-  if (isReadRequest && url.pathname === '/health') {
+  if (isReadRequest && (url.pathname === '/health' || url.pathname === '/health.json')) {
+    const health = buildHealthPayload(hostname, url, env);
+    if (requestWantsHealthHtml(request, url)) {
+      return new Response(renderEnterpriseHealthPage(health, env), {
+        status: 200,
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+          'cache-control': 'no-store',
+          'x-robots-tag': 'noindex',
+        },
+      });
+    }
     return buildHealthResponse(hostname, url, env);
   }
 
@@ -539,6 +584,35 @@ async function handleEnterpriseControlPlaneRequestInner(
     return new Response(renderEnterpriseLogoutPage(env), {
       status: 200,
       headers,
+    });
+  }
+
+  if (isReadRequest && (url.pathname === '/app/readiness' || url.pathname === '/app/readiness.html')) {
+    const sessionRedirect = await requireEnterpriseCustomerPageSession(request, url, env);
+    if (sessionRedirect) return sessionRedirect;
+
+    const readiness = buildPublicEnterpriseReadiness(await buildEnterpriseReadiness(hostname, env));
+    return new Response(renderEnterpriseReadinessPage(readiness, env), {
+      status: 200,
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'x-robots-tag': 'noindex',
+      },
+    });
+  }
+
+  if (isReadRequest && (url.pathname === '/app/health' || url.pathname === '/app/health.html')) {
+    const sessionRedirect = await requireEnterpriseCustomerPageSession(request, url, env);
+    if (sessionRedirect) return sessionRedirect;
+
+    return new Response(renderEnterpriseHealthPage(buildHealthPayload(hostname, url, env), env), {
+      status: 200,
+      headers: {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'x-robots-tag': 'noindex',
+      },
     });
   }
 
@@ -656,9 +730,20 @@ async function handleEnterpriseControlPlaneRequestInner(
     }
   }
 
-  if (isReadRequest && url.pathname === '/readiness') {
-    const readiness = await buildEnterpriseReadiness(hostname, env);
-    return Response.json(buildPublicEnterpriseReadiness(readiness), {
+  if (isReadRequest && (url.pathname === '/readiness' || url.pathname === '/readiness.json')) {
+    const readiness = buildPublicEnterpriseReadiness(await buildEnterpriseReadiness(hostname, env));
+    if (requestWantsReadinessHtml(request, url)) {
+      return new Response(renderEnterpriseReadinessPage(readiness, env), {
+        status: 200,
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+          'cache-control': 'no-store',
+          'x-robots-tag': 'noindex',
+        },
+      });
+    }
+
+    return Response.json(readiness, {
       headers: {
         'cache-control': 'no-store',
       },
