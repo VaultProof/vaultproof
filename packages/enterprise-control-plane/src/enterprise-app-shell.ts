@@ -346,25 +346,25 @@ export function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, _su
 export const ENTERPRISE_APP_SHELL_THEME = `
     /* enterprise-universal-sidebar */
     :root {
-      color-scheme: light;
-      --background: #f8fafc;
-      --foreground: #0f172a;
-      --card: #ffffff;
-      --card-foreground: #0f172a;
-      --primary: #315f95;
-      --primary-foreground: #ffffff;
-      --secondary: #f1f5f9;
-      --secondary-foreground: #172033;
-      --muted-bg: #f1f5f9;
-      --muted-foreground: #64748b;
-      --accent-bg: #eef4fb;
-      --accent-foreground: #1f4f82;
-      --border: #e2e8f0;
-      --input: #e2e8f0;
-      --ring: #315f95;
+      color-scheme: dark;
+      --background: #0b0f14;
+      --foreground: #f8fafc;
+      --card: #111827;
+      --card-foreground: #f8fafc;
+      --primary: #8ab4f8;
+      --primary-foreground: #08111f;
+      --secondary: #1b2432;
+      --secondary-foreground: #e8eef7;
+      --muted-bg: #151d29;
+      --muted-foreground: #a8b3c2;
+      --accent-bg: #18243a;
+      --accent-foreground: #d7e7ff;
+      --border: #2a3442;
+      --input: #334155;
+      --ring: #8ab4f8;
       --radius: 8px;
       --bg: var(--background);
-      --bg-mid: #e9eff5;
+      --bg-mid: #121a25;
       --bg-card: var(--card);
       --paper: var(--card);
       --surface: var(--muted-bg);
@@ -378,7 +378,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       --sidebar-muted: var(--muted-foreground);
       --sidebar-link: var(--muted-foreground);
       --sidebar-link-active-bg: var(--accent-bg);
-      --sidebar-link-active-border: rgba(49, 95, 149, 0.22);
+      --sidebar-link-active-border: rgba(138, 180, 248, 0.26);
       --sidebar-link-active-text: var(--foreground);
       --sidebar-accent: var(--primary);
       --control-bg: var(--card);
@@ -396,20 +396,20 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       --action-text: var(--foreground);
       --gold: var(--primary);
       --accent: var(--primary);
-      --accent-soft: rgba(49, 95, 149, 0.12);
-      --green: #15803d;
-      --red: #dc2626;
-      --blue: #2563eb;
-      --ok: #15803d;
-      --warn: #b45309;
-      --danger: #dc2626;
+      --accent-soft: rgba(138, 180, 248, 0.14);
+      --green: #4ade80;
+      --red: #f87171;
+      --blue: #93c5fd;
+      --ok: #4ade80;
+      --warn: #fbbf24;
+      --danger: #f87171;
       --ink: var(--primary-foreground);
       --primary-bg: var(--primary);
       --primary-text: var(--primary-foreground);
       --primary-border: var(--primary);
-      --option-bg: #ffffff;
+      --option-bg: var(--card);
       --option-text: var(--foreground);
-      --shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
     }
     body {
       background: var(--page-bg) !important;
@@ -549,7 +549,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 12px;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
       overflow: visible;
     }
     .sidebar.enterprise-app-sidebar .brand {
@@ -730,14 +730,14 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       color: var(--red);
     }
     .sidebar.enterprise-app-sidebar .signout-link:hover {
-      background: rgba(220, 38, 38, 0.08);
-      border-color: rgba(220, 38, 38, 0.22);
+      background: rgba(248, 113, 113, 0.12);
+      border-color: rgba(248, 113, 113, 0.28);
       color: var(--red);
     }
     .sidebar.enterprise-app-sidebar .nav-pill {
       font-size: 10px;
       color: var(--accent-foreground);
-      border: 1px solid rgba(49, 95, 149, 0.22);
+      border: 1px solid rgba(138, 180, 248, 0.26);
       background: var(--accent-bg);
       border-radius: 999px;
       padding: 2px 7px;
@@ -749,7 +749,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       height: 7px;
       border-radius: 999px;
       background: var(--sidebar-accent);
-      box-shadow: 0 0 0 4px rgba(49, 95, 149, 0.12);
+      box-shadow: 0 0 0 4px rgba(138, 180, 248, 0.16);
       flex: 0 0 auto;
     }
     @media (max-width: 980px) {

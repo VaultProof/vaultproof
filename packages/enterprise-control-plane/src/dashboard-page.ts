@@ -15,33 +15,33 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
   <title>Enterprise Dashboard - VaultProof</title>
   <style>
     :root {
-      color-scheme: light;
-      --bg: #f6f8fb;
-      --panel: rgba(255, 255, 255, 0.9);
-      --panel-strong: #ffffff;
-      --card-bg: #ffffff;
-      --row-bg: #f8fafc;
-      --line: #d9e1ea;
-      --line-soft: #e7edf3;
-      --text: #18212b;
-      --muted: #5e6b78;
-      --soft: #718090;
-      --gold: #315f95;
-      --green: #15803d;
-      --red: #dc2626;
-      --blue: #2563eb;
-      --warn: #d97706;
-      --ink: #ffffff;
-      --control-bg: #ffffff;
-      --primary-bg: #315f95;
-      --primary-text: #ffffff;
-      --primary-border: #315f95;
-      --shadow: 0 18px 54px rgba(24, 33, 43, 0.09);
-      --dashboard-ink: #18212b;
-      --dashboard-cloud: #d9e1ea;
-      --dashboard-rose: #315f95;
-      --dashboard-panel: #f6f8fb;
-      --dashboard-track: #e7edf3;
+      color-scheme: dark;
+      --bg: #0b0f14;
+      --panel: #111827;
+      --panel-strong: #111827;
+      --card-bg: #111827;
+      --row-bg: #151d29;
+      --line: #2a3442;
+      --line-soft: #2a3442;
+      --text: #f8fafc;
+      --muted: #a8b3c2;
+      --soft: #a8b3c2;
+      --gold: #8ab4f8;
+      --green: #4ade80;
+      --red: #f87171;
+      --blue: #93c5fd;
+      --warn: #fbbf24;
+      --ink: #08111f;
+      --control-bg: #111827;
+      --primary-bg: #8ab4f8;
+      --primary-text: #08111f;
+      --primary-border: #8ab4f8;
+      --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+      --dashboard-ink: #f8fafc;
+      --dashboard-cloud: #2a3442;
+      --dashboard-rose: #8ab4f8;
+      --dashboard-panel: #0b0f14;
+      --dashboard-track: #151d29;
     }
     * { box-sizing: border-box; }
     body {
@@ -50,30 +50,30 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-weight: 400;
       color: var(--text);
-      background: #f6f8fb;
+      background: #0b0f14;
     }
     a { color: inherit; text-decoration: none; }
     ${ENTERPRISE_APP_SHELL_THEME}
     :root {
-      --background: #f8fafc;
-      --foreground: #0f172a;
-      --card: #ffffff;
-      --card-foreground: #0f172a;
-      --popover: #ffffff;
-      --popover-foreground: #0f172a;
-      --primary: #315f95;
-      --primary-foreground: #ffffff;
-      --secondary: #f1f5f9;
-      --secondary-foreground: #172033;
-      --muted-bg: #f1f5f9;
-      --muted-foreground: #64748b;
-      --accent-bg: #eef4fb;
-      --accent-foreground: #1f4f82;
-      --destructive: #dc2626;
-      --destructive-foreground: #ffffff;
-      --border: #e2e8f0;
-      --input: #e2e8f0;
-      --ring: #315f95;
+      --background: #0b0f14;
+      --foreground: #f8fafc;
+      --card: #111827;
+      --card-foreground: #f8fafc;
+      --popover: #111827;
+      --popover-foreground: #f8fafc;
+      --primary: #8ab4f8;
+      --primary-foreground: #08111f;
+      --secondary: #1b2432;
+      --secondary-foreground: #e8eef7;
+      --muted-bg: #151d29;
+      --muted-foreground: #a8b3c2;
+      --accent-bg: #18243a;
+      --accent-foreground: #d7e7ff;
+      --destructive: #f87171;
+      --destructive-foreground: #21090b;
+      --border: #2a3442;
+      --input: #334155;
+      --ring: #8ab4f8;
       --radius: 8px;
       --bg: var(--background);
       --page-bg: var(--background);
@@ -89,16 +89,16 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       --soft: var(--muted-foreground);
       --nav-text: var(--muted-foreground);
       --action-text: var(--foreground);
-      --shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-      --gold: #315f95;
-      --accent: #315f95;
-      --accent-soft: rgba(49, 95, 149, 0.12);
-      --primary-bg: #315f95;
-      --primary-text: #ffffff;
-      --primary-border: #315f95;
-      --dashboard-rose: #315f95;
+      --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+      --gold: #8ab4f8;
+      --accent: #8ab4f8;
+      --accent-soft: rgba(138, 180, 248, 0.14);
+      --primary-bg: #8ab4f8;
+      --primary-text: #08111f;
+      --primary-border: #8ab4f8;
+      --dashboard-rose: #8ab4f8;
       --sidebar-link-active-bg: var(--accent-bg);
-      --sidebar-link-active-border: rgba(49, 95, 149, 0.22);
+      --sidebar-link-active-border: rgba(138, 180, 248, 0.26);
       --sidebar-link-active-text: var(--foreground);
       --sidebar-accent: var(--primary);
     }
@@ -126,7 +126,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       background: var(--card);
       border-radius: var(--radius);
       padding: 16px;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
     }
     .dashboard-hero {
       display: flex;
@@ -164,13 +164,13 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       height: 8px;
       border-radius: 999px;
       background: var(--green);
-      box-shadow: 0 0 0 4px rgba(21, 128, 61, 0.12);
+      box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.16);
     }
     .eyebrow {
       display: inline-flex;
       color: var(--accent-foreground);
       background: var(--accent-bg);
-      border: 1px solid rgba(49, 95, 149, 0.18);
+      border: 1px solid rgba(138, 180, 248, 0.24);
       border-radius: 999px;
       padding: 5px 9px;
       font-size: 11px;
@@ -244,15 +244,15 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       background: var(--card);
       border-radius: var(--radius);
       padding: 18px;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
     }
     .status-pill {
       display: inline-flex; align-items: center; gap: 8px;
       border-radius: 999px; padding: 7px 10px; font-size: 12px; font-weight: 600;
-      background: rgba(21, 128, 61, 0.10); color: var(--green); border: 1px solid rgba(21, 128, 61, 0.22);
+      background: rgba(74, 222, 128, 0.10); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.26);
     }
-    .status-pill.warn { background: rgba(180, 83, 9, 0.10); color: var(--warn); border-color: rgba(180, 83, 9, 0.28); }
-    .status-pill.bad { background: rgba(220, 38, 38, 0.12); color: var(--red); border-color: rgba(220, 38, 38, 0.28); }
+    .status-pill.warn { background: rgba(251, 191, 36, 0.10); color: var(--warn); border-color: rgba(251, 191, 36, 0.30); }
+    .status-pill.bad { background: rgba(248, 113, 113, 0.12); color: var(--red); border-color: rgba(248, 113, 113, 0.30); }
     .attention-card {
       border-color: var(--border);
       background: var(--card);
@@ -269,10 +269,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       border: 1px solid var(--line-soft);
       border-radius: var(--radius);
       padding: 13px;
-      background: #ffffff;
+      background: var(--card);
     }
-    .attention-row.warn { border-color: rgba(217, 119, 6, 0.28); background: #fffaf3; }
-    .attention-row.bad { border-color: rgba(220, 38, 38, 0.24); background: #fff7f7; }
+    .attention-row.warn { border-color: rgba(251, 191, 36, 0.30); background: rgba(251, 191, 36, 0.10); }
+    .attention-row.bad { border-color: rgba(248, 113, 113, 0.30); background: rgba(248, 113, 113, 0.10); }
     .section-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
     .section-title h2 { margin: 0; color: var(--foreground); font-size: 16px; font-weight: 600; letter-spacing: 0; }
     .section-title p { margin: 4px 0 0; color: var(--muted-foreground); font-size: 13px; line-height: 1.45; }
@@ -303,7 +303,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       color: var(--foreground);
       border-color: var(--border);
       font-weight: 600;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
     }
     .tab-panel { display: grid; gap: 16px; }
     .tab-panel[hidden] { display: none; }
@@ -321,23 +321,28 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       border-radius: var(--radius);
       padding: 16px;
       background: var(--card);
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
     }
     .overview-rail {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
     .rail-card.accent {
-      background: var(--foreground);
-      border-color: var(--foreground);
-      color: var(--background);
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--primary-foreground);
     }
     .rail-card.accent .rail-title,
     .rail-card.accent .rail-value {
-      color: #ffffff;
+      color: var(--primary-foreground);
     }
     .rail-card.accent .rail-copy,
     .rail-card.accent .rail-meta {
-      color: rgba(255, 255, 255, 0.72);
+      color: rgba(8, 17, 31, 0.78);
+    }
+    .rail-card.accent .tag {
+      color: var(--primary-foreground);
+      border-color: rgba(8, 17, 31, 0.24);
+      background: rgba(8, 17, 31, 0.08);
     }
     .rail-title {
       color: var(--foreground);
@@ -393,7 +398,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       background: var(--card);
       color: var(--foreground);
       font-weight: 650;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
     }
     .call-summary-grid {
       display: grid;
@@ -451,8 +456,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       border-radius: 50%;
       display: grid;
       place-items: center;
-      background: conic-gradient(#e7edf3 0deg 360deg);
-      box-shadow: inset 0 0 0 1px rgba(44, 48, 55, 0.08);
+      background: conic-gradient(#263241 0deg 360deg);
+      box-shadow: inset 0 0 0 1px rgba(248, 250, 252, 0.08);
       position: relative;
     }
     .donut::after {
@@ -460,8 +465,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       position: absolute;
       inset: 26px;
       border-radius: 50%;
-      background: #ffffff;
-      box-shadow: 0 0 0 1px rgba(44, 48, 55, 0.08);
+      background: var(--card);
+      box-shadow: 0 0 0 1px rgba(248, 250, 252, 0.08);
     }
     .donut-center {
       position: relative;
@@ -606,7 +611,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       stroke-width: 1;
     }
     .trend-area {
-      fill: rgba(49, 95, 149, 0.10);
+      fill: rgba(138, 180, 248, 0.14);
     }
     .trend-line {
       fill: none;
@@ -616,7 +621,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       stroke-linejoin: round;
     }
     .trend-marker {
-      fill: #ffffff;
+      fill: var(--card);
       stroke: var(--primary-bg);
       stroke-width: 2;
     }
@@ -642,14 +647,14 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .tag {
       color: var(--accent-foreground);
       font-size: 12px;
-      border: 1px solid rgba(49, 95, 149, 0.22);
+      border: 1px solid rgba(138, 180, 248, 0.26);
       border-radius: 999px;
       padding: 5px 8px;
       background: var(--accent-bg);
     }
-    .tag.good { color: var(--green); border-color: rgba(21, 128, 61, 0.24); background: rgba(21, 128, 61, 0.08); }
-    .tag.warn { color: var(--warn); border-color: rgba(180, 83, 9, 0.30); background: rgba(180, 83, 9, 0.08); }
-    .tag.bad { color: var(--red); border-color: rgba(220, 38, 38, 0.28); background: rgba(220, 38, 38, 0.08); }
+    .tag.good { color: var(--green); border-color: rgba(74, 222, 128, 0.30); background: rgba(74, 222, 128, 0.10); }
+    .tag.warn { color: var(--warn); border-color: rgba(251, 191, 36, 0.32); background: rgba(251, 191, 36, 0.10); }
+    .tag.bad { color: var(--red); border-color: rgba(248, 113, 113, 0.32); background: rgba(248, 113, 113, 0.10); }
     .empty, .error {
       color: var(--muted-foreground);
       border: 1px dashed var(--border);
@@ -657,7 +662,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       padding: 18px;
       background: var(--muted-bg);
     }
-    .error { color: var(--red); border-color: rgba(220, 38, 38, 0.3); }
+    .error { color: var(--red); border-color: rgba(248, 113, 113, 0.34); }
     .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
     .action { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; color: var(--foreground); background: var(--card); }
     .action.primary { color: var(--primary-text, var(--text)); }
@@ -669,23 +674,23 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       background: var(--card);
       transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
     }
-    .feature-card:hover { transform: translateY(-2px); border-color: rgba(49, 95, 149, 0.32); background: var(--row-bg); }
+    .feature-card:hover { transform: translateY(-2px); border-color: rgba(138, 180, 248, 0.36); background: var(--row-bg); }
     .feature-card h3 { margin: 0; font-size: 16px; line-height: 1.15; letter-spacing: 0; }
     .feature-card p { margin: 0; color: var(--muted-foreground); font-size: 13px; line-height: 1.45; flex: 1; }
     .feature-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-    .feature-tag { color: var(--green); border: 1px solid rgba(21, 128, 61, 0.22); border-radius: 999px; padding: 4px 7px; font-size: 11px; }
-    .feature-tag.pending { color: var(--warn); border-color: rgba(180, 83, 9, 0.30); }
+    .feature-tag { color: var(--green); border: 1px solid rgba(74, 222, 128, 0.30); border-radius: 999px; padding: 4px 7px; font-size: 11px; }
+    .feature-tag.pending { color: var(--warn); border-color: rgba(251, 191, 36, 0.32); }
     .enterprise-dashboard-main .card,
     .enterprise-dashboard-main .rail-card {
       background: var(--card) !important;
       border-color: var(--border) !important;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28) !important;
       color: var(--foreground) !important;
     }
     .enterprise-dashboard-main .rail-card.accent {
-      background: var(--foreground) !important;
-      border-color: var(--foreground) !important;
-      color: var(--background) !important;
+      background: var(--primary) !important;
+      border-color: var(--primary) !important;
+      color: var(--primary-foreground) !important;
     }
     .enterprise-dashboard-main .tabbar {
       background: var(--muted-bg) !important;
@@ -701,7 +706,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       background: var(--card) !important;
       color: var(--foreground) !important;
       border-color: var(--border) !important;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22) !important;
     }
     .enterprise-dashboard-main .row,
     .enterprise-dashboard-main .intent-card,
@@ -1188,10 +1193,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var mixed = rawNumber(summary.mixedSlots);
         var missing = rawNumber(summary.missingSlots);
         var values = [
-          { label: 'Ready for traffic', value: live, color: '#15803d' },
-          { label: 'Demo only', value: placeholder, color: '#d97706' },
-          { label: 'Partial setup', value: mixed, color: '#2563eb' },
-          { label: 'Missing', value: missing, color: '#dc2626' },
+          { label: 'Ready for traffic', value: live, color: '#4ade80' },
+          { label: 'Demo only', value: placeholder, color: '#fbbf24' },
+          { label: 'Partial setup', value: mixed, color: '#93c5fd' },
+          { label: 'Missing', value: missing, color: '#f87171' },
         ];
         var cursor = 0;
         var stops = values.map(function(item) {
@@ -1202,7 +1207,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         });
         var donut = byId('materialDonut');
         if (donut) {
-          donut.style.background = total > 0 ? 'conic-gradient(' + stops.join(', ') + ')' : 'conic-gradient(#e7edf3 0deg 360deg)';
+          donut.style.background = total > 0 ? 'conic-gradient(' + stops.join(', ') + ')' : 'conic-gradient(#263241 0deg 360deg)';
           donut.innerHTML = '<div class="donut-center"><strong>' + percent(live, total) + '%</strong><span>ready</span></div>';
         }
         var legend = byId('materialLegend');
@@ -1219,9 +1224,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var denied = rawNumber(traffic.deniedCalls);
         var otherErrors = rawNumber(traffic.otherErrorCalls);
         var segments = [
-          { label: 'Allowed', value: ok, color: '#15803d' },
-          { label: 'Blocked', value: denied, color: '#d97706' },
-          { label: 'Errors', value: otherErrors, color: '#dc2626' },
+          { label: 'Allowed', value: ok, color: '#4ade80' },
+          { label: 'Blocked', value: denied, color: '#fbbf24' },
+          { label: 'Errors', value: otherErrors, color: '#f87171' },
         ];
         var bar = byId('trafficOutcomeBar');
         if (bar) {
@@ -1229,7 +1234,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             ? segments.map(function(item) {
                 return '<span class="bar-segment" style="--width:' + percent(item.value, total) + '%;--fill:' + item.color + '"></span>';
               }).join('')
-            : '<span class="bar-segment" style="--width:100%;--fill:#e7edf3"></span>';
+            : '<span class="bar-segment" style="--width:100%;--fill:#263241"></span>';
         }
         text('trafficMeta', number(total) + ' ' + plural(total, 'call'));
         var legend = byId('trafficLegend');
@@ -1240,7 +1245,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         }
       }
       function coverageItem(label, value, detail, width, tone) {
-        var color = tone === 'bad' ? '#dc2626' : tone === 'warn' ? '#d97706' : tone === 'blue' ? '#315f95' : '#15803d';
+        var color = tone === 'bad' ? '#f87171' : tone === 'warn' ? '#fbbf24' : tone === 'blue' ? '#8ab4f8' : '#4ade80';
         return '<div class="coverage-item"><div class="coverage-top"><span class="coverage-label">' + escapeHtml(label) + '</span><strong class="coverage-value">' + escapeHtml(value) + '</strong></div><div class="provider-meta">' + escapeHtml(detail) + '</div><div class="meter"><span style="--width:' + Math.max(0, Math.min(100, width)) + '%;--fill:' + color + '"></span></div></div>';
       }
       function renderCoverageRows(id, coverage, summary) {
@@ -1289,7 +1294,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           var tone = denied || errors ? 'warn' : live && !review ? 'good' : 'warn';
           var labelText = Array.isArray(item.labels) && item.labels.length ? item.labels.join(', ') : item.provider;
           var width = Math.max(percent(calls || slots, maxValue), slots ? 8 : 3);
-          return '<div class="provider-row"><div class="provider-row-head"><div><div class="provider-name">' + escapeHtml(item.provider || 'unknown') + '</div><div class="provider-meta">' + escapeHtml(labelText) + ' - ' + number(slots) + ' ' + plural(slots, 'slot') + ' - ' + number(calls) + ' recent ' + plural(calls, 'call') + '</div></div><span class="tag ' + tone + '">' + (denied || errors ? 'watch' : live ? 'ready' : 'setup') + '</span></div><div class="meter"><span style="--width:' + width + '%;--fill:' + (tone === 'good' ? '#15803d' : '#d97706') + '"></span></div><div class="provider-meta">' + number(live) + ' ready - ' + number(review) + ' needs review - last ' + escapeHtml(relativeTime(item.lastActivity)) + '</div></div>';
+          return '<div class="provider-row"><div class="provider-row-head"><div><div class="provider-name">' + escapeHtml(item.provider || 'unknown') + '</div><div class="provider-meta">' + escapeHtml(labelText) + ' - ' + number(slots) + ' ' + plural(slots, 'slot') + ' - ' + number(calls) + ' recent ' + plural(calls, 'call') + '</div></div><span class="tag ' + tone + '">' + (denied || errors ? 'watch' : live ? 'ready' : 'setup') + '</span></div><div class="meter"><span style="--width:' + width + '%;--fill:' + (tone === 'good' ? '#4ade80' : '#fbbf24') + '"></span></div><div class="provider-meta">' + number(live) + ' ready - ' + number(review) + ' needs review - last ' + escapeHtml(relativeTime(item.lastActivity)) + '</div></div>';
         }).join('') : '<div class="empty">No provider slots or runtime activity are visible yet.</div>';
         if (id === 'providerUsageList') text('providerUsageMeta', number(usage.length) + ' provider ' + plural(usage.length, 'group'));
         if (id === 'keyMapProviderList') text('keyMapMeta', number(totalSlots) + ' active ' + plural(totalSlots, 'slot'));
