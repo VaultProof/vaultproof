@@ -9,10 +9,15 @@ const expectedSecurityProfile = process.env.ENTERPRISE_EXPECTED_SECURITY_PROFILE
 const readinessRetries = Number.parseInt(process.env.READINESS_RETRIES || '3', 10);
 const readinessRetryDelayMs = Number.parseInt(process.env.READINESS_RETRY_DELAY_MS || '3000', 10);
 
-const requiredAppPaths = [
+const requiredPublicPaths = [
   '/',
   '/app/login',
   '/app/enterprise-login.js',
+  '/health',
+  '/readiness',
+];
+
+const protectedAppPaths = [
   '/app',
   '/app/',
   '/app/dashboard',
@@ -35,8 +40,11 @@ const requiredAppPaths = [
   '/app/testers',
   '/app/release',
   '/app/scanner',
-  '/health',
-  '/readiness',
+];
+
+const requiredAppPaths = [
+  ...requiredPublicPaths,
+  ...protectedAppPaths,
 ];
 
 const staffOnlyPaths = [
@@ -131,6 +139,26 @@ async function assertPathOk(path) {
   return text;
 }
 
+function isPublicEnterprisePath(path) {
+  const pathname = new URL(path, `${enterpriseUrl}/`).pathname;
+  return requiredPublicPaths.includes(pathname);
+}
+
+function isProtectedEnterpriseAppPath(path) {
+  const pathname = new URL(path, `${enterpriseUrl}/`).pathname;
+  return protectedAppPaths.includes(pathname)
+    || (pathname.startsWith('/app/') && pathname !== '/app/login' && pathname !== '/app/enterprise-login.js');
+}
+
+async function assertProtectedRedirect(path) {
+  const { response } = await fetchText(path);
+  const location = response.headers.get('location') || '';
+  if (![302, 303].includes(response.status) || !location.includes('/app/login')) {
+    throw new Error(`${path} should redirect anonymous users to login, got HTTP ${response.status} location=${location}`);
+  }
+  return location;
+}
+
 async function assertReadiness() {
   let lastError;
   const attempts = Number.isFinite(readinessRetries) && readinessRetries > 0 ? readinessRetries : 1;
@@ -171,7 +199,7 @@ async function assertReadiness() {
 
 async function assertPublicPagesAndLinks() {
   const discoveredLinks = [];
-  for (const path of requiredAppPaths) {
+  for (const path of requiredPublicPaths) {
     const text = await assertPathOk(path);
     if (path === '/app/enterprise-login.js') {
       if (
@@ -187,12 +215,22 @@ async function assertPublicPagesAndLinks() {
     discoveredLinks.push(...extractEnterpriseLinks(text));
   }
 
+  for (const path of protectedAppPaths) {
+    await assertProtectedRedirect(path);
+  }
+
   const pathsToCheck = unique(discoveredLinks)
     .filter((path) => !path.startsWith('/api/v1/enterprise/'))
     .sort();
 
   for (const path of pathsToCheck) {
-    await assertPathOk(path);
+    if (isPublicEnterprisePath(path)) {
+      await assertPathOk(path);
+    } else if (isProtectedEnterpriseAppPath(path)) {
+      await assertProtectedRedirect(path);
+    } else {
+      await assertPathOk(path);
+    }
   }
 
   return pathsToCheck;
