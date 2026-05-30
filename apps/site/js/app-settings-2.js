@@ -1,8 +1,8 @@
 tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { inter: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
-          colors: { brand: '#6366f1', 'brand-hover': '#5558e6', cyan: '#06b6d4', surface: '#0a0a0f', card: '#111118', border: '#1e1e2e' }
+          fontFamily: { inter: ['Geist', 'sans-serif'], mono: ['Geist Mono', 'monospace'] },
+          colors: { brand: '#00e5ff', 'brand-hover': '#22e6a8', cyan: '#00e5ff', surface: '#070a10', card: '#0e1622', border: 'rgba(148, 163, 184, 0.16)' }
         }
       }
     };

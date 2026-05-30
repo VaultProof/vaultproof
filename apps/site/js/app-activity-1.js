@@ -6,7 +6,11 @@
     ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
     : 'https://init.vaultproof.dev/api/v1/init';
   const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
-  const ACCENT = '#d97706';
+  const ACCENT = '#00e5ff';
+  const SUCCESS = '#22e6a8';
+  const DANGER = '#fb7185';
+  const GRID = 'rgba(148,163,184,0.14)';
+  const MUTED = 'rgba(235,245,255,0.42)';
   const CALL_LIMITS = {
     free: 10000,
     starter: 50000,
@@ -290,7 +294,7 @@
             label: 'calls',
             data: rows.map((row) => row.calls),
             borderColor: ACCENT,
-            backgroundColor: 'rgba(217,119,6,0.06)',
+            backgroundColor: 'rgba(0,229,255,0.08)',
             fill: true,
             tension: 0.35,
             pointRadius: 0,
@@ -299,7 +303,7 @@
           {
             label: 'errors',
             data: rows.map((row) => row.errors),
-            borderColor: '#b91c1c',
+            borderColor: DANGER,
             backgroundColor: 'transparent',
             fill: false,
             tension: 0.35,
@@ -315,17 +319,17 @@
         interaction: { mode: 'index', intersect: false },
         scales: {
           x: {
-            grid: { color: '#e7e5de' },
+            grid: { color: GRID },
             border: { display: false },
-            ticks: { color: '#8a8a82', font: { family: "'JetBrains Mono', ui-monospace, monospace", size: 10 }, maxTicksLimit: 8 },
+            ticks: { color: MUTED, font: { family: "'Geist Mono', ui-monospace, monospace", size: 10 }, maxTicksLimit: 8 },
           },
           y: {
-            grid: { color: '#e7e5de' },
+            grid: { color: GRID },
             border: { display: false },
             beginAtZero: true,
             ticks: {
-              color: '#8a8a82',
-              font: { family: "'JetBrains Mono', ui-monospace, monospace", size: 10 },
+              color: MUTED,
+              font: { family: "'Geist Mono', ui-monospace, monospace", size: 10 },
               callback(value) {
                 return value >= 1000 ? `${Math.round(value / 1000)}k` : value;
               },
@@ -352,7 +356,7 @@
     if (fill) {
       const ratio = limit === Infinity ? 100 : Math.min(100, limit > 0 ? (calls30d / limit) * 100 : 0);
       fill.style.width = `${ratio}%`;
-      fill.style.background = ratio >= 90 ? '#b91c1c' : ACCENT;
+      fill.style.background = ratio >= 90 ? DANGER : `linear-gradient(90deg, ${ACCENT}, ${SUCCESS})`;
     }
   }
 
@@ -509,7 +513,7 @@
           <div class="stack-title">${escapeHtml(log.projectName)}</div>
           <div class="stack-sub">${escapeHtml(log.endpoint)} · ${escapeHtml(relTime(log.timestamp))}</div>
         </div>
-        <div class="stack-value" style="color:#b91c1c">${escapeHtml(formatLatency(log.latency))}</div>
+        <div class="stack-value" style="color:var(--danger)">${escapeHtml(formatLatency(log.latency))}</div>
       </div>
     `).join('');
   }

@@ -154,9 +154,8 @@
   }
   function syncOrganizationUrl(orgId) {
     const params = new URLSearchParams(window.location.search);
-    if (orgId) params.set('org', orgId);
-    else params.delete('org');
-    const next = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+    params.delete('org');
+    const next = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}${window.location.hash || ''}`;
     window.history.replaceState({}, '', next);
   }
   function chooseOrganization(orgs, activeOrganizationId) {

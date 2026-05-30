@@ -1,0 +1,363 @@
+:root {
+  --accent: #00e5ff;
+  --accent-hover: #22e6a8;
+  --bg: #070a10;
+  --bg-mid: #0b111b;
+  --bg-card: rgba(14, 22, 34, 0.88);
+  --rule-color: rgba(148, 163, 184, 0.16);
+  --hair-color: rgba(148, 163, 184, 0.10);
+  --rule: 1px solid var(--rule-color);
+  --hair: 1px solid var(--hair-color);
+  --text: #f7fbff;
+  --text-mid: #d9e7ef;
+  --text-muted: rgba(235, 245, 255, 0.68);
+  --text-faint: rgba(235, 245, 255, 0.42);
+  --danger: #fb7185;
+  --success: #22e6a8;
+  --ok: #22e6a8;
+  --warn: #f8c038;
+  --mono: "Geist Mono", "SFMono-Regular", Consolas, monospace;
+  --display: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --body: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --settings-card: rgba(9, 15, 25, 0.92);
+  --settings-card-raised: rgba(12, 20, 32, 0.96);
+}
+
+html,
+body {
+  background:
+    radial-gradient(circle at 14% 8%, rgba(0, 229, 255, 0.14), transparent 30rem),
+    radial-gradient(circle at 86% 0%, rgba(34, 230, 168, 0.12), transparent 28rem),
+    linear-gradient(135deg, #070a10 0%, #0b1220 46%, #08111b 100%) !important;
+  color: var(--text) !important;
+  font-family: var(--body) !important;
+}
+
+.page {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.layout {
+  display: grid !important;
+  grid-template-columns: var(--vp-sidebar-collapsed, 64px) minmax(0, 1fr) !important;
+  min-height: calc(100vh - 64px) !important;
+  background: transparent !important;
+}
+
+.main,
+.settings-main {
+  min-width: 0 !important;
+  padding: 28px 32px 44px !important;
+  background: transparent !important;
+  color: var(--text) !important;
+}
+
+.settings-wrap {
+  width: min(1040px, 100%) !important;
+  max-width: 1040px !important;
+  margin: 0 auto !important;
+}
+
+.settings-wrap > div:first-child {
+  margin-bottom: 4px !important;
+}
+
+.settings-wrap h1 {
+  color: var(--text) !important;
+  font-family: var(--display) !important;
+  font-size: clamp(32px, 3.6vw, 48px) !important;
+  font-weight: 600 !important;
+  line-height: 0.98 !important;
+  letter-spacing: 0 !important;
+}
+
+.settings-wrap h2,
+.settings-wrap h3,
+.settings-wrap h4 {
+  color: var(--text) !important;
+  font-family: var(--display) !important;
+  letter-spacing: 0 !important;
+}
+
+.settings-wrap p,
+.settings-wrap label,
+.settings-wrap .text-gray-300,
+.settings-wrap .text-gray-400,
+.settings-wrap .text-gray-500,
+.settings-wrap .text-gray-600,
+.settings-wrap .text-sm,
+.settings-wrap .text-xs,
+.topbar-crumb,
+.topbar-email,
+.sidebar-user-info {
+  color: var(--text-muted) !important;
+}
+
+.settings-wrap .text-white,
+.settings-wrap .font-medium,
+.settings-wrap .font-semibold,
+.settings-wrap .font-bold {
+  color: var(--text) !important;
+}
+
+.settings-wrap > section,
+.settings-wrap .bg-\[\#111118\],
+.settings-wrap .bg-\[\#0a0a0f\],
+#sessionExpired > div,
+#killSwitchModal > div,
+#billingMsg,
+#killSwitchActive,
+#deleteConfirm1,
+#deleteConfirm2 {
+  border: 1px solid rgba(148, 163, 184, 0.16) !important;
+  border-radius: 8px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.060), rgba(255, 255, 255, 0.030)),
+    var(--settings-card) !important;
+  color: var(--text) !important;
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+.settings-wrap > section {
+  padding: 24px !important;
+}
+
+.settings-wrap > section:hover {
+  border-color: rgba(0, 229, 255, 0.24) !important;
+}
+
+.settings-wrap .border-\[\#1e1e2e\],
+.settings-wrap .border-red-900\/50,
+.settings-wrap .border-red-800,
+.settings-wrap .border-amber-500\/20,
+.settings-wrap .border-amber-500\/30,
+.settings-wrap .border-\[\#6366f1\]\/20,
+.settings-wrap .border-\[\#6366f1\]\/30,
+.settings-wrap .border-gray-500,
+.settings-wrap .border-gray-600\/30 {
+  border-color: rgba(148, 163, 184, 0.16) !important;
+}
+
+input,
+select,
+textarea,
+.settings-wrap input,
+.settings-wrap select,
+.settings-wrap textarea,
+.settings-wrap .bg-\[\#0a0a0f\],
+.settings-wrap .bg-\[\#111118\] {
+  background: rgba(5, 10, 18, 0.76) !important;
+  border-color: rgba(148, 163, 184, 0.16) !important;
+  color: var(--text) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-faint) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.settings-wrap .focus\:border-\[\#6366f1\]:focus {
+  background: rgba(5, 10, 18, 0.90) !important;
+  border-color: rgba(0, 229, 255, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.12) !important;
+  outline: none !important;
+}
+
+button,
+.settings-wrap a,
+.settings-wrap button {
+  font-family: var(--mono) !important;
+}
+
+.settings-wrap .bg-\[\#6366f1\],
+.settings-wrap .hover\:bg-\[\#5558e6\]:hover,
+.settings-wrap .billing-upgrade-btn,
+#saveGlobalLimitsBtn,
+#billingManageBtn,
+#deleteBtn + div button,
+#confirmKillBtn,
+.settings-wrap a[href="#billing"],
+.settings-wrap a[href="/app/keys"] {
+  background: linear-gradient(135deg, var(--accent), var(--success)) !important;
+  border-color: transparent !important;
+  color: #001016 !important;
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.20) !important;
+}
+
+.settings-wrap .bg-\[\#6366f1\]:hover,
+.settings-wrap .billing-upgrade-btn:hover,
+#saveGlobalLimitsBtn:hover,
+#billingManageBtn:hover,
+.settings-wrap a[href="#billing"]:hover,
+.settings-wrap a[href="/app/keys"]:hover {
+  background: linear-gradient(135deg, #4df0ff, #4ff0bd) !important;
+  color: #001016 !important;
+}
+
+#deleteBtn,
+#deleteConfirmFinalBtn {
+  background: rgba(251, 113, 133, 0.12) !important;
+  border-color: rgba(251, 113, 133, 0.28) !important;
+  color: var(--danger) !important;
+  box-shadow: none !important;
+}
+
+#deleteBtn:hover,
+#deleteConfirmFinalBtn:hover {
+  background: rgba(251, 113, 133, 0.18) !important;
+  color: #ffe4ea !important;
+}
+
+#killSwitchBtn,
+#killSwitchActive,
+.settings-wrap .bg-amber-500\/10,
+.settings-wrap .bg-yellow-900\/30,
+.settings-wrap .bg-red-950\/30,
+.settings-wrap .bg-red-900\/30,
+.settings-wrap .bg-\[\#6366f1\]\/10,
+.settings-wrap .bg-\[\#6366f1\]\/15,
+.settings-wrap .bg-gray-700\/30 {
+  background: rgba(255, 255, 255, 0.045) !important;
+}
+
+.settings-wrap .text-\[\#06b6d4\],
+.settings-wrap .text-\[\#6366f1\],
+.settings-wrap .text-indigo-400,
+.settings-wrap .text-cyan-400 {
+  color: var(--accent) !important;
+}
+
+.settings-wrap .text-green-400 {
+  color: var(--success) !important;
+}
+
+.settings-wrap .text-amber-400,
+.settings-wrap .text-yellow-400,
+.settings-wrap .text-yellow-200 {
+  color: var(--warn) !important;
+}
+
+.settings-wrap .text-red-300,
+.settings-wrap .text-red-400,
+.settings-wrap .text-red-200 {
+  color: var(--danger) !important;
+}
+
+.settings-wrap .bg-\[\#6366f1\],
+#keysBar,
+#callsBar,
+.usage-bar-fill {
+  background: linear-gradient(90deg, var(--accent), var(--success)) !important;
+}
+
+.settings-wrap .w-full.bg-\[\#0a0a0f\],
+.usage-bar-track {
+  background: rgba(148, 163, 184, 0.16) !important;
+}
+
+#settingsAnnualToggle {
+  background: rgba(148, 163, 184, 0.16) !important;
+}
+
+#settingsAnnualDot {
+  background: var(--text-muted) !important;
+}
+
+#toastInner {
+  background: var(--settings-card-raised) !important;
+  border-color: rgba(148, 163, 184, 0.16) !important;
+  color: var(--text) !important;
+}
+
+.fixed.inset-0,
+#killSwitchModal,
+#sessionExpired,
+.sidebar-overlay {
+  background: rgba(2, 6, 12, 0.72) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.sidebar:hover .sidebar-dot,
+.sidebar:focus-within .sidebar-dot {
+  width: 0 !important;
+  flex-basis: 0 !important;
+  opacity: 0 !important;
+  transform: scale(0.72);
+  pointer-events: none;
+  border-color: transparent !important;
+}
+
+.sidebar:hover .sidebar-item,
+.sidebar:focus-within .sidebar-item {
+  gap: 0 !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+@media (min-width: 961px) {
+  #sidebar.sidebar {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    height: auto !important;
+    min-height: calc(100vh - 64px) !important;
+    transform: translateX(0) !important;
+  }
+
+  #sidebarOverlay {
+    display: none !important;
+  }
+}
+
+@media (max-width: 960px) {
+  .layout {
+    display: block !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  #sidebar.sidebar {
+    position: fixed !important;
+    top: 64px !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: min(86vw, 280px) !important;
+    transform: translateX(-100%) !important;
+  }
+
+  #sidebar.sidebar.is-open {
+    transform: translateX(0) !important;
+  }
+
+  .sidebar-overlay {
+    inset: 64px 0 0 !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .main,
+  .settings-main {
+    padding: 20px 16px 32px !important;
+  }
+
+  .settings-wrap > section {
+    padding: 18px !important;
+  }
+
+  #deleteConfirm2 .flex,
+  #killSwitchModal .flex,
+  #upgradeProBanner .flex {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+}

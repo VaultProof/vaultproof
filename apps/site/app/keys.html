@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="/js/auth-callback-guard.js?v=20260530a"></script>
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
   <script src="/js/app-keys-1.js" defer></script>
@@ -13,9 +14,9 @@
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
   <script src="/js/app-keys-2.js" defer></script>
-  <style>
+  <style data-app-shell-style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -789,6 +790,7 @@
   </style>
   <link rel="stylesheet" href="/css/site-theme.css">
   <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260530a">
+  <link rel="stylesheet" href="/css/app-keys-theme.css?v=20260530a" data-app-shell-stylesheet>
 </head>
 <body>
   <div class="page">
@@ -801,7 +803,7 @@
         </svg>
       </button>
       <a href="/" class="topbar-logo">
-        <span>vaultproof</span>
+        <span class="topbar-logo-name">vaultproof</span>
       </a>
       <span class="topbar-sep">/</span>
       <span>dashboard</span>
@@ -1186,7 +1188,7 @@
     </div>
   </div>
 
-  <script src="/js/app-keys-3.js?v=20260521a" defer></script>
+  <script src="/js/app-keys-3.js?v=20260530a" defer data-app-shell-page-script></script>
   <script src="/js/analytics.js" defer></script>
 </body>
 </html>

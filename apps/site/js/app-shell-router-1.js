@@ -6,6 +6,7 @@
     '/app/alerts': true
   };
   var STYLE_SELECTOR = 'style[data-app-shell-style]';
+  var LINK_STYLE_SELECTOR = 'link[rel="stylesheet"][data-app-shell-stylesheet]';
   var PAGE_SCRIPT_SELECTOR = 'script[data-app-shell-page-script]';
   var RUNTIME_SCRIPT_SELECTOR = 'script[data-app-shell-runtime]';
   var navInFlight = null;
@@ -43,11 +44,19 @@
 
   function syncPageStyle(nextDoc) {
     var nextStyle = nextDoc.querySelector(STYLE_SELECTOR);
-    if (!nextStyle) return;
-    var currentStyle = document.head.querySelector(STYLE_SELECTOR);
-    var replacement = nextStyle.cloneNode(true);
-    if (currentStyle) currentStyle.replaceWith(replacement);
-    else document.head.appendChild(replacement);
+    if (nextStyle) {
+      var currentStyle = document.head.querySelector(STYLE_SELECTOR);
+      var replacement = nextStyle.cloneNode(true);
+      if (currentStyle) currentStyle.replaceWith(replacement);
+      else document.head.appendChild(replacement);
+    }
+
+    document.head.querySelectorAll(LINK_STYLE_SELECTOR).forEach(function(link) {
+      link.remove();
+    });
+    nextDoc.querySelectorAll(LINK_STYLE_SELECTOR).forEach(function(link) {
+      document.head.appendChild(link.cloneNode(true));
+    });
   }
 
   function syncTopbarAndMain(nextDoc) {

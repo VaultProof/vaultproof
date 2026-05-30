@@ -1,3 +1,4 @@
+(function() {
 // --- Split-key encryption engine (Shamir GF(256)) ---
     var _EXP = new Uint8Array(512), _LOG = new Uint8Array(256);
     (function() {
@@ -1081,3 +1082,4 @@
     // --- Initialize ---
     loadProjects();
     loadStats();
+})();
