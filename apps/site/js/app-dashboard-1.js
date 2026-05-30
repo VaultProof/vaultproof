@@ -34,19 +34,10 @@
     'transparent_proxy',
     'upstream_request',
   ]);
-  const CALL_LIMITS = {
-    free: 10000,
-    starter: 50000,
-    pro: 500000,
-    team: 2000000,
-    enterprise: Infinity,
-  };
-
   let token = localStorage.getItem('vaultproof_token');
   const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
   let refreshAttempted = false;
   let refreshPromise = null;
-  let usageChart = null;
   let currentProjectRows = [];
   let currentProjectFilter = 'all';
   let liveRequestRows = [];
@@ -86,21 +77,6 @@
 
   function safeClassSegment(value) {
     return String(value || 'unknown').toLowerCase().replace(/[^a-z0-9_-]/g, '-');
-  }
-
-  function normalizeTier(value) {
-    const tier = String(value || '').trim().toLowerCase();
-    if (!tier) return 'free';
-    if (tier.includes('enterprise')) return 'enterprise';
-    if (tier.includes('team')) return 'team';
-    if (tier.includes('pro')) return 'pro';
-    if (tier.includes('starter')) return 'starter';
-    if (tier.includes('free')) return 'free';
-    return 'free';
-  }
-
-  function formatTierLabel(tier) {
-    return tier === 'free' ? 'free plan' : `${tier} plan`;
   }
 
   function extractRefreshToken(value) {
@@ -263,11 +239,11 @@
     return event.metadata || {};
   }
 
-  function requestLatencyFromEvent(event, fallbackIndex) {
+  function requestLatencyFromEvent(event) {
     const metadata = parseMetadata(event);
     const latency = Number(metadata.latency_ms || metadata.latency || (event && (event.latency_ms || event.latency)));
     if (Number.isFinite(latency) && latency > 0) return latency;
-    return [0.3, 0.4, 0.6, 0.8, 1.2, 2.1, 3.4][fallbackIndex % 7];
+    return null;
   }
 
   function hasOwnRequestSignal(event) {
@@ -411,20 +387,6 @@
     return null;
   }
 
-  function resolveTier(billing) {
-    const payload = unwrapPayload(billing) || {};
-    return normalizeTier(
-      payload?.tier ||
-      payload?.plan ||
-      payload?.subscriptionTier ||
-      payload?.subscription?.tier ||
-      payload?.subscription?.plan ||
-      payload?.customer?.tier ||
-      user?.tier ||
-      user?.plan
-    );
-  }
-
   function buildFallbackOverview(overview, rows, keyStats, logs) {
     const providersFromKeys = new Set(
       Array.from(keyStats.values()).map((row) => row?.provider).filter(Boolean)
@@ -446,16 +408,6 @@
     if (count >= 5) return { label: 'critical', color: '#ff4f68', bg: 'rgba(255,79,104,0.10)' };
     if (count >= 2) return { label: 'high', color: '#f8c038', bg: 'rgba(248,192,56,0.10)' };
     return { label: 'medium', color: '#00e5ff', bg: 'rgba(0,229,255,0.10)' };
-  }
-
-  function buildDistributionBars(values, color) {
-    const nonZero = values.filter((value) => value > 0);
-    if (!nonZero.length) return '<span class="status-empty">—</span>';
-    const max = Math.max.apply(null, nonZero);
-    return values.slice(0, 12).map((value) => {
-      const height = Math.max(6, Math.round((value / max) * 30));
-      return `<div class="spark-bar" style="height:${height}px;background:${color};opacity:${value > 0 ? 1 : 0.25}"></div>`;
-    }).join('');
   }
 
   async function buildProjectRows(projects, keyStats) {
@@ -481,7 +433,6 @@
         calls30d,
         lastUsedAt,
         createdAt: extractTimestamp(project.created_at, project.createdAt),
-        sparkValues: matchedStats.map((stat) => Number(stat?.callsThisMonth || stat?.calls_this_month || 0)),
         status: keys.length === 0 ? 'idle' : calls30d > 0 ? 'healthy' : 'ready',
       };
     }));
@@ -500,34 +451,8 @@
         calls30d: Number(project.calls30d || project.calls_30d || 0),
         lastUsedAt: extractTimestamp(project.lastUsedAt, project.last_used_at, project.lastUsed, project.last_used),
         createdAt: extractTimestamp(project.createdAt, project.created_at),
-        sparkValues: Array.isArray(project.sparkValues)
-          ? project.sparkValues.map((value) => Number(value || 0))
-          : Array.isArray(project.spark_values)
-            ? project.spark_values.map((value) => Number(value || 0))
-            : [],
         status: project.status || (Number(project.keysCount || project.keys_count || 0) === 0 ? 'idle' : 'ready'),
       }));
-  }
-
-  function renderUsageSummary(overview, usageRows, tier) {
-    const totalCalls = Number(overview?.totalCalls || 0);
-    const calls30d = usageRows.reduce((sum, row) => sum + Number(row.calls || 0), 0);
-    const limit = CALL_LIMITS[tier] || CALL_LIMITS.free;
-    setText('usagePlanLabel', formatTierLabel(tier));
-    setText('usageMetricLabel', 'all calls');
-    setText('usageMetricValue', formatNum(totalCalls));
-    setText(
-      'usageMetricNote',
-      limit === Infinity
-        ? `last 30d ${formatNum(calls30d)}`
-        : `last 30d ${formatNum(calls30d)} of ${formatNum(limit)} included`
-    );
-    const fill = document.getElementById('usageBarFill');
-    if (fill) {
-      const ratio = limit === Infinity ? 100 : Math.min(100, limit > 0 ? (calls30d / limit) * 100 : 0);
-      fill.style.width = `${ratio}%`;
-      fill.style.background = ratio >= 90 ? '#b91c1c' : 'var(--accent)';
-    }
   }
 
   function renderProjectRows() {
@@ -539,7 +464,7 @@
       return project.env === currentProjectFilter;
     });
     if (!rows.length) {
-      container.innerHTML = '<div class="table-row"><div class="status-empty">No routes match this filter.</div><div></div><div></div><div></div><div></div><div></div></div>';
+      container.innerHTML = '<div class="table-row"><div class="status-empty">No projects match this filter.</div><div></div><div></div><div></div><div></div><div></div></div>';
       return;
     }
 
@@ -552,30 +477,18 @@
             ? 'rgba(247,251,255,0.28)'
             : ACCENT;
       const statusLabel = project.status === 'ready' ? 'ready' : project.status;
-      const method = project.env === 'production' ? 'POST' : project.env === 'development' ? 'GET' : 'PUT';
-      const routeSlug = String(project.name || project.vpProjId || 'route')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')
-        .slice(0, 28) || 'route';
-      const p99 = project.calls30d > 0
-        ? `${Math.max(0.3, Math.min(8.8, (project.calls30d % 34) / 10 + 0.3)).toFixed(1)}ms`
-        : '—';
-      const reqPerSecond = project.calls30d > 0
-        ? Math.max(1, Math.round(project.calls30d / (30 * 24 * 60 * 60) * 1000)) / 1000
-        : 0;
-      const reqLabel = reqPerSecond >= 1 ? reqPerSecond.toFixed(1) : reqPerSecond ? reqPerSecond.toFixed(3) : '0';
+      const lastUsed = project.lastUsedAt ? relTime(project.lastUsedAt) : 'no calls';
       return `
         <div class="table-row ${project.status === 'alert' ? 'alert-row' : ''}">
           <div>
-            <div class="proj-name">/api/v1/${escapeHtml(routeSlug)}</div>
+            <div class="proj-name">${escapeHtml(project.name || project.vpProjId || 'Untitled project')}</div>
             <div class="proj-id">${escapeHtml(project.vpProjId)}</div>
           </div>
-          <div><span class="env-badge env-${safeClassSegment(project.env)}">${escapeHtml(method)}</span></div>
-          <div class="cell-mono">vaultproof-proxy</div>
-          <div class="cell-mono" style="color:var(--accent)">${escapeHtml(p99)}</div>
-          <div class="cell-mono">${escapeHtml(reqLabel)}</div>
-          <div class="status-cell ${project.status === 'idle' && project.keysCount === 0 ? 'status-empty' : ''}" style="color:${project.status === 'idle' && project.keysCount === 0 ? 'var(--text-faint)' : sparkColor}">● ${escapeHtml(statusLabel)}</div>
+          <div><span class="env-badge env-${safeClassSegment(project.env)}">${escapeHtml(project.env)}</span></div>
+          <div class="cell-mono">${escapeHtml(`${formatNum(project.keysCount)} key${project.keysCount === 1 ? '' : 's'}`)}</div>
+          <div class="cell-mono">${escapeHtml(lastUsed)}</div>
+          <div class="cell-mono">${escapeHtml(formatNum(project.calls30d))}</div>
+          <div class="status-cell ${project.status === 'idle' && project.keysCount === 0 ? 'status-empty' : ''}" style="color:${project.status === 'idle' && project.keysCount === 0 ? 'var(--text-muted)' : sparkColor}">● ${escapeHtml(statusLabel)}</div>
         </div>`;
     }).join('');
   }
@@ -628,105 +541,11 @@
     setText('pageMeta', `/ ${projectRows.length} total · ${activeProjects} active`);
   }
 
-  function buildChart(labels, calls, errors) {
-    const mono = "'Geist Mono', 'SFMono-Regular', Consolas, monospace";
-    const rule = 'rgba(0,229,255,0.13)';
-    const canvas = document.getElementById('usageChart');
-    if (!canvas || typeof Chart === 'undefined') return;
-    const ctx = canvas.getContext('2d');
-    if (usageChart) usageChart.destroy();
-    usageChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [
-          {
-            label: 'calls',
-            data: calls,
-            borderColor: ACCENT,
-            backgroundColor: 'rgba(0,229,255,0.08)',
-            fill: true,
-            tension: 0.4,
-            pointRadius: 0,
-            pointHoverRadius: 4,
-            pointHoverBackgroundColor: ACCENT,
-            borderWidth: 2,
-          },
-          {
-            label: 'errors',
-            data: errors,
-            borderColor: '#ff4f68',
-            backgroundColor: 'transparent',
-            fill: false,
-            tension: 0.4,
-            pointRadius: 0,
-            pointHoverRadius: 4,
-            pointHoverBackgroundColor: '#ff4f68',
-            borderWidth: 1.5,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#07101a',
-            titleColor: '#f7fbff',
-            bodyColor: 'rgba(247,251,255,0.68)',
-            borderColor: rule,
-            borderWidth: 1,
-            cornerRadius: 4,
-            padding: 10,
-            titleFont: { family: mono, size: 11 },
-            bodyFont: { family: mono, size: 11 },
-          },
-        },
-        scales: {
-          x: {
-            grid: { color: rule },
-            ticks: { color: 'rgba(247,251,255,0.36)', font: { family: mono, size: 10 }, maxTicksLimit: 8 },
-            border: { display: false },
-          },
-          y: {
-            grid: { color: rule },
-            ticks: {
-              color: 'rgba(247,251,255,0.36)',
-              font: { family: mono, size: 10 },
-              callback(value) {
-                return value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value;
-              },
-            },
-            border: { display: false },
-            beginAtZero: true,
-          },
-        },
-      },
-    });
-  }
-
-  function demoChart() {
-    const labels = [];
-    const calls = [];
-    const errors = [];
-    for (let i = 29; i >= 0; i -= 1) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-      const base = 60000 + Math.sin(i * 0.4) * 20000;
-      calls.push(Math.round(base));
-      errors.push(Math.round(base * 0.008));
-    }
-    buildChart(labels, calls, errors);
-  }
-
   function renderActivity(events) {
     const feed = document.getElementById('activity-feed');
     if (!feed) return;
     if (!events.length) {
-      feed.innerHTML = '<div class="activity-row" style="color:var(--text-faint)"><span class="act-time">—</span><span class="act-tag">—</span><span>no recent activity</span></div>';
+      feed.innerHTML = '<div class="activity-row" style="color:var(--text-muted)"><span class="act-time">—</span><span class="act-tag">—</span><span>no recent activity</span></div>';
       return;
     }
     feed.innerHTML = events.slice(0, 8).map((event) => {
@@ -828,43 +647,34 @@
     const recentEvents = overview.recentActivity || [];
     const apiEvents = recentEvents.filter(isUserApiCall);
     const latencies = apiEvents
-      .map((event, index) => requestLatencyFromEvent(event, index))
+      .map(requestLatencyFromEvent)
       .filter((latency) => Number.isFinite(latency) && latency > 0)
       .sort((a, b) => a - b);
     const p99 = latencies.length
       ? latencies[Math.min(latencies.length - 1, Math.floor(latencies.length * 0.99))]
-      : 0.4;
+      : null;
+    const activeRoutes = Number(overview.activeApps || currentProjectRows.filter((project) => project.keysCount > 0 || project.calls30d > 0).length || currentProjectRows.length || 0);
 
     setText('kpi-keys', formatNum(totalCalls));
-    setText('kpi-keys-sub', '+12.4%');
-    setText('kpi-calls', `${Number(p99 || 0.4).toFixed(1)}ms`);
-    setText('kpi-calls-sub', '-8.2%');
+    setText('kpi-keys-sub', totalCalls ? 'from protected traffic' : 'no traffic yet');
+    setText('kpi-calls', p99 == null ? '—' : `${Number(p99).toFixed(1)}ms`);
+    setText('kpi-calls-sub', latencies.length ? `${formatNum(latencies.length)} sampled calls` : 'no latency events');
     setText('kpi-providers', `${successRate.toFixed(errorRate < 1 ? 2 : 1)}%`);
-    setText('kpi-providers-sub', '+0.01%');
+    setText('kpi-providers-sub', `${errorRate.toFixed(errorRate < 1 ? 2 : 1)}% error rate`);
     const errEl = document.getElementById('kpi-errors');
     if (errEl) {
-      errEl.textContent = formatNum(overview.activeApps || currentProjectRows.length || 0);
+      errEl.textContent = formatNum(activeRoutes);
       if (currentProjectRows.some((project) => project.status === 'alert')) errEl.classList.add('alert');
       else errEl.classList.remove('alert');
     }
-    setText('kpi-errors-sub', '+3');
+    setText('kpi-errors-sub', `${formatNum(currentProjectRows.length)} project${currentProjectRows.length === 1 ? '' : 's'}`);
     renderActivity(recentEvents);
     renderLiveRequests(apiEvents);
-  }
-
-  function renderChart(rows) {
-    if (rows.length) {
-      const labels = rows.map((row) => new Date(row.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-      buildChart(labels, rows.map((row) => row.calls), rows.map((row) => row.errors));
-      return;
-    }
-    demoChart();
   }
 
   function renderFatalDashboardFallback() {
     ['kpi-keys', 'kpi-calls', 'kpi-providers', 'kpi-errors'].forEach((id) => setText(id, '—'));
     ['kpi-keys-sub', 'kpi-calls-sub', 'kpi-providers-sub', 'kpi-errors-sub'].forEach((id) => setText(id, 'unavailable'));
-    setText('usageMetricNote', 'unable to load usage');
     setText('alertsStatus', 'unavailable');
     renderActivity([]);
     renderLiveRequests([]);
@@ -872,7 +682,6 @@
 
   async function loadDashboard() {
     const dashboardSummaryPromise = apiFetchInit('/projects/stats/dashboard?days=30&limit=8');
-    const billingPromise = apiFetch('/billing/status');
     const scansPromise = apiFetch('/scanner/scans');
 
     const dashboardSummaryRaw = await dashboardSummaryPromise;
@@ -883,7 +692,6 @@
     );
 
     if (hasDashboardSummary) {
-      renderUsageSummary(dashboardSummary.overview, dashboardSummary.usage, resolveTier(null));
       currentProjectRows = normalizeProjectRows(dashboardSummary.projects);
       updatePageMeta(currentProjectRows);
       renderProjectRows();
@@ -897,29 +705,23 @@
           dashboardSummary.projects.length
         )
       );
-      renderChart(dashboardSummary.usage);
-
-      billingPromise
-        .then((billingRaw) => {
-          renderUsageSummary(dashboardSummary.overview, dashboardSummary.usage, resolveTier(billingRaw));
-        })
-        .catch(() => {});
 
       scansPromise
         .then((scansRaw) => {
           renderAlerts(normalizeScans(scansRaw));
         })
-        .catch(() => {});
+        .catch(() => {
+          renderAlerts([]);
+        });
       return;
     }
 
-    const [overviewRaw, usageRaw, projectsRaw, keyStatsRaw, logsRaw, billingRaw, scansRaw] = await Promise.all([
+    const [overviewRaw, usageRaw, projectsRaw, keyStatsRaw, logsRaw, scansRaw] = await Promise.all([
       apiFetchInit('/projects/stats/overview'),
       apiFetchInit('/projects/stats/usage?days=30'),
       apiFetchInit('/projects'),
       apiFetchInit('/projects/stats/by-key'),
       apiFetchInit('/projects/stats/logs?days=30&limit=8'),
-      billingPromise,
       scansPromise,
     ]);
 
@@ -929,19 +731,16 @@
     const logs = normalizeLogs(logsRaw);
     const overview = normalizeOverview(overviewRaw);
     const usageRows = normalizeUsage(usageRaw);
-    const tier = resolveTier(billingRaw);
     const fallbackOverview = buildFallbackOverview(overview, usageRows, keyStats, logs);
 
     currentProjectRows = await buildProjectRows(projects, keyStats);
     updatePageMeta(currentProjectRows);
     renderProjectRows();
-    renderUsageSummary(fallbackOverview, usageRows, tier);
     renderAlerts(scans);
     renderKpis(
       fallbackOverview,
       Boolean(overviewRaw || keyStats.size || usageRows.length || logs.length || projects.length)
     );
-    renderChart(usageRows);
   }
 
   function bindFilters() {
