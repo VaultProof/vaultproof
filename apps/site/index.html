@@ -2159,6 +2159,686 @@
       color: #f7fbff !important;
     }
 
+    /* React gateway template adaptation */
+    body {
+      background:
+        radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.14), transparent 34rem),
+        #08090e;
+    }
+
+    .page-shell {
+      max-width: none;
+      border-left-color: rgba(0, 229, 255, 0.12);
+      border-right-color: rgba(0, 229, 255, 0.12);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.15), transparent 34rem),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        #08090e;
+      background-size: auto, 28px 28px, auto;
+      color: #f0f0f5;
+    }
+
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(8, 9, 14, 0.78);
+      backdrop-filter: blur(18px);
+    }
+
+    .landing-hero {
+      position: relative;
+      min-height: 790px;
+      padding: 150px 24px 250px;
+      border-bottom: 0;
+      background: transparent;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .hero-aurora,
+    .hero-mesh,
+    .hero-meteors {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .hero-blob {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(72px);
+      opacity: 0.44;
+      animation: template-float 12s ease-in-out infinite;
+    }
+
+    .hero-blob-one {
+      width: 360px;
+      height: 360px;
+      left: 9%;
+      top: 12%;
+      background: #00e5ff;
+    }
+
+    .hero-blob-two {
+      width: 280px;
+      height: 280px;
+      right: 12%;
+      top: 22%;
+      background: #0ea5e9;
+      animation-delay: -4s;
+    }
+
+    .hero-blob-three {
+      width: 240px;
+      height: 240px;
+      left: 43%;
+      bottom: 20%;
+      background: #22d3ee;
+      animation-delay: -7s;
+    }
+
+    .hero-mesh {
+      background:
+        radial-gradient(ellipse at center, transparent 0%, rgba(8, 9, 14, 0.58) 58%, #08090e 100%),
+        radial-gradient(rgba(0, 229, 255, 0.10) 1px, transparent 1px);
+      background-size: auto, 28px 28px;
+    }
+
+    .hero-meteors span {
+      position: absolute;
+      right: var(--x);
+      top: -9%;
+      width: 2px;
+      height: 128px;
+      background: linear-gradient(#00e5ff, transparent);
+      transform: rotate(45deg);
+      animation: template-meteor 5.4s linear infinite;
+      animation-delay: var(--delay);
+      opacity: 0.72;
+    }
+
+    .landing-hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 1040px;
+      margin: 0 auto;
+      display: grid;
+      justify-items: center;
+    }
+
+    .landing-hero .hero-kicker {
+      margin-bottom: 24px;
+      color: #00e5ff;
+      letter-spacing: 0.26em;
+    }
+
+    .landing-hero h1 {
+      max-width: 1040px;
+      margin: 0;
+      color: #ffffff;
+      font-size: clamp(54px, 8.6vw, 124px);
+      font-weight: 700;
+      letter-spacing: -0.075em;
+      line-height: 0.9;
+      text-align: center;
+    }
+
+    .landing-hero h1 > span {
+      display: block;
+    }
+
+    .hero-title-accent {
+      color: transparent;
+      background: linear-gradient(90deg, #ffffff, #22d3ee);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .hero-flip-words {
+      display: inline-grid;
+      height: 1em;
+      overflow: hidden;
+      color: transparent;
+      background: linear-gradient(90deg, #ffffff, #22d3ee);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .hero-flip-words span {
+      grid-area: 1 / 1;
+      transform: translateY(110%);
+      animation: template-flip 8s infinite;
+      white-space: nowrap;
+    }
+
+    .hero-flip-words span:nth-child(2) {
+      animation-delay: 2s;
+    }
+
+    .hero-flip-words span:nth-child(3) {
+      animation-delay: 4s;
+    }
+
+    .hero-flip-words span:nth-child(4) {
+      animation-delay: 6s;
+    }
+
+    .landing-hero .hero-subcopy {
+      width: min(100%, 740px);
+      margin: 32px auto 0;
+      color: rgba(247, 251, 255, 0.66);
+      font-size: 18px;
+      line-height: 1.75;
+      text-align: center;
+    }
+
+    .landing-hero .hero-actions {
+      margin-top: 28px;
+      justify-content: center;
+    }
+
+    .landing-hero .btn-dark {
+      background: linear-gradient(135deg, #00e5ff, #0ea5e9);
+      box-shadow: 0 0 34px rgba(0, 229, 255, 0.28);
+    }
+
+    .hero-app-wrap {
+      position: relative;
+      z-index: 4;
+      width: min(1220px, calc(100% - 48px));
+      margin: -220px auto 82px;
+    }
+
+    .hero-app {
+      overflow: hidden;
+      border: 1px solid rgba(0, 229, 255, 0.20);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(16, 17, 27, 0.93), rgba(8, 9, 14, 0.98));
+      box-shadow:
+        0 30px 100px rgba(0, 0, 0, 0.55),
+        0 0 90px rgba(0, 229, 255, 0.12);
+    }
+
+    .app-chrome {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 44px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .chrome-dots {
+      display: flex;
+      gap: 7px;
+    }
+
+    .chrome-dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #ef4444;
+    }
+
+    .chrome-dots span:nth-child(2) {
+      background: #f59e0b;
+    }
+
+    .chrome-dots span:nth-child(3) {
+      background: #10b981;
+    }
+
+    .url-bar {
+      flex: 1;
+      color: rgba(247, 251, 255, 0.34);
+      font-family: var(--mono);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .chrome-actions {
+      display: flex;
+      gap: 9px;
+    }
+
+    .chrome-actions span {
+      width: 14px;
+      height: 14px;
+      border: 1px solid rgba(247, 251, 255, 0.16);
+      border-radius: 4px;
+    }
+
+    .app-layout {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr) 292px;
+      min-height: 486px;
+    }
+
+    .app-sidebar {
+      padding: 14px 10px;
+      border-right: 1px solid rgba(255, 255, 255, 0.07);
+      background: rgba(3, 6, 10, 0.26);
+    }
+
+    .app-sidebar-logo,
+    .sb-item {
+      display: grid;
+      place-items: center;
+      height: 42px;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      color: rgba(247, 251, 255, 0.34);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .app-sidebar-logo,
+    .sb-item.active,
+    .sb-item:hover {
+      background: rgba(0, 229, 255, 0.11);
+      color: #00e5ff;
+    }
+
+    .app-sidebar-logo {
+      border: 1px solid rgba(0, 229, 255, 0.24);
+    }
+
+    .sb-sep {
+      height: 1px;
+      margin: 16px 8px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .app-main {
+      min-width: 0;
+      padding: 22px;
+      overflow: auto;
+    }
+
+    .breadcrumb {
+      margin-bottom: 18px;
+      color: rgba(247, 251, 255, 0.34);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .breadcrumb span {
+      margin: 0 8px;
+    }
+
+    .breadcrumb b {
+      color: #00e5ff;
+      font-weight: 600;
+    }
+
+    .main-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .ms {
+      min-height: 96px;
+      padding: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .ms-val {
+      color: #00e5ff;
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .ms-lbl {
+      margin-top: 6px;
+      color: rgba(247, 251, 255, 0.34);
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .ms-change {
+      margin-top: 8px;
+      color: #22e6a8;
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .route-table {
+      width: 100%;
+      margin-top: 18px;
+      border-collapse: collapse;
+      color: rgba(247, 251, 255, 0.58);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .route-table th,
+    .route-table td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.065);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .route-table th {
+      color: rgba(247, 251, 255, 0.34);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .route-table .path,
+    .route-table .latency {
+      color: #f7fbff;
+    }
+
+    .route-table .latency {
+      color: #00e5ff;
+    }
+
+    .method {
+      display: inline-flex;
+      padding: 3px 6px;
+      border-radius: 5px;
+      background: rgba(0, 229, 255, 0.10);
+      color: #00e5ff;
+      font-size: 10px;
+    }
+
+    .method.post {
+      color: #a78bfa;
+    }
+
+    .method.put {
+      color: #f59e0b;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      margin-right: 6px;
+      border-radius: 999px;
+      background: #22e6a8;
+    }
+
+    .status-dot.warn {
+      background: #f59e0b;
+    }
+
+    .app-panel {
+      padding: 22px;
+      border-left: 1px solid rgba(255, 255, 255, 0.07);
+      background: rgba(3, 6, 10, 0.22);
+    }
+
+    .panel-title {
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 650;
+    }
+
+    .panel-sub {
+      margin-top: 4px;
+      color: rgba(247, 251, 255, 0.34);
+      font-family: var(--mono);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .mini-chart {
+      width: 100%;
+      height: 90px;
+      margin: 18px 0;
+      filter: drop-shadow(0 0 18px rgba(0, 229, 255, 0.2));
+    }
+
+    .pm {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.065);
+      color: rgba(247, 251, 255, 0.36);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .pm b {
+      color: #00e5ff;
+    }
+
+    .pm b.green {
+      color: #22e6a8;
+    }
+
+    .pm b.warn,
+    .panel-log strong.warn {
+      color: #f59e0b;
+    }
+
+    .panel-log {
+      margin-top: 18px;
+      color: rgba(247, 251, 255, 0.34);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .panel-log b {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+      color: rgba(247, 251, 255, 0.58);
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .panel-log b span {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #00e5ff;
+      box-shadow: 0 0 16px #00e5ff;
+    }
+
+    .log-entry {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr) 36px;
+      gap: 8px;
+      padding: 6px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.045);
+    }
+
+    .log-entry span,
+    .log-entry strong {
+      color: #00e5ff;
+      font-weight: 500;
+    }
+
+    .app-statusbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 22px;
+      padding: 10px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+      color: rgba(247, 251, 255, 0.34);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .status-live {
+      color: #22e6a8;
+    }
+
+    .section,
+    #product,
+    #pricing,
+    #security,
+    #faq,
+    #how-it-works,
+    #providers {
+      background:
+        radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.08), transparent 28rem),
+        radial-gradient(rgba(0, 229, 255, 0.06) 1px, transparent 1px),
+        #08090e;
+      background-size: auto, 28px 28px, auto;
+      color: #f0f0f5;
+    }
+
+    .section-title,
+    .price-amount,
+    .security-title,
+    .step-card h3 {
+      color: #ffffff;
+    }
+
+    .section-copy,
+    .comparison-cell,
+    .price-copy,
+    .price-meta,
+    .security-copy,
+    .faq-item p,
+    .step-card p {
+      color: rgba(247, 251, 255, 0.62);
+    }
+
+    .section-kicker,
+    .price-tag,
+    .step-number {
+      color: #00e5ff;
+    }
+
+    .comparison,
+    .price-card,
+    .security-card,
+    .faq-item,
+    .step-card,
+    .provider-card {
+      border-color: rgba(0, 229, 255, 0.16);
+      background: rgba(255, 255, 255, 0.035);
+      box-shadow: none;
+    }
+
+    .comparison-head,
+    .comparison-row,
+    .price-card,
+    .security-card,
+    .faq-item,
+    .step-card {
+      border-color: rgba(0, 229, 255, 0.14);
+    }
+
+    .comparison-dot {
+      background: #00e5ff;
+    }
+
+    .price-card.recommended {
+      background: linear-gradient(180deg, rgba(0, 229, 255, 0.13), rgba(255, 255, 255, 0.035));
+    }
+
+    .price-card .btn-dark,
+    .agent-section .btn-dark {
+      background: linear-gradient(135deg, #00e5ff, #0ea5e9);
+      color: #001016;
+    }
+
+    .agent-section {
+      border-color: rgba(0, 229, 255, 0.16);
+      background:
+        radial-gradient(circle at 80% 20%, rgba(0, 229, 255, 0.16), transparent 28rem),
+        #05070b;
+    }
+
+    @keyframes template-float {
+      50% {
+        transform: translate3d(30px, -25px, 0) scale(1.08);
+      }
+    }
+
+    @keyframes template-meteor {
+      to {
+        transform: translate(-800px, 800px) rotate(45deg);
+        opacity: 0;
+      }
+    }
+
+    @keyframes template-flip {
+      0%, 18% {
+        transform: translateY(0);
+      }
+      24%, 100% {
+        transform: translateY(-110%);
+      }
+    }
+
+    @media (max-width: 1080px) {
+      .app-layout {
+        grid-template-columns: 58px minmax(0, 1fr);
+      }
+
+      .app-panel {
+        display: none;
+      }
+
+      .main-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .landing-hero {
+        min-height: 650px;
+        padding: 118px 16px 220px;
+      }
+
+      .landing-hero h1 {
+        font-size: clamp(44px, 13vw, 68px);
+      }
+
+      .hero-flip-words span {
+        white-space: normal;
+      }
+
+      .landing-hero .hero-subcopy {
+        font-size: 15px;
+      }
+
+      .hero-app-wrap {
+        width: calc(100% - 24px);
+        margin-top: -180px;
+      }
+
+      .app-layout {
+        grid-template-columns: 48px minmax(0, 1fr);
+        min-height: 420px;
+      }
+
+      .app-main {
+        padding: 16px;
+      }
+
+      .main-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .route-table {
+        min-width: 640px;
+      }
+
+      .app-statusbar,
+      .url-bar {
+        display: none;
+      }
+    }
+
   </style>
 </head>
 
@@ -2199,51 +2879,110 @@
     </div>
 
     <main>
-      <section class="hero" id="top">
-        <div class="hero-frame">
-          <div class="hero-media" aria-hidden="true">
-            <div class="hero-orb"></div>
-            <svg class="hero-network" viewBox="0 0 980 540" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M70 310 C180 250 250 236 354 280 C454 322 492 230 588 190 C700 144 792 190 910 92" stroke="rgba(0,229,255,0.62)" stroke-width="1.2"/>
-              <path d="M110 145 C220 180 302 190 392 128 C508 48 590 118 690 166 C776 208 830 214 920 184" stroke="rgba(0,229,255,0.34)" stroke-width="1"/>
-              <path d="M140 420 C246 350 312 360 410 396 C526 438 592 344 708 306 C790 280 846 320 928 382" stroke="rgba(0,229,255,0.38)" stroke-width="1"/>
-              <path d="M214 72 L354 280 L560 246 L710 382 L910 92" stroke="rgba(0,229,255,0.22)" stroke-width="1"/>
-              <path d="M102 258 L392 128 L588 190 L708 306 L862 450" stroke="rgba(0,229,255,0.22)" stroke-width="1"/>
-              <circle cx="70" cy="310" r="4" fill="#00e5ff"/>
-              <circle cx="214" cy="72" r="4" fill="#00e5ff"/>
-              <circle cx="354" cy="280" r="5" fill="#00e5ff"/>
-              <circle cx="392" cy="128" r="4" fill="#00e5ff"/>
-              <circle cx="560" cy="246" r="5" fill="#00e5ff"/>
-              <circle cx="588" cy="190" r="4" fill="#00e5ff"/>
-              <circle cx="708" cy="306" r="5" fill="#00e5ff"/>
-              <circle cx="710" cy="382" r="4" fill="#00e5ff"/>
-              <circle cx="910" cy="92" r="5" fill="#00e5ff"/>
-              <circle cx="862" cy="450" r="4" fill="#00e5ff"/>
-            </svg>
+      <section class="hero landing-hero" id="top">
+        <div class="hero-aurora" aria-hidden="true">
+          <div class="hero-blob hero-blob-one"></div>
+          <div class="hero-blob hero-blob-two"></div>
+          <div class="hero-blob hero-blob-three"></div>
+        </div>
+        <div class="hero-mesh" aria-hidden="true"></div>
+        <div class="hero-meteors" aria-hidden="true">
+          <span style="--x: 18%; --delay: .4s"></span>
+          <span style="--x: 34%; --delay: 2.1s"></span>
+          <span style="--x: 58%; --delay: 4.2s"></span>
+          <span style="--x: 74%; --delay: 1.2s"></span>
+          <span style="--x: 88%; --delay: 3.5s"></span>
+        </div>
+
+        <div class="landing-hero-content">
+          <p class="hero-kicker">Third-party key gateway</p>
+          <h1>
+            <span>One gateway for</span>
+            <span class="hero-title-accent">every third party key.</span>
+          </h1>
+          <p class="hero-subcopy">VaultProof splits, encrypts, and proxies provider secrets so apps, agents, CI jobs, and internal tools call upstream services without ever handling the raw key.</p>
+          <div class="hero-actions">
+            <a class="btn btn-dark" href="/app/login">Get started</a>
+            <button class="install-card" type="button" data-copy-command="npx @vaultproof/init" aria-label="Copy install command">
+              <span class="hero-cta-cmd-prompt">$</span>
+              <span class="hero-cta-cmd-text">npx @vaultproof/init</span>
+            </button>
           </div>
+        </div>
+      </section>
 
-          <div class="hero-content">
-            <div class="hero-copy">
-              <p class="hero-kicker">Third-party key control plane</p>
-              <h1><span class="hero-title-gradient">Turn exposed API keys into</span> <span class="hero-title-rest">controlled proxy calls.</span></h1>
-            </div>
+      <section class="hero-app-wrap" aria-label="VaultProof dashboard preview">
+        <div class="hero-app">
+          <div class="app-chrome">
+            <div class="chrome-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div class="url-bar">vaultproof.dev/app/dashboard/routes</div>
+            <div class="chrome-actions" aria-hidden="true"><span></span><span></span></div>
+          </div>
+          <div class="app-layout">
+            <aside class="app-sidebar" aria-label="Preview navigation">
+              <div class="app-sidebar-logo">VP</div>
+              <div class="sb-item active">DB</div>
+              <div class="sb-item">RT</div>
+              <div class="sb-item">AL</div>
+              <div class="sb-sep"></div>
+              <div class="sb-item">KY</div>
+              <div class="sb-item">ST</div>
+            </aside>
 
-            <div class="hero-right">
-              <p class="hero-subcopy">VaultProof splits, encrypts, and proxies third-party API keys so apps, agents, CI jobs, and internal tools never handle the raw provider secret.</p>
-              <div class="hero-actions">
-                <a class="btn btn-dark" href="/app/login">Get started</a>
-                <button class="install-card" type="button" data-copy-command="npx @vaultproof/init" aria-label="Copy install command">
-                  <span class="hero-cta-cmd-prompt">$</span>
-                  <span class="hero-cta-cmd-text">npx @vaultproof/init</span>
-                </button>
+            <div class="app-main">
+              <div class="breadcrumb">Dashboard <span>/</span> Routes <span>/</span> <b>Production</b></div>
+              <div class="main-stats">
+                <div class="ms"><div class="ms-val">2.1B</div><div class="ms-lbl">Requests today</div><div class="ms-change">+12.4%</div></div>
+                <div class="ms"><div class="ms-val">0.4ms</div><div class="ms-lbl">p99 latency</div><div class="ms-change">-8.2%</div></div>
+                <div class="ms"><div class="ms-val">99.99%</div><div class="ms-lbl">success rate</div><div class="ms-change">+0.01%</div></div>
+                <div class="ms"><div class="ms-val">213</div><div class="ms-lbl">active routes</div><div class="ms-change">+3</div></div>
               </div>
-            </div>
-          </div>
 
-          <div class="hero-scanline" aria-hidden="true">
-            <span><i></i><i></i><i></i><i></i><i></i></span>
-            <span><i></i><i></i><i></i><i></i><i></i></span>
+              <table class="route-table" aria-label="Preview gateway routes">
+                <thead>
+                  <tr>
+                    <th>Route</th>
+                    <th>Method</th>
+                    <th>Upstream</th>
+                    <th>p99</th>
+                    <th>Req/s</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td class="path">/api/v1/openai</td><td><span class="method get">GET</span></td><td>openai-proxy</td><td class="latency">0.8ms</td><td>3,241</td><td><span class="status-dot"></span>Healthy</td></tr>
+                  <tr><td class="path">/api/v1/anthropic</td><td><span class="method post">POST</span></td><td>claude-proxy</td><td class="latency">1.2ms</td><td>1,847</td><td><span class="status-dot"></span>Healthy</td></tr>
+                  <tr><td class="path">/api/v1/stripe</td><td><span class="method post">POST</span></td><td>billing-proxy</td><td class="latency">2.1ms</td><td>892</td><td><span class="status-dot"></span>Healthy</td></tr>
+                  <tr><td class="path">/api/v1/notion</td><td><span class="method put">PUT</span></td><td>workspace-proxy</td><td class="latency">1.8ms</td><td>167</td><td><span class="status-dot warn"></span>Review</td></tr>
+                  <tr><td class="path">/api/v1/custom</td><td><span class="method get">GET</span></td><td>internal-api</td><td class="latency">0.3ms</td><td>524</td><td><span class="status-dot"></span>Healthy</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <aside class="app-panel">
+              <div class="panel-title">Traffic Overview</div>
+              <div class="panel-sub">Last 60 minutes</div>
+              <svg class="mini-chart" viewBox="0 0 240 80" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M0 64 C24 55 32 44 58 42 C84 40 93 30 118 28 C143 27 156 18 180 20 C203 22 220 13 240 8 L240 80 L0 80 Z" fill="rgba(0,229,255,.16)"></path>
+                <path d="M0 64 C24 55 32 44 58 42 C84 40 93 30 118 28 C143 27 156 18 180 20 C203 22 220 13 240 8" fill="none" stroke="#00e5ff" stroke-width="1.6"></path>
+              </svg>
+              <div class="panel-metrics">
+                <div class="pm"><span>Error rate</span><b class="green">0.02%</b></div>
+                <div class="pm"><span>Active conns</span><b>14,281</b></div>
+                <div class="pm"><span>Cache hit</span><b class="green">94.2%</b></div>
+                <div class="pm"><span>Bandwidth</span><b>2.16 TB/s</b></div>
+                <div class="pm"><span>Throttled</span><b class="warn">23</b></div>
+              </div>
+              <div class="panel-log">
+                <b><span></span>Live requests</b>
+                <div class="log-entry"><span>19:25:04</span> GET /api/search <strong>200</strong></div>
+                <div class="log-entry"><span>19:25:08</span> POST /api/auth <strong>201</strong></div>
+                <div class="log-entry"><span>19:25:11</span> PUT /api/hooks <strong class="warn">429</strong></div>
+                <div class="log-entry"><span>19:25:14</span> GET /api/config <strong>200</strong></div>
+              </div>
+            </aside>
           </div>
+          <div class="app-statusbar"><span class="status-live">All systems operational</span><span>213 routes protected</span><span>Last sync: 2s ago</span><span>v1.4.2</span></div>
         </div>
       </section>
 
