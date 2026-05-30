@@ -38,15 +38,6 @@
       animation: spin 1s linear infinite;
     }
 
-    .sidebar-expanded { width: 220px; }
-    .sidebar-collapsed { width: 64px; }
-    .sidebar-collapsed .sidebar-label { display: none; }
-    .sidebar-collapsed .sidebar-logo-text { display: none; }
-    .sidebar-collapsed .sidebar-user-info { display: none; }
-    .sidebar-collapsed .sidebar-nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
-    .sidebar-collapsed .sidebar-bottom { align-items: center; }
-    .sidebar-collapsed .sidebar-bottom .logout-text { display: none; }
-
     .btn-glow {
       box-shadow: 0 0 20px rgba(99,102,241,0.3);
     }
@@ -134,13 +125,6 @@
       text-transform: uppercase;
       color: #8a8a82;
       padding: 6px 8px;
-    }
-    body.scanner-app .sidebar-dot {
-      font-size: 8px;
-      color: #c4c4bd;
-    }
-    body.scanner-app .sidebar-nav-item.active .sidebar-dot {
-      color: #d97706;
     }
     body.scanner-app .sidebar-bottom {
       border-top-color: #e7e5de !important;
@@ -372,29 +356,29 @@
   <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden"></div>
 
   <!-- Left Sidebar -->
-  <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col transition-all duration-200 sidebar-expanded -translate-x-full lg:translate-x-0">
+  <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col -translate-x-full lg:translate-x-0">
     <nav class="flex-1 px-2 py-5 space-y-0.5 overflow-y-auto">
       <div class="sidebar-group">
         <div class="sidebar-head">overview</div>
-        <a href="/app/" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">projects</span></a>
-        <a href="/app/activity" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">activity</span></a>
-        <a href="/app/alerts" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">alerts</span></a>
+        <a href="/app/" class="sidebar-nav-item"><span class="sidebar-label">projects</span></a>
+        <a href="/app/activity" class="sidebar-nav-item"><span class="sidebar-label">activity</span></a>
+        <a href="/app/alerts" class="sidebar-nav-item"><span class="sidebar-label">alerts</span></a>
       </div>
       <div class="sidebar-group">
         <div class="sidebar-head">vault</div>
-        <a href="/app/keys" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">keys</span></a>
-        <a href="/app/settings" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">settings</span></a>
-        <a href="/app/plans" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">plans</span></a>
+        <a href="/app/keys" class="sidebar-nav-item"><span class="sidebar-label">keys</span></a>
+        <a href="/app/settings" class="sidebar-nav-item"><span class="sidebar-label">settings</span></a>
+        <a href="/app/plans" class="sidebar-nav-item"><span class="sidebar-label">plans</span></a>
       </div>
       <div class="sidebar-group">
         <div class="sidebar-head">scanner</div>
-        <a href="/app/scanner" class="sidebar-nav-item active"><span class="sidebar-dot">●</span><span class="sidebar-label">repos</span></a>
+        <a href="/app/scanner" class="sidebar-nav-item active"><span class="sidebar-label">repos</span></a>
       </div>
       <div class="sidebar-group">
         <div class="sidebar-head">help</div>
-        <a href="/docs" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">docs</span></a>
-        <a href="#" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">changelog</span></a>
-        <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item"><span class="sidebar-dot">●</span><span class="sidebar-label">support</span></a>
+        <a href="/docs" class="sidebar-nav-item"><span class="sidebar-label">docs</span></a>
+        <a href="#" class="sidebar-nav-item"><span class="sidebar-label">changelog</span></a>
+        <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item"><span class="sidebar-label">support</span></a>
       </div>
       <div class="usage-box">
         <div class="usage-label">plan loading</div>

@@ -4,3 +4,5 @@
 /app/members.html https://enterprise.vaultproof.dev/app/members 302
 /app/org https://admin.vaultproof.dev/app/org 302
 /app/org.html https://admin.vaultproof.dev/app/org 302
+/app/logs /app/activity 302
+/app/logs.html /app/activity 302

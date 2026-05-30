@@ -40,8 +40,49 @@ body {
   border: 0 !important;
 }
 
+.topbar-logo::before {
+  content: none !important;
+}
+
+.topbar-logo-mark {
+  width: 30px !important;
+  height: 30px !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(0, 229, 255, 0.58) !important;
+  border-radius: 10px !important;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(0, 229, 255, 0.16), transparent 62%),
+    rgba(0, 229, 255, 0.06) !important;
+  box-shadow: 0 0 22px rgba(0, 229, 255, 0.16) !important;
+}
+
+.topbar-logo-img {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: cover !important;
+  transform: scale(1.42);
+  transform-origin: center;
+}
+
+.topbar-logo-fallback {
+  display: none;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.layout {
+  grid-template-columns: var(--vp-sidebar-expanded, 224px) minmax(0, 1fr) !important;
+  min-height: calc(100vh - 64px) !important;
+}
+
 .main {
   padding: 28px 32px 44px !important;
+  min-width: 0;
 }
 
 .page-header {
@@ -328,23 +369,6 @@ body {
 
 .usage-bar-fill {
   background: linear-gradient(90deg, var(--accent), var(--ok)) !important;
-}
-
-.sidebar:hover .sidebar-dot,
-.sidebar:focus-within .sidebar-dot {
-  width: 0 !important;
-  flex-basis: 0 !important;
-  opacity: 0 !important;
-  transform: scale(0.72);
-  pointer-events: none;
-  border-color: transparent !important;
-}
-
-.sidebar:hover .sidebar-item,
-.sidebar:focus-within .sidebar-item {
-  gap: 0 !important;
-  padding-left: 12px !important;
-  padding-right: 12px !important;
 }
 
 @media (max-width: 960px) {

@@ -73,9 +73,28 @@
     currentMain.replaceWith(nextMain.cloneNode(true));
   }
 
+  function syncLivePanel(nextDoc) {
+    var nextPanel = nextDoc.querySelector('.layout > .live-panel');
+    var currentPanel = document.querySelector('.layout > .live-panel');
+    var currentLayout = document.querySelector('.layout');
+
+    if (!currentLayout) return;
+    if (nextPanel && currentPanel) {
+      currentPanel.replaceWith(nextPanel.cloneNode(true));
+      return;
+    }
+    if (nextPanel && !currentPanel) {
+      currentLayout.appendChild(nextPanel.cloneNode(true));
+      return;
+    }
+    if (!nextPanel && currentPanel) {
+      currentPanel.remove();
+    }
+  }
+
   function syncEnterpriseSidebar(nextDoc) {
     var nextSidebar = nextDoc.querySelector('.sidebar.enterprise-app-sidebar');
-    var currentSidebar = document.querySelector('.sidebar.enterprise-app-sidebar');
+    var currentSidebar = document.querySelector('.layout > .sidebar');
     if (!nextSidebar || !currentSidebar) return;
     currentSidebar.replaceWith(nextSidebar.cloneNode(true));
   }
@@ -131,6 +150,7 @@
       syncPageStyle(nextDoc);
       syncEnterpriseSidebar(nextDoc);
       syncTopbarAndMain(nextDoc);
+      syncLivePanel(nextDoc);
       loadPageScripts(nextDoc);
       updateSidebar(target.pathname);
 

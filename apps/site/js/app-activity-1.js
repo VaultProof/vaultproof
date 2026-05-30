@@ -11,13 +11,6 @@
   const DANGER = '#fb7185';
   const GRID = 'rgba(148,163,184,0.14)';
   const MUTED = 'rgba(235,245,255,0.42)';
-  const CALL_LIMITS = {
-    free: 10000,
-    starter: 50000,
-    pro: 500000,
-    team: 2000000,
-    enterprise: Infinity,
-  };
   const MAX_VISIBLE_ROWS = 120;
 
   let token = localStorage.getItem('vaultproof_token');
@@ -216,30 +209,6 @@
     });
   }
 
-  function resolveTier(billing) {
-    const payload = unwrapPayload(billing) || {};
-    const raw = String(
-      payload.tier ||
-      payload.plan ||
-      payload.subscriptionTier ||
-      payload.subscription?.tier ||
-      payload.customer?.tier ||
-      user.tier ||
-      user.plan ||
-      ''
-    ).trim().toLowerCase();
-
-    if (raw.includes('enterprise')) return 'enterprise';
-    if (raw.includes('team')) return 'team';
-    if (raw.includes('pro')) return 'pro';
-    if (raw.includes('starter')) return 'starter';
-    return 'free';
-  }
-
-  function formatTierLabel(tier) {
-    return tier === 'free' ? 'free plan' : `${tier} plan`;
-  }
-
   function formatNum(value) {
     const num = Number(value || 0);
     if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
@@ -267,6 +236,44 @@
   function formatLatency(value) {
     if (value == null || !Number.isFinite(Number(value))) return '—';
     return `${Math.round(Number(value))} ms`;
+  }
+
+  function formatClock(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  function formatBytes(value) {
+    const num = Number(value || 0);
+    if (!Number.isFinite(num) || num <= 0) return '—';
+    if (num >= 1024 * 1024 * 1024) return `${(num / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    if (num >= 1024 * 1024) return `${(num / (1024 * 1024)).toFixed(2)} MB`;
+    if (num >= 1024) return `${(num / 1024).toFixed(1)} KB`;
+    return `${Math.round(num)} B`;
+  }
+
+  function requestMethod(log) {
+    const metadata = log.metadata || {};
+    const raw = metadata.method || metadata.http_method || metadata.request_method || metadata.verb || '';
+    if (raw) return String(raw).toUpperCase().slice(0, 6);
+    const endpoint = String(log.endpoint || '').trim();
+    const match = endpoint.match(/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s+/i);
+    return match ? match[1].toUpperCase() : 'CALL';
+  }
+
+  function requestPath(log) {
+    const metadata = log.metadata || {};
+    const raw = metadata.path || metadata.url_path || metadata.route || log.endpoint || '';
+    return String(raw).replace(/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s+/i, '') || 'request';
+  }
+
+  function requestStatusCode(log) {
+    const metadata = log.metadata || {};
+    const code = Number(metadata.status || metadata.status_code || metadata.http_status || metadata.upstream_status || 0);
+    if (Number.isFinite(code) && code > 0) return code;
+    return log.status === 'error' ? 500 : 200;
   }
 
   function statusBadge(status) {
@@ -338,26 +345,6 @@
         },
       },
     });
-  }
-
-  function renderUsageBox(summary, tier) {
-    const calls30d = summary.usage.reduce((sum, row) => sum + row.calls, 0);
-    const limit = CALL_LIMITS[tier] || CALL_LIMITS.free;
-    setText('usagePlanLabel', formatTierLabel(tier));
-    setText('usageMetricLabel', 'all calls');
-    setText('usageMetricValue', formatNum(summary.overview.totalCalls));
-    setText(
-      'usageMetricNote',
-      limit === Infinity
-        ? `last 30d ${formatNum(calls30d)}`
-        : `last 30d ${formatNum(calls30d)} of ${formatNum(limit)} included`
-    );
-    const fill = document.getElementById('usageBarFill');
-    if (fill) {
-      const ratio = limit === Infinity ? 100 : Math.min(100, limit > 0 ? (calls30d / limit) * 100 : 0);
-      fill.style.width = `${ratio}%`;
-      fill.style.background = ratio >= 90 ? DANGER : `linear-gradient(90deg, ${ACCENT}, ${SUCCESS})`;
-    }
   }
 
   function renderKpis(summary, logs) {
@@ -526,12 +513,63 @@
     setText('filterNote', parts.join(' · '));
   }
 
+  function renderLivePanel(logs) {
+    const feed = document.getElementById('liveApiFeed');
+    if (!feed) return;
+
+    const oneHourAgo = Date.now() - 60 * 60 * 1000;
+    const recent = logs
+      .filter((log) => {
+        const time = new Date(log.timestamp).getTime();
+        return Number.isFinite(time) && time >= oneHourAgo;
+      })
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    const statuses = recent.map(requestStatusCode);
+    const errors = statuses.filter((status) => status >= 400).length;
+    const errorRate = statuses.length ? (errors / statuses.length) * 100 : 0;
+    const throttled = statuses.filter((status) => status === 429).length;
+    const cacheRows = recent
+      .map((log) => log.metadata && (log.metadata.cache_hit ?? log.metadata.cacheHit))
+      .filter((value) => value !== undefined && value !== null);
+    const cacheHits = cacheRows.filter((value) => value === true || value === 'true' || value === 1 || value === 'hit').length;
+    const totalBytes = recent.reduce((sum, log) => {
+      const metadata = log.metadata || {};
+      return sum + Number(metadata.bytes || metadata.response_bytes || metadata.responseBytes || metadata.size || 0);
+    }, 0);
+
+    setText('liveErrorRate', statuses.length ? `${errorRate < 0.01 && errorRate > 0 ? '<0.01' : errorRate.toFixed(errorRate < 1 ? 2 : 1)}%` : '—');
+    setText('liveActiveConns', statuses.length ? formatNum(statuses.length) : '—');
+    setText('liveCacheHit', cacheRows.length ? `${((cacheHits / cacheRows.length) * 100).toFixed(1)}%` : '—');
+    setText('liveBandwidth', formatBytes(totalBytes));
+    setText('liveThrottled', statuses.length ? String(throttled) : '—');
+
+    const rows = recent.slice(0, 22);
+    if (!rows.length) {
+      feed.innerHTML = '<div class="live-api-empty">No user API calls in the last hour. Calls will appear here after this account routes traffic through VaultProof.</div>';
+      return;
+    }
+
+    feed.innerHTML = rows.map((log) => {
+      const status = requestStatusCode(log);
+      const statusClass = status >= 500 ? 'status-error' : status >= 400 ? 'status-warn' : '';
+      return `
+        <div class="live-api-row">
+          <span class="live-time">${escapeHtml(formatClock(log.timestamp))}</span>
+          <span class="live-method">${escapeHtml(requestMethod(log))}</span>
+          <span class="live-path">${escapeHtml(requestPath(log))}</span>
+          <span class="live-status ${statusClass}">${escapeHtml(status)}</span>
+        </div>`;
+    }).join('');
+  }
+
   function renderAll() {
     const filtered = getFilteredLogs();
     renderFilterNote(filtered);
     renderTable(filtered);
     renderEndpointPanel(filtered);
     renderErrorPanel(filtered);
+    renderLivePanel(allLogs);
   }
 
   function renderUnavailableState() {
@@ -553,6 +591,7 @@
     if (rowsEl) rowsEl.innerHTML = '<tr><td colspan="7" class="empty-state">We could not load activity right now.</td></tr>';
     if (endpointList) endpointList.innerHTML = '<div class="empty-state">Endpoint data is unavailable right now.</div>';
     if (errorList) errorList.innerHTML = '<div class="empty-state">Error data is unavailable right now.</div>';
+    renderLivePanel([]);
   }
 
   function exportCsv() {
@@ -627,15 +666,13 @@
     setText('streamStatus', 'loading…');
     setText('filterNote', 'loading activity…');
 
-    const [summaryRaw, logsRaw, billingRaw] = await Promise.all([
+    const [summaryRaw, logsRaw] = await Promise.all([
       apiFetch(INIT_API, '/projects/stats/dashboard?days=30&limit=12'),
       apiFetch(INIT_API, '/projects/stats/logs?days=90&limit=1000'),
-      apiFetch(API, '/billing/status'),
     ]);
 
     if (!summaryRaw && !logsRaw) {
       allLogs = [];
-      renderUsageBox(normalizeSummary(null), resolveTier(billingRaw));
       renderUnavailableState();
       buildChart([]);
       return;
@@ -649,7 +686,6 @@
     );
     allLogs = logs;
 
-    renderUsageBox(summary, resolveTier(billingRaw));
     renderKpis(summary, logs);
     buildChart(summary.usage);
     populateFilters(logs);

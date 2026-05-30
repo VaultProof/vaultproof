@@ -495,17 +495,6 @@
       `).join('');
     }
   }
-  function renderUsageBox(alertsPayload) {
-    const destinations = alertsPayload?.destinations || [];
-    const enabled = destinations.filter((item) => item.enabled).length;
-    const percent = destinations.length ? Math.max(6, Math.min(100, (enabled / destinations.length) * 100)) : 6;
-    setText('usagePlanLabel', 'alert operations');
-    setText('usageMetricLabel', 'destinations');
-    setText('usageMetricValue', `${enabled}`);
-    const bar = $('usageBarFill');
-    if (bar) bar.style.width = `${percent}%`;
-    setText('usageMetricNote', `${destinations.length} total configured for this organization`);
-  }
   function renderKpis(alertsPayload, overviewPayload) {
     const org = alertsPayload?.organization || null;
     const activeAlerts = overviewPayload?.alerts || [];
@@ -734,7 +723,6 @@
     currentOverviewPayload = overviewData;
 
     renderBanner(currentAlertsPayload, overviewData);
-    renderUsageBox(currentAlertsPayload);
     renderKpis(currentAlertsPayload, overviewData);
     renderOpsKit();
     renderPolicy(currentAlertsPayload);

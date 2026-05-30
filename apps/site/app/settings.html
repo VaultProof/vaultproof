@@ -176,9 +176,6 @@
       background: var(--bg-card);
       border: var(--rule);
     }
-    .sidebar-dot { font-size: 8px; }
-    .sidebar-item.active .sidebar-dot { color: var(--accent); }
-    .sidebar-item:not(.active) .sidebar-dot { color: #c4c4bd; }
     .usage-box {
       margin-top: 40px;
       padding: 14px;
@@ -321,25 +318,25 @@
     <aside id="sidebar" class="sidebar">
       <div class="sidebar-group">
         <div class="sidebar-head">overview</div>
-        <a href="/app/" class="sidebar-item"><span class="sidebar-dot">●</span> projects</a>
-        <a href="/app/activity" class="sidebar-item"><span class="sidebar-dot">●</span> activity</a>
-        <a href="/app/alerts" class="sidebar-item"><span class="sidebar-dot">●</span> alerts</a>
+        <a href="/app/" class="sidebar-item">projects</a>
+        <a href="/app/activity" class="sidebar-item">activity</a>
+        <a href="/app/alerts" class="sidebar-item">alerts</a>
       </div>
       <div class="sidebar-group">
         <div class="sidebar-head">vault</div>
-        <a href="/app/keys" class="sidebar-item"><span class="sidebar-dot">●</span> keys</a>
-        <a href="/app/settings" class="sidebar-item active"><span class="sidebar-dot">●</span> settings</a>
-        <a href="/app/plans" class="sidebar-item"><span class="sidebar-dot">●</span> plans</a>
+        <a href="/app/keys" class="sidebar-item">keys</a>
+        <a href="/app/settings" class="sidebar-item active">settings</a>
+        <a href="/app/plans" class="sidebar-item">plans</a>
       </div>
       <div class="sidebar-group">
         <div class="sidebar-head">scanner</div>
-        <a href="/app/scanner" class="sidebar-item"><span class="sidebar-dot">●</span> repos</a>
+        <a href="/app/scanner" class="sidebar-item">repos</a>
       </div>
       <div class="sidebar-group">
         <div class="sidebar-head">help</div>
-        <a href="/docs" class="sidebar-item"><span class="sidebar-dot">●</span> docs</a>
-        <a href="#" class="sidebar-item"><span class="sidebar-dot">●</span> changelog</a>
-        <a href="mailto:hello@vaultproof.dev" class="sidebar-item"><span class="sidebar-dot">●</span> support</a>
+        <a href="/docs" class="sidebar-item">docs</a>
+        <a href="#" class="sidebar-item">changelog</a>
+        <a href="mailto:hello@vaultproof.dev" class="sidebar-item">support</a>
       </div>
       <div class="usage-box">
         <div class="usage-label" id="usagePlanLabel">plan loading</div>

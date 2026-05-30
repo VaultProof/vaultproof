@@ -92,16 +92,6 @@
     }
     .sidebar-item:hover { color: var(--text); }
     .sidebar-item.active { color: var(--text); background: var(--bg-card); border: var(--rule); }
-    .sidebar-dot { font-size: 8px; }
-    .sidebar-item.active .sidebar-dot { color: var(--accent); }
-    .sidebar-item:not(.active) .sidebar-dot { color: #c4c4bd; }
-    .usage-box { margin-top: 40px; padding: 14px; border: var(--rule); border-radius: 4px; background: var(--bg-card); }
-    .usage-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px; }
-    .usage-row { font-family: var(--mono); font-size: 12px; color: var(--text); display: flex; justify-content: space-between; gap: 16px; }
-    .usage-bar-track { height: 4px; background: #eeece5; border-radius: 99px; margin-top: 8px; overflow: hidden; }
-    .usage-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; width: 0%; }
-    .usage-reset { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 8px; }
-
     .main { padding: 28px 32px; }
     .page-header { display: flex; align-items: flex-start; gap: 16px 20px; flex-wrap: wrap; margin-bottom: 4px; }
     .page-heading { display: grid; gap: 6px; min-width: 0; flex: 1 1 280px; }
@@ -246,12 +236,16 @@
   <div class="page">
     <div class="topbar">
       <div class="topbar-logo">
-        <span class="topbar-logo-name">vaultproof</span>
+        <span class="topbar-logo-mark">
+          <img class="topbar-logo-img" src="/og-image2.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+          <span class="topbar-logo-fallback">VP</span>
+        </span>
+        <span class="topbar-logo-name">VaultProof</span>
       </div>
       <span class="topbar-sep">/</span>
-      <span>dashboard</span>
+      <span>Dashboard</span>
       <span class="topbar-sep">/</span>
-      <span class="topbar-crumb">activity</span>
+      <span class="topbar-crumb">Activity</span>
 
       <div class="topbar-session">
         <span class="topbar-email" id="user-email">loading...</span>
@@ -261,34 +255,35 @@
     </div>
 
     <div class="layout">
-      <aside class="sidebar">
+      <aside class="sidebar enterprise-app-sidebar" aria-label="Dashboard navigation">
+        <a href="/app/" class="sidebar-logo" aria-label="VaultProof dashboard">
+          <span class="sidebar-logo-mark">
+            <img class="sidebar-logo-img" src="/og-image2.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <span class="sidebar-logo-fallback">VP</span>
+          </span>
+          <span class="sidebar-logo-text">VaultProof</span>
+        </a>
         <div class="sidebar-group">
           <div class="sidebar-head">overview</div>
-          <a class="sidebar-item" href="/app/"><span class="sidebar-dot">●</span> projects</a>
-          <a class="sidebar-item active" href="/app/activity"><span class="sidebar-dot">●</span> activity</a>
-          <a class="sidebar-item" href="/app/alerts"><span class="sidebar-dot">●</span> alerts</a>
+          <a href="/app/" class="sidebar-item" title="Dashboard"><span class="sidebar-label">dashboard</span></a>
+          <a href="/app/activity" class="sidebar-item active" title="Activity"><span class="sidebar-label">activity</span></a>
+          <a href="/app/alerts" class="sidebar-item" title="Alerts"><span class="sidebar-label">alerts <span class="sidebar-alert-count" id="sidebarAlertsCount">0</span></span></a>
         </div>
         <div class="sidebar-group">
           <div class="sidebar-head">vault</div>
-          <a class="sidebar-item" href="/app/keys"><span class="sidebar-dot">●</span> keys</a>
-          <a class="sidebar-item" href="/app/settings"><span class="sidebar-dot">●</span> settings</a>
-          <a class="sidebar-item" href="/app/plans"><span class="sidebar-dot">●</span> plans</a>
+          <a href="/app/keys" class="sidebar-item" title="Keys"><span class="sidebar-label">keys</span></a>
+          <a href="/app/settings" class="sidebar-item" title="Settings"><span class="sidebar-label">settings</span></a>
+          <a href="/app/plans" class="sidebar-item" title="Plans"><span class="sidebar-label">plans</span></a>
         </div>
         <div class="sidebar-group">
           <div class="sidebar-head">scanner</div>
-          <a class="sidebar-item" href="/app/scanner"><span class="sidebar-dot">●</span> repos</a>
+          <a href="/app/scanner" class="sidebar-item" title="Repos"><span class="sidebar-label">repos</span></a>
         </div>
         <div class="sidebar-group">
           <div class="sidebar-head">help</div>
-          <a class="sidebar-item" href="/docs"><span class="sidebar-dot">●</span> docs</a>
-          <a class="sidebar-item" href="#"><span class="sidebar-dot">●</span> changelog</a>
-          <a class="sidebar-item" href="mailto:hello@vaultproof.dev"><span class="sidebar-dot">●</span> support</a>
-        </div>
-        <div class="usage-box">
-          <div class="usage-label" id="usagePlanLabel">plan loading</div>
-          <div class="usage-row"><span id="usageMetricLabel">all calls</span><span id="usageMetricValue">—</span></div>
-          <div class="usage-bar-track"><div class="usage-bar-fill" id="usageBarFill"></div></div>
-          <div class="usage-reset" id="usageMetricNote">loading…</div>
+          <a href="/docs" class="sidebar-item" title="Docs"><span class="sidebar-label">docs</span></a>
+          <a href="#" class="sidebar-item" title="Changelog"><span class="sidebar-label">changelog</span></a>
+          <a href="mailto:hello@vaultproof.dev" class="sidebar-item" title="Support"><span class="sidebar-label">support</span></a>
         </div>
       </aside>
 
@@ -392,7 +387,7 @@
             </div>
           </div>
 
-          <div style="display:grid;gap:20px;">
+          <div class="activity-side-grid">
             <div class="panel">
               <div class="panel-head">
                 busiest endpoints
@@ -415,6 +410,33 @@
           </div>
         </div>
       </main>
+
+      <aside class="live-panel" aria-label="Live API call usage">
+        <h2>Traffic Overview</h2>
+        <div class="live-subtitle">Last 60 minutes</div>
+
+        <svg class="traffic-spark" viewBox="0 0 300 94" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M0 76 C28 68 34 58 64 55 C91 51 93 43 122 40 C147 37 155 28 181 26 C206 24 212 18 236 20 C258 21 278 12 300 8 L300 94 L0 94 Z" fill="url(#activityTrafficFill)"/>
+          <path d="M0 76 C28 68 34 58 64 55 C91 51 93 43 122 40 C147 37 155 28 181 26 C206 24 212 18 236 20 C258 21 278 12 300 8" stroke="#00e5ff" stroke-width="1.8"/>
+          <defs>
+            <linearGradient id="activityTrafficFill" x1="150" y1="8" x2="150" y2="94" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#00e5ff" stop-opacity="0.28"/>
+              <stop offset="1" stop-color="#00e5ff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+
+        <div class="traffic-stat"><span>Error rate</span><strong id="liveErrorRate">—</strong></div>
+        <div class="traffic-stat"><span>Active calls</span><strong id="liveActiveConns">—</strong></div>
+        <div class="traffic-stat"><span>Cache hit</span><strong id="liveCacheHit">—</strong></div>
+        <div class="traffic-stat"><span>Bandwidth</span><strong id="liveBandwidth">—</strong></div>
+        <div class="traffic-stat warning"><span>Throttled</span><strong id="liveThrottled">—</strong></div>
+
+        <div class="live-title"><span class="live-pulse"></span><span>Live requests</span></div>
+        <div class="live-api-feed" id="liveApiFeed" data-vp-no-translate>
+          <div class="live-api-empty">Loading your API calls…</div>
+        </div>
+      </aside>
     </div>
   </div>
   <script src="/js/analytics.js" defer></script>

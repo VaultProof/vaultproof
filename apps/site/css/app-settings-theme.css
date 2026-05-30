@@ -44,7 +44,7 @@ body {
 
 .layout {
   display: grid !important;
-  grid-template-columns: var(--vp-sidebar-collapsed, 64px) minmax(0, 1fr) !important;
+  grid-template-columns: var(--vp-sidebar-expanded, 224px) minmax(0, 1fr) !important;
   min-height: calc(100vh - 64px) !important;
   background: transparent !important;
 }
@@ -288,21 +288,11 @@ button,
   -webkit-backdrop-filter: blur(10px);
 }
 
-.sidebar:hover .sidebar-dot,
-.sidebar:focus-within .sidebar-dot {
-  width: 0 !important;
-  flex-basis: 0 !important;
-  opacity: 0 !important;
-  transform: scale(0.72);
-  pointer-events: none;
-  border-color: transparent !important;
-}
-
 .sidebar:hover .sidebar-item,
 .sidebar:focus-within .sidebar-item {
-  gap: 0 !important;
-  padding-left: 12px !important;
-  padding-right: 12px !important;
+  gap: 10px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
 }
 
 @media (min-width: 961px) {
