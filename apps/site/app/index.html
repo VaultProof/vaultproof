@@ -6,6 +6,7 @@
   <script src="/js/app-index-1.js" defer></script>
   <script src="/js/app-index-7.js" defer></script>
   <script src="/js/site-i18n.js?v=20260529b" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/iconify-icon@3.0.2/dist/iconify-icon.min.js" defer></script>
   <script src="/js/app-dashboard-1.js?v=20260529c" defer data-app-shell-page-script></script>
   <script src="/js/app-shell-router-1.js" defer></script>
 
@@ -379,6 +380,13 @@
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.02em;
+    }
+
+    .sidebar-icon iconify-icon {
+      width: 18px;
+      height: 18px;
+      display: block;
+      color: currentColor;
     }
 
     .sidebar-item.active .sidebar-icon,
@@ -1035,25 +1043,25 @@
     </a>
     <div class="sidebar-group">
       <div class="sidebar-head">overview</div>
-      <a href="/app/" class="sidebar-item active" title="Projects"><span class="sidebar-icon">DB</span><span class="sidebar-label">dashboard</span></a>
-      <a href="/app/activity" class="sidebar-item" title="Activity"><span class="sidebar-icon">RT</span><span class="sidebar-label">activity</span></a>
-      <a href="/app/alerts" class="sidebar-item" title="Alerts"><span class="sidebar-icon">AL</span><span class="sidebar-label">alerts <span class="sidebar-alert-count" id="sidebarAlertsCount">0</span></span></a>
+      <a href="/app/" class="sidebar-item active" title="Dashboard"><span class="sidebar-icon"><iconify-icon icon="lucide:layout-dashboard" aria-hidden="true"></iconify-icon></span><span class="sidebar-label">dashboard</span></a>
+      <a href="/app/activity" class="sidebar-item" title="Activity"><span class="sidebar-icon"><iconify-icon icon="lucide:activity" aria-hidden="true"></iconify-icon></span><span class="sidebar-label">activity</span></a>
+      <a href="/app/alerts" class="sidebar-item" title="Alerts"><span class="sidebar-icon"><iconify-icon icon="lucide:bell-ring" aria-hidden="true"></iconify-icon></span><span class="sidebar-label">alerts <span class="sidebar-alert-count" id="sidebarAlertsCount">0</span></span></a>
     </div>
     <div class="sidebar-group">
       <div class="sidebar-head">vault</div>
-      <a href="/app/keys" class="sidebar-item" title="Keys"><span class="sidebar-icon">KY</span><span class="sidebar-label">keys</span></a>
-      <a href="/app/settings" class="sidebar-item" title="Settings"><span class="sidebar-icon">ST</span><span class="sidebar-label">settings</span></a>
-      <a href="/app/plans" class="sidebar-item" title="Plans"><span class="sidebar-icon">PL</span><span class="sidebar-label">plans</span></a>
+      <a href="/app/keys" class="sidebar-item" title="Keys"><span class="sidebar-icon"><iconify-icon icon="lucide:key-round" aria-hidden="true"></iconify-icon></span><span class="sidebar-label">keys</span></a>
+      <a href="/app/settings" class="sidebar-item" title="Settings"><span class="sidebar-icon"><iconify-icon icon="lucide:settings" aria-hidden="true"></iconify-icon></span><span class="sidebar-label">settings</span></a>
+      <a href="/app/plans" class="sidebar-item" title="Plans"><span class="sidebar-icon"><iconify-icon icon="lucide:credit-card" aria-hidden="true"></iconify-icon></span><span class="sidebar-label">plans</span></a>
     </div>
     <div class="sidebar-group">
       <div class="sidebar-head">scanner</div>
-      <a href="/app/scanner" class="sidebar-item" title="Repos"><span class="sidebar-icon">SC</span><span class="sidebar-label">repos</span></a>
+      <a href="/app/scanner" class="sidebar-item" title="Repos"><span class="sidebar-icon"><iconify-icon icon="lucide:scan-line" aria-hidden="true"></iconify-icon></span><span class="sidebar-label">repos</span></a>
     </div>
     <div class="sidebar-group">
       <div class="sidebar-head">help</div>
-      <a href="/docs" class="sidebar-item" title="Docs"><span class="sidebar-icon">DC</span><span class="sidebar-label">docs</span></a>
-      <a href="#" class="sidebar-item" title="Changelog"><span class="sidebar-icon">CL</span><span class="sidebar-label">changelog</span></a>
-      <a href="mailto:hello@vaultproof.dev" class="sidebar-item" title="Support"><span class="sidebar-icon">SP</span><span class="sidebar-label">support</span></a>
+      <a href="/docs" class="sidebar-item" title="Docs"><span class="sidebar-icon"><iconify-icon icon="lucide:file-text" aria-hidden="true"></iconify-icon></span><span class="sidebar-label">docs</span></a>
+      <a href="#" class="sidebar-item" title="Changelog"><span class="sidebar-icon"><iconify-icon icon="lucide:history" aria-hidden="true"></iconify-icon></span><span class="sidebar-label">changelog</span></a>
+      <a href="mailto:hello@vaultproof.dev" class="sidebar-item" title="Support"><span class="sidebar-icon"><iconify-icon icon="lucide:life-buoy" aria-hidden="true"></iconify-icon></span><span class="sidebar-label">support</span></a>
     </div>
   </aside>
 

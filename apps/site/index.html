@@ -174,8 +174,8 @@
       min-height: 100vh;
       margin: 0 auto;
       background: linear-gradient(180deg, #dbe7f3 0%, var(--bg) 28%, #e8f0f7 100%);
-      border-left: 1px solid rgba(215, 224, 235, 0.28);
-      border-right: 1px solid rgba(215, 224, 235, 0.28);
+      border-left: 0;
+      border-right: 0;
       box-shadow: none;
       overflow: hidden;
     }
@@ -675,31 +675,111 @@
 
     .nav-links {
       gap: 4px;
-      margin-left: 4px;
+      margin-left: auto;
+      margin-right: auto;
       padding: 4px;
       border: 1px solid rgba(148, 163, 184, 0.14);
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.035);
     }
 
-    .nav-link {
+    .nav-item {
+      position: relative;
+    }
+
+    .nav-link,
+    .nav-menu-trigger {
       display: inline-flex;
       align-items: center;
+      gap: 7px;
       min-height: 34px;
       padding: 0 12px;
+      border: 0;
       border-radius: 999px;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      font: inherit;
+      letter-spacing: inherit;
+      text-transform: inherit;
       transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
     }
 
     .nav-link:hover,
+    .nav-item:focus-within .nav-menu-trigger,
+    .nav-item:hover .nav-menu-trigger,
     .btn-ghost:hover {
       background: rgba(0, 229, 255, 0.10);
       color: #00e5ff;
       box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.14) inset;
     }
 
+    .nav-chevron {
+      width: 6px;
+      height: 6px;
+      margin-top: -2px;
+      border-right: 1px solid currentColor;
+      border-bottom: 1px solid currentColor;
+      transform: rotate(45deg);
+      opacity: 0.72;
+    }
+
+    .nav-menu {
+      position: absolute;
+      top: calc(100% + 12px);
+      left: 50%;
+      z-index: 80;
+      display: grid;
+      gap: 4px;
+      width: 260px;
+      padding: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.20);
+      border-radius: 14px;
+      background: rgba(5, 7, 11, 0.94);
+      color: rgba(247, 251, 255, 0.78);
+      box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 6px);
+      transition: opacity 150ms ease, transform 150ms ease;
+    }
+
+    .nav-item:hover .nav-menu,
+    .nav-item:focus-within .nav-menu {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, 0);
+    }
+
+    .nav-menu a {
+      display: grid;
+      gap: 2px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: rgba(247, 251, 255, 0.82);
+      font-family: var(--sans);
+      font-size: 13px;
+      letter-spacing: -0.01em;
+      text-transform: none;
+      transition: background-color 150ms ease, color 150ms ease;
+    }
+
+    .nav-menu a:hover {
+      background: rgba(0, 229, 255, 0.10);
+      color: #ffffff;
+    }
+
+    .nav-menu span {
+      color: rgba(247, 251, 255, 0.48);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
     .nav-actions {
       gap: 8px;
+      margin-left: 0;
     }
 
     .nav-actions .btn {
@@ -2243,8 +2323,8 @@
 
     .page-shell {
       max-width: none;
-      border-left-color: rgba(0, 229, 255, 0.12);
-      border-right-color: rgba(0, 229, 255, 0.12);
+      border-left: 0;
+      border-right: 0;
       background:
         radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.15), transparent 34rem),
         linear-gradient(135deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
@@ -2269,7 +2349,7 @@
       backdrop-filter: blur(22px) saturate(1.35);
       -webkit-backdrop-filter: blur(22px) saturate(1.35);
       isolation: isolate;
-      overflow: hidden;
+      overflow: visible;
       box-shadow:
         0 24px 72px rgba(0, 0, 0, 0.42),
         0 0 0 1px rgba(255, 255, 255, 0.035) inset,
@@ -2831,6 +2911,98 @@
       box-shadow: none;
     }
 
+    #product .section-head {
+      max-width: 880px;
+      margin-bottom: 34px;
+    }
+
+    #product .section-title {
+      max-width: 760px;
+      margin-inline: auto;
+    }
+
+    #product .section-copy {
+      color: rgba(247, 251, 255, 0.74);
+    }
+
+    .comparison {
+      max-width: 1180px;
+      border-radius: 16px;
+      background:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(5, 7, 11, 0.72));
+      box-shadow:
+        0 28px 90px rgba(0, 0, 0, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .comparison-row {
+      grid-template-columns: minmax(250px, 1.35fr) repeat(4, minmax(118px, 1fr));
+      border-color: rgba(148, 163, 184, 0.14);
+    }
+
+    .comparison-head {
+      background: rgba(15, 23, 42, 0.74);
+    }
+
+    .comparison-cell {
+      min-height: 62px;
+      display: flex;
+      align-items: center;
+      border-color: rgba(148, 163, 184, 0.14);
+      color: rgba(247, 251, 255, 0.76);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .comparison-head .comparison-cell {
+      min-height: 58px;
+      color: rgba(247, 251, 255, 0.66);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+    }
+
+    .comparison-head .comparison-cell:nth-child(2),
+    .comparison-row .comparison-cell:nth-child(2) {
+      background: rgba(0, 229, 255, 0.075);
+      color: #f7fbff;
+    }
+
+    .comparison-head .comparison-cell:nth-child(2) {
+      color: #00e5ff;
+    }
+
+    .comparison-feature {
+      color: #f7fbff;
+      font-weight: 560;
+    }
+
+    .dot {
+      width: 24px;
+      height: 24px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(0, 229, 255, 0.36);
+      background: rgba(0, 229, 255, 0.12);
+      color: #00e5ff;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: inset 0 0 18px rgba(0, 229, 255, 0.10);
+    }
+
+    .dot::before {
+      content: "\2713";
+    }
+
+    .dash {
+      color: rgba(247, 251, 255, 0.36);
+    }
+
+    .small-note {
+      color: rgba(247, 251, 255, 0.72);
+      font-family: var(--mono);
+    }
+
     .comparison-head,
     .comparison-row,
     .price-card,
@@ -2883,6 +3055,397 @@
       border-color: transparent;
       background: linear-gradient(135deg, #00e5ff, #0ea5e9);
       color: #001016;
+    }
+
+    #pricing .section-head {
+      max-width: 780px;
+      margin-bottom: 44px;
+      text-align: center;
+    }
+
+    #pricing .section-kicker {
+      color: #00e5ff;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+    }
+
+    #pricing .section-title {
+      max-width: 720px;
+      margin-inline: auto;
+      font-size: clamp(36px, 4vw, 56px);
+      letter-spacing: -0.055em;
+      line-height: 1.02;
+    }
+
+    #pricing .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      max-width: 1180px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      overflow: visible;
+    }
+
+    #pricing .price-card,
+    #pricing .pricing-grid .price-card {
+      min-height: 420px;
+      padding: 28px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(5, 7, 11, 0.78)),
+        rgba(15, 23, 42, 0.82);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 24px 70px rgba(0, 0, 0, 0.26);
+    }
+
+    #pricing .price-card:last-child {
+      border-right: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    #pricing .price-card.recommended {
+      border-color: rgba(0, 229, 255, 0.48);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.18), transparent 18rem),
+        linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(5, 7, 11, 0.82));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.07),
+        0 30px 90px rgba(0, 229, 255, 0.14),
+        0 24px 70px rgba(0, 0, 0, 0.32);
+    }
+
+    #pricing .plan-top {
+      align-items: flex-start;
+    }
+
+    #pricing .plan-label {
+      color: rgba(247, 251, 255, 0.74);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+    }
+
+    #pricing .recommended-tag {
+      min-height: 24px;
+      padding: 0 9px;
+      border: 1px solid rgba(0, 229, 255, 0.28);
+      border-radius: 999px;
+      background: rgba(0, 229, 255, 0.10);
+      color: #7cf4ff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      white-space: nowrap;
+    }
+
+    #pricing .recommended-tag::before {
+      width: 5px;
+      height: 5px;
+      background: #00e5ff;
+      box-shadow: 0 0 12px rgba(0, 229, 255, 0.82);
+    }
+
+    #pricing .plan-price {
+      margin-top: 28px;
+    }
+
+    #pricing .plan-price strong {
+      color: #ffffff;
+      font-size: clamp(44px, 4vw, 58px);
+      font-weight: 680;
+      letter-spacing: -0.06em;
+    }
+
+    #pricing .plan-price span {
+      color: rgba(247, 251, 255, 0.58);
+    }
+
+    #pricing .plan-copy {
+      min-height: 42px;
+      margin: 12px 0 26px;
+      color: rgba(247, 251, 255, 0.72);
+      font-size: 15px;
+    }
+
+    #pricing .plan-meter {
+      gap: 0;
+      margin-bottom: 28px;
+      padding-top: 16px;
+      border-top-color: rgba(148, 163, 184, 0.18);
+    }
+
+    #pricing .plan-meter-row {
+      min-height: 34px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.10);
+    }
+
+    #pricing .plan-meter-row:last-child {
+      border-bottom: 0;
+    }
+
+    #pricing .plan-meter-row span {
+      color: rgba(247, 251, 255, 0.56);
+    }
+
+    #pricing .plan-meter-row strong {
+      color: rgba(255, 255, 255, 0.92);
+      font-weight: 600;
+    }
+
+    #pricing .price-card .btn {
+      min-height: 44px;
+      border-color: rgba(148, 163, 184, 0.20);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #f7fbff;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+    }
+
+    #pricing .price-card .btn:hover {
+      border-color: rgba(0, 229, 255, 0.46);
+      background: rgba(0, 229, 255, 0.08);
+      color: #7cf4ff;
+      transform: translateY(-1px);
+    }
+
+    #pricing .price-card.recommended .btn {
+      border-color: transparent;
+      background: linear-gradient(135deg, #00e5ff, #38bdf8);
+      color: #001016;
+      box-shadow: 0 14px 34px rgba(0, 229, 255, 0.22);
+    }
+
+    #pricing .price-card.recommended .btn:hover {
+      color: #001016;
+      background: linear-gradient(135deg, #7cf4ff, #38bdf8);
+    }
+
+    #security .section-head {
+      max-width: 900px;
+      margin-bottom: 40px;
+    }
+
+    #security .section-copy {
+      max-width: 720px;
+      color: rgba(247, 251, 255, 0.70);
+    }
+
+    #security .security-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 16px;
+      max-width: 1180px;
+      align-items: stretch;
+    }
+
+    #security .security-card,
+    #security .security-card:nth-child(1),
+    #security .security-card:nth-child(2),
+    #security .security-card:nth-child(3),
+    #security .security-card:nth-child(4) {
+      position: relative;
+      min-height: 260px;
+      padding: 28px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 85% 0%, rgba(0, 229, 255, 0.16), transparent 17rem),
+        linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(5, 7, 11, 0.76));
+      color: #f7fbff;
+      text-align: left;
+      overflow: hidden;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 24px 70px rgba(0, 0, 0, 0.24);
+    }
+
+    #security .security-card:nth-child(1) {
+      grid-column: span 4;
+      min-height: 330px;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(0, 229, 255, 0.22), transparent 18rem),
+        radial-gradient(circle at 86% 18%, rgba(34, 230, 168, 0.12), transparent 16rem),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(5, 7, 11, 0.78));
+    }
+
+    #security .security-card:nth-child(2) {
+      grid-column: span 2;
+    }
+
+    #security .security-card:nth-child(3) {
+      grid-column: span 2;
+      background:
+        radial-gradient(circle at 80% 14%, rgba(34, 230, 168, 0.18), transparent 15rem),
+        linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(5, 7, 11, 0.78));
+    }
+
+    #security .security-card:nth-child(4) {
+      grid-column: span 4;
+      min-height: 300px;
+      background:
+        radial-gradient(circle at 74% 10%, rgba(0, 229, 255, 0.16), transparent 18rem),
+        radial-gradient(circle at 18% 100%, rgba(14, 165, 233, 0.14), transparent 18rem),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.90), rgba(5, 7, 11, 0.76));
+    }
+
+    #security .security-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: linear-gradient(135deg, rgba(0, 0, 0, 0.72), transparent 68%);
+      pointer-events: none;
+    }
+
+    #security .security-card::after {
+      content: "";
+      position: absolute;
+      right: 24px;
+      top: 24px;
+      width: 112px;
+      height: 112px;
+      border: 1px solid rgba(0, 229, 255, 0.18);
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, rgba(0, 229, 255, 0.12), rgba(255, 255, 255, 0.02));
+      box-shadow: inset 0 0 36px rgba(0, 229, 255, 0.08);
+      opacity: 0.78;
+      transform: rotate(8deg);
+      pointer-events: none;
+    }
+
+    #security .security-card:nth-child(2)::after,
+    #security .security-card:nth-child(3)::after {
+      width: 76px;
+      height: 76px;
+      border-radius: 22px;
+      opacity: 0.52;
+    }
+
+    #security .security-code,
+    #security .security-title,
+    #security .security-copy {
+      position: relative;
+      z-index: 1;
+    }
+
+    #security .security-code {
+      min-width: 0;
+      height: 30px;
+      margin-bottom: auto;
+      padding: 0 11px;
+      border-color: rgba(0, 229, 255, 0.26);
+      background: rgba(0, 229, 255, 0.08);
+      color: #7cf4ff;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    #security .security-title {
+      max-width: 520px;
+      margin-top: 86px;
+      margin-bottom: 10px;
+      color: #ffffff;
+      font-size: clamp(24px, 2.8vw, 36px);
+      letter-spacing: -0.05em;
+      line-height: 1.02;
+    }
+
+    #security .security-card:nth-child(2) .security-title,
+    #security .security-card:nth-child(3) .security-title {
+      margin-top: 68px;
+      font-size: clamp(22px, 2vw, 28px);
+    }
+
+    #security .security-copy {
+      max-width: 620px;
+      color: rgba(247, 251, 255, 0.70);
+      font-size: 15px;
+      line-height: 1.58;
+    }
+
+    @media (max-width: 1080px) {
+      #security .security-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      #security .security-card,
+      #security .security-card:nth-child(1),
+      #security .security-card:nth-child(2),
+      #security .security-card:nth-child(3),
+      #security .security-card:nth-child(4) {
+        grid-column: auto;
+        min-height: 280px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+      }
+    }
+
+    @media (max-width: 640px) {
+      #security .security-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      #security .security-card,
+      #security .security-card:nth-child(1),
+      #security .security-card:nth-child(2),
+      #security .security-card:nth-child(3),
+      #security .security-card:nth-child(4) {
+        min-height: 250px;
+        padding: 24px;
+      }
+
+      #security .security-title,
+      #security .security-card:nth-child(2) .security-title,
+      #security .security-card:nth-child(3) .security-title {
+        margin-top: 72px;
+        font-size: 25px;
+      }
+    }
+
+    @media (max-width: 1080px) {
+      #pricing .pricing-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      #pricing .pricing-grid .price-card,
+      #pricing .pricing-grid .price-card:nth-child(2n),
+      #pricing .pricing-grid .price-card:nth-last-child(-n+2),
+      #pricing .pricing-grid .price-card:last-child {
+        border: 1px solid rgba(148, 163, 184, 0.18);
+      }
+
+      #pricing .pricing-grid .price-card.recommended {
+        border-color: rgba(0, 229, 255, 0.48);
+      }
+    }
+
+    @media (max-width: 640px) {
+      #pricing .section-head {
+        margin-bottom: 32px;
+      }
+
+      #pricing .pricing-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      #pricing .price-card,
+      #pricing .pricing-grid .price-card {
+        min-height: 0;
+        padding: 24px;
+      }
+
+      #pricing .plan-copy {
+        min-height: 0;
+      }
     }
 
     .price-card .btn-dark,
@@ -3042,31 +3605,54 @@
         <span>VaultProof</span>
       </a>
 
-      <div class="nav-links" aria-label="Primary">
-        <a class="nav-link" href="#product">Product</a>
+      <div class="nav-links" aria-label="Primary navigation">
+        <div class="nav-item has-menu">
+          <button class="nav-menu-trigger" type="button" aria-haspopup="true">
+            Products
+            <span class="nav-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="nav-menu" role="menu">
+            <a href="#product" role="menuitem">Overview<span>Compare split-key proxying with traditional secret stores.</span></a>
+            <a href="/docs#sdk-reference" role="menuitem" data-i18n-lock>SDK<span>Provider-compatible calls without raw keys in apps.</span></a>
+            <a href="/docs#cli-reference" role="menuitem" data-i18n-lock>CLI scanner<span>Find, split, and rewrite exposed API keys.</span></a>
+          </div>
+        </div>
+        <div class="nav-item has-menu">
+          <button class="nav-menu-trigger" type="button" aria-haspopup="true">
+            Use cases
+            <span class="nav-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="nav-menu" role="menu">
+            <a href="#how-it-works" role="menuitem">AI agents<span>Give agents proxy URLs instead of provider secrets.</span></a>
+            <a href="/cicd-kubernetes" role="menuitem">CI/CD<span>Remove raw third-party keys from pipelines and deploy logs.</span></a>
+            <a href="/enterprise-demo" role="menuitem">Enterprise<span>Governance, audit trails, and dedicated runtime options.</span></a>
+          </div>
+        </div>
         <a class="nav-link" href="/docs">Docs</a>
-        <a class="nav-link" href="/docs#sdk-reference" data-i18n-lock>SDK</a>
-        <a class="nav-link" href="/docs#cli-reference" data-i18n-lock>CLI</a>
         <a class="nav-link" href="#pricing">Pricing</a>
       </div>
 
       <div class="nav-actions">
-        <a class="btn btn-plain" href="/app/login">Sign in</a>
-        <a class="btn btn-dark" href="/app/login">Get a key</a>
+        <a class="btn btn-plain" href="/app/login">Login</a>
+        <a class="btn btn-dark" href="/app/login">Get started</a>
       </div>
 
       <button id="mobileToggle" type="button" class="btn mobile-toggle" aria-label="Toggle menu" aria-expanded="false">menu</button>
     </nav>
 
     <div id="mobileMenu" class="mobile-menu" aria-label="Mobile navigation">
-      <a href="#product">Product</a>
+      <a href="#product">Products</a>
+      <a href="#how-it-works">Use cases</a>
       <a href="/docs">Docs</a>
       <a href="/docs#sdk-reference" data-i18n-lock>SDK</a>
       <a href="/docs#cli-reference" data-i18n-lock>CLI</a>
+      <a href="/cicd-kubernetes">CI/CD</a>
+      <a href="/enterprise-demo">Enterprise</a>
       <a href="#pricing">Pricing</a>
       <a href="/security">Security</a>
       <a href="/status">Status</a>
-      <a href="/app/login">Get a key</a>
+      <a href="/app/login">Login</a>
+      <a href="/app/login">Get started</a>
     </div>
 
     <main>
