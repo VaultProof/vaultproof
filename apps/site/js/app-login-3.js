@@ -20,16 +20,68 @@
   const LOOP_KEY = 'vp_login_ts';
   const PROMO_KEY = 'vp_promo';
   const SSO_DOMAIN_KEY = 'vp_sso_domain';
+  const AUTH_HASH_STORAGE_KEY = 'vp_pending_auth_hash';
+  const AUTH_CODE_STORAGE_KEY = 'vp_pending_auth_code';
   const LOCAL_AUTH_PREFIXES = ['vaultproof_', 'sb-'];
 
-  const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      detectSessionInUrl: false,
+      flowType: 'pkce',
+    },
+  });
   const urlParams = new URLSearchParams(window.location.search);
-  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const pendingAuthCode = takePendingAuthCode();
+  const hashParams = new URLSearchParams(takePendingAuthHash());
 
   let isRedirecting = false;
 
   function $(id) {
     return document.getElementById(id);
+  }
+
+  function takePendingAuthHash() {
+    try {
+      const storedHash = sessionStorage.getItem(AUTH_HASH_STORAGE_KEY);
+      if (storedHash) {
+        sessionStorage.removeItem(AUTH_HASH_STORAGE_KEY);
+        return storedHash;
+      }
+    } catch {}
+    return window.location.hash.replace(/^#/, '');
+  }
+
+  function takePendingAuthCode() {
+    try {
+      const storedCode = sessionStorage.getItem(AUTH_CODE_STORAGE_KEY);
+      if (storedCode) {
+        sessionStorage.removeItem(AUTH_CODE_STORAGE_KEY);
+        return storedCode;
+      }
+    } catch {}
+    return '';
+  }
+
+  function getConfirmCode() {
+    return urlParams.get('code') || pendingAuthCode;
+  }
+
+  function hasAuthCallbackHash() {
+    return hashParams.has('access_token') ||
+      hashParams.has('refresh_token') ||
+      hashParams.has('provider_token') ||
+      hashParams.has('error') ||
+      hashParams.get('type') === 'recovery' ||
+      hashParams.get('type') === 'magiclink';
+  }
+
+  function scrubAuthHashFromUrl() {
+    if (!window.location.hash || !hasAuthCallbackHash()) return;
+    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+  }
+
+  function getAuthHashErrorMessage() {
+    return hashParams.get('error_description') || hashParams.get('error') || '';
   }
 
   function clearStoredAuth() {
@@ -814,7 +866,7 @@
       }).catch(function() {});
     }
     sbClient.auth.signOut({ scope: 'global' }).catch(function() {});
-    if (!urlParams.get('code')) {
+    if (!getConfirmCode()) {
       window.history.replaceState({}, '', '/app/login');
     }
     return true;
@@ -833,8 +885,42 @@
     return loopHistory.length;
   }
 
+  async function handleHashCallback(cliContext, forceLogout) {
+    if (forceLogout || !hasAuthCallbackHash()) return false;
+
+    const authError = getAuthHashErrorMessage();
+    scrubAuthHashFromUrl();
+    if (authError) {
+      showError(authError);
+      return true;
+    }
+
+    const accessToken = hashParams.get('access_token') || '';
+    const refreshToken = hashParams.get('refresh_token') || '';
+    if (!accessToken || !refreshToken) return false;
+
+    try {
+      const { data, error } = await sbClient.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      if (error) throw error;
+      const session = data && data.session;
+      if (!session) throw new Error('Session was not returned.');
+      if (isRecoveryFlow()) {
+        showRecoveryForm('Recovery link verified. Choose a new password.');
+        return true;
+      }
+      await finalizeAuthenticatedSession(session, session.user, cliContext);
+      return true;
+    } catch (error) {
+      showError(error && error.message ? error.message : 'Could not complete sign-in. Please try again.');
+      return true;
+    }
+  }
+
   async function handleCodeExchange(cliContext) {
-    const confirmCode = urlParams.get('code');
+    const confirmCode = getConfirmCode();
     if (!confirmCode) {
       if (isRecoveryFlow()) {
         const result = await sbClient.auth.getSession();
@@ -873,7 +959,7 @@
   }
 
   async function handleExistingSession(cliContext, forceLogout, loopCount) {
-    if (forceLogout || urlParams.get('code') || loopCount >= 3 || isRecoveryFlow()) return;
+    if (forceLogout || getConfirmCode() || loopCount >= 3 || isRecoveryFlow()) return;
     const result = await sbClient.auth.getSession();
     const session = result.data && result.data.session;
     if (session && !isRedirecting) {
@@ -977,8 +1063,11 @@
     prefillSsoDomainFromState();
     showCliBanner(cliContext);
     bindUiEvents(cliContext);
-    bindAuthState(cliContext, forceLogout);
 
+    const handledHashCallback = await handleHashCallback(cliContext, forceLogout);
+    if (handledHashCallback) return;
+
+    bindAuthState(cliContext, forceLogout);
     await handleCodeExchange(cliContext);
     await handleExistingSession(cliContext, forceLogout, loopCount);
   }
