@@ -6,7 +6,7 @@
   <script src="/js/app-index-1.js" defer></script>
   <script src="/js/app-index-7.js" defer></script>
   <script src="/js/site-i18n.js?v=20260529b" defer></script>
-  <script src="/js/app-dashboard-1.js?v=20260529a" defer data-app-shell-page-script></script>
+  <script src="/js/app-dashboard-1.js?v=20260529b" defer data-app-shell-page-script></script>
   <script src="/js/app-shell-router-1.js" defer></script>
 
   <link rel="icon" type="image/png" href="/favicon.png">
@@ -412,14 +412,34 @@
       overflow: hidden;
     }
 
-    .sidebar-logo-img {
+    .sidebar-logo-mark {
       width: 34px;
       height: 34px;
       flex: 0 0 auto;
-      border: 1px solid rgba(0, 229, 255, 0.35);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid rgba(0, 229, 255, 0.42);
       border-radius: 10px;
-      object-fit: cover;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(0, 229, 255, 0.16), transparent 62%),
+        rgba(0, 229, 255, 0.06);
       box-shadow: 0 0 24px rgba(0, 229, 255, 0.18);
+    }
+
+    .sidebar-logo-img {
+      width: 34px;
+      height: 34px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .sidebar-logo-fallback {
+      display: none;
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
     }
 
     .sidebar-logo-text {
@@ -798,6 +818,16 @@
       font-size: 11px;
     }
 
+    .live-api-empty {
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid rgba(0, 229, 255, 0.13);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.025);
+      color: var(--text-faint);
+      line-height: 1.6;
+    }
+
     .live-api-row {
       display: grid;
       grid-template-columns: 54px 48px minmax(0, 1fr) 42px;
@@ -938,7 +968,10 @@
   <!-- SIDEBAR -->
   <aside class="sidebar enterprise-app-sidebar" aria-label="Dashboard navigation">
     <a href="/app/" class="sidebar-logo" aria-label="VaultProof dashboard">
-      <img class="sidebar-logo-img" src="../logo-sm.png" alt="">
+      <span class="sidebar-logo-mark">
+        <img class="sidebar-logo-img" src="/logo-sm.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <span class="sidebar-logo-fallback">VP</span>
+      </span>
       <span class="sidebar-logo-text">VaultProof</span>
     </a>
     <div class="sidebar-group">
@@ -1089,15 +1122,15 @@
       </defs>
     </svg>
 
-    <div class="traffic-stat"><span>Error rate</span><strong id="liveErrorRate">0.02%</strong></div>
+    <div class="traffic-stat"><span>Error rate</span><strong id="liveErrorRate">—</strong></div>
     <div class="traffic-stat"><span>Active conns</span><strong id="liveActiveConns">—</strong></div>
-    <div class="traffic-stat"><span>Cache hit</span><strong id="liveCacheHit">94.2%</strong></div>
+    <div class="traffic-stat"><span>Cache hit</span><strong id="liveCacheHit">—</strong></div>
     <div class="traffic-stat"><span>Bandwidth</span><strong id="liveBandwidth">—</strong></div>
-    <div class="traffic-stat warning"><span>Throttled</span><strong id="liveThrottled">0</strong></div>
+    <div class="traffic-stat warning"><span>Throttled</span><strong id="liveThrottled">—</strong></div>
 
     <div class="live-title"><span class="live-pulse"></span><span>Live requests</span></div>
     <div class="live-api-feed" id="liveApiFeed" data-vp-no-translate>
-      <div class="live-api-row"><span class="live-time">--:--:--</span><span class="live-method">GET</span><span class="live-path">/api/loading</span><span class="live-status">200</span></div>
+      <div class="live-api-empty">Loading your API calls…</div>
     </div>
   </aside>
 </div>

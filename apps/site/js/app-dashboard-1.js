@@ -23,6 +23,17 @@
     key_rotation: '#f8c038',
     revoke: '#ff4f68',
   };
+  const LIVE_REQUEST_ACTIONS = new Set([
+    'api_call',
+    'api_request',
+    'http_request',
+    'provider_call',
+    'provider_request',
+    'proxy_call',
+    'proxy_request',
+    'transparent_proxy',
+    'upstream_request',
+  ]);
   const CALL_LIMITS = {
     free: 10000,
     starter: 50000,
@@ -39,7 +50,6 @@
   let currentProjectRows = [];
   let currentProjectFilter = 'all';
   let liveRequestRows = [];
-  let liveRequestTimer = null;
 
   function cleanDashboardOrgParam() {
     const params = new URLSearchParams(window.location.search);
@@ -253,28 +263,6 @@
     return event.metadata || {};
   }
 
-  function requestMethodFromEvent(event, fallbackIndex) {
-    const metadata = parseMetadata(event);
-    const method = metadata.method || (event && (event.method || event.http_method));
-    if (method) return String(method).toUpperCase();
-    return ['GET', 'POST', 'POST', 'DELETE', 'PUT'][fallbackIndex % 5];
-  }
-
-  function requestPathFromEvent(event, fallbackIndex) {
-    const metadata = parseMetadata(event);
-    const path = metadata.endpoint || metadata.path || metadata.route || (event && (event.path || event.endpoint));
-    if (path) return String(path).replace(/^https?:\/\/[^/]+/i, '') || '/api/proxy';
-    const paths = ['/api/v1/proxy', '/api/v1/chat', '/api/v1/keys', '/api/v1/search', '/api/v1/hooks', '/api/v1/auth'];
-    return paths[fallbackIndex % paths.length];
-  }
-
-  function requestStatusFromEvent(event, fallbackIndex) {
-    const metadata = parseMetadata(event);
-    const status = Number(metadata.status_code || metadata.status || (event && (event.status_code || event.status)));
-    if (Number.isFinite(status) && status > 0) return status;
-    return fallbackIndex % 9 === 0 ? 429 : fallbackIndex % 7 === 0 ? 201 : 200;
-  }
-
   function requestLatencyFromEvent(event, fallbackIndex) {
     const metadata = parseMetadata(event);
     const latency = Number(metadata.latency_ms || metadata.latency || (event && (event.latency_ms || event.latency)));
@@ -282,24 +270,46 @@
     return [0.3, 0.4, 0.6, 0.8, 1.2, 2.1, 3.4][fallbackIndex % 7];
   }
 
-  function makeFallbackRequest(index) {
-    return {
-      timestamp: Date.now() - index * 1400,
-      method: requestMethodFromEvent(null, index),
-      path: requestPathFromEvent(null, index),
-      status: requestStatusFromEvent(null, index),
-      latency: requestLatencyFromEvent(null, index),
-    };
+  function hasOwnRequestSignal(event) {
+    const metadata = parseMetadata(event);
+    const path = metadata.endpoint || metadata.path || metadata.route || event?.path || event?.endpoint || event?.route;
+    const status = metadata.status_code || metadata.status || event?.status_code || event?.status;
+    const method = metadata.method || event?.method || event?.http_method;
+    const latency = metadata.latency_ms || metadata.latency || event?.latency_ms || event?.latency;
+    const requestId = metadata.request_id || metadata.requestId || metadata.upstream_request_id || event?.request_id || event?.requestId;
+    return Boolean(
+      path &&
+      (status || method || latency || requestId || metadata.provider || event?.provider)
+    );
+  }
+
+  function isUserApiCall(event) {
+    if (!event) return false;
+    const type = String(event.action || event.type || '').toLowerCase();
+    if (type) return LIVE_REQUEST_ACTIONS.has(type);
+    return hasOwnRequestSignal(event);
   }
 
   function normalizeRequestEvent(event, index) {
     const timestamp = extractTimestamp(event?.timestamp, event?.created_at, event?.createdAt, event?.started_at, event?.startedAt) || Date.now() - index * 1400;
+    const metadata = parseMetadata(event);
+    const rawPath = metadata.endpoint || metadata.path || metadata.route || event?.path || event?.endpoint || event?.route || '';
+    const rawStatus = metadata.status_code || metadata.status || event?.status_code || event?.status;
+    const rawMethod = metadata.method || event?.method || event?.http_method;
+    const rawLatency = metadata.latency_ms || metadata.latency || event?.latency_ms || event?.latency;
+    const cacheHitRaw = metadata.cache_hit ?? metadata.cacheHit;
+    const bytes = Number(metadata.bytes || metadata.response_bytes || metadata.responseBytes || metadata.bandwidth_bytes || 0);
+    const status = Number(rawStatus);
+    const latency = Number(rawLatency);
+    const path = rawPath ? String(rawPath).replace(/^https?:\/\/[^/]+/i, '') || '/api/proxy' : '';
     return {
       timestamp,
-      method: requestMethodFromEvent(event, index),
-      path: requestPathFromEvent(event, index),
-      status: requestStatusFromEvent(event, index),
-      latency: requestLatencyFromEvent(event, index),
+      method: rawMethod ? String(rawMethod).toUpperCase() : 'API',
+      path,
+      status: Number.isFinite(status) && status > 0 ? status : null,
+      latency: Number.isFinite(latency) && latency > 0 ? latency : 0,
+      cacheHit: typeof cacheHitRaw === 'boolean' ? cacheHitRaw : cacheHitRaw == null ? null : String(cacheHitRaw).toLowerCase() === 'true',
+      bytes: Number.isFinite(bytes) && bytes > 0 ? bytes : 0,
     };
   }
 
@@ -738,50 +748,69 @@
     }).join('');
   }
 
-  function renderLiveStats(overview, events) {
-    const totalCalls = Number(overview?.totalCalls || 0);
-    const errorRate = Number(overview?.errorRate || 0);
-    const activeApps = Number(overview?.activeApps || currentProjectRows.length || 0);
-    const averageLatency = events.length
-      ? events.reduce((sum, event) => sum + Number(event.latency || 0), 0) / events.length
-      : 0.4;
-    setText('liveErrorRate', `${errorRate < 0.01 && errorRate > 0 ? '<0.01' : errorRate.toFixed(errorRate < 1 ? 2 : 1)}%`);
-    setText('liveActiveConns', formatNum(Math.max(24, Math.round(activeApps * 37 + totalCalls % 997))));
-    setText('liveCacheHit', `${Math.max(82, Math.min(99.9, 96.2 - errorRate)).toFixed(1)}%`);
-    setText('liveBandwidth', `${Math.max(0.2, averageLatency * 1.8).toFixed(2)} TB/s`);
-    setText('liveThrottled', String(events.filter((event) => Number(event.status) === 429).length));
+  function formatBytes(value) {
+    if (!Number.isFinite(value) || value <= 0) return '—';
+    if (value >= 1e12) return `${(value / 1e12).toFixed(2)} TB`;
+    if (value >= 1e9) return `${(value / 1e9).toFixed(2)} GB`;
+    if (value >= 1e6) return `${(value / 1e6).toFixed(1)} MB`;
+    if (value >= 1e3) return `${(value / 1e3).toFixed(1)} KB`;
+    return `${Math.round(value)} B`;
+  }
+
+  function renderLiveStats(events) {
+    if (!events.length) {
+      setText('liveErrorRate', '—');
+      setText('liveActiveConns', '—');
+      setText('liveCacheHit', '—');
+      setText('liveBandwidth', '—');
+      setText('liveThrottled', '—');
+      return;
+    }
+
+    const statuses = events.map((event) => Number(event.status)).filter((status) => Number.isFinite(status));
+    const errorCount = statuses.filter((status) => status >= 400).length;
+    const errorRate = statuses.length ? (errorCount / statuses.length) * 100 : 0;
+    const cacheKnown = events.filter((event) => event.cacheHit !== null);
+    const cacheHitRate = cacheKnown.length
+      ? (cacheKnown.filter((event) => event.cacheHit).length / cacheKnown.length) * 100
+      : null;
+    const totalBytes = events.reduce((sum, event) => sum + Number(event.bytes || 0), 0);
+
+    setText('liveErrorRate', statuses.length ? `${errorRate < 0.01 && errorRate > 0 ? '<0.01' : errorRate.toFixed(errorRate < 1 ? 2 : 1)}%` : '—');
+    setText('liveActiveConns', formatNum(events.length));
+    setText('liveCacheHit', cacheHitRate === null ? '—' : `${cacheHitRate.toFixed(1)}%`);
+    setText('liveBandwidth', formatBytes(totalBytes));
+    setText('liveThrottled', String(statuses.filter((status) => status === 429).length));
   }
 
   function renderLiveRequestRows() {
     const feed = document.getElementById('liveApiFeed');
     if (!feed) return;
+    if (!liveRequestRows.length) {
+      feed.innerHTML = '<div class="live-api-empty">No user API calls yet. Calls will appear here after this account routes traffic through VaultProof.</div>';
+      return;
+    }
     feed.innerHTML = liveRequestRows.slice(0, 22).map((row) => {
-      const statusClass = row.status >= 500 ? 'status-error' : row.status >= 400 ? 'status-warn' : '';
+      const status = Number(row.status);
+      const statusClass = status >= 500 ? 'status-error' : status >= 400 ? 'status-warn' : '';
       return `
         <div class="live-api-row">
           <span class="live-time">${escapeHtml(formatClock(row.timestamp))}</span>
           <span class="live-method">${escapeHtml(row.method)}</span>
-          <span class="live-path">${escapeHtml(row.path)}</span>
-          <span class="live-status ${statusClass}">${escapeHtml(row.status)}</span>
+          <span class="live-path">${escapeHtml(row.path || 'request')}</span>
+          <span class="live-status ${statusClass}">${escapeHtml(row.status == null ? '—' : row.status)}</span>
         </div>`;
     }).join('');
   }
 
-  function renderLiveRequests(events, overview) {
-    const normalized = (events || []).map(normalizeRequestEvent);
-    liveRequestRows = normalized.length
-      ? normalized.concat(Array.from({ length: Math.max(0, 18 - normalized.length) }, (_, index) => makeFallbackRequest(index + normalized.length)))
-      : Array.from({ length: 18 }, (_, index) => makeFallbackRequest(index));
-    renderLiveStats(overview || {}, liveRequestRows);
+  function renderLiveRequests(events) {
+    liveRequestRows = (events || [])
+      .filter(isUserApiCall)
+      .map(normalizeRequestEvent)
+      .filter((event) => event.path || event.status != null)
+      .sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+    renderLiveStats(liveRequestRows);
     renderLiveRequestRows();
-
-    if (liveRequestTimer) window.clearInterval(liveRequestTimer);
-    liveRequestTimer = window.setInterval(() => {
-      liveRequestRows.unshift(makeFallbackRequest(Date.now() % 17));
-      liveRequestRows = liveRequestRows.slice(0, 28);
-      renderLiveStats(overview || {}, liveRequestRows);
-      renderLiveRequestRows();
-    }, 1500);
   }
 
   function renderKpis(overview, hasData) {
@@ -797,7 +826,8 @@
     const errorRate = Number(overview.errorRate || 0);
     const successRate = Math.max(0, 100 - errorRate);
     const recentEvents = overview.recentActivity || [];
-    const latencies = recentEvents
+    const apiEvents = recentEvents.filter(isUserApiCall);
+    const latencies = apiEvents
       .map((event, index) => requestLatencyFromEvent(event, index))
       .filter((latency) => Number.isFinite(latency) && latency > 0)
       .sort((a, b) => a - b);
@@ -819,7 +849,7 @@
     }
     setText('kpi-errors-sub', '+3');
     renderActivity(recentEvents);
-    renderLiveRequests(recentEvents, overview);
+    renderLiveRequests(apiEvents);
   }
 
   function renderChart(rows) {
