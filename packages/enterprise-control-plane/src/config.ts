@@ -34,6 +34,7 @@ export interface EnterpriseControlPlaneEnv {
   mixpanelToken?: string;
   mixpanelAutocapture?: boolean;
   mixpanelRecordSessionsPercent?: number;
+  awsKmsRuntimePrincipalArn?: string;
 }
 
 export interface SecureExecutorDispatchInput {

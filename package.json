@@ -45,6 +45,7 @@
     "mint:enterprise-runtime-token": "node scripts/enterprise-mint-runtime-token.mjs",
     "dev": "turbo run dev",
     "test:enterprise-control-plane-smoke": "npm run build:enterprise && node scripts/enterprise-control-plane-smoke.mjs",
+    "evidence:enterprise-tenant-isolation": "npm run build:enterprise && node scripts/enterprise-tenant-isolation-evidence.mjs",
     "test:enterprise-apim-policies": "node scripts/enterprise-apim-policy-docs-smoke.mjs",
     "test:enterprise-smoke": "npm run build:enterprise && node scripts/enterprise-secure-executor-smoke.mjs",
     "qa:enterprise-live-app": "node scripts/enterprise-live-app-qa.mjs",

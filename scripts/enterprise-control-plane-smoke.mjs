@@ -120,9 +120,13 @@ let internalAdminSupportNotes = [];
 let internalAdminBusinessStatusUpdates = [];
 let internalAdminActionRequests = [];
 let internalAdminActionExecutionRecords = [];
+let organizationKmsConnections = [];
+let organizationProxyAccessPolicies = [];
 let internalAdminCreatedBusiness = null;
 let internalAdminOwnerInvite = null;
 let organizationSsoSettingsSchemaReady = true;
+let organizationKmsConnectionsSchemaReady = true;
+let organizationProxyAccessPoliciesSchemaReady = true;
 let bootstrapRpcCalls = 0;
 let authUserLookupCalls = 0;
 let projectKeyGetCalls = 0;
@@ -227,9 +231,50 @@ function installSupabaseStub() {
     updated_at: '2026-04-26T12:15:00.000Z',
   }];
   internalAdminActionExecutionRecords = [];
+  organizationKmsConnections = [{
+    id: 'kms_connection_123',
+    organization_id: 'org_123',
+    provider: 'aws-kms',
+    display_name: 'AWS customer-managed KMS',
+    status: 'ready_to_test',
+    aws_account_id: '111122223333',
+    aws_region: 'us-east-1',
+    aws_kms_key_arn: 'arn:aws:kms:us-east-1:111122223333:key/12345678-1234-1234-1234-123456789abc',
+    aws_role_arn: 'arn:aws:iam::111122223333:role/VaultProofCustomerKmsRole',
+    external_id: 'vaultproof-org123-kms-test',
+    last_test_status: 'not_tested',
+    last_tested_at: null,
+    last_test_error: null,
+    metadata: {},
+    created_by_user_id: 'user_123',
+    updated_by_user_id: 'user_123',
+    created_at: '2026-04-26T12:20:00.000Z',
+    updated_at: '2026-04-26T12:20:00.000Z',
+  }];
+  organizationProxyAccessPolicies = [{
+    organization_id: 'org_123',
+    tier: 'basic',
+    enforcement_mode: 'monitor',
+    allowed_egress_cidrs: [],
+    require_mtls: false,
+    require_private_connectivity: false,
+    anomaly_auto_freeze_enabled: true,
+    default_rate_limit_per_minute: null,
+    default_provider_scope_mode: 'project_policy',
+    freeze_state: 'active',
+    freeze_reason: null,
+    frozen_at: null,
+    notes: null,
+    created_by: 'user_123',
+    updated_by: 'user_123',
+    created_at: '2026-04-26T12:30:00.000Z',
+    updated_at: '2026-04-26T12:30:00.000Z',
+  }];
   internalAdminCreatedBusiness = null;
   internalAdminOwnerInvite = null;
   organizationSsoSettingsSchemaReady = true;
+  organizationKmsConnectionsSchemaReady = true;
+  organizationProxyAccessPoliciesSchemaReady = true;
   bootstrapRpcCalls = 0;
   authUserLookupCalls = 0;
   projectKeyGetCalls = 0;
@@ -320,6 +365,90 @@ function installSupabaseStub() {
       if (method === 'DELETE') {
         ssoSettings = null;
         return jsonResponse([]);
+      }
+    }
+
+    if (url.includes('/rest/v1/organization_kms_connections')) {
+      if (!organizationKmsConnectionsSchemaReady) {
+        return jsonResponse({
+          code: 'PGRST205',
+          message: "Could not find the table 'public.organization_kms_connections' in the schema cache",
+        }, 404);
+      }
+      if (method === 'GET') {
+        const organizationId = decodedUrl.match(/[?&]organization_id=eq\.([^&]+)/)?.[1];
+        const provider = decodedUrl.match(/[?&]provider=eq\.([^&]+)/)?.[1];
+        return jsonResponse(organizationKmsConnections.filter((row) => {
+          return (!organizationId || row.organization_id === organizationId)
+            && (!provider || row.provider === provider);
+        }));
+      }
+      if (method === 'POST' || method === 'PATCH') {
+        const body = JSON.parse(init?.body || '{}');
+        const row = {
+          id: body.id || organizationKmsConnections.find((existing) => existing.organization_id === body.organization_id && existing.provider === body.provider)?.id || `kms_connection_${organizationKmsConnections.length + 1}`,
+          organization_id: body.organization_id || 'org_123',
+          provider: body.provider || 'aws-kms',
+          display_name: body.display_name || 'AWS customer-managed KMS',
+          status: body.status || 'waiting_on_customer',
+          aws_account_id: body.aws_account_id || null,
+          aws_region: body.aws_region || null,
+          aws_kms_key_arn: body.aws_kms_key_arn || null,
+          aws_role_arn: body.aws_role_arn || null,
+          external_id: body.external_id || 'vaultproof-generated-external-id',
+          last_test_status: body.last_test_status || 'not_tested',
+          last_tested_at: body.last_tested_at || null,
+          last_test_error: body.last_test_error || null,
+          metadata: body.metadata || {},
+          created_by_user_id: body.created_by_user_id || 'user_123',
+          updated_by_user_id: body.updated_by_user_id || 'user_123',
+          created_at: body.created_at || '2026-04-26T12:20:00.000Z',
+          updated_at: body.updated_at || '2026-04-26T12:25:00.000Z',
+        };
+        organizationKmsConnections = organizationKmsConnections.filter((existing) => {
+          return !(existing.organization_id === row.organization_id && existing.provider === row.provider);
+        });
+        organizationKmsConnections.unshift(row);
+        return jsonResponse(row);
+      }
+    }
+
+    if (url.includes('/rest/v1/organization_proxy_access_policies')) {
+      if (!organizationProxyAccessPoliciesSchemaReady) {
+        return jsonResponse({
+          code: 'PGRST205',
+          message: "Could not find the table 'public.organization_proxy_access_policies' in the schema cache",
+        }, 404);
+      }
+      if (method === 'GET') {
+        const organizationId = decodedUrl.match(/[?&]organization_id=eq\.([^&]+)/)?.[1];
+        return jsonResponse(organizationProxyAccessPolicies.filter((row) => !organizationId || row.organization_id === organizationId));
+      }
+      if (method === 'POST' || method === 'PATCH') {
+        const body = JSON.parse(init?.body || '{}');
+        const existing = organizationProxyAccessPolicies.find((row) => row.organization_id === (body.organization_id || 'org_123'));
+        const row = {
+          organization_id: body.organization_id || 'org_123',
+          tier: body.tier || existing?.tier || 'basic',
+          enforcement_mode: body.enforcement_mode || existing?.enforcement_mode || 'monitor',
+          allowed_egress_cidrs: body.allowed_egress_cidrs || existing?.allowed_egress_cidrs || [],
+          require_mtls: body.require_mtls === undefined ? existing?.require_mtls || false : body.require_mtls === true,
+          require_private_connectivity: body.require_private_connectivity === undefined ? existing?.require_private_connectivity || false : body.require_private_connectivity === true,
+          anomaly_auto_freeze_enabled: body.anomaly_auto_freeze_enabled === undefined ? existing?.anomaly_auto_freeze_enabled !== false : body.anomaly_auto_freeze_enabled !== false,
+          default_rate_limit_per_minute: body.default_rate_limit_per_minute ?? null,
+          default_provider_scope_mode: body.default_provider_scope_mode || existing?.default_provider_scope_mode || 'project_policy',
+          freeze_state: body.freeze_state || existing?.freeze_state || 'active',
+          freeze_reason: body.freeze_reason || null,
+          frozen_at: body.frozen_at || null,
+          notes: body.notes || null,
+          created_by: body.created_by || existing?.created_by || 'user_123',
+          updated_by: body.updated_by || 'user_123',
+          created_at: existing?.created_at || '2026-04-26T12:30:00.000Z',
+          updated_at: body.updated_at || '2026-04-26T12:35:00.000Z',
+        };
+        organizationProxyAccessPolicies = organizationProxyAccessPolicies.filter((existingRow) => existingRow.organization_id !== row.organization_id);
+        organizationProxyAccessPolicies.unshift(row);
+        return jsonResponse(row);
       }
     }
 
@@ -1580,6 +1709,164 @@ async function assertEnterpriseCallerLockIpPolicy() {
   }
 }
 
+async function assertEnterpriseProxyAccessPolicy() {
+  installSupabaseStub();
+  activeProject = {
+    ...fakeProject,
+    caller_lock_policy: {},
+  };
+  const sourceIpEnv = {
+    enterpriseHostname: ENTERPRISE_HOSTNAME,
+    executorBaseUrl: 'https://executor.internal',
+    executorSigningKeyId: 'enterprise-local',
+    executorSigningSecret: 'local-secret',
+    trustedSourceIpHeaderSecret: 'source-ip-secret',
+    supabaseUrl: 'https://supabase.example.co',
+    supabaseServiceRoleKey: 'service-role-key',
+  };
+  organizationProxyAccessPolicies = [{
+    ...organizationProxyAccessPolicies[0],
+    tier: 'recommended',
+    enforcement_mode: 'enforce',
+    allowed_egress_cidrs: ['203.0.113.0/24'],
+    default_provider_scope_mode: 'project_policy',
+  }];
+
+  const deniedResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-client-class': 'server',
+        'x-vaultproof-source-ip': '198.51.100.42',
+        'x-vaultproof-source-ip-secret': 'source-ip-secret',
+      },
+      body: JSON.stringify({
+        method: 'GET',
+        upstream_path: '/v1/models',
+      }),
+    }),
+    sourceIpEnv,
+  );
+  const deniedPayload = await deniedResponse.json();
+  if (deniedResponse.status !== 403 || !String(deniedPayload?.error || '').includes('organization egress allowlist')) {
+    throw new Error(`Expected proxy access egress allowlist denial, got ${deniedResponse.status} ${JSON.stringify(deniedPayload)}`);
+  }
+  if (!auditEvents.some((event) => event.event_type === 'enterprise_caller_lock_denied' && event.metadata?.policy_scope === 'organization_proxy_access')) {
+    throw new Error(`Expected proxy access denial governance audit event, got ${JSON.stringify(auditEvents)}`);
+  }
+  if (organizationProxyAccessPolicies[0]?.freeze_state !== 'frozen'
+    || !auditEvents.some((event) => event.event_type === 'enterprise_proxy_access_anomaly_detected' && event.metadata?.auto_freeze === true)) {
+    throw new Error(`Expected proxy access auto-freeze after denied source, got policy=${JSON.stringify(organizationProxyAccessPolicies[0])} audits=${JSON.stringify(auditEvents)}`);
+  }
+
+  organizationProxyAccessPolicies = [{
+    ...organizationProxyAccessPolicies[0],
+    enforcement_mode: 'enforce',
+    freeze_state: 'active',
+    freeze_reason: null,
+    frozen_at: null,
+    anomaly_auto_freeze_enabled: false,
+  }];
+
+  const allowedResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-client-class': 'server',
+        'x-vaultproof-source-ip': '203.0.113.42',
+        'x-vaultproof-source-ip-secret': 'source-ip-secret',
+      },
+      body: JSON.stringify({
+        method: 'GET',
+        upstream_path: '/v1/models',
+        dry_run: true,
+      }),
+    }),
+    sourceIpEnv,
+  );
+  const allowedPayload = await allowedResponse.json();
+  if (allowedResponse.status !== 202 || allowedPayload?.request?.dry_run !== true) {
+    throw new Error(`Expected proxy access policy to allow customer egress IP, got ${allowedResponse.status} ${JSON.stringify(allowedPayload)}`);
+  }
+}
+
+async function assertEnterpriseHighSecurityProxyAccessPolicy() {
+  installSupabaseStub();
+  activeProject = {
+    ...fakeProject,
+    caller_lock_policy: {},
+  };
+  organizationProxyAccessPolicies = [{
+    ...organizationProxyAccessPolicies[0],
+    tier: 'high_security',
+    enforcement_mode: 'enforce',
+    allowed_egress_cidrs: [],
+    require_mtls: true,
+    require_private_connectivity: false,
+    anomaly_auto_freeze_enabled: false,
+  }];
+
+  const deniedResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-client-class': 'server',
+      },
+      body: JSON.stringify({
+        method: 'GET',
+        upstream_path: '/v1/models',
+      }),
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      executorBaseUrl: 'https://executor.internal',
+      executorSigningKeyId: 'enterprise-local',
+      executorSigningSecret: 'local-secret',
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  const deniedPayload = await deniedResponse.json();
+  if (deniedResponse.status !== 403 || !String(deniedPayload?.error || '').includes('mTLS')) {
+    throw new Error(`Expected high-security mTLS denial, got ${deniedResponse.status} ${JSON.stringify(deniedPayload)}`);
+  }
+
+  const allowedResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest(`/api/v1/enterprise/projects/${PROJECT_ID}/providers/openai/execute`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-client-class': 'server',
+        'x-vaultproof-client-cert-thumbprint': 'AA:BB:CC:DD',
+      },
+      body: JSON.stringify({
+        method: 'GET',
+        upstream_path: '/v1/models',
+        dry_run: true,
+      }),
+    }),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+      executorBaseUrl: 'https://executor.internal',
+      executorSigningKeyId: 'enterprise-local',
+      executorSigningSecret: 'local-secret',
+      supabaseUrl: 'https://supabase.example.co',
+      supabaseServiceRoleKey: 'service-role-key',
+    },
+  );
+  const allowedPayload = await allowedResponse.json();
+  if (allowedResponse.status !== 202 || allowedPayload?.request?.dry_run !== true) {
+    throw new Error(`Expected high-security mTLS request to validate, got ${allowedResponse.status} ${JSON.stringify(allowedPayload)}`);
+  }
+}
+
 async function assertEnterpriseCallerLockIpv6Policy() {
   installSupabaseStub();
   const sourceIpEnv = {
@@ -2318,6 +2605,10 @@ async function assertEnterpriseProjectOverviewRollup() {
   if ('share1_encrypted' in slot || 'share2_encrypted' in slot) {
     throw new Error(`Provider slot API must not expose encrypted share payloads: ${JSON.stringify(slot)}`);
   }
+  if (bootstrapPayload.proxy_access_summary?.tier !== 'basic'
+    || bootstrapPayload.proxy_access_checklist?.[0]?.label !== 'Proxy access tier') {
+    throw new Error(`Expected bootstrap to include customer-safe proxy access posture, got ${JSON.stringify(bootstrapPayload.proxy_access_summary)} / ${JSON.stringify(bootstrapPayload.proxy_access_checklist)}`);
+  }
 
   const overviewResponse = await handleEnterpriseControlPlaneRequest(
     buildRequest('/api/v1/enterprise/projects/stats/overview', {
@@ -2799,6 +3090,66 @@ async function assertEnterpriseSsoLifecycle() {
   }
   if (!auditEvents.find((event) => event.event_type === 'organization_sso_settings_updated')) {
     throw new Error('Expected SSO settings update audit event');
+  }
+
+  const kmsStatusResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/orgs/current/kms-connections', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'x-vaultproof-organization': 'org_123',
+      },
+    }),
+    {
+      ...env,
+      awsKmsRuntimePrincipalArn: 'arn:aws:iam::999988887777:role/VaultProofRuntimeRole',
+    },
+  );
+  const kmsStatusPayload = await kmsStatusResponse.json();
+  if (kmsStatusResponse.status !== 200
+    || kmsStatusPayload.kms_connections?.[0]?.aws_account_id !== '111122223333'
+    || kmsStatusPayload.kms_connections?.[0]?.trust_policy?.Statement?.[0]?.Principal?.AWS !== 'arn:aws:iam::999988887777:role/VaultProofRuntimeRole') {
+    throw new Error(`Expected org-scoped KMS status for customer admins, got ${kmsStatusResponse.status} ${JSON.stringify(kmsStatusPayload)}`);
+  }
+
+  const currentOrgResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/orgs/current', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'x-vaultproof-organization': 'org_123',
+      },
+    }),
+    {
+      ...env,
+      awsKmsRuntimePrincipalArn: 'arn:aws:iam::999988887777:role/VaultProofRuntimeRole',
+    },
+  );
+  const currentOrgPayload = await currentOrgResponse.json();
+  if (currentOrgResponse.status !== 200
+    || currentOrgPayload.kms_connections_visible !== true
+    || currentOrgPayload.kms_connections?.[0]?.external_id !== 'vaultproof-org123-kms-test') {
+    throw new Error(`Expected current org payload to include scoped KMS status, got ${currentOrgResponse.status} ${JSON.stringify(currentOrgPayload)}`);
+  }
+  if (currentOrgPayload.proxy_access_visible !== true
+    || currentOrgPayload.proxy_access_summary?.tier !== 'basic'
+    || currentOrgPayload.organization?.proxy_access_summary?.freeze_state !== 'active') {
+    throw new Error(`Expected current org payload to include customer-safe proxy access posture, got ${currentOrgResponse.status} ${JSON.stringify(currentOrgPayload)}`);
+  }
+
+  const proxyPostureResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/api/v1/enterprise/orgs/current/proxy-access-policy', {
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'x-vaultproof-organization': 'org_123',
+      },
+    }),
+    env,
+  );
+  const proxyPosturePayload = await proxyPostureResponse.json();
+  if (proxyPostureResponse.status !== 200
+    || proxyPosturePayload.proxy_access_summary?.tier !== 'basic'
+    || proxyPosturePayload.proxy_access_summary?.allowed_egress_cidr_count !== 0
+    || JSON.stringify(proxyPosturePayload).includes('203.0.113.0/24')) {
+    throw new Error(`Expected customer-safe proxy access posture endpoint, got ${proxyPostureResponse.status} ${JSON.stringify(proxyPosturePayload)}`);
   }
 
   const startedResponse = await handleEnterpriseControlPlaneRequest(
@@ -3494,7 +3845,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/evidence',
       title: 'Evidence packet - VaultProof Enterprise',
-      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Identity/OAuth proof', 'Key rotation proof', 'Key exposure response proof', 'Pilot operations proof', 'API proxy self-test proof', 'API inventory proof', 'Policy drift proof', 'Integration rollout proof', 'Scanner exposure proof', 'Launch support proof', 'Monitoring evidence proof', 'Release evidence proof', 'Paid-pilot tester proof', 'Contract entitlements proof', 'Paid onboarding proof', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'identity_login_qa', 'key_rotation_evidence', 'key_exposure_response', 'pilot_operations_evidence', 'api_proxy_self_test', 'api_inventory', 'policy_drift_exceptions', 'integration_rollout', 'scanner_exposure_review', 'launch_support_readiness', 'monitoring_evidence', 'release_evidence', 'pilot_tester_readiness', 'contract_entitlements', 'paid_onboarding', 'security_review_packet', 'vaultproof_enterprise_security_review_packet', 'vaultproof_enterprise_api_inventory', 'vaultproof_enterprise_policy_drift', 'vaultproof_enterprise_integration_rollout', 'vaultproof_enterprise_scanner_exposure_review', 'vaultproof_enterprise_key_exposure_response', 'vaultproof_enterprise_release_evidence', 'vaultproof_enterprise_paid_pilot_tester_readiness', 'vaultproof_enterprise_entitlements', 'vaultproof_enterprise_paid_onboarding', 'execute_endpoint_pattern', 'paid_onboarding_actions', 'rollback_paths', 'monitoring_review', 'budget_alert', 'live_gate', 'oauth_redirect_qa_command', 'Email API key protection', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/inventory', '/app/policy', '/app/rollout', '/app/scanner', '/app/release', '/app/testers', '/app/entitlements', '/app/control', '/app/alerts', '/app/security-review', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
+      required: ['Evidence readiness', 'Customer exports', 'Proof inventory', 'Review workflow', 'Identity/OAuth proof', 'Key rotation proof', 'Key exposure response proof', 'Pilot operations proof', 'API proxy self-test proof', 'API inventory proof', 'Proxy access posture', 'Policy drift proof', 'Integration rollout proof', 'Scanner exposure proof', 'Launch support proof', 'Monitoring evidence proof', 'Release evidence proof', 'Paid-pilot tester proof', 'Contract entitlements proof', 'Paid onboarding proof', 'Go/no-go launch decision', 'go_no_go', 'manual_evidence', 'identity_login_qa', 'key_rotation_evidence', 'key_exposure_response', 'pilot_operations_evidence', 'api_proxy_self_test', 'api_inventory', 'proxy_access_posture', 'policy_drift_exceptions', 'integration_rollout', 'scanner_exposure_review', 'launch_support_readiness', 'monitoring_evidence', 'release_evidence', 'pilot_tester_readiness', 'contract_entitlements', 'paid_onboarding', 'security_review_packet', 'vaultproof_enterprise_security_review_packet', 'vaultproof_enterprise_api_inventory', 'vaultproof_enterprise_policy_drift', 'vaultproof_enterprise_integration_rollout', 'vaultproof_enterprise_scanner_exposure_review', 'vaultproof_enterprise_key_exposure_response', 'vaultproof_enterprise_release_evidence', 'vaultproof_enterprise_paid_pilot_tester_readiness', 'vaultproof_enterprise_entitlements', 'vaultproof_enterprise_paid_onboarding', 'execute_endpoint_pattern', 'paid_onboarding_actions', 'rollback_paths', 'monitoring_review', 'budget_alert', 'live_gate', 'oauth_redirect_qa_command', 'Email API key protection', 'raw egress CIDR values', 'Evidence packet JSON', 'copy JSON', 'download JSON', 'vaultproof_enterprise_evidence_packet', 'email_provider_slots', '/app/inventory', '/app/policy', '/app/rollout', '/app/scanner', '/app/release', '/app/testers', '/app/entitlements', '/app/control', '/app/alerts', '/app/security-review', '/api/v1/enterprise/audit?format=csv&days=30', '/api/v1/enterprise/members/access-review?format=csv'],
     },
     {
       path: '/app/technical-guide',
@@ -3504,7 +3855,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/security-review',
       title: 'Security review packet - VaultProof Enterprise',
-      required: ['Review readiness', 'Control coverage', 'Evidence map', 'Open review items', 'securityReviewOpenFilterForm', 'securityReviewOpenSearch', 'securityReviewOpenType', 'clearSecurityReviewFilters', 'filteredSecurityReviewOpenItems', 'securityReviewOpenItemMatches', 'Copyable security review packet', 'copy review brief', 'copySecurityReviewBriefBtn', 'securityReviewFocusBriefText', 'VaultProof Enterprise security review brief', 'vaultproof_enterprise_security_review_packet', 'Architecture summary', 'Control coverage', 'Evidence links', 'Common answers', 'Secrets excluded', 'Identity and RBAC', 'Caller-lock policy', 'Provider key custody', 'Policy drift and exceptions', 'Integration rollout', 'Secret exposure review', 'Key exposure response', 'Release evidence', 'Paid-pilot tester readiness', 'Contract entitlements', 'Paid customer onboarding', 'Runtime attestation', 'Monitoring and edge protection', 'Security review packet status', 'scanner_exposure_review', 'key_exposure_response', 'release_evidence', 'pilot_tester_readiness', 'contract_entitlements', 'paid_onboarding', 'copy packet', '/app/evidence', '/app/audit', '/app/alerts', '/app/policy', '/app/rollout', '/app/scanner', '/app/release', '/app/testers', '/app/entitlements', '/app/runbooks'],
+      required: ['Review readiness', 'Control coverage', 'Evidence map', 'Open review items', 'securityReviewOpenFilterForm', 'securityReviewOpenSearch', 'securityReviewOpenType', 'clearSecurityReviewFilters', 'filteredSecurityReviewOpenItems', 'securityReviewOpenItemMatches', 'Copyable security review packet', 'copy review brief', 'copySecurityReviewBriefBtn', 'securityReviewFocusBriefText', 'VaultProof Enterprise security review brief', 'vaultproof_enterprise_security_review_packet', 'Architecture summary', 'Control coverage', 'Evidence links', 'Common answers', 'Secrets excluded', 'Identity and RBAC', 'Caller-lock policy', 'Proxy access tier', 'Provider key custody', 'Policy drift and exceptions', 'Integration rollout', 'Secret exposure review', 'Key exposure response', 'Release evidence', 'Paid-pilot tester readiness', 'Contract entitlements', 'Paid customer onboarding', 'Runtime attestation', 'Monitoring and edge protection', 'Security review packet status', 'proxy_access_posture', 'scanner_exposure_review', 'key_exposure_response', 'release_evidence', 'pilot_tester_readiness', 'contract_entitlements', 'paid_onboarding', 'copy packet', '/app/evidence', '/app/audit', '/app/alerts', '/app/policy', '/app/rollout', '/app/scanner', '/app/release', '/app/testers', '/app/entitlements', '/app/runbooks'],
     },
     {
       path: '/app/release',
@@ -3558,7 +3909,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/runbooks',
       title: 'Runbooks - VaultProof Enterprise',
-      required: ['Hardening status', 'Production verifier', 'Evidence bundle', 'Security review packet', 'Tester readiness review', 'Monitoring evidence review', 'Customer launch gate', 'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch', 'Handoff package', 'npm run package:enterprise-handoff', 'Handoff gate', 'npm run gate:enterprise-handoff', 'Finish gate', 'blocker/warning details', 'npm run gate:enterprise-finish', 'Key exposure response runbook', 'runbooksExposureMeta', 'Current exposure response status', 'Open Provider Slots incident mode', 'incident JSON', 'Export audit CSV', 'Proof boundary', 'Operator order', 'mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls', 'Gateway JWT validation preparation', 'discover the Supabase issuer', 'gateway policy template smoke', 'caller-lock header delete/override', 'npm run test:enterprise-apim-policies', 'Origin TLS certificate plan', 'Origin TLS preparation plan', 'Origin DNS guardrail', 'Origin DNS record', 'DNS record updates', 'Origin TLS preflight', 'TLS origin cutover', 'gateway cutover', 'GCP runtime reset rollback', 'old prototype cleanup'],
+      required: ['Hardening status', 'Production verifier', 'Evidence bundle', 'Security review packet', 'Tester readiness review', 'Monitoring evidence review', 'Customer launch gate', 'RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch', 'Handoff package', 'npm run package:enterprise-handoff', 'Handoff gate', 'npm run gate:enterprise-handoff', 'Finish gate', 'blocker/warning details', 'npm run gate:enterprise-finish', 'Key exposure response runbook', 'runbooksExposureMeta', 'Current exposure response status', 'Leaked vp-proj-* response', 'proxy freeze', 'Open Provider Slots incident mode', 'incident JSON', 'Export audit CSV', 'Proof boundary', 'Operator order', 'mTLS caller-lock preparation', 'npm run prepare:enterprise-mtls', 'Gateway JWT validation preparation', 'discover the Supabase issuer', 'gateway policy template smoke', 'caller-lock header delete/override', 'npm run test:enterprise-apim-policies', 'Origin TLS certificate plan', 'Origin TLS preparation plan', 'Origin DNS guardrail', 'Origin DNS record', 'DNS record updates', 'Origin TLS preflight', 'TLS origin cutover', 'gateway cutover', 'GCP runtime reset rollback', 'old prototype cleanup'],
     },
   ];
   for (const page of supportPages) {
@@ -4007,6 +4358,7 @@ async function assertEnterpriseMixpanelAnalytics() {
 
   for (const [path, pageName] of [
     ['/', 'internal-admin'],
+    ['/app', 'internal-admin'],
     ['/orgs/org_123', 'internal-admin'],
     ['/app/launch', 'launch'],
     ['/app/demo', 'demo'],
@@ -4054,6 +4406,15 @@ async function assertInternalAdminConsole() {
   if (unauthenticatedPageResponse.status !== 302
     || unauthenticatedPageResponse.headers.get('location') !== '/app/login') {
     throw new Error(`Expected internal admin page to redirect to login, got ${unauthenticatedPageResponse.status}`);
+  }
+
+  const unauthenticatedAppResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/app'),
+    env,
+  );
+  if (unauthenticatedAppResponse.status !== 302
+    || unauthenticatedAppResponse.headers.get('location') !== '/app/login') {
+    throw new Error(`Expected internal admin /app page to redirect to login, got ${unauthenticatedAppResponse.status}`);
   }
 
   const unauthenticatedLaunchResponse = await handleEnterpriseControlPlaneRequest(
@@ -4140,6 +4501,20 @@ async function assertInternalAdminConsole() {
   const pageHtml = await pageResponse.text();
   if (pageResponse.status !== 200 || !pageHtml.includes('VaultProof Internal Admin')) {
     throw new Error(`Expected internal admin page to render, got ${pageResponse.status}`);
+  }
+  const appPageResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/app', {
+      headers: {
+        cookie: sessionCookie.split(';')[0],
+      },
+    }),
+    env,
+  );
+  const appPageHtml = await appPageResponse.text();
+  if (appPageResponse.status !== 200
+    || !appPageHtml.includes('VaultProof Internal Admin')
+    || !appPageHtml.includes('/api/v1/internal-admin/overview')) {
+    throw new Error(`Expected internal admin /app page to render the staff console, got ${appPageResponse.status}`);
   }
   const headPageResponse = await handleEnterpriseControlPlaneRequest(
     buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/', {
@@ -4345,10 +4720,17 @@ async function assertInternalAdminConsole() {
   for (const required of [
     'Business detail',
     'SSO setup checklist',
+    'AWS KMS connection',
+    'Customer KMS onboarding',
+    'Proxy access tier',
+    '/proxy-access-policy',
     'Business login links',
     'data-internal-admin-action="org-account-management"',
     '/sso-settings',
+    '/kms-connections',
     'save SSO',
+    'save AWS KMS',
+    'save proxy tier',
     'create invite',
     'User/member timeline',
     'Support notes',
@@ -4441,6 +4823,14 @@ async function assertInternalAdminConsole() {
   if (!overview.businesses[0]?.business_login_links?.find((link) => link.href.includes('/app/login?org=org_123'))) {
     throw new Error(`Expected internal admin overview to include per-business login links, got ${JSON.stringify(overview.businesses[0]?.business_login_links)}`);
   }
+  if (overview.summary?.kms_configured_count !== 1 || overview.businesses[0]?.kms?.status !== 'ready_to_test') {
+    throw new Error(`Expected internal admin overview to include KMS onboarding status, got ${JSON.stringify(overview.summary)} / ${JSON.stringify(overview.businesses[0]?.kms)}`);
+  }
+  if (overview.proxy_access_policy_schema_ready !== true
+    || overview.businesses[0]?.proxy_access_policy?.tier !== 'basic'
+    || overview.businesses[0]?.proxy_access_summary?.freeze_state !== 'active') {
+    throw new Error(`Expected internal admin overview to include proxy access tier status, got ${JSON.stringify(overview.businesses[0]?.proxy_access_policy)}`);
+  }
   if (!Array.isArray(overview.recent_internal_admin_audit)
     || overview.recent_internal_admin_audit[0]?.event_type !== 'internal_admin_overview_viewed') {
     throw new Error(`Expected internal admin overview to include employee audit stream, got ${JSON.stringify(overview.recent_internal_admin_audit)}`);
@@ -4498,6 +4888,20 @@ async function assertInternalAdminConsole() {
   }
   if (!Array.isArray(orgDetail.sso_checklist) || !orgDetail.sso_checklist.find((item) => item.label === 'Choose identity provider')) {
     throw new Error(`Expected org detail SSO checklist, got ${JSON.stringify(orgDetail.sso_checklist)}`);
+  }
+  if (!orgDetail.kms_connections_schema_ready
+    || orgDetail.kms_connections?.[0]?.aws_account_id !== '111122223333'
+    || !orgDetail.kms_connections?.[0]?.trust_policy?.Statement?.[0]?.Condition?.StringEquals?.['sts:ExternalId']) {
+    throw new Error(`Expected org detail AWS KMS connection with trust policy, got ${JSON.stringify(orgDetail.kms_connections)}`);
+  }
+  if (!Array.isArray(orgDetail.kms_checklist) || !orgDetail.kms_checklist.find((item) => item.label === 'External ID')) {
+    throw new Error(`Expected org detail KMS checklist, got ${JSON.stringify(orgDetail.kms_checklist)}`);
+  }
+  if (!orgDetail.proxy_access_policy_schema_ready
+    || orgDetail.proxy_access_policy?.tier !== 'basic'
+    || !Array.isArray(orgDetail.proxy_access_checklist)
+    || !orgDetail.proxy_access_checklist.find((item) => item.label === 'Proxy access tier')) {
+    throw new Error(`Expected org detail proxy access policy checklist, got ${JSON.stringify(orgDetail.proxy_access_policy)} / ${JSON.stringify(orgDetail.proxy_access_checklist)}`);
   }
   if (!Array.isArray(orgDetail.member_timeline) || !orgDetail.member_timeline.find((item) => item.type === 'member')) {
     throw new Error(`Expected org detail member timeline, got ${JSON.stringify(orgDetail.member_timeline)}`);
@@ -4661,6 +5065,212 @@ async function assertInternalAdminConsole() {
   }
   if (!auditEvents.some((event) => event.event_type === 'organization_sso_settings_updated' && event.metadata?.updated_via === 'internal_admin')) {
     throw new Error(`Expected customer org audit event for internal SSO settings update, got ${JSON.stringify(auditEvents)}`);
+  }
+
+  const disabledKmsResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/kms-connections', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        aws_account_id: '111122223333',
+        aws_region: 'us-east-1',
+        aws_kms_key_arn: 'arn:aws:kms:us-east-1:111122223333:key/12345678-1234-1234-1234-123456789abc',
+        aws_role_arn: 'arn:aws:iam::111122223333:role/VaultProofCustomerKmsRole',
+      }),
+    }),
+    env,
+  );
+  if (disabledKmsResponse.status !== 403) {
+    throw new Error(`Expected internal KMS connection update to be disabled by default, got ${disabledKmsResponse.status}`);
+  }
+
+  const rawAwsCredentialKmsResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/kms-connections', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        aws_access_key_id: 'AKIAIOSFODNN7EXAMPLE',
+        aws_secret_access_key: 'secret',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  if (rawAwsCredentialKmsResponse.status !== 400) {
+    throw new Error(`Expected KMS onboarding to reject raw AWS credentials, got ${rawAwsCredentialKmsResponse.status}`);
+  }
+
+  const invalidKmsArnResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/kms-connections', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        aws_account_id: '111122223333',
+        aws_region: 'us-east-1',
+        aws_kms_key_arn: 'alias/vaultproof',
+        aws_role_arn: 'arn:aws:iam::111122223333:role/VaultProofCustomerKmsRole',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  if (invalidKmsArnResponse.status !== 400) {
+    throw new Error(`Expected KMS onboarding to require full KMS key ARN, got ${invalidKmsArnResponse.status}`);
+  }
+
+  const kmsUpdateResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/kms-connections', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        aws_account_id: '111122223333',
+        aws_region: 'us-east-1',
+        aws_kms_key_arn: 'arn:aws:kms:us-east-1:111122223333:key/12345678-1234-1234-1234-123456789abc',
+        aws_role_arn: 'arn:aws:iam::111122223333:role/VaultProofCustomerKmsRole',
+        status: 'ready_to_test',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+      awsKmsRuntimePrincipalArn: 'arn:aws:iam::999988887777:role/VaultProofRuntimeRole',
+    },
+  );
+  const kmsUpdatePayload = await kmsUpdateResponse.json();
+  if (kmsUpdateResponse.status !== 200
+    || kmsUpdatePayload.kms_connection?.aws_account_id !== '111122223333'
+    || !kmsUpdatePayload.kms_connection?.external_id
+    || kmsUpdatePayload.kms_connection?.trust_policy?.Statement?.[0]?.Principal?.AWS !== 'arn:aws:iam::999988887777:role/VaultProofRuntimeRole'
+    || !String(kmsUpdatePayload.kms_connection?.preflight_command || '').includes('preflight:aws-customer-kms')) {
+    throw new Error(`Expected approved KMS connection update, got ${kmsUpdateResponse.status}: ${JSON.stringify(kmsUpdatePayload)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_kms_connection_updated')) {
+    throw new Error(`Expected internal KMS connection audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+  if (!auditEvents.some((event) => event.event_type === 'organization_kms_connection_updated' && event.metadata?.updated_via === 'internal_admin')) {
+    throw new Error(`Expected customer org audit event for KMS connection update, got ${JSON.stringify(auditEvents)}`);
+  }
+
+  const proxyPolicyUpdateResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/proxy-access-policy', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        tier: 'recommended',
+        enforcement_mode: 'enforce',
+        allowed_egress_cidrs: ['203.0.113.0/24'],
+        anomaly_auto_freeze_enabled: true,
+        default_rate_limit_per_minute: 120,
+        default_provider_scope_mode: 'deny_unscoped',
+        require_mtls: false,
+        require_private_connectivity: false,
+        freeze_state: 'active',
+        notes: 'Customer uses fixed NAT egress for server-side calls.',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const proxyPolicyUpdatePayload = await proxyPolicyUpdateResponse.json();
+  if (proxyPolicyUpdateResponse.status !== 200
+    || proxyPolicyUpdatePayload.proxy_access_policy?.tier !== 'recommended'
+    || proxyPolicyUpdatePayload.proxy_access_policy?.enforcement_mode !== 'enforce'
+    || proxyPolicyUpdatePayload.proxy_access_policy?.allowed_egress_cidrs?.[0] !== '203.0.113.0/24'
+    || proxyPolicyUpdatePayload.proxy_access_summary?.default_rate_limit_per_minute !== 120) {
+    throw new Error(`Expected approved proxy access policy update, got ${proxyPolicyUpdateResponse.status}: ${JSON.stringify(proxyPolicyUpdatePayload)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_proxy_access_policy_updated')) {
+    throw new Error(`Expected internal proxy access policy audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
+  }
+  if (!auditEvents.some((event) => event.event_type === 'enterprise_proxy_access_policy_updated' && event.metadata?.updated_via === 'internal_admin')) {
+    throw new Error(`Expected customer org audit event for proxy access policy update, got ${JSON.stringify(auditEvents)}`);
+  }
+
+  const proxyFreezeResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/proxy-access-policy/freeze', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        reason: 'Customer reported leaked vp-proj key in ticket CUST-999.',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const proxyFreezePayload = await proxyFreezeResponse.json();
+  if (proxyFreezeResponse.status !== 200
+    || proxyFreezePayload.proxy_access_policy?.freeze_state !== 'frozen'
+    || !String(proxyFreezePayload.proxy_access_policy?.freeze_reason || '').includes('CUST-999')) {
+    throw new Error(`Expected approved proxy access freeze, got ${proxyFreezeResponse.status}: ${JSON.stringify(proxyFreezePayload)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_proxy_access_frozen')
+    || !auditEvents.some((event) => event.event_type === 'enterprise_proxy_access_frozen')) {
+    throw new Error(`Expected proxy access freeze audit events, internal=${JSON.stringify(internalAdminAuditEvents)} customer=${JSON.stringify(auditEvents)}`);
+  }
+
+  const proxyThawResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/proxy-access-policy/thaw', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        reason: 'Customer rotated app-side proxy key handling and approved thaw.',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const proxyThawPayload = await proxyThawResponse.json();
+  if (proxyThawResponse.status !== 200
+    || proxyThawPayload.proxy_access_policy?.freeze_state !== 'active'
+    || proxyThawPayload.proxy_access_policy?.freeze_reason !== null) {
+    throw new Error(`Expected approved proxy access thaw, got ${proxyThawResponse.status}: ${JSON.stringify(proxyThawPayload)}`);
+  }
+  if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_proxy_access_thawed')
+    || !auditEvents.some((event) => event.event_type === 'enterprise_proxy_access_thawed')) {
+    throw new Error(`Expected proxy access thaw audit events, internal=${JSON.stringify(internalAdminAuditEvents)} customer=${JSON.stringify(auditEvents)}`);
   }
 
   const ssoStartCheckResponse = await handleEnterpriseControlPlaneRequest(
@@ -5394,6 +6004,8 @@ await assertEnterpriseRuntimeExecuteToken();
 await assertEnterpriseOriginLock();
 await assertEnterpriseCallerLockPolicy();
 await assertEnterpriseCallerLockIpPolicy();
+await assertEnterpriseProxyAccessPolicy();
+await assertEnterpriseHighSecurityProxyAccessPolicy();
 await assertEnterpriseCallerLockIpv6Policy();
 await assertEnterpriseCallerLockCertificatePolicy();
 await assertEnterpriseProviderCallerLockPolicy();

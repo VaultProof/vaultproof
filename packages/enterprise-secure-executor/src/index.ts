@@ -89,6 +89,9 @@ export interface EnterpriseSecureExecutorEnv {
   awsSecureBoot?: boolean;
   awsImageDigest?: string;
   awsRoleArn?: string;
+  awsExternalId?: string;
+  awsRoleSessionName?: string;
+  awsAssumeRoleDurationSeconds?: number;
   awsAttestationType?: string;
   awsIsolationProvider?: 'aws-nitro-enclave' | 'aws-ec2';
   keyProvider?: VaultUnwrapKeyProvider;

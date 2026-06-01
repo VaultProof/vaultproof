@@ -38,6 +38,28 @@ The customer KMS policy or IAM policy must allow the runtime role to decrypt:
 
 For stricter deployments, bind decrypt permission to expected role/session conditions and Nitro Enclave attestation when available.
 
+## Admin Onboarding Flow
+
+VaultProof stores each customer KMS setup under that business' `organization_id`. That is the tenant boundary: Acme's AWS KMS ARN, role ARN, and `external_id` live on Acme's organization record; another business gets a separate row and a separate `external_id`.
+
+In the internal admin console, open the business detail page and save the AWS KMS connection with:
+
+- AWS account ID
+- AWS region
+- AWS KMS key ARN
+- Customer IAM role ARN
+- VaultProof-generated `external_id`
+
+The admin response includes a customer trust-policy template using the VaultProof AWS runtime principal and that business' `external_id`. Do not enter AWS access keys, AWS secret access keys, session tokens, provider API keys, or private key material in this form.
+
+The database table for this flow is `organization_kms_connections`. Writes are approval-gated internal admin actions; customer org admins can read their own KMS onboarding status for evidence and handoff.
+
+Staff page shape:
+
+- `https://admin.vaultproof.dev/orgs/<organization_id>` is the VaultProof staff page for one business.
+- `https://enterprise.vaultproof.dev/app/login?org=<organization_id>` is the customer login link for that same business.
+- `GET /api/v1/enterprise/orgs/current/kms-connections` returns only the signed-in business' KMS status to allowed org admins/auditors.
+
 ## Preflight
 
 Run preflight before changing runtime secrets:
@@ -93,12 +115,14 @@ AWS_KMS_KEY_USAGE=ENCRYPT_DECRYPT
 AWS_KMS_KEY_STATE=Enabled
 AWS_KMS_KEY_ORIGIN=AWS_KMS
 AWS_ISOLATION_PROVIDER=aws-nitro-enclave
+AWS_ROLE_ARN=arn:aws:iam::111122223333:role/VaultProofCustomerKmsRole
+AWS_EXTERNAL_ID=vaultproof-org123-...
 AWS_ATTESTATION_TOKEN_HASH=...
 AWS_CONFIDENTIAL_VM_RESOURCE_ID=...
 AWS_MEASUREMENT_SUMMARY=...
 ```
 
-`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` are supported for local/bootstrap tests. Production should use the runtime role through instance metadata.
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` are supported for local/bootstrap tests. Production should use the runtime role through instance metadata. When `AWS_ROLE_ARN` is set, the executor assumes that customer role before calling AWS KMS; when `AWS_EXTERNAL_ID` is also set, it sends that value in the STS `AssumeRole` request.
 
 ## Provider Key Sealing
 

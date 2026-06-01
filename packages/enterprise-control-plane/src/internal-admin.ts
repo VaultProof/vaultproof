@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer';
-import { timingSafeEqual } from 'node:crypto';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import {
   isOrganizationRole,
   isValidDomain,
@@ -11,6 +11,16 @@ import { getEnterpriseHostname, type EnterpriseControlPlaneEnv } from './config.
 import { injectEnterpriseAnalytics } from './analytics.js';
 import { writeGovernanceAuditEvent } from './audit.js';
 import { authenticateUser, type EnterpriseUserAuth } from './auth.js';
+import {
+  defaultProxyAccessPolicy,
+  isMissingOrganizationProxyAccessPoliciesTable,
+  normalizeProxyAccessPolicyRow,
+  normalizeProxyAccessPolicyInput,
+  proxyAccessChecklist,
+  proxyAccessCustomerSummary,
+  readOrganizationProxyAccessPolicy,
+  type OrganizationProxyAccessPolicyRow,
+} from './proxy-access-policy.js';
 import { getSupabase } from './supabase.js';
 
 const INTERNAL_AUTH_ERROR = 'VaultProof employee access required. Sign in with an approved employee account.';
@@ -116,6 +126,27 @@ interface InternalAdminActionExecutionRecordRow {
   created_at: string;
 }
 
+interface InternalAdminKmsConnectionRow {
+  id: string;
+  organization_id: string;
+  provider: 'aws-kms';
+  display_name: string | null;
+  status: 'waiting_on_customer' | 'ready_to_test' | 'verified' | 'blocked';
+  aws_account_id: string | null;
+  aws_region: string | null;
+  aws_kms_key_arn: string | null;
+  aws_role_arn: string | null;
+  external_id: string;
+  last_test_status: 'not_tested' | 'passed' | 'failed';
+  last_tested_at: string | null;
+  last_test_error: string | null;
+  metadata: Record<string, unknown> | null;
+  created_by_user_id: string | null;
+  updated_by_user_id: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
 interface InternalAdminAuthUser {
   id: string;
   email?: string | null;
@@ -184,6 +215,17 @@ function isMissingOrganizationSsoSettingsTable(error: { code?: string; message?:
   return error?.code === '42P01'
     || error?.code === 'PGRST205'
     || (message.includes('organization_sso_settings') && (
+      message.includes('schema cache')
+      || message.includes('does not exist')
+      || message.includes('could not find')
+    ));
+}
+
+function isMissingOrganizationKmsConnectionsTable(error: { code?: string; message?: string } | null | undefined): boolean {
+  const message = String(error?.message || '').toLowerCase();
+  return error?.code === '42P01'
+    || error?.code === 'PGRST205'
+    || (message.includes('organization_kms_connections') && (
       message.includes('schema cache')
       || message.includes('does not exist')
       || message.includes('could not find')
@@ -651,6 +693,175 @@ function normalizeInternalAdminSsoProvider(value: unknown): string | null | Resp
   return provider;
 }
 
+function hasRawAwsCredentialFields(body: Record<string, unknown>): boolean {
+  const blockedFields = new Set([
+    'aws_access_key_id',
+    'aws_secret_access_key',
+    'aws_session_token',
+    'access_key_id',
+    'secret_access_key',
+    'session_token',
+    'private_key',
+    'credential',
+    'credentials',
+  ]);
+  return Object.keys(body).some((key) => blockedFields.has(key.trim().toLowerCase()));
+}
+
+function normalizeAwsAccountId(value: unknown, fieldName = 'aws_account_id'): string | Response | null {
+  const accountId = typeof value === 'string' ? value.trim() : '';
+  if (!accountId) return null;
+  if (!/^[0-9]{12}$/.test(accountId)) {
+    return Response.json({ error: `${fieldName} must be a 12-digit AWS account ID.` }, { status: 400 });
+  }
+  return accountId;
+}
+
+function normalizeAwsRegion(value: unknown, fieldName = 'aws_region'): string | Response | null {
+  const region = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (!region) return null;
+  if (!/^(?:[a-z]{2}|us-gov|cn)-[a-z0-9-]+-\d$/.test(region)) {
+    return Response.json({ error: `${fieldName} must be a valid AWS region such as us-east-1.` }, { status: 400 });
+  }
+  return region;
+}
+
+function parseAwsKmsKeyArn(value: unknown): {
+  arn: string;
+  partition: string;
+  region: string;
+  accountId: string;
+} | Response | null {
+  const arn = typeof value === 'string' ? value.trim() : '';
+  if (!arn) return null;
+  const match = arn.match(/^arn:(aws[a-z-]*):kms:([a-z0-9-]+):([0-9]{12}):key\/([A-Za-z0-9-]+)$/);
+  if (!match) {
+    return Response.json({
+      error: 'aws_kms_key_arn must be a full AWS KMS key ARN like arn:aws:kms:us-east-1:111122223333:key/uuid.',
+    }, { status: 400 });
+  }
+  const region = normalizeAwsRegion(match[2], 'aws_kms_key_arn region');
+  if (region instanceof Response) return region;
+  return {
+    arn,
+    partition: match[1],
+    region: region || match[2],
+    accountId: match[3],
+  };
+}
+
+function parseAwsRoleArn(value: unknown): {
+  arn: string;
+  partition: string;
+  accountId: string;
+} | Response | null {
+  const arn = typeof value === 'string' ? value.trim() : '';
+  if (!arn) return null;
+  const match = arn.match(/^arn:(aws[a-z-]*):iam::([0-9]{12}):role\/[A-Za-z0-9+=,.@_/-]{1,512}$/);
+  if (!match) {
+    return Response.json({
+      error: 'aws_role_arn must be a full IAM role ARN like arn:aws:iam::111122223333:role/VaultProofCustomerKmsRole.',
+    }, { status: 400 });
+  }
+  return {
+    arn,
+    partition: match[1],
+    accountId: match[2],
+  };
+}
+
+function normalizeKmsConnectionStatus(value: unknown, fallback: InternalAdminKmsConnectionRow['status']): InternalAdminKmsConnectionRow['status'] | Response {
+  const status = typeof value === 'string' ? value.trim().toLowerCase() : fallback;
+  if (
+    status === 'waiting_on_customer'
+    || status === 'ready_to_test'
+    || status === 'verified'
+    || status === 'blocked'
+  ) {
+    return status;
+  }
+  return Response.json({ error: 'status must be waiting_on_customer, ready_to_test, verified, or blocked.' }, { status: 400 });
+}
+
+function normalizeAwsKmsExternalId(value: unknown, organizationId: string, existingExternalId?: string | null): string | Response {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  const externalId = raw || existingExternalId || `vaultproof-${organizationId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}-${randomBytes(8).toString('hex')}`;
+  if (externalId.length < 16 || externalId.length > 160) {
+    return Response.json({ error: 'external_id must be between 16 and 160 characters.' }, { status: 400 });
+  }
+  if (!/^[A-Za-z0-9+=,.@:/_-]+$/.test(externalId)) {
+    return Response.json({ error: 'external_id can only contain letters, numbers, and +=,.@:/_- characters.' }, { status: 400 });
+  }
+  return externalId;
+}
+
+function vaultProofAwsRuntimePrincipalArn(env: EnterpriseControlPlaneEnv): string {
+  return (env.awsKmsRuntimePrincipalArn || 'arn:aws:iam::VAULTPROOF_AWS_ACCOUNT_ID:role/VaultProofRuntimeRole').trim();
+}
+
+function buildAwsKmsTrustPolicy(env: EnterpriseControlPlaneEnv, externalId: string): Record<string, unknown> {
+  return {
+    Version: '2012-10-17',
+    Statement: [{
+      Sid: 'AllowVaultProofRuntimeAssumeRole',
+      Effect: 'Allow',
+      Principal: {
+        AWS: vaultProofAwsRuntimePrincipalArn(env),
+      },
+      Action: 'sts:AssumeRole',
+      Condition: {
+        StringEquals: {
+          'sts:ExternalId': externalId,
+        },
+      },
+    }],
+  };
+}
+
+function buildAwsKmsPreflightCommand(row: Pick<InternalAdminKmsConnectionRow, 'aws_kms_key_arn' | 'aws_region' | 'aws_role_arn'>): string | null {
+  if (!row.aws_kms_key_arn || !row.aws_region || !row.aws_role_arn) return null;
+  return [
+    `CUSTOMER_AWS_KMS_KEY_ID="${row.aws_kms_key_arn}"`,
+    `CUSTOMER_AWS_RUNTIME_ROLE_ARN="${row.aws_role_arn}"`,
+    `AWS_REGION="${row.aws_region}"`,
+    'npm run preflight:aws-customer-kms',
+  ].join(' \\\n');
+}
+
+function buildKmsChecklist(connection: InternalAdminKmsConnectionRow | null): Array<{
+  label: string;
+  status: 'done' | 'todo';
+  detail: string;
+}> {
+  return [{
+    label: 'AWS account ID',
+    status: connection?.aws_account_id ? 'done' : 'todo',
+    detail: connection?.aws_account_id || 'Ask the customer for their 12-digit AWS account ID.',
+  }, {
+    label: 'AWS region',
+    status: connection?.aws_region ? 'done' : 'todo',
+    detail: connection?.aws_region || 'Use the region where their KMS key lives.',
+  }, {
+    label: 'KMS key ARN',
+    status: connection?.aws_kms_key_arn ? 'done' : 'todo',
+    detail: connection?.aws_kms_key_arn || 'Require a full key ARN, not an alias.',
+  }, {
+    label: 'Customer role ARN',
+    status: connection?.aws_role_arn ? 'done' : 'todo',
+    detail: connection?.aws_role_arn || 'Customer creates an IAM role VaultProof can assume.',
+  }, {
+    label: 'External ID',
+    status: connection?.external_id ? 'done' : 'todo',
+    detail: connection?.external_id || 'VaultProof generates this per business.',
+  }, {
+    label: 'Preflight test',
+    status: connection?.last_test_status === 'passed' || connection?.status === 'verified' ? 'done' : 'todo',
+    detail: connection?.last_test_status === 'passed'
+      ? `Passed ${connection.last_tested_at || ''}`.trim()
+      : 'Run AWS KMS preflight before marking verified.',
+  }];
+}
+
 function ssoStartRedirectUrl(env: EnterpriseControlPlaneEnv, companyDomain: string): string {
   const params = new URLSearchParams({
     auth: 'sso',
@@ -960,6 +1171,52 @@ async function getInternalAdminActionExecutionRecords(
   }
 }
 
+async function getInternalAdminKmsConnections(
+  env: EnterpriseControlPlaneEnv,
+  organizationId: string,
+): Promise<{
+  rows: InternalAdminKmsConnectionRow[];
+  schemaReady: boolean;
+}> {
+  try {
+    const { data, error } = await getSupabase(env)
+      .from('organization_kms_connections')
+      .select('id, organization_id, provider, display_name, status, aws_account_id, aws_region, aws_kms_key_arn, aws_role_arn, external_id, last_test_status, last_tested_at, last_test_error, metadata, created_by_user_id, updated_by_user_id, created_at, updated_at')
+      .eq('organization_id', organizationId)
+      .order('updated_at', { ascending: false })
+      .limit(10);
+    if (error) {
+      if (!isMissingOrganizationKmsConnectionsTable(error)) {
+        console.warn(`internal admin KMS connection read skipped: ${error.message}`);
+      }
+      return { rows: [], schemaReady: false };
+    }
+    return {
+      rows: normalizeRows(data as MaybeArray<InternalAdminKmsConnectionRow>),
+      schemaReady: true,
+    };
+  } catch (error) {
+    console.warn(`internal admin KMS connection read failed: ${error instanceof Error ? error.message : String(error)}`);
+    return { rows: [], schemaReady: false };
+  }
+}
+
+async function getInternalAdminProxyAccessPolicy(
+  env: EnterpriseControlPlaneEnv,
+  organizationId: string,
+): Promise<{
+  row: OrganizationProxyAccessPolicyRow;
+  schemaReady: boolean;
+  error?: string;
+}> {
+  const result = await readOrganizationProxyAccessPolicy(env, organizationId);
+  return {
+    row: result.policy || defaultProxyAccessPolicy(organizationId),
+    schemaReady: result.schemaReady,
+    error: result.error,
+  };
+}
+
 function buildSsoChecklist(sso: {
   company_domain: string | null;
   sso_provider: string | null;
@@ -1077,7 +1334,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
     .primary { background:var(--primary-bg); color:var(--primary-text); border-color:var(--primary-border); font-weight:600; }
     .toolbar { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; }
     .grid { display:grid; gap:16px; }
-    .kpis { grid-template-columns:repeat(5, minmax(0,1fr)); margin-bottom:16px; }
+    .kpis { grid-template-columns:repeat(6, minmax(0,1fr)); margin-bottom:16px; }
     .two { grid-template-columns:minmax(0,1fr) minmax(360px,.8fr); }
     .card { border:1px solid var(--line); border-radius:8px; padding:20px; background:var(--card-bg); box-shadow:var(--shadow); }
     .control-center { margin-bottom:16px; overflow:hidden; }
@@ -1149,6 +1406,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
     .inline-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
     .link-stack { display:flex; flex-wrap:wrap; gap:7px; margin-top:8px; }
     .create-business { margin-bottom:16px; }
+    .code-block { margin-top:8px; border:1px solid var(--line-soft); border-radius:8px; background:#0e1514; color:#d7e8e4; padding:12px; overflow:auto; white-space:pre-wrap; font:12px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; text-transform:none; letter-spacing:0; }
     @media (max-width: 1050px) { .shell { grid-template-columns:1fr; padding:12px; } .sidebar { position:relative; top:0; max-height:none; height:auto; order:2; } .main { order:1; } .topbar { flex-direction:column; } .toolbar { justify-content:flex-start; } .kpis, .two, .action-grid, .admin-actions-toolbar, .form-row, .control-kpis, .control-chart-grid, .control-chart-grid.visual, .donut-wrap { grid-template-columns:1fr; } }
   </style>
 </head>
@@ -1162,6 +1420,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
       <a class="nav-link" href="#businesses"><span>Businesses</span><span class="tag">read</span></a>
       <a class="nav-link" href="#users"><span>Users</span></a>
       <a class="nav-link" href="#sso"><span>SSO</span></a>
+      <a class="nav-link" href="#kms"><span>KMS</span></a>
       <a class="nav-link" href="#support"><span>Support</span></a>
       <a class="nav-link" href="#org-detail"><span>Org detail</span></a>
       <div class="nav-label">proof</div>
@@ -1249,6 +1508,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         <div class="card"><div class="kpi-label">projects</div><div id="kpiProjects" class="kpi-value">...</div><div class="kpi-sub">active customer scopes</div></div>
         <div class="card"><div class="kpi-label">pending invites</div><div id="kpiInvites" class="kpi-value">...</div><div class="kpi-sub">need follow-up</div></div>
         <div class="card"><div class="kpi-label">SSO configured</div><div id="kpiSso" class="kpi-value">...</div><div class="kpi-sub">team orgs</div></div>
+        <div class="card"><div class="kpi-label">KMS ready</div><div id="kpiKms" class="kpi-value">...</div><div class="kpi-sub">verified customer KMS</div></div>
       </section>
 
       <section class="card create-business" id="business-create">
@@ -1291,6 +1551,11 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
           <div class="section-title"><h2>SSO rollout</h2><span id="ssoMeta" class="mini"></span></div>
           <div id="ssoList" class="list"><div class="empty">Loading SSO status...</div></div>
         </div>
+      </section>
+
+      <section class="card" id="kms" style="margin-top:16px">
+        <div class="section-title"><h2>Customer KMS onboarding</h2><span id="kmsMeta" class="mini"></span></div>
+        <div id="kmsList" class="list"><div class="empty">Loading KMS status...</div></div>
       </section>
 
       <section class="card" id="org-detail" style="margin-top:16px; display:none">
@@ -1577,20 +1842,35 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
       }
       function businessRow(biz) {
         var sso = biz.sso || {};
+        var kms = biz.kms || {};
+        var proxy = biz.proxy_access_policy || {};
+        var proxyTier = proxy.tier || 'basic';
+        var proxyFrozen = proxy.freeze_state === 'frozen';
         var sub = (biz.owner_email || 'owner unknown') + ' - ' + number(biz.member_count) + ' users - ' + number(biz.active_project_count) + ' projects - ' + number(biz.api_call_count) + ' API calls - created ' + rel(biz.created_at);
         var links = linkTags(biz.business_login_links || []);
-        return '<div class="row"><div><div class="row-title">' + escapeHtml(biz.name || biz.slug || biz.id) + '</div><div class="row-sub">' + escapeHtml(sub) + '</div><div class="link-stack">' + links + '</div></div><div><span class="tag ' + (sso.status === 'configured' ? 'good' : 'warn') + '">' + escapeHtml(sso.status === 'configured' ? 'SSO ready' : 'SSO todo') + '</span><a class="tag" href="/orgs/' + encodeURIComponent(biz.id) + '">detail</a></div></div>';
+        return '<div class="row"><div><div class="row-title">' + escapeHtml(biz.name || biz.slug || biz.id) + '</div><div class="row-sub">' + escapeHtml(sub) + '</div><div class="link-stack">' + links + '</div></div><div><span class="tag ' + (sso.status === 'configured' ? 'good' : 'warn') + '">' + escapeHtml(sso.status === 'configured' ? 'SSO ready' : 'SSO todo') + '</span><span class="tag ' + (kms.status === 'verified' || kms.last_test_status === 'passed' ? 'good' : (kms.status ? 'warn' : '')) + '">' + escapeHtml(kms.status ? 'KMS ' + kms.status : 'KMS todo') + '</span><span class="tag ' + (proxyFrozen ? 'bad' : (proxyTier === 'high_security' ? 'good' : (proxyTier === 'recommended' ? 'warn' : ''))) + '">' + escapeHtml(proxyFrozen ? 'Proxy frozen' : 'Proxy ' + proxyTier) + '</span><a class="tag" href="/orgs/' + encodeURIComponent(biz.id) + '">detail</a></div></div>';
       }
       function roleOptions(selected) {
         return ['viewer', 'member', 'developer', 'auditor', 'iam_admin', 'security_admin', 'platform_admin', 'admin'].map(function(role) {
           return '<option value="' + role + '"' + (role === selected ? ' selected' : '') + '>' + role + '</option>';
         }).join('');
       }
-      function renderAdminActionForms(org, pendingInvitations, currentStatus) {
+      function renderAdminActionForms(org, pendingInvitations, currentStatus, kmsConnection, proxyAccessPolicy) {
         var sso = org.sso || {};
+        var kms = kmsConnection || {};
+        var proxy = proxyAccessPolicy || {};
         var provider = sso.sso_provider || 'microsoft-entra';
         var loginMode = sso.login_mode || 'sso-first';
         var ssoStatus = sso.status || 'requested';
+        var kmsStatus = kms.status || 'waiting_on_customer';
+        var proxyTier = proxy.tier || 'basic';
+        var proxyMode = proxy.enforcement_mode || 'monitor';
+        var proxyScopeMode = proxy.default_provider_scope_mode || 'project_policy';
+        var proxyFreezeState = proxy.freeze_state || 'active';
+        var proxyCidrs = Array.isArray(proxy.allowed_egress_cidrs) ? proxy.allowed_egress_cidrs.join('\\n') : '';
+        var proxyRateLimit = proxy.default_rate_limit_per_minute ? String(proxy.default_rate_limit_per_minute) : '';
+        var trustPolicy = kms.trust_policy ? JSON.stringify(kms.trust_policy, null, 2) : '';
+        var preflightCommand = kms.preflight_command || '';
         var resendRevoke = pendingInvitations.length ? pendingInvitations.map(function(invite) {
           return '<div class="row"><div><div class="row-title">' + escapeHtml(invite.email) + '</div><div class="row-sub">' + escapeHtml(invite.role + ' invite created ' + rel(invite.created_at)) + '</div><div class="inline-actions"><button type="button" data-invite-action="resend" data-invite-id="' + escapeHtml(invite.id) + '">record resend</button><button class="danger" type="button" data-invite-action="revoke" data-invite-id="' + escapeHtml(invite.id) + '">revoke invite</button></div></div><span class="tag warn">pending</span></div>';
         }).join('') : '<div class="empty">No pending invites to resend or revoke.</div>';
@@ -1598,6 +1878,8 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
           + '<div class="admin-actions-toolbar"><label class="field">approval secret<input id="adminApprovalSecret" type="password" autocomplete="off" placeholder="required for writes"></label><div><div class="row-title">Enterprise account administration</div><div class="row-sub">Use this staff-only page only in the configured VaultProof staff admin system to set SSO metadata, invite admins, record account status, and keep support notes. Secrets and IdP private material stay out of these forms.</div><div id="adminActionStatus" class="form-status"></div></div></div>'
           + '<div class="action-grid">'
           + '<form id="ssoSettingsForm" class="action-form"><h3>SSO settings</h3><label class="field">company domain<input name="company_domain" value="' + escapeHtml(sso.company_domain || '') + '" placeholder="customer.com"></label><div class="form-row"><label class="field">provider<select name="sso_provider"><option value="microsoft-entra"' + (provider === 'microsoft-entra' ? ' selected' : '') + '>microsoft-entra</option><option value="okta"' + (provider === 'okta' ? ' selected' : '') + '>okta</option><option value="google-workspace"' + (provider === 'google-workspace' ? ' selected' : '') + '>google-workspace</option><option value="generic-saml"' + (provider === 'generic-saml' ? ' selected' : '') + '>generic-saml</option><option value="supabase-saml"' + (provider === 'supabase-saml' ? ' selected' : '') + '>supabase-saml</option></select></label><label class="field">rollout status<select name="status"><option value="requested"' + (ssoStatus === 'requested' ? ' selected' : '') + '>requested</option><option value="configured"' + (ssoStatus === 'configured' ? ' selected' : '') + '>configured</option></select></label></div><label class="field">login mode<select name="login_mode"><option value="sso-first"' + (loginMode === 'sso-first' ? ' selected' : '') + '>sso-first</option><option value="assisted"' + (loginMode === 'assisted' ? ' selected' : '') + '>assisted</option></select></label><div class="row"><div><div class="row-title">Supabase SAML broker check</div><div class="row-sub" id="ssoBrokerCheckStatus">Checks whether the company domain returns a real SSO redirect. If Supabase SAML is disabled, this will show blocked.</div></div><button type="button" id="ssoBrokerCheckBtn">check SSO start</button></div><button class="primary" type="submit">save SSO</button></form>'
+          + '<form id="kmsConnectionForm" class="action-form"><h3>AWS KMS connection</h3><input type="hidden" name="provider" value="aws-kms"><div class="form-row"><label class="field">AWS account ID<input name="aws_account_id" value="' + escapeHtml(kms.aws_account_id || '') + '" placeholder="111122223333"></label><label class="field">AWS region<input name="aws_region" value="' + escapeHtml(kms.aws_region || '') + '" placeholder="us-east-1"></label></div><label class="field">KMS key ARN<input name="aws_kms_key_arn" value="' + escapeHtml(kms.aws_kms_key_arn || '') + '" placeholder="arn:aws:kms:us-east-1:111122223333:key/..."></label><label class="field">customer role ARN<input name="aws_role_arn" value="' + escapeHtml(kms.aws_role_arn || '') + '" placeholder="arn:aws:iam::111122223333:role/VaultProofCustomerKmsRole"></label><div class="form-row"><label class="field">external ID<input name="external_id" value="' + escapeHtml(kms.external_id || '') + '" placeholder="generated if blank"></label><label class="field">status<select name="status"><option value="waiting_on_customer"' + (kmsStatus === 'waiting_on_customer' ? ' selected' : '') + '>waiting_on_customer</option><option value="ready_to_test"' + (kmsStatus === 'ready_to_test' ? ' selected' : '') + '>ready_to_test</option><option value="verified"' + (kmsStatus === 'verified' ? ' selected' : '') + '>verified</option><option value="blocked"' + (kmsStatus === 'blocked' ? ' selected' : '') + '>blocked</option></select></label></div><button class="primary" type="submit">save AWS KMS</button>' + (trustPolicy ? '<div class="row-sub">Customer role trust policy</div><pre class="code-block">' + escapeHtml(trustPolicy) + '</pre>' : '') + (preflightCommand ? '<div class="row-sub">Operator preflight command</div><pre class="code-block">' + escapeHtml(preflightCommand) + '</pre>' : '') + '</form>'
+          + '<form id="proxyAccessPolicyForm" class="action-form"><h3>Proxy access tier</h3><div class="form-row"><label class="field">tier<select name="tier"><option value="basic"' + (proxyTier === 'basic' ? ' selected' : '') + '>basic</option><option value="recommended"' + (proxyTier === 'recommended' ? ' selected' : '') + '>recommended</option><option value="high_security"' + (proxyTier === 'high_security' ? ' selected' : '') + '>high_security</option></select></label><label class="field">mode<select name="enforcement_mode"><option value="monitor"' + (proxyMode === 'monitor' ? ' selected' : '') + '>monitor</option><option value="enforce"' + (proxyMode === 'enforce' ? ' selected' : '') + '>enforce</option><option value="paused"' + (proxyMode === 'paused' ? ' selected' : '') + '>paused</option></select></label></div><label class="field">customer egress CIDRs<textarea name="allowed_egress_cidrs" placeholder="203.0.113.0/24">' + escapeHtml(proxyCidrs) + '</textarea></label><div class="form-row"><label class="field">rate limit/min<input name="default_rate_limit_per_minute" type="number" min="1" max="60000" value="' + escapeHtml(proxyRateLimit) + '" placeholder="project default"></label><label class="field">scope mode<select name="default_provider_scope_mode"><option value="project_policy"' + (proxyScopeMode === 'project_policy' ? ' selected' : '') + '>project_policy</option><option value="deny_unscoped"' + (proxyScopeMode === 'deny_unscoped' ? ' selected' : '') + '>deny_unscoped</option></select></label></div><div class="form-row"><label class="field">require mTLS<select name="require_mtls"><option value="false"' + (!proxy.require_mtls ? ' selected' : '') + '>false</option><option value="true"' + (proxy.require_mtls ? ' selected' : '') + '>true</option></select></label><label class="field">private connectivity<select name="require_private_connectivity"><option value="false"' + (!proxy.require_private_connectivity ? ' selected' : '') + '>false</option><option value="true"' + (proxy.require_private_connectivity ? ' selected' : '') + '>true</option></select></label></div><div class="form-row"><label class="field">auto-freeze<select name="anomaly_auto_freeze_enabled"><option value="true"' + (proxy.anomaly_auto_freeze_enabled !== false ? ' selected' : '') + '>true</option><option value="false"' + (proxy.anomaly_auto_freeze_enabled === false ? ' selected' : '') + '>false</option></select></label><label class="field">freeze state<select name="freeze_state"><option value="active"' + (proxyFreezeState === 'active' ? ' selected' : '') + '>active</option><option value="frozen"' + (proxyFreezeState === 'frozen' ? ' selected' : '') + '>frozen</option><option value="thaw_pending"' + (proxyFreezeState === 'thaw_pending' ? ' selected' : '') + '>thaw_pending</option></select></label></div><label class="field">freeze reason<input name="freeze_reason" value="' + escapeHtml(proxy.freeze_reason || '') + '" placeholder="incident ticket or reason"></label><label class="field">notes<textarea name="notes" placeholder="Customer rollout notes, no secrets">' + escapeHtml(proxy.notes || '') + '</textarea></label><button class="primary" type="submit">save proxy tier</button></form>'
           + '<form id="inviteForm" class="action-form"><h3>Invite enterprise user</h3><label class="field">email<input name="email" type="email" placeholder="identity.owner@customer.com"></label><label class="field">role<select name="role">' + roleOptions('iam_admin') + '</select></label><button class="primary" type="submit">create invite</button></form>'
           + '<form id="businessStatusForm" class="action-form"><h3>Account status</h3><div class="form-row"><label class="field">status<select name="status"><option value="onboarding"' + (currentStatus && currentStatus.status === 'onboarding' ? ' selected' : '') + '>onboarding</option><option value="active"' + (currentStatus && currentStatus.status === 'active' ? ' selected' : '') + '>active</option><option value="at_risk"' + (currentStatus && currentStatus.status === 'at_risk' ? ' selected' : '') + '>at_risk</option><option value="paused"' + (currentStatus && currentStatus.status === 'paused' ? ' selected' : '') + '>paused</option><option value="offboarding"' + (currentStatus && currentStatus.status === 'offboarding' ? ' selected' : '') + '>offboarding</option></select></label><label class="field">plan label<input name="plan_label" value="' + escapeHtml(currentStatus && currentStatus.plan_label ? currentStatus.plan_label : '') + '" placeholder="Enterprise Pilot"></label></div><label class="field">summary<textarea name="summary" placeholder="Current account status">' + escapeHtml(currentStatus && currentStatus.summary ? currentStatus.summary : '') + '</textarea></label><label class="field">next step<input name="next_step" value="' + escapeHtml(currentStatus && currentStatus.next_step ? currentStatus.next_step : '') + '" placeholder="Next customer/admin action"></label><button class="primary" type="submit">record status</button></form>'
           + '<form id="supportNoteForm" class="action-form"><h3>Support note</h3><label class="field">note type<select name="note_type"><option value="support_note">support_note</option><option value="onboarding">onboarding</option><option value="security">security</option><option value="billing">billing</option><option value="go_live">go_live</option></select></label><label class="field">note<textarea name="body" placeholder="Customer-visible context, no secrets"></textarea></label><button class="primary" type="submit">add note</button></form>'
@@ -1641,6 +1923,51 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
             setSsoBrokerCheckStatus(error && error.message ? error.message : 'SSO start check failed.', 'bad');
           } finally {
             ssoBrokerCheckBtn.disabled = false;
+          }
+        });
+        var kmsForm = byId('kmsConnectionForm');
+        if (kmsForm) kmsForm.addEventListener('submit', async function(event) {
+          event.preventDefault();
+          try {
+            setActionStatus('Saving AWS KMS connection...', '');
+            var payload = await postAdminAction('/api/v1/internal-admin/orgs/' + encodeURIComponent(orgId) + '/kms-connections', {
+              provider: 'aws-kms',
+              aws_account_id: formValue(kmsForm, 'aws_account_id'),
+              aws_region: formValue(kmsForm, 'aws_region'),
+              aws_kms_key_arn: formValue(kmsForm, 'aws_kms_key_arn'),
+              aws_role_arn: formValue(kmsForm, 'aws_role_arn'),
+              external_id: formValue(kmsForm, 'external_id'),
+              status: formValue(kmsForm, 'status')
+            });
+            var connection = payload.kms_connection || {};
+            setActionStatus('AWS KMS connection saved. External ID: ' + (connection.external_id || 'generated'), 'good');
+            renderOrgDetail(await fetchOrgDetail(orgId));
+          } catch (error) {
+            setActionStatus(error && error.message ? error.message : 'AWS KMS update failed.', 'bad');
+          }
+        });
+        var proxyForm = byId('proxyAccessPolicyForm');
+        if (proxyForm) proxyForm.addEventListener('submit', async function(event) {
+          event.preventDefault();
+          try {
+            setActionStatus('Saving proxy access policy...', '');
+            await postAdminAction('/api/v1/internal-admin/orgs/' + encodeURIComponent(orgId) + '/proxy-access-policy', {
+              tier: formValue(proxyForm, 'tier'),
+              enforcement_mode: formValue(proxyForm, 'enforcement_mode'),
+              allowed_egress_cidrs: formValue(proxyForm, 'allowed_egress_cidrs'),
+              require_mtls: formValue(proxyForm, 'require_mtls'),
+              require_private_connectivity: formValue(proxyForm, 'require_private_connectivity'),
+              anomaly_auto_freeze_enabled: formValue(proxyForm, 'anomaly_auto_freeze_enabled'),
+              default_rate_limit_per_minute: formValue(proxyForm, 'default_rate_limit_per_minute'),
+              default_provider_scope_mode: formValue(proxyForm, 'default_provider_scope_mode'),
+              freeze_state: formValue(proxyForm, 'freeze_state'),
+              freeze_reason: formValue(proxyForm, 'freeze_reason'),
+              notes: formValue(proxyForm, 'notes')
+            });
+            setActionStatus('Proxy access policy saved and audited.', 'good');
+            renderOrgDetail(await fetchOrgDetail(orgId));
+          } catch (error) {
+            setActionStatus(error && error.message ? error.message : 'Proxy access policy update failed.', 'bad');
           }
         });
         var inviteForm = byId('inviteForm');
@@ -1748,13 +2075,21 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         var pendingInvitations = invitations.filter(function(invite) { return invite.status === 'pending'; });
         var statusUpdates = Array.isArray(payload.business_status_updates) ? payload.business_status_updates : [];
         var currentStatus = statusUpdates[0] || null;
+        var kmsConnections = Array.isArray(payload.kms_connections) ? payload.kms_connections : [];
+        var primaryKms = kmsConnections.find(function(connection) { return connection.provider === 'aws-kms'; }) || null;
+        var kmsChecklist = Array.isArray(payload.kms_checklist) ? payload.kms_checklist : [];
+        var proxyPolicy = payload.proxy_access_policy || null;
+        var proxySummary = payload.proxy_access_summary || {};
+        var proxyChecklist = Array.isArray(payload.proxy_access_checklist) ? payload.proxy_access_checklist : [];
         var actionRequests = Array.isArray(payload.action_requests) ? payload.action_requests : [];
         var executionRecords = Array.isArray(payload.execution_records) ? payload.execution_records : [];
         var html = '';
         html += row(org.name || org.slug || org.id || 'Business', (org.owner_email || 'owner unknown') + ' - ' + number(org.member_count) + ' users - ' + number(org.active_project_count) + ' active projects', org.sso && org.sso.status === 'configured' ? 'SSO ready' : 'SSO todo', org.sso && org.sso.status === 'configured' ? 'good' : 'warn');
-        html += renderAdminActionForms(org, pendingInvitations, currentStatus);
+        html += renderAdminActionForms(org, pendingInvitations, currentStatus, primaryKms, proxyPolicy);
         html += '<div class="row"><div><div class="row-title">Business plan and status</div><div class="row-sub">' + (currentStatus ? escapeHtml((currentStatus.plan_label || 'plan not set') + ' - ' + currentStatus.summary + (currentStatus.next_step ? ' - next: ' + currentStatus.next_step : '') + ' - ' + rel(currentStatus.created_at)) : (payload.business_status_schema_ready ? 'No business status has been recorded yet.' : 'Business status table is not applied yet.')) + '</div></div><span class="tag ' + (currentStatus && currentStatus.status === 'active' ? 'good' : 'warn') + '">' + escapeHtml(currentStatus ? currentStatus.status : (payload.business_status_schema_ready ? 'not set' : 'pending')) + '</span></div>';
         html += '<div class="row"><div><div class="row-title">SSO setup checklist</div><div class="row-sub">' + ssoChecklist.map(function(item) { return escapeHtml(item.label + ': ' + item.detail); }).join('<br>') + '</div></div><div>' + tagList(ssoChecklist) + '</div></div>';
+        html += '<div class="row"><div><div class="row-title">AWS KMS onboarding</div><div class="row-sub">' + (kmsChecklist.length ? kmsChecklist.map(function(item) { return escapeHtml(item.label + ': ' + item.detail); }).join('<br>') : (payload.kms_connections_schema_ready ? 'No AWS KMS connection has been saved yet.' : 'KMS connection table is not applied yet.')) + (primaryKms && primaryKms.preflight_command ? '<pre class="code-block">' + escapeHtml(primaryKms.preflight_command) + '</pre>' : '') + '</div></div><div>' + tagList(kmsChecklist) + '<span class="tag ' + (primaryKms && (primaryKms.status === 'verified' || primaryKms.last_test_status === 'passed') ? 'good' : 'warn') + '">' + escapeHtml(primaryKms ? primaryKms.status : (payload.kms_connections_schema_ready ? 'not set' : 'pending')) + '</span></div></div>';
+        html += '<div class="row"><div><div class="row-title">Proxy access tier</div><div class="row-sub">' + (proxyChecklist.length ? proxyChecklist.map(function(item) { return escapeHtml(item.label + ': ' + item.detail); }).join('<br>') : (payload.proxy_access_policy_schema_ready ? 'No proxy access policy has been saved yet.' : 'Proxy access policy table is not applied yet.')) + '</div></div><div>' + tagList(proxyChecklist) + '<span class="tag ' + (proxySummary.freeze_state === 'frozen' ? 'bad' : (proxySummary.tier === 'high_security' ? 'good' : (proxySummary.tier === 'recommended' ? 'warn' : ''))) + '">' + escapeHtml((proxySummary.freeze_state === 'frozen' ? 'frozen ' : '') + (proxySummary.tier || 'basic')) + '</span></div></div>';
         html += '<div class="row"><div><div class="row-title">User/member timeline</div><div class="row-sub">' + (timeline.length ? timeline.slice(0, 8).map(function(item) { return escapeHtml(item.label + ' - ' + (item.detail || '') + ' - ' + rel(item.created_at)); }).join('<br>') : 'No member timeline events yet.') + '</div></div><span class="tag">timeline</span></div>';
         html += '<div class="row"><div><div class="row-title">Pending invitation actions</div><div class="row-sub">' + (pendingInvitations.length ? pendingInvitations.map(function(invite) { return escapeHtml(invite.email + ' as ' + invite.role + ' - API: POST /api/v1/internal-admin/orgs/' + org.id + '/invitations/' + invite.id + '/resend or /revoke'); }).join('<br>') : 'No pending invites for this business.') + '</div></div><span class="tag warn">approval gated</span></div>';
         html += '<div class="row"><div><div class="row-title">Business login links</div><div class="row-sub">Use these links for this specific business. The customer-facing app stays on enterprise.vaultproof.dev.</div><div class="link-stack">' + linkTags(businessLoginLinks) + '</div></div><span class="tag good">per business</span></div>';
@@ -1773,9 +2108,11 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         text('kpiProjects', number(summary.active_project_count));
         text('kpiInvites', number(summary.pending_invitation_count));
         text('kpiSso', number(summary.sso_configured_count));
+        text('kpiKms', number(summary.kms_verified_count));
         text('businessMeta', number((payload.businesses || []).length) + ' businesses visible');
         text('userMeta', number(summary.admin_membership_count) + ' admins/owners');
         text('ssoMeta', number(summary.sso_configured_count) + ' configured');
+        text('kmsMeta', number(summary.kms_configured_count) + ' saved / ' + number(summary.kms_verified_count) + ' verified');
 
         var businesses = Array.isArray(payload.businesses) ? payload.businesses : [];
         byId('businessList').innerHTML = businesses.length ? businesses.map(businessRow).join('') : '<div class="empty">No businesses found.</div>';
@@ -1800,6 +2137,12 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
           var sso = biz.sso || {};
           return row(biz.name || biz.id, (sso.company_domain || 'domain not set') + ' - ' + (sso.sso_provider || 'provider pending') + ' - ' + (sso.login_mode || 'mode pending'), sso.status || 'not started', sso.status === 'configured' ? 'good' : 'warn');
         }).join('') : '<div class="empty">No SSO settings found yet.</div>';
+
+        var kmsRows = businesses.filter(function(biz) { return biz.kms; });
+        byId('kmsList').innerHTML = kmsRows.length ? kmsRows.map(function(biz) {
+          var kms = biz.kms || {};
+          return row(biz.name || biz.id, (kms.aws_account_id || 'account pending') + ' - ' + (kms.aws_region || 'region pending') + ' - ' + (kms.provider || 'aws-kms'), kms.status || 'not started', kms.status === 'verified' || kms.last_test_status === 'passed' ? 'good' : 'warn');
+        }).join('') : '<div class="empty">No customer KMS connections saved yet.</div>';
 
         var audit = Array.isArray(payload.recent_audit) ? payload.recent_audit : [];
         byId('auditList').innerHTML = audit.length ? audit.map(function(event) {
@@ -1868,6 +2211,8 @@ async function handleInternalAdminOrgDetail(
     businessStatusResult,
     actionRequestResult,
     executionRecordResult,
+    kmsConnectionResult,
+    proxyAccessPolicyResult,
   ] = await Promise.all([
     supabase
       .from('organizations')
@@ -1907,6 +2252,8 @@ async function handleInternalAdminOrgDetail(
     getInternalAdminBusinessStatus(env, orgId),
     getInternalAdminActionRequests(env, orgId),
     getInternalAdminActionExecutionRecords(env, orgId),
+    getInternalAdminKmsConnections(env, orgId),
+    getInternalAdminProxyAccessPolicy(env, orgId),
   ]);
 
   const ssoSchemaReady = !isMissingOrganizationSsoSettingsTable(ssoResult.error);
@@ -1997,6 +2344,7 @@ async function handleInternalAdminOrgDetail(
       created_at: event.created_at,
     })),
   ].sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime());
+  const primaryKmsConnection = kmsConnectionResult.rows.find((connection) => connection.provider === 'aws-kms') || null;
 
   return Response.json({
     generated_at: new Date().toISOString(),
@@ -2022,7 +2370,13 @@ async function handleInternalAdminOrgDetail(
       business_login_links: enterpriseBusinessLoginLinks(env, organization.id, sso?.company_domain || null),
     },
     sso_schema_ready: ssoSchemaReady,
-    migration_required: ssoSchemaReady ? null : 'Apply supabase/migrations/20260419010000_organization_sso_settings.sql',
+    migration_required: ssoSchemaReady && kmsConnectionResult.schemaReady && proxyAccessPolicyResult.schemaReady
+      ? null
+      : [
+        ssoSchemaReady ? null : 'Apply supabase/migrations/20260419010000_organization_sso_settings.sql',
+        kmsConnectionResult.schemaReady ? null : 'Apply supabase/migrations/20260531000000_organization_kms_connections.sql',
+        proxyAccessPolicyResult.schemaReady ? null : 'Apply supabase/migrations/20260601000000_organization_proxy_access_policies.sql',
+      ].filter(Boolean).join(' | '),
     users: members.map((member) => ({
       user_id: member.user_id,
       email: memberEmailMap.get(member.user_id) || null,
@@ -2098,6 +2452,31 @@ async function handleInternalAdminOrgDetail(
       executed_at: record.executed_at,
       created_at: record.created_at,
     })),
+    kms_connections_schema_ready: kmsConnectionResult.schemaReady,
+    kms_connections: kmsConnectionResult.rows.map((connection) => ({
+      id: connection.id,
+      organization_id: connection.organization_id,
+      provider: connection.provider,
+      display_name: connection.display_name,
+      status: connection.status,
+      aws_account_id: connection.aws_account_id,
+      aws_region: connection.aws_region,
+      aws_kms_key_arn: connection.aws_kms_key_arn,
+      aws_role_arn: connection.aws_role_arn,
+      external_id: connection.external_id,
+      last_test_status: connection.last_test_status,
+      last_tested_at: connection.last_tested_at,
+      last_test_error: connection.last_test_error,
+      created_at: connection.created_at,
+      updated_at: connection.updated_at,
+      trust_policy: buildAwsKmsTrustPolicy(env, connection.external_id),
+      preflight_command: buildAwsKmsPreflightCommand(connection),
+    })),
+    kms_checklist: buildKmsChecklist(primaryKmsConnection),
+    proxy_access_policy_schema_ready: proxyAccessPolicyResult.schemaReady,
+    proxy_access_policy: proxyAccessPolicyResult.row,
+    proxy_access_summary: proxyAccessCustomerSummary(proxyAccessPolicyResult.row),
+    proxy_access_checklist: proxyAccessChecklist(proxyAccessPolicyResult.row),
     evidence_links: enterpriseEvidenceLinks(env, orgId),
     guardrails: [
       'Org detail reads are available to allowlisted employees.',
@@ -2517,6 +2896,498 @@ async function handleUpdateInternalAdminSsoSettings(
       'SSO settings updates require the approval secret header.',
       'This endpoint stores only provider metadata and rollout status. It does not accept OAuth client secrets, SAML metadata XML, certificates, or IdP private material.',
       'The customer organization audit and internal admin audit streams both record the change.',
+    ],
+  }, {
+    headers: {
+      'cache-control': 'no-store',
+    },
+  });
+}
+
+async function fetchExistingKmsConnection(
+  env: EnterpriseControlPlaneEnv,
+  organizationId: string,
+  provider = 'aws-kms',
+): Promise<InternalAdminKmsConnectionRow | null> {
+  const { data, error } = await getSupabase(env)
+    .from('organization_kms_connections')
+    .select('id, organization_id, provider, display_name, status, aws_account_id, aws_region, aws_kms_key_arn, aws_role_arn, external_id, last_test_status, last_tested_at, last_test_error, metadata, created_by_user_id, updated_by_user_id, created_at, updated_at')
+    .eq('organization_id', organizationId)
+    .eq('provider', provider)
+    .limit(1);
+  if (error) {
+    throw new Error(error.message);
+  }
+  return normalizeRows(data as MaybeArray<InternalAdminKmsConnectionRow>)[0] || null;
+}
+
+async function handleUpdateInternalAdminKmsConnection(
+  request: Request,
+  env: EnterpriseControlPlaneEnv,
+  organizationId: string,
+): Promise<Response> {
+  const orgId = decodeURIComponent(organizationId || '').trim();
+  if (!orgId) {
+    return Response.json({ error: 'Organization ID is required.' }, { status: 400 });
+  }
+
+  const authorized = await authorizeInternalAdmin(request, env);
+  if (authorized instanceof Response) return authorized;
+
+  const approvalError = requireInternalAdminActionApproval(request, env);
+  if (approvalError) return approvalError;
+
+  let body: Record<string, unknown>;
+  try {
+    const parsed = await request.json();
+    body = parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : {};
+  } catch {
+    return Response.json({ error: 'Invalid JSON body.' }, { status: 400 });
+  }
+
+  if (hasRawAwsCredentialFields(body)) {
+    return Response.json({
+      error: 'Do not enter AWS access keys, session tokens, private keys, or raw credentials in VaultProof admin. Use a customer IAM role ARN plus external_id.',
+    }, { status: 400 });
+  }
+
+  const provider = typeof body.provider === 'string' ? body.provider.trim().toLowerCase() : 'aws-kms';
+  if (provider !== 'aws-kms') {
+    return Response.json({ error: 'Only aws-kms onboarding is supported in this flow.' }, { status: 400 });
+  }
+
+  const orgResult = await getSupabase(env)
+    .from('organizations')
+    .select('id, kind')
+    .eq('id', orgId)
+    .limit(1);
+  if (orgResult.error) {
+    return Response.json({ error: `Internal admin org lookup failed: ${orgResult.error.message}` }, { status: 500 });
+  }
+  const organization = normalizeRows(orgResult.data as MaybeArray<{ id: string; kind: string }>)[0];
+  if (!organization) {
+    return Response.json({ error: 'Organization not found.' }, { status: 404 });
+  }
+  if (organization.kind !== 'team') {
+    return Response.json({ error: 'KMS onboarding is only available for enterprise team organizations.' }, { status: 400 });
+  }
+
+  let existing: InternalAdminKmsConnectionRow | null = null;
+  try {
+    existing = await fetchExistingKmsConnection(env, orgId, provider);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes('organization_kms_connections')) {
+      return Response.json({
+        error: 'KMS onboarding table is not applied yet.',
+        migration_required: 'Apply supabase/migrations/20260531000000_organization_kms_connections.sql',
+      }, { status: 501 });
+    }
+    return Response.json({ error: `Internal admin KMS lookup failed: ${message}` }, { status: 500 });
+  }
+
+  const parsedKeyArn = parseAwsKmsKeyArn(body.aws_kms_key_arn);
+  if (parsedKeyArn instanceof Response) return parsedKeyArn;
+  const parsedRoleArn = parseAwsRoleArn(body.aws_role_arn);
+  if (parsedRoleArn instanceof Response) return parsedRoleArn;
+
+  const explicitAccountId = normalizeAwsAccountId(body.aws_account_id);
+  if (explicitAccountId instanceof Response) return explicitAccountId;
+  const explicitRegion = normalizeAwsRegion(body.aws_region);
+  if (explicitRegion instanceof Response) return explicitRegion;
+
+  const derivedAccountIds = [
+    explicitAccountId,
+    parsedKeyArn?.accountId || null,
+    parsedRoleArn?.accountId || null,
+  ].filter(Boolean) as string[];
+  const uniqueAccountIds = [...new Set(derivedAccountIds)];
+  if (uniqueAccountIds.length > 1) {
+    return Response.json({ error: 'aws_account_id, aws_kms_key_arn account, and aws_role_arn account must match.' }, { status: 400 });
+  }
+
+  const derivedRegions = [
+    explicitRegion,
+    parsedKeyArn?.region || null,
+  ].filter(Boolean) as string[];
+  const uniqueRegions = [...new Set(derivedRegions)];
+  if (uniqueRegions.length > 1) {
+    return Response.json({ error: 'aws_region must match the region inside aws_kms_key_arn.' }, { status: 400 });
+  }
+
+  if (parsedKeyArn && parsedRoleArn && parsedKeyArn.partition !== parsedRoleArn.partition) {
+    return Response.json({ error: 'aws_kms_key_arn and aws_role_arn must use the same AWS partition.' }, { status: 400 });
+  }
+
+  const externalId = normalizeAwsKmsExternalId(body.external_id, orgId, existing?.external_id || null);
+  if (externalId instanceof Response) return externalId;
+
+  const displayNameRaw = typeof body.display_name === 'string' ? body.display_name.trim() : '';
+  const displayName = displayNameRaw ? truncateForAudit(displayNameRaw, 120) : 'AWS customer-managed KMS';
+  const fallbackStatus: InternalAdminKmsConnectionRow['status'] = parsedKeyArn && parsedRoleArn && uniqueRegions[0] && uniqueAccountIds[0]
+    ? 'ready_to_test'
+    : 'waiting_on_customer';
+  const status = normalizeKmsConnectionStatus(body.status, fallbackStatus);
+  if (status instanceof Response) return status;
+
+  const now = new Date().toISOString();
+  const upsertRow = {
+    organization_id: orgId,
+    provider,
+    display_name: displayName,
+    status,
+    aws_account_id: uniqueAccountIds[0] || existing?.aws_account_id || null,
+    aws_region: uniqueRegions[0] || existing?.aws_region || null,
+    aws_kms_key_arn: parsedKeyArn?.arn || existing?.aws_kms_key_arn || null,
+    aws_role_arn: parsedRoleArn?.arn || existing?.aws_role_arn || null,
+    external_id: externalId,
+    last_test_status: status === 'verified' ? 'passed' : existing?.last_test_status || 'not_tested',
+    last_tested_at: status === 'verified' ? now : existing?.last_tested_at || null,
+    last_test_error: status === 'blocked'
+      ? truncateForAudit(typeof body.last_test_error === 'string' ? body.last_test_error.trim() : existing?.last_test_error || 'KMS onboarding blocked.', 500)
+      : null,
+    metadata: {
+      ...(existing?.metadata || {}),
+      onboarding_source: 'internal_admin',
+      runtime_principal_arn: vaultProofAwsRuntimePrincipalArn(env),
+    },
+    created_by_user_id: existing?.created_by_user_id || authorized.auth.userId,
+    updated_by_user_id: authorized.auth.userId,
+    updated_at: now,
+  };
+
+  const { data, error } = await getSupabase(env)
+    .from('organization_kms_connections')
+    .upsert(upsertRow, { onConflict: 'organization_id,provider' })
+    .select('id, organization_id, provider, display_name, status, aws_account_id, aws_region, aws_kms_key_arn, aws_role_arn, external_id, last_test_status, last_tested_at, last_test_error, metadata, created_by_user_id, updated_by_user_id, created_at, updated_at')
+    .single();
+
+  if (error || !data) {
+    const message = error?.message || 'Internal admin KMS connection save failed.';
+    return Response.json({ error: message }, { status: error && isMissingOrganizationKmsConnectionsTable(error) ? 501 : 400 });
+  }
+
+  const connection = data as InternalAdminKmsConnectionRow;
+  await writeGovernanceAuditEvent(env, {
+    organization_id: orgId,
+    actor_user_id: authorized.auth.userId,
+    actor_email: authorized.auth.email,
+    event_type: 'organization_kms_connection_updated',
+    target_type: 'organization_kms_connection',
+    target_id: connection.id,
+    description: `Updated AWS KMS onboarding for ${connection.aws_account_id || orgId}`,
+    metadata: {
+      provider: connection.provider,
+      status: connection.status,
+      aws_account_id: connection.aws_account_id,
+      aws_region: connection.aws_region,
+      has_kms_key_arn: Boolean(connection.aws_kms_key_arn),
+      has_role_arn: Boolean(connection.aws_role_arn),
+      updated_via: 'internal_admin',
+    },
+  });
+
+  await writeInternalAdminAuditEvent(
+    env,
+    authorized.auth,
+    request,
+    'internal_admin_kms_connection_updated',
+    {
+      organization_id: orgId,
+      kms_connection_id: connection.id,
+      provider: connection.provider,
+      status: connection.status,
+      aws_account_id: connection.aws_account_id,
+      aws_region: connection.aws_region,
+    },
+  );
+
+  return Response.json({
+    kms_connection: {
+      ...connection,
+      trust_policy: buildAwsKmsTrustPolicy(env, connection.external_id),
+      preflight_command: buildAwsKmsPreflightCommand(connection),
+    },
+    kms_checklist: buildKmsChecklist(connection),
+    guardrails: [
+      'KMS onboarding writes require internal admin actions to be enabled.',
+      'KMS onboarding writes require the approval secret header.',
+      'This stores customer AWS ARNs and a VaultProof-generated external_id only. Do not store AWS access keys or provider secrets here.',
+      'Each KMS connection is scoped to one organization_id and audited in both customer governance audit and internal admin audit.',
+    ],
+  }, {
+    headers: {
+      'cache-control': 'no-store',
+    },
+  });
+}
+
+async function handleUpdateInternalAdminProxyAccessPolicy(
+  request: Request,
+  env: EnterpriseControlPlaneEnv,
+  organizationId: string,
+): Promise<Response> {
+  const orgId = decodeURIComponent(organizationId || '').trim();
+  if (!orgId) {
+    return Response.json({ error: 'Organization ID is required.' }, { status: 400 });
+  }
+
+  const authorized = await authorizeInternalAdmin(request, env);
+  if (authorized instanceof Response) return authorized;
+
+  const approvalError = requireInternalAdminActionApproval(request, env);
+  if (approvalError) return approvalError;
+
+  let body: Record<string, unknown>;
+  try {
+    const parsed = await request.json();
+    body = parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : {};
+  } catch {
+    return Response.json({ error: 'Invalid JSON body.' }, { status: 400 });
+  }
+
+  const orgResult = await getSupabase(env)
+    .from('organizations')
+    .select('id, kind')
+    .eq('id', orgId)
+    .limit(1);
+  if (orgResult.error) {
+    return Response.json({ error: `Internal admin org lookup failed: ${orgResult.error.message}` }, { status: 500 });
+  }
+  const organization = normalizeRows(orgResult.data as MaybeArray<{ id: string; kind: string }>)[0];
+  if (!organization) {
+    return Response.json({ error: 'Organization not found.' }, { status: 404 });
+  }
+  if (organization.kind !== 'team') {
+    return Response.json({ error: 'Proxy access tiers are only available for enterprise team organizations.' }, { status: 400 });
+  }
+
+  const existingResult = await readOrganizationProxyAccessPolicy(env, orgId);
+  if (!existingResult.schemaReady) {
+    return Response.json({
+      error: existingResult.error || 'Proxy access policy table is not applied yet.',
+      migration_required: 'Apply supabase/migrations/20260601000000_organization_proxy_access_policies.sql',
+    }, { status: existingResult.error ? 500 : 501 });
+  }
+
+  const existing = existingResult.policy || defaultProxyAccessPolicy(orgId);
+  const normalized = normalizeProxyAccessPolicyInput(body, existing);
+  if (!normalized.ok) {
+    return Response.json({ error: normalized.error }, { status: 400 });
+  }
+
+  const now = new Date().toISOString();
+  const next = normalized.value;
+  const freezeState = next.freeze_state;
+  const upsertRow = {
+    organization_id: orgId,
+    tier: next.tier,
+    enforcement_mode: next.enforcement_mode,
+    allowed_egress_cidrs: next.allowed_egress_cidrs,
+    require_mtls: next.require_mtls,
+    require_private_connectivity: next.require_private_connectivity,
+    anomaly_auto_freeze_enabled: next.anomaly_auto_freeze_enabled,
+    default_rate_limit_per_minute: next.default_rate_limit_per_minute,
+    default_provider_scope_mode: next.default_provider_scope_mode,
+    freeze_state: freezeState,
+    freeze_reason: freezeState === 'active' ? null : next.freeze_reason,
+    frozen_at: freezeState === 'frozen' ? existing.frozen_at || now : null,
+    notes: next.notes,
+    created_by: existing.created_by || authorized.auth.userId,
+    updated_by: authorized.auth.userId,
+    updated_at: now,
+  };
+
+  const { data, error } = await getSupabase(env)
+    .from('organization_proxy_access_policies')
+    .upsert(upsertRow, { onConflict: 'organization_id' })
+    .select('organization_id, tier, enforcement_mode, allowed_egress_cidrs, require_mtls, require_private_connectivity, anomaly_auto_freeze_enabled, default_rate_limit_per_minute, default_provider_scope_mode, freeze_state, freeze_reason, frozen_at, notes, created_by, updated_by, created_at, updated_at')
+    .single();
+
+  if (error || !data) {
+    const message = error?.message || 'Internal admin proxy access policy save failed.';
+    return Response.json({ error: message }, { status: error && isMissingOrganizationProxyAccessPoliciesTable(error) ? 501 : 400 });
+  }
+
+  const policy = data as OrganizationProxyAccessPolicyRow;
+  const summary = proxyAccessCustomerSummary(policy);
+  await writeGovernanceAuditEvent(env, {
+    organization_id: orgId,
+    actor_user_id: authorized.auth.userId,
+    actor_email: authorized.auth.email,
+    event_type: 'enterprise_proxy_access_policy_updated',
+    target_type: 'organization_proxy_access_policy',
+    target_id: orgId,
+    description: `Updated enterprise proxy access policy to ${policy.tier}/${policy.enforcement_mode}`,
+    metadata: {
+      ...summary,
+      updated_via: 'internal_admin',
+    },
+  });
+
+  await writeInternalAdminAuditEvent(
+    env,
+    authorized.auth,
+    request,
+    'internal_admin_proxy_access_policy_updated',
+    {
+      organization_id: orgId,
+      proxy_access_policy: summary,
+    },
+  );
+
+  return Response.json({
+    proxy_access_policy: policy,
+    proxy_access_summary: summary,
+    proxy_access_checklist: proxyAccessChecklist(policy),
+    guardrails: [
+      'Proxy access policy writes require internal admin actions to be enabled.',
+      'Proxy access policy writes require the approval secret header.',
+      'Customer KMS credentials and original provider keys are not rotated by this control; it gates use of VaultProof proxy project keys.',
+      'Enforce mode blocks requests that fail the configured tier requirements. Monitor mode records the policy without blocking.',
+    ],
+  }, {
+    headers: {
+      'cache-control': 'no-store',
+    },
+  });
+}
+
+async function handleSetInternalAdminProxyAccessFreezeState(
+  request: Request,
+  env: EnterpriseControlPlaneEnv,
+  organizationId: string,
+  action: 'freeze' | 'thaw',
+): Promise<Response> {
+  const orgId = decodeURIComponent(organizationId || '').trim();
+  if (!orgId) {
+    return Response.json({ error: 'Organization ID is required.' }, { status: 400 });
+  }
+
+  const authorized = await authorizeInternalAdmin(request, env);
+  if (authorized instanceof Response) return authorized;
+
+  const approvalError = requireInternalAdminActionApproval(request, env);
+  if (approvalError) return approvalError;
+
+  let body: Record<string, unknown> = {};
+  try {
+    const parsed = await request.json().catch(() => ({}));
+    body = parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : {};
+  } catch {
+    return Response.json({ error: 'Invalid JSON body.' }, { status: 400 });
+  }
+
+  const orgResult = await getSupabase(env)
+    .from('organizations')
+    .select('id, kind')
+    .eq('id', orgId)
+    .limit(1);
+  if (orgResult.error) {
+    return Response.json({ error: `Internal admin org lookup failed: ${orgResult.error.message}` }, { status: 500 });
+  }
+  const organization = normalizeRows(orgResult.data as MaybeArray<{ id: string; kind: string }>)[0];
+  if (!organization) {
+    return Response.json({ error: 'Organization not found.' }, { status: 404 });
+  }
+  if (organization.kind !== 'team') {
+    return Response.json({ error: 'Proxy access tiers are only available for enterprise team organizations.' }, { status: 400 });
+  }
+
+  const existingResult = await readOrganizationProxyAccessPolicy(env, orgId);
+  if (!existingResult.schemaReady) {
+    return Response.json({
+      error: existingResult.error || 'Proxy access policy table is not applied yet.',
+      migration_required: 'Apply supabase/migrations/20260601000000_organization_proxy_access_policies.sql',
+    }, { status: existingResult.error ? 500 : 501 });
+  }
+
+  const existing = existingResult.policy || defaultProxyAccessPolicy(orgId);
+  const reasonInput = typeof body.reason === 'string'
+    ? body.reason.trim()
+    : typeof body.freeze_reason === 'string'
+      ? body.freeze_reason.trim()
+      : '';
+  const now = new Date().toISOString();
+  const freezeState = action === 'freeze' ? 'frozen' : 'active';
+  const freezeReason = action === 'freeze'
+    ? truncateForAudit(reasonInput || 'Internal admin froze proxy access for this organization.', 1000)
+    : null;
+  const upsertRow = {
+    organization_id: orgId,
+    tier: existing.tier,
+    enforcement_mode: existing.enforcement_mode,
+    allowed_egress_cidrs: existing.allowed_egress_cidrs,
+    require_mtls: existing.require_mtls,
+    require_private_connectivity: existing.require_private_connectivity,
+    anomaly_auto_freeze_enabled: existing.anomaly_auto_freeze_enabled,
+    default_rate_limit_per_minute: existing.default_rate_limit_per_minute,
+    default_provider_scope_mode: existing.default_provider_scope_mode,
+    freeze_state: freezeState,
+    freeze_reason: freezeReason,
+    frozen_at: action === 'freeze' ? now : null,
+    notes: existing.notes,
+    created_by: existing.created_by || authorized.auth.userId,
+    updated_by: authorized.auth.userId,
+    updated_at: now,
+  };
+
+  const { data, error } = await getSupabase(env)
+    .from('organization_proxy_access_policies')
+    .upsert(upsertRow, { onConflict: 'organization_id' })
+    .select('organization_id, tier, enforcement_mode, allowed_egress_cidrs, require_mtls, require_private_connectivity, anomaly_auto_freeze_enabled, default_rate_limit_per_minute, default_provider_scope_mode, freeze_state, freeze_reason, frozen_at, notes, created_by, updated_by, created_at, updated_at')
+    .single();
+
+  if (error || !data) {
+    const message = error?.message || `Internal admin proxy access ${action} failed.`;
+    return Response.json({ error: message }, { status: error && isMissingOrganizationProxyAccessPoliciesTable(error) ? 501 : 400 });
+  }
+
+  const policy = data as OrganizationProxyAccessPolicyRow;
+  const summary = proxyAccessCustomerSummary(policy);
+  await writeGovernanceAuditEvent(env, {
+    organization_id: orgId,
+    actor_user_id: authorized.auth.userId,
+    actor_email: authorized.auth.email,
+    event_type: action === 'freeze' ? 'enterprise_proxy_access_frozen' : 'enterprise_proxy_access_thawed',
+    target_type: 'organization_proxy_access_policy',
+    target_id: orgId,
+    description: action === 'freeze'
+      ? `Froze enterprise proxy access for ${orgId}`
+      : `Thawed enterprise proxy access for ${orgId}`,
+    metadata: {
+      ...summary,
+      reason: freezeReason,
+      updated_via: 'internal_admin',
+    },
+  });
+
+  await writeInternalAdminAuditEvent(
+    env,
+    authorized.auth,
+    request,
+    action === 'freeze' ? 'internal_admin_proxy_access_frozen' : 'internal_admin_proxy_access_thawed',
+    {
+      organization_id: orgId,
+      proxy_access_policy: summary,
+      reason: freezeReason,
+    },
+  );
+
+  return Response.json({
+    proxy_access_policy: policy,
+    proxy_access_summary: summary,
+    proxy_access_checklist: proxyAccessChecklist(policy),
+    guardrails: [
+      'Proxy access freeze/thaw actions require internal admin actions to be enabled.',
+      'Proxy access freeze/thaw actions require the approval secret header.',
+      'Freeze blocks VaultProof proxy project-key use for the organization without changing customer KMS keys or original provider keys.',
     ],
   }, {
     headers: {
@@ -3623,6 +4494,39 @@ export async function handleInternalAdminRoutes(
     request.method === 'POST'
     && pathSegments.length === 3
     && pathSegments[0] === 'orgs'
+    && pathSegments[2] === 'kms-connections'
+  ) {
+    return handleUpdateInternalAdminKmsConnection(request, env, pathSegments[1] || '');
+  }
+
+  if (
+    request.method === 'POST'
+    && pathSegments.length === 3
+    && pathSegments[0] === 'orgs'
+    && pathSegments[2] === 'proxy-access-policy'
+  ) {
+    return handleUpdateInternalAdminProxyAccessPolicy(request, env, pathSegments[1] || '');
+  }
+
+  if (
+    request.method === 'POST'
+    && pathSegments.length === 4
+    && pathSegments[0] === 'orgs'
+    && pathSegments[2] === 'proxy-access-policy'
+    && (pathSegments[3] === 'freeze' || pathSegments[3] === 'thaw')
+  ) {
+    return handleSetInternalAdminProxyAccessFreezeState(
+      request,
+      env,
+      pathSegments[1] || '',
+      pathSegments[3] === 'freeze' ? 'freeze' : 'thaw',
+    );
+  }
+
+  if (
+    request.method === 'POST'
+    && pathSegments.length === 3
+    && pathSegments[0] === 'orgs'
     && pathSegments[2] === 'invitations'
   ) {
     return handleCreateInternalAdminInvitation(request, env, pathSegments[1] || '');
@@ -3735,6 +4639,8 @@ export async function handleInternalAdminRoutes(
     projectResult,
     inviteResult,
     ssoResult,
+    kmsResult,
+    proxyAccessPolicyResult,
     auditResult,
     internalAuditRows,
   ] = await Promise.all([
@@ -3765,6 +4671,16 @@ export async function handleInternalAdminRoutes(
       .order('updated_at', { ascending: false })
       .limit(1000),
     supabase
+      .from('organization_kms_connections')
+      .select('organization_id, provider, status, last_test_status, updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(1000),
+    supabase
+      .from('organization_proxy_access_policies')
+      .select('organization_id, tier, enforcement_mode, allowed_egress_cidrs, require_mtls, require_private_connectivity, anomaly_auto_freeze_enabled, default_rate_limit_per_minute, default_provider_scope_mode, freeze_state, freeze_reason, frozen_at, notes, created_by, updated_by, created_at, updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(1000),
+    supabase
       .from('organization_audit_events')
       .select('id, organization_id, actor_email, event_type, target_type, target_id, description, created_at')
       .order('created_at', { ascending: false })
@@ -3776,8 +4692,16 @@ export async function handleInternalAdminRoutes(
   if (ssoResult.error && !ssoSchemaReady) {
     console.warn(`internal admin SSO settings read skipped: ${ssoResult.error.message}`);
   }
+  const kmsSchemaReady = !isMissingOrganizationKmsConnectionsTable(kmsResult.error);
+  if (kmsResult.error && !kmsSchemaReady) {
+    console.warn(`internal admin KMS connection read skipped: ${kmsResult.error.message}`);
+  }
+  const proxyAccessPolicySchemaReady = !isMissingOrganizationProxyAccessPoliciesTable(proxyAccessPolicyResult.error);
+  if (proxyAccessPolicyResult.error && !proxyAccessPolicySchemaReady) {
+    console.warn(`internal admin proxy access policy read skipped: ${proxyAccessPolicyResult.error.message}`);
+  }
 
-  const firstError = orgResult.error || memberResult.error || projectResult.error || inviteResult.error || (ssoSchemaReady ? ssoResult.error : null) || auditResult.error;
+  const firstError = orgResult.error || memberResult.error || projectResult.error || inviteResult.error || (ssoSchemaReady ? ssoResult.error : null) || (kmsSchemaReady ? kmsResult.error : null) || (proxyAccessPolicySchemaReady ? proxyAccessPolicyResult.error : null) || auditResult.error;
   if (firstError) {
     return Response.json({ error: `Internal admin query failed: ${firstError.message}` }, { status: 500 });
   }
@@ -3822,6 +4746,16 @@ export async function handleInternalAdminRoutes(
     status: string | null;
     updated_at: string | null;
   }>) : [];
+  const kmsRows = kmsSchemaReady ? normalizeRows(kmsResult.data as MaybeArray<{
+    organization_id: string;
+    provider: 'aws-kms';
+    status: string | null;
+    last_test_status: string | null;
+    updated_at: string | null;
+  }>) : [];
+  const proxyAccessPolicyRows = proxyAccessPolicySchemaReady
+    ? normalizeRows(proxyAccessPolicyResult.data as MaybeArray<Record<string, unknown>>)
+    : [];
   const auditRows = normalizeRows(auditResult.data as MaybeArray<{
     id: string;
     organization_id: string | null;
@@ -3837,6 +4771,11 @@ export async function handleInternalAdminRoutes(
   const memberEmailMap = await getUserEmailMap(env, members.map((member) => member.user_id));
   const orgById = new Map(organizations.map((organization) => [organization.id, organization]));
   const ssoByOrgId = new Map(ssoRows.map((row) => [row.organization_id, row]));
+  const kmsByOrgId = new Map(kmsRows.map((row) => [row.organization_id, row]));
+  const proxyPolicyByOrgId = new Map(proxyAccessPolicyRows.map((row) => [
+    String(row.organization_id || ''),
+    normalizeProxyAccessPolicyRow(row, String(row.organization_id || '')),
+  ]));
   const membersByOrg = new Map<string, typeof members>();
   const projectsByOrg = new Map<string, typeof projects>();
   const invitationsByOrg = new Map<string, typeof invitations>();
@@ -3863,6 +4802,10 @@ export async function handleInternalAdminRoutes(
   const activeProjects = projects.filter((project) => !project.revoked_at);
   const pendingInvitations = invitations.filter((invitation) => invitation.status === 'pending');
   const configuredSso = ssoRows.filter((row) => row.status === 'configured');
+  const verifiedKms = kmsRows.filter((row) => row.status === 'verified' || row.last_test_status === 'passed');
+  const recommendedProxyPolicies = proxyAccessPolicyRows.filter((row) => row.tier === 'recommended');
+  const highSecurityProxyPolicies = proxyAccessPolicyRows.filter((row) => row.tier === 'high_security');
+  const frozenProxyPolicies = proxyAccessPolicyRows.filter((row) => row.freeze_state === 'frozen');
   const adminMemberships = members.filter((member) => member.role === 'owner' || member.role === 'admin');
   const apiCallAnalytics = await getInternalAdminApiCallAnalytics(
     env,
@@ -3884,6 +4827,8 @@ export async function handleInternalAdminRoutes(
     const activeOrgProjects = orgProjects.filter((project) => !project.revoked_at);
     const pendingOrgInvitations = orgInvitations.filter((invitation) => invitation.status === 'pending');
     const sso = ssoByOrgId.get(organization.id) || null;
+    const kms = kmsByOrgId.get(organization.id) || null;
+    const proxyAccessPolicy = proxyPolicyByOrgId.get(organization.id) || defaultProxyAccessPolicy(organization.id);
     const orgApiCallStats = apiCallsByOrg.get(organization.id) || emptyApiCallStats();
     return {
       id: organization.id,
@@ -3903,6 +4848,9 @@ export async function handleInternalAdminRoutes(
       api_denied_count: orgApiCallStats.denied_count,
       last_api_call_at: orgApiCallStats.last_api_call_at,
       sso,
+      kms,
+      proxy_access_policy: proxyAccessPolicy,
+      proxy_access_summary: proxyAccessCustomerSummary(proxyAccessPolicy),
       business_login_links: enterpriseBusinessLoginLinks(env, organization.id, sso?.company_domain || null),
     };
   });
@@ -3927,6 +4875,11 @@ export async function handleInternalAdminRoutes(
       active_project_count: activeProjects.length,
       pending_invitation_count: pendingInvitations.length,
       sso_configured_count: configuredSso.length,
+      kms_configured_count: kmsRows.length,
+      kms_verified_count: verifiedKms.length,
+      proxy_recommended_count: recommendedProxyPolicies.length,
+      proxy_high_security_count: highSecurityProxyPolicies.length,
+      proxy_frozen_count: frozenProxyPolicies.length,
       total_api_call_count: apiCallAnalytics.totals.call_count,
       api_error_count: apiCallAnalytics.totals.error_count,
       api_denied_count: apiCallAnalytics.totals.denied_count,
@@ -3934,7 +4887,15 @@ export async function handleInternalAdminRoutes(
       api_call_rollup_ready: apiCallAnalytics.schemaReady,
     },
     sso_schema_ready: ssoSchemaReady,
-    migration_required: ssoSchemaReady ? null : 'Apply supabase/migrations/20260419010000_organization_sso_settings.sql',
+    kms_connections_schema_ready: kmsSchemaReady,
+    proxy_access_policy_schema_ready: proxyAccessPolicySchemaReady,
+    migration_required: ssoSchemaReady && kmsSchemaReady && proxyAccessPolicySchemaReady
+      ? null
+      : [
+        ssoSchemaReady ? null : 'Apply supabase/migrations/20260419010000_organization_sso_settings.sql',
+        kmsSchemaReady ? null : 'Apply supabase/migrations/20260531000000_organization_kms_connections.sql',
+        proxyAccessPolicySchemaReady ? null : 'Apply supabase/migrations/20260601000000_organization_proxy_access_policies.sql',
+      ].filter(Boolean).join(' | '),
     api_call_trend: apiCallAnalytics.dailyTotals,
     businesses,
     users: members.slice(0, 100).map((member) => {
@@ -3973,6 +4934,12 @@ export async function handleInternalAdminRoutes(
       ssoSchemaReady
         ? 'SSO metadata is available for per-business login guidance.'
         : 'SSO metadata migration is pending; overview omits SSO settings until supabase/migrations/20260419010000_organization_sso_settings.sql is applied.',
+      kmsSchemaReady
+        ? 'Customer-managed KMS onboarding records are scoped by organization_id.'
+        : 'KMS onboarding migration is pending; overview omits KMS connection status until supabase/migrations/20260531000000_organization_kms_connections.sql is applied.',
+      proxyAccessPolicySchemaReady
+        ? 'Proxy access tier records are scoped by organization_id and enforced by the execute proxy.'
+        : 'Proxy access policy migration is pending; overview omits tier status until supabase/migrations/20260601000000_organization_proxy_access_policies.sql is applied.',
       'Customer data views are read-only by default; safe employee writes require the disabled-by-default action gate and approval secret.',
     ],
   }, {

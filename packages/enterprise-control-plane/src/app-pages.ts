@@ -11724,6 +11724,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var pilotTesters = buildPilotTesterReadinessPacket(org, sso, readiness, overview, bootstrap);
         var entitlements = buildEntitlementsPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var onboarding = buildPaidOnboardingPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var proxyAccess = proxyAccessPostureFromData(org, bootstrap);
         var projectCount = projectCountFromData(org, overview, bootstrap);
         var memberCount = Number(org.member_count || 0);
         var providerCount = providerCountFromData(overview, bootstrap);
@@ -11744,7 +11745,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             project_count: projectCount,
             member_count: memberCount,
             provider_slots: providerCount,
-            sso_provider_status: sso.provider_status || 'not confirmed'
+            sso_provider_status: sso.provider_status || 'not confirmed',
+            proxy_access_tier: proxyAccess.tier,
+            proxy_access_status: proxyAccess.status
           },
           architecture: [
             'Enterprise browser calls only organization-scoped /api/v1/enterprise APIs on enterprise.vaultproof.dev.',
@@ -11756,6 +11759,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           controls: [
             { name: 'Identity and RBAC', status: identityQa.status, tone: identityQa.status === 'ready' ? 'good' : 'warn', detail: 'Supabase-brokered enterprise session plus VaultProof organization membership, roles, project assignment, and access-review exports.' },
             { name: 'Caller-lock policy', status: 'built', tone: 'good', detail: 'Control policy can bind protected calls to approved origins, gateways, CIDRs, methods, upstream hosts, path prefixes, provider families, and rate limits.' },
+            { name: 'Proxy access tier', status: proxyAccess.status, tone: proxyAccessTone(proxyAccess), detail: 'Organization proxy use is gated by tier, enforcement mode, freeze state, egress source count, mTLS/private-connectivity requirements, rate defaults, and anomaly auto-freeze.' },
             { name: 'Provider key custody', status: displayPilotStatus(rotation.status), tone: rotation.status === 'accepted_for_pilot' ? 'good' : 'warn', detail: 'Provider slots expose posture and material mode without returning plaintext keys or encrypted shares to customer browsers.' },
             { name: 'API inventory', status: apiInventory.status, tone: apiInventory.status === 'ready' ? 'good' : 'warn', detail: 'API surfaces are derived from projects, provider slots, policy, traffic evidence, and browser-local owner/review metadata without storing secrets.' },
             { name: 'Policy drift and exceptions', status: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good', detail: 'Policy drift rows are derived from existing project/provider/policy/traffic evidence, with browser-local accepted-risk records, owners, expiry, and compensating controls.' },
@@ -11777,6 +11781,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { title: 'Audit CSV', href: evidenceExportHref('/api/v1/enterprise/audit?format=csv&days=30'), detail: 'Governance and runtime event export for review.', tag: 'csv', tone: 'good' },
             { title: 'Access review CSV', href: evidenceExportHref('/api/v1/enterprise/members/access-review?format=csv'), detail: 'Members, roles, invitations, and project assignments.', tag: 'csv', tone: 'good' },
             { title: 'Activity', href: '/app/activity', detail: 'Runtime status codes, latency, provider request IDs, denials, and attestation hints.', tag: 'events', tone: 'good' },
+            { title: 'Proxy access posture', href: '/app/evidence', detail: 'Customer-safe tier, enforce/monitor state, freeze state, prerequisite counts, and auto-freeze status. Raw egress CIDR values are excluded.', tag: proxyAccess.status, tone: proxyAccessTone(proxyAccess) },
             { title: 'API Inventory', href: '/app/inventory', detail: 'API catalog with owners, environment, risk, provider-slot mapping, policy posture, traffic evidence, review status, and JSON export.', tag: apiInventory.status, tone: apiInventory.status === 'ready' ? 'good' : 'warn' },
             { title: 'Policy Drift', href: '/app/policy', detail: 'Control gaps, placeholder material, owner gaps, stale traffic, accepted-risk records, expiry dates, and customer-safe JSON export.', tag: policyDrift.status, tone: policyDrift.status === 'hold' ? 'warn' : 'good' },
             { title: 'Rollout Manager', href: '/app/rollout', detail: 'Workload cutover plan with owners, integration mode, canary percentage, test status, rollback path, blockers, and evidence export.', tag: integrationRollout.status, tone: integrationRollout.status === 'hold' ? 'warn' : 'good' },
@@ -11803,6 +11808,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             { question: 'Will provider keys appear in the browser or evidence packet?', answer: 'No. Customer pages show provider posture and material mode only. Raw keys, encrypted shares, service-role keys, origin-lock values, signing secrets, alert webhook secrets, and unwrap roots are excluded.' },
             { question: 'How is a stolen browser session limited?', answer: 'The session still needs organization membership, project access, caller-lock policy, allowed provider/upstream policy, rate limits, request signing, executor verification, and runtime readiness before protected provider work proceeds.' },
             { question: 'What happens after an external platform or repository key exposure?', answer: 'Provider Slots can copy a customer-safe incident packet, show linked scanner findings, emergency revoke VaultProof-routed provider use, and guide upstream rotation. Direct raw-key use outside VaultProof remains outside the VaultProof proof boundary.' },
+            { question: 'What happens if a vp-proj-* key leaks?', answer: 'VaultProof can freeze organization proxy access, enforce source or mTLS/private-connectivity checks, and rate-limit abuse without rotating customer KMS keys or original provider keys unless those upstream keys also leaked.' },
             { question: 'What can the customer export for review?', answer: 'Readiness, evidence packet JSON, audit CSV, access-review CSV, activity records, launch brief, and this security review packet.' },
             { question: 'Who owns incident response?', answer: 'Base pilot uses the customer incident-response team plus VaultProof launch support. 24-hour incident response can be sold as an add-on.' }
           ],
@@ -11817,6 +11823,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             integration_rollout: integrationRollout.status,
             scanner_exposure_review: scannerExposure.status,
             key_exposure_response: keyExposureResponse.status,
+            proxy_access_posture: proxyAccess.status,
             launch_support_readiness: support.status,
             release_evidence: releaseEvidence.status,
             pilot_tester_readiness: pilotTesters.status,
@@ -11831,6 +11838,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'browser session token',
             'OAuth client secret',
             'alert webhook secrets',
+            'raw egress CIDR values',
+            'staff-only proxy policy notes',
             'origin-lock secret',
             'executor signing secret',
             'runtime-token secret',
@@ -13399,6 +13408,58 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var joiner = path.indexOf('?') === -1 ? '?' : '&';
         return path + joiner + 'org=' + encodeURIComponent(currentOrgId);
       }
+      function proxyAccessPostureFromData(org, bootstrap) {
+        var summary = (org && org.proxy_access_summary) || (bootstrap && bootstrap.proxy_access_summary) || {};
+        var checklist = Array.isArray(org && org.proxy_access_checklist)
+          ? org.proxy_access_checklist
+          : Array.isArray(bootstrap && bootstrap.proxy_access_checklist)
+            ? bootstrap.proxy_access_checklist
+            : [];
+        var tier = summary.tier || 'basic';
+        var freezeState = summary.freeze_state || 'active';
+        var status = freezeState === 'frozen' ? 'frozen' : tier;
+        var customerActions = [];
+        if (tier === 'recommended' && !summary.allowed_egress_cidr_count) {
+          customerActions.push('Provide fixed egress CIDRs or a trusted gateway path before enforce mode.');
+        }
+        if (tier === 'high_security' && !summary.require_mtls && !summary.require_private_connectivity) {
+          customerActions.push('Choose mTLS, private connectivity, or both before treating High Security as complete.');
+        }
+        if (summary.enforcement_mode !== 'enforce') {
+          customerActions.push('Move from monitor to enforce after prerequisites are verified.');
+        }
+        if (freezeState === 'frozen') {
+          customerActions.push('Contact VaultProof support to review the freeze reason and thaw plan.');
+        }
+        return {
+          status: status,
+          tier: tier,
+          enforcement_mode: summary.enforcement_mode || 'monitor',
+          freeze_state: freezeState,
+          frozen_at: summary.frozen_at || null,
+          allowed_egress_cidr_count: Number(summary.allowed_egress_cidr_count || 0),
+          require_mtls: summary.require_mtls === true,
+          require_private_connectivity: summary.require_private_connectivity === true,
+          anomaly_auto_freeze_enabled: summary.anomaly_auto_freeze_enabled !== false,
+          default_rate_limit_per_minute: summary.default_rate_limit_per_minute || null,
+          default_provider_scope_mode: summary.default_provider_scope_mode || 'project_policy',
+          checklist: checklist.map(function(item) {
+            return {
+              label: item.label || 'Proxy access requirement',
+              status: item.status || 'todo',
+              detail: item.detail || ''
+            };
+          }),
+          customer_actions: customerActions,
+          secrets_excluded: ['raw egress CIDR values', 'provider API keys', 'customer KMS material', 'staff notes', 'origin-lock secrets', 'runtime-token secrets']
+        };
+      }
+      function proxyAccessTone(posture) {
+        if (!posture || posture.freeze_state === 'frozen') return 'bad';
+        if (posture.tier === 'high_security') return posture.require_mtls || posture.require_private_connectivity ? 'good' : 'warn';
+        if (posture.tier === 'recommended') return posture.allowed_egress_cidr_count ? 'good' : 'warn';
+        return 'good';
+      }
       function evidencePacketObject(org, sso, readiness, overview, bootstrap) {
         var controlPlane = readiness.control_plane || {};
         var executor = readiness.executor || {};
@@ -13421,6 +13482,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var entitlements = buildEntitlementsPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var onboarding = buildPaidOnboardingPacket(org, sso, readiness, overview, bootstrap, goNoGo);
         var securityReview = buildSecurityReviewPacket(org, sso, readiness, overview, bootstrap, goNoGo);
+        var proxyAccess = proxyAccessPostureFromData(org, bootstrap);
         return {
           packet_type: 'vaultproof_enterprise_evidence_packet',
           packet_version: 1,
@@ -13495,6 +13557,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           pilot_operations_evidence: pilotOps,
           api_proxy_self_test: apiProxy,
           api_inventory: apiInventory,
+          proxy_access_posture: proxyAccess,
           policy_drift_exceptions: policyDrift,
           integration_rollout: integrationRollout,
           scanner_exposure_review: scannerExposure,
@@ -13532,6 +13595,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Confirm rollback ownership, budget alert coverage, and launch-week monitoring ownership before live customer traffic.',
             'Run the API proxy dry-run self-test and blocked-recipient email denial test before the customer walkthrough.',
             'Review the API inventory for owners, environment, data sensitivity, risk, provider-slot mapping, policy posture, stale traffic, and review due items.',
+            'Review proxy access posture for tier, enforce/monitor state, freeze state, egress prerequisite count, mTLS/private-connectivity requirements, and auto-freeze status.',
+            'If a vp-proj-* key is leaked, freeze VaultProof proxy access or tighten source controls; customer KMS keys and original provider keys do not need to rotate unless the upstream provider key also leaked.',
             'Review policy drift and accepted-risk exceptions for owner, reason, compensating control, expiration date, next action, and launch hold status.',
             'Review the integration rollout plan for application owner, gateway owner, target date, canary percent, test status, rollback owner/path, blockers, and copy-safe dry-run snippet.',
             'Review scanner exposure evidence for redacted finding metadata, owner, rotation status, evidence reference, and open critical/high remediation before paid traffic.',
@@ -13545,7 +13610,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
             'Share the security review packet with customer security, procurement, and technical reviewers after validating launch blockers.',
             'VaultProof staff handles proposal drafting and pilot-success tracking on admin.vaultproof.dev, outside the customer workspace.',
             'For the protected email API key workflow, verify sender, recipient, template, gateway, and rate policy before live sends.',
-            'Keep provider keys, encrypted shares, service-role keys, origin-lock values, and signing secrets out of customer packets.'
+            'Keep provider keys, encrypted shares, service-role keys, raw egress CIDR values, staff notes, origin-lock values, and signing secrets out of customer packets.'
           ]
         };
       }
@@ -13570,13 +13635,15 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         var pilotTesters = packet.pilot_tester_readiness || buildPilotTesterReadinessPacket(org, sso, readiness, overview, bootstrap);
         var entitlements = packet.contract_entitlements || buildEntitlementsPacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
         var onboarding = packet.paid_onboarding || buildPaidOnboardingPacket(org, sso, readiness, overview, bootstrap, buildGoNoGoStatus(org, sso, readiness, overview, bootstrap));
+        var proxyAccess = packet.proxy_access_posture || proxyAccessPostureFromData(org, bootstrap);
         text('evidenceMeta', productionReady ? 'ready for review' : 'needs attention');
         byId('evidenceReadinessList').innerHTML = [
           row('Production readiness', productionReady ? 'Control plane and confidential executor report production-ready.' : (readiness.production_blockers || []).join('; '), productionReady ? 'ready' : 'blocked', productionReady ? 'good' : 'bad'),
           row('Go/no-go launch decision', packet.go_no_go.status === 'go' ? 'Launch board says GO for pilot testing.' : 'Launch board says HOLD: ' + packet.go_no_go.blockers.join('; '), packet.go_no_go.status, packet.go_no_go.status === 'go' ? 'good' : 'bad'),
           row('Security profile', readiness.security_profile || 'not reported', displayRuntimeTier(readiness.runtime_tier), readiness.security_profile === 'google-confidential-production' ? 'good' : 'warn'),
           row('Origin lock', controlPlane.origin_lock_configured ? 'GCP edge origin-lock header is configured and enforced by the control plane.' : 'Origin lock still needs configuration review.', controlPlane.origin_lock_required ? 'required' : 'optional', controlPlane.origin_lock_configured ? 'good' : 'warn'),
-          row('Executor evidence', executor.reachable ? 'Executor health is reachable through the private runtime path. Key release: ' + (executorHealth.key_release_ready ? 'ready' : 'attention') + '. Attestation: ' + (executorHealth.attestation_evidence_ready ? 'ready' : 'attention') + '.' : 'Executor health was not reachable from readiness.', executor.reachable ? 'reachable' : 'attention', executor.reachable ? 'good' : 'bad')
+          row('Executor evidence', executor.reachable ? 'Executor health is reachable through the private runtime path. Key release: ' + (executorHealth.key_release_ready ? 'ready' : 'attention') + '. Attestation: ' + (executorHealth.attestation_evidence_ready ? 'ready' : 'attention') + '.' : 'Executor health was not reachable from readiness.', executor.reachable ? 'reachable' : 'attention', executor.reachable ? 'good' : 'bad'),
+          row('Proxy access posture', 'Tier ' + proxyAccess.tier + ', mode ' + proxyAccess.enforcement_mode + ', freeze state ' + proxyAccess.freeze_state + ', egress CIDR count ' + number(proxyAccess.allowed_egress_cidr_count) + '.', proxyAccess.status, proxyAccessTone(proxyAccess))
         ].join('');
         byId('evidenceExportList').innerHTML = [
           linkRow('Readiness summary', 'Customer-facing production gate for runtime, executor, key release, and Cloud KMS posture.', '/readiness', 'open', productionReady ? 'good' : 'warn'),
@@ -13600,6 +13667,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           row('Members', number(packet.organization.member_count) + ' members are visible for access review.', number(packet.organization.member_count), packet.organization.member_count ? 'good' : 'warn'),
           row('Provider posture', number(packet.usage_summary.active_provider_slots) + ' active provider/app connections are visible in overview.', number(packet.usage_summary.active_provider_slots), packet.usage_summary.active_provider_slots ? 'good' : 'warn'),
           row('Email API key protection', packet.usage_summary.email_provider_slots ? 'Email provider slots visible: ' + packet.usage_summary.email_providers.join(', ') + '. Run protected email dry-run before the customer walkthrough.' : 'No email provider key slot is visible yet. Add Resend, SendGrid, Mailgun, Postmark, or AWS SES before the walkthrough.', packet.usage_summary.email_provider_slots ? 'ready' : 'todo', packet.usage_summary.email_provider_slots ? 'good' : 'warn'),
+          row('Proxy project-key protection', 'vp-proj-* use is gated by ' + proxyAccess.tier + ' tier controls, auto-freeze is ' + (proxyAccess.anomaly_auto_freeze_enabled ? 'enabled' : 'disabled') + ', and raw egress CIDR values are excluded from this packet.', proxyAccess.status, proxyAccessTone(proxyAccess)),
           row('Traffic evidence', number(packet.usage_summary.proxy_calls) + ' proxy calls, ' + number(packet.usage_summary.denied_calls) + ' denied, ' + number(packet.usage_summary.error_calls) + ' errors.', packet.usage_summary.proxy_calls ? 'observed' : 'pending', packet.usage_summary.error_calls || packet.usage_summary.denied_calls ? 'warn' : 'good')
         ].join('');
         byId('evidenceWorkflowList').innerHTML = [
@@ -14614,6 +14682,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           byId('runbooksExposureList').innerHTML = [
             row('Current exposure response status', exposureResponseForRunbook.decision, exposureResponseForRunbook.status, exposureResponseForRunbook.status === 'hold' ? 'bad' : exposureResponseForRunbook.status === 'ready_to_contain' ? 'good' : 'warn'),
             row('Triage linked scanner findings', number(exposureSummaryForRunbook.linked_scanner_findings) + ' scanner findings are linked to provider slots; ' + number(exposureSummaryForRunbook.open_critical_or_high_linked_findings) + ' linked critical/high findings remain open.', exposureSummaryForRunbook.open_critical_or_high_linked_findings ? 'hold' : 'review', exposureSummaryForRunbook.open_critical_or_high_linked_findings ? 'bad' : 'good'),
+            row('Leaked vp-proj-* response', 'Freeze organization proxy access from internal admin, confirm proxy access posture in Evidence, review Audit and Activity for source/method/path abuse, then thaw only after customer app handling is fixed. Customer KMS keys and original provider keys rotate only if upstream material also leaked.', 'proxy freeze', 'warn'),
             linkRow('Open Provider Slots incident mode', 'Copy the customer-safe incident JSON, review material mode, and emergency revoke affected provider slots without exposing raw upstream keys.', '/app/keys', 'incident JSON', 'good'),
             linkRow('Open Scanner findings', 'Update linked exposure findings only after rotation, revoke, false-positive review, or explicit pilot-limited acceptance.', '/app/scanner', 'scanner', exposureSummaryForRunbook.open_critical_or_high_linked_findings ? 'warn' : 'good'),
             linkRow('Export activity evidence', 'Review routed traffic, denials, latency, provider request IDs, and attestation hints for what VaultProof actually saw.', '/app/activity', 'activity', 'good'),

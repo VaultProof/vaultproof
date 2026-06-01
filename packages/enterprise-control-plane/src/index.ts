@@ -512,6 +512,8 @@ async function handleEnterpriseControlPlaneRequestInner(
     internalAdminSurface &&
     isReadRequest &&
     (url.pathname === '/'
+      || url.pathname === '/app'
+      || url.pathname === '/app/'
       || url.pathname === '/admin'
       || url.pathname === '/admin/'
       || url.pathname === '/internal/admin'

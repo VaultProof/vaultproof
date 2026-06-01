@@ -11,6 +11,11 @@ import {
   resolveOrganizationMembershipFromList,
 } from '../auth.js';
 import { writeGovernanceAuditEvent } from '../audit.js';
+import {
+  proxyAccessChecklist,
+  proxyAccessCustomerSummary,
+  readOrganizationProxyAccessPolicy,
+} from '../proxy-access-policy.js';
 import { getSupabase } from '../supabase.js';
 
 interface ProjectWriteBody {
@@ -73,6 +78,9 @@ type ProjectsBootstrapPayload = {
   active_organization_id: string | null;
   projects: ProjectBootstrapSummary[];
   overview: Record<string, unknown>;
+  proxy_access_policy_schema_ready?: boolean;
+  proxy_access_summary?: Record<string, unknown> | null;
+  proxy_access_checklist?: ReturnType<typeof proxyAccessChecklist>;
 };
 
 type CallerLockPolicy = {
@@ -96,6 +104,10 @@ type CallerLockPolicy = {
   require_email_template_id?: boolean;
   provider_overrides?: Record<string, CallerLockPolicy>;
 };
+
+function canViewProxyAccessPosture(role: string | null | undefined): boolean {
+  return ['owner', 'admin', 'iam_admin', 'security_admin', 'platform_admin', 'auditor'].includes(String(role || ''));
+}
 
 function generateProjectId(): string {
   const bytes = new Uint8Array(12);
@@ -1344,7 +1356,33 @@ function normalizeBootstrapOrganizations(value: unknown): OrganizationBootstrapS
     .filter((organization): organization is OrganizationBootstrapSummary => Boolean(organization));
 }
 
+async function fetchBootstrapProxyAccessPosture(
+  env: EnterpriseControlPlaneEnv,
+  organizationId: string | null,
+  role: string | null | undefined,
+): Promise<{
+  proxy_access_policy_schema_ready: boolean;
+  proxy_access_summary: Record<string, unknown> | null;
+  proxy_access_checklist: ReturnType<typeof proxyAccessChecklist>;
+}> {
+  if (!organizationId || !canViewProxyAccessPosture(role)) {
+    return {
+      proxy_access_policy_schema_ready: true,
+      proxy_access_summary: null,
+      proxy_access_checklist: [],
+    };
+  }
+
+  const result = await readOrganizationProxyAccessPolicy(env, organizationId);
+  return {
+    proxy_access_policy_schema_ready: result.schemaReady,
+    proxy_access_summary: result.policy ? proxyAccessCustomerSummary(result.policy) : null,
+    proxy_access_checklist: proxyAccessChecklist(result.policy),
+  };
+}
+
 async function fetchProjectsBootstrapRpc(
+  env: EnterpriseControlPlaneEnv,
   supabase: any,
   userId: string,
   requestedOrganizationId: string | null,
@@ -1366,6 +1404,15 @@ async function fetchProjectsBootstrapRpc(
     const record = payload as Record<string, unknown>;
     const projects = normalizeBootstrapProjects(record.projects);
     const organizations = normalizeBootstrapOrganizations(record.organizations);
+    const activeOrganizationId = stringOrNull(record.active_organization_id);
+    const activeOrganization = organizations.find((organization) => organization.id === activeOrganizationId)
+      || organizations.find((organization) => organization.is_active)
+      || null;
+    const proxyAccessPosture = await fetchBootstrapProxyAccessPosture(
+      env,
+      activeOrganizationId,
+      activeOrganization?.role || null,
+    );
     const accessOverview = normalizeRollupOverviewPayload(record.access_overview)
       || emptyAccessLogOverview('rollup_rpc');
     const keys = projects.flatMap((project) => project.provider_slots.map((slot) => ({
@@ -1379,8 +1426,9 @@ async function fetchProjectsBootstrapRpc(
 
     return {
       organizations,
-      active_organization_id: stringOrNull(record.active_organization_id),
+      active_organization_id: activeOrganizationId,
       projects,
+      ...proxyAccessPosture,
       overview: buildOverviewStatsFromAccess(
         projects.map((project) => ({
           id: project.id,
@@ -1426,7 +1474,7 @@ export async function handleEnterpriseProjectRoutes(
 
   if (request.method === 'GET' && pathSegments.length === 2 && pathSegments[0] === 'projects' && pathSegments[1] === 'bootstrap') {
     const requestedOrganizationId = request.headers.get('x-vaultproof-organization')?.trim() || null;
-    const rpcPayload = await fetchProjectsBootstrapRpc(supabase, auth.userId, requestedOrganizationId);
+    const rpcPayload = await fetchProjectsBootstrapRpc(env, supabase, auth.userId, requestedOrganizationId);
     if (rpcPayload) {
       return Response.json(rpcPayload);
     }
@@ -1435,6 +1483,11 @@ export async function handleEnterpriseProjectRoutes(
     const membership = resolveOrganizationMembershipFromList(request, memberships);
     const organizationId = membership?.organization_id || null;
     const projects = await listAccessibleProjects(env, auth.userId, organizationId, memberships);
+    const proxyAccessPosture = await fetchBootstrapProxyAccessPosture(
+      env,
+      organizationId,
+      membership?.organization_role || null,
+    );
     const [projectsPayload, overview] = await Promise.all([
       buildProjectsPayload(supabase, projects),
       buildInitOverviewStats(
@@ -1456,6 +1509,7 @@ export async function handleEnterpriseProjectRoutes(
         is_active: item.organization_id === organizationId,
       })),
       active_organization_id: organizationId,
+      ...proxyAccessPosture,
       ...projectsPayload,
       overview,
     });

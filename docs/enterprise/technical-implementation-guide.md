@@ -423,6 +423,7 @@ Important runbook groups:
 
 - `verify:enterprise-production`: checks live production posture.
 - `evidence:enterprise-production`: captures timestamped infrastructure/app/readiness evidence.
+- `evidence:enterprise-tenant-isolation`: runs synthetic two-customer tenant-isolation checks for project bootstrap, KMS status, audit evidence, access review evidence, provider-slot writes, and execute authorization; writes JSON evidence under `/tmp/vaultproof-tenant-isolation-evidence/`.
 - `validate:enterprise-evidence`: validates the latest evidence bundle.
 - `qa:enterprise-live-app`: checks live enterprise pages and links.
 - `qa:enterprise-live-execute`: validates auth, policy, signing, and executor reachability without provider dispatch.

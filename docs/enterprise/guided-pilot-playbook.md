@@ -141,6 +141,8 @@ This solves a real key-security problem for us.
 
 Use this after a customer says yes to a pilot.
 
+For the staff-admin, proxy tier, and customer handoff checklist, use `docs/enterprise/admin-guided-customer-onboarding.md`.
+
 1. Create or confirm the customer business in `admin.vaultproof.dev`.
 2. Invite the first owner or confirm the customer login path.
 3. Decide SSO mode: temporary email/password, invite-only, or Supabase SAML/Entra path.

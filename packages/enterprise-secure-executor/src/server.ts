@@ -149,6 +149,9 @@ function getEnv(): EnterpriseSecureExecutorEnv {
     awsSecureBoot: process.env.AWS_SECURE_BOOT === 'true',
     awsImageDigest: process.env.AWS_ATTESTATION_EXPECTED_IMAGE_DIGEST,
     awsRoleArn: process.env.AWS_ROLE_ARN,
+    awsExternalId: process.env.AWS_EXTERNAL_ID || process.env.AWS_ROLE_EXTERNAL_ID,
+    awsRoleSessionName: process.env.AWS_ROLE_SESSION_NAME,
+    awsAssumeRoleDurationSeconds: Number.parseInt(process.env.AWS_ASSUME_ROLE_DURATION_SECONDS || '', 10),
     awsAttestationType: process.env.AWS_ATTESTATION_TYPE,
     awsIsolationProvider: process.env.AWS_ISOLATION_PROVIDER === 'aws-nitro-enclave'
       ? 'aws-nitro-enclave'

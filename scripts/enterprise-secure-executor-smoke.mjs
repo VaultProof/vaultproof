@@ -845,7 +845,6 @@ async function assertAwsKmsVaultUnwrapKeyProvider() {
     measurementSummary: 'nitro-enclave;pcr0:approved',
     secureBoot: true,
     imageDigest: 'sha256:aws-executor-build',
-    roleArn: 'arn:aws:iam::111122223333:role/vaultproof-executor',
     attestationType: 'aws-nitro-enclave',
     isolationProvider: 'aws-nitro-enclave',
   });
@@ -870,6 +869,68 @@ async function assertAwsKmsVaultUnwrapKeyProvider() {
   }
   if (evidence?.region !== 'us-east-1' || evidence?.accountId !== '111122223333') {
     throw new Error(`Expected AWS key ARN to populate evidence region/account, got ${JSON.stringify(evidence)}`);
+  }
+
+  let assumeRoleCallCount = 0;
+  let assumedKmsCallCount = 0;
+  const assumedProvider = new AwsKmsVaultUnwrapKeyProvider({
+    region: 'us-east-1',
+    keyArn: 'arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab',
+    encryptedVaultUnwrapKeyBase64: 'aws-kms-ciphertext',
+    accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+    secretAccessKey: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
+    roleArn: 'arn:aws:iam::111122223333:role/VaultProofCustomerKmsRole',
+    externalId: 'vaultproof-org123-kms-test',
+    roleSessionName: 'vaultproof-org123',
+    fetchImpl: async (input, init) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+      const headers = new Headers(init?.headers);
+      if (url === 'https://sts.us-east-1.amazonaws.com/') {
+        assumeRoleCallCount += 1;
+        if (!headers.get('authorization')?.startsWith('AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/')) {
+          throw new Error(`Expected STS AssumeRole to be signed by source credentials, got ${headers.get('authorization')}`);
+        }
+        const body = String(init?.body || '');
+        if (!body.includes('Action=AssumeRole') || !body.includes('ExternalId=vaultproof-org123-kms-test')) {
+          throw new Error(`Expected STS AssumeRole body to include action and external id, got ${body}`);
+        }
+        return new Response(`<?xml version="1.0" encoding="UTF-8"?>
+<AssumeRoleResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
+  <AssumeRoleResult>
+    <Credentials>
+      <AccessKeyId>ASIAASSUMEDROLEEXAMPLE</AccessKeyId>
+      <SecretAccessKey>assumed-secret-access-key</SecretAccessKey>
+      <SessionToken>assumed-session-token</SessionToken>
+      <Expiration>2099-01-01T00:00:00Z</Expiration>
+    </Credentials>
+  </AssumeRoleResult>
+</AssumeRoleResponse>`, {
+          status: 200,
+          headers: { 'content-type': 'text/xml' },
+        });
+      }
+      if (url !== 'https://kms.us-east-1.amazonaws.com/') {
+        throw new Error(`Unexpected AWS URL after assume role: ${url}`);
+      }
+      assumedKmsCallCount += 1;
+      if (!headers.get('authorization')?.startsWith('AWS4-HMAC-SHA256 Credential=ASIAASSUMEDROLEEXAMPLE/')) {
+        throw new Error(`Expected AWS KMS decrypt to use assumed credentials, got ${headers.get('authorization')}`);
+      }
+      if (headers.get('x-amz-security-token') !== 'assumed-session-token') {
+        throw new Error('Expected AWS KMS decrypt to use assumed session token');
+      }
+      return new Response(JSON.stringify({
+        Plaintext: expectedKey,
+        KeyId: 'arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab',
+      }), {
+        status: 200,
+        headers: { 'content-type': 'application/x-amz-json-1.1' },
+      });
+    },
+  });
+  const assumedReleased = await assumedProvider.getVaultUnwrapKey();
+  if (assumedReleased !== expectedKey || assumeRoleCallCount !== 1 || assumedKmsCallCount !== 1) {
+    throw new Error('Expected AWS KMS provider to assume the customer role before decrypting');
   }
 }
 

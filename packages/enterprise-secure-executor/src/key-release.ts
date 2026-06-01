@@ -293,6 +293,9 @@ export class AwsKmsVaultUnwrapKeyProvider implements VaultUnwrapKeyProvider {
     secureBoot?: boolean;
     imageDigest?: string;
     roleArn?: string;
+    externalId?: string;
+    roleSessionName?: string;
+    assumeRoleDurationSeconds?: number;
     attestationType?: string;
     isolationProvider?: 'aws-nitro-enclave' | 'aws-ec2';
   }) {
@@ -363,20 +366,33 @@ export class AwsKmsVaultUnwrapKeyProvider implements VaultUnwrapKeyProvider {
   }
 
   private async getCredentials(): Promise<AwsCredentials> {
-    if (this.input.accessKeyId && this.input.secretAccessKey) {
-      return {
-        accessKeyId: this.input.accessKeyId,
-        secretAccessKey: this.input.secretAccessKey,
-        sessionToken: this.input.sessionToken,
-      };
-    }
-
     const now = Date.now();
     if (this.cachedCredentials && this.cachedCredentials.expiresAt > now) {
       return this.cachedCredentials.value;
     }
 
-    const fetched = await fetchAwsInstanceCredentials(this.fetchImpl());
+    const sourceCredentials = this.input.accessKeyId && this.input.secretAccessKey
+      ? {
+        accessKeyId: this.input.accessKeyId,
+        secretAccessKey: this.input.secretAccessKey,
+        sessionToken: this.input.sessionToken,
+      }
+      : (await fetchAwsInstanceCredentials(this.fetchImpl())).credentials;
+
+    if (!this.input.roleArn) {
+      return sourceCredentials;
+    }
+
+    const region = getRequiredAwsRegion(this.input.region, this.input.keyArn || this.input.keyId);
+    const fetched = await assumeAwsRole({
+      fetchImpl: this.fetchImpl(),
+      region,
+      credentials: sourceCredentials,
+      roleArn: this.input.roleArn,
+      externalId: this.input.externalId,
+      roleSessionName: this.input.roleSessionName,
+      durationSeconds: this.input.assumeRoleDurationSeconds,
+    });
     this.cachedCredentials = {
       value: fetched.credentials,
       expiresAt: fetched.expiresAt,
@@ -440,10 +456,13 @@ export function buildVaultUnwrapKeyProvider(input: {
   awsConfidentialVmResourceId?: string;
   awsMeasurementSummary?: string;
   awsSecureBoot?: boolean;
-  awsImageDigest?: string;
-  awsRoleArn?: string;
-  awsAttestationType?: string;
-  awsIsolationProvider?: 'aws-nitro-enclave' | 'aws-ec2';
+    awsImageDigest?: string;
+    awsRoleArn?: string;
+    awsExternalId?: string;
+    awsRoleSessionName?: string;
+    awsAssumeRoleDurationSeconds?: number;
+    awsAttestationType?: string;
+    awsIsolationProvider?: 'aws-nitro-enclave' | 'aws-ec2';
   fetchImpl?: typeof fetch;
   keyProvider?: VaultUnwrapKeyProvider;
 }): VaultUnwrapKeyProvider {
@@ -501,6 +520,9 @@ export function buildVaultUnwrapKeyProvider(input: {
         secureBoot: input.awsSecureBoot,
         imageDigest: input.awsImageDigest,
         roleArn: input.awsRoleArn,
+        externalId: input.awsExternalId,
+        roleSessionName: input.awsRoleSessionName,
+        assumeRoleDurationSeconds: input.awsAssumeRoleDurationSeconds,
         attestationType: input.awsAttestationType,
         isolationProvider: input.awsIsolationProvider,
       });
@@ -697,6 +719,104 @@ async function decryptAwsKmsCiphertext(input: {
   return {
     plaintext: responsePayload.Plaintext,
     keyId: responsePayload.KeyId || null,
+  };
+}
+
+function xmlDecode(value: string): string {
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
+function readXmlText(xml: string, tagName: string): string | null {
+  const escapedTagName = tagName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = xml.match(new RegExp(`<${escapedTagName}>([\\s\\S]*?)</${escapedTagName}>`));
+  return match?.[1] ? xmlDecode(match[1]) : null;
+}
+
+function normalizeAwsRoleSessionName(value: string | undefined): string {
+  const normalized = (value || `vaultproof-${randomUUID()}`)
+    .trim()
+    .replace(/[^A-Za-z0-9+=,.@_-]/g, '-')
+    .slice(0, 64);
+  return normalized.length >= 2 ? normalized : `vaultproof-${randomUUID()}`.slice(0, 64);
+}
+
+async function assumeAwsRole(input: {
+  fetchImpl: typeof fetch;
+  region: string;
+  credentials: AwsCredentials;
+  roleArn: string;
+  externalId?: string;
+  roleSessionName?: string;
+  durationSeconds?: number;
+}): Promise<{ credentials: AwsCredentials; expiresAt: number }> {
+  const host = `sts.${input.region}.amazonaws.com`;
+  const durationSeconds = Number.isFinite(input.durationSeconds)
+    ? Math.max(900, Math.min(Number(input.durationSeconds), 43_200))
+    : 3600;
+  const form = new URLSearchParams({
+    Action: 'AssumeRole',
+    Version: '2011-06-15',
+    RoleArn: input.roleArn,
+    RoleSessionName: normalizeAwsRoleSessionName(input.roleSessionName),
+    DurationSeconds: String(durationSeconds),
+  });
+  if (input.externalId) {
+    form.set('ExternalId', input.externalId);
+  }
+
+  const payload = form.toString();
+  const dates = awsDate();
+  const headers: Record<string, string> = {
+    'content-type': 'application/x-www-form-urlencoded; charset=utf-8',
+    host,
+    'x-amz-date': dates.amzDate,
+  };
+  if (input.credentials.sessionToken) {
+    headers['x-amz-security-token'] = input.credentials.sessionToken;
+  }
+  const signed = buildAwsAuthorizationHeader({
+    credentials: input.credentials,
+    region: input.region,
+    service: 'sts',
+    method: 'POST',
+    path: '/',
+    host,
+    headers,
+    payload,
+    amzDate: dates.amzDate,
+    dateStamp: dates.dateStamp,
+  });
+
+  const response = await input.fetchImpl(`https://${host}/`, {
+    method: 'POST',
+    headers: {
+      ...headers,
+      authorization: signed.authorization,
+    },
+    body: payload,
+  });
+  const xml = await response.text().catch(() => '');
+  const accessKeyId = readXmlText(xml, 'AccessKeyId');
+  const secretAccessKey = readXmlText(xml, 'SecretAccessKey');
+  const sessionToken = readXmlText(xml, 'SessionToken') || undefined;
+  if (!response.ok || !accessKeyId || !secretAccessKey || !sessionToken) {
+    const errorMessage = readXmlText(xml, 'Message') || `AWS STS AssumeRole failed with ${response.status}`;
+    throw new Error(errorMessage);
+  }
+  const expiration = readXmlText(xml, 'Expiration');
+  const expiresAt = expiration ? Date.parse(expiration) - 5 * 60_000 : Date.now() + Math.min(durationSeconds, 3600) * 1000 - 5 * 60_000;
+  return {
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+      sessionToken,
+    },
+    expiresAt: Math.max(Date.now() + 60_000, expiresAt),
   };
 }
 

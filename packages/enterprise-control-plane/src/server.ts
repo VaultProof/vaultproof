@@ -107,6 +107,7 @@ function getEnv(): EnterpriseControlPlaneEnv {
     mixpanelRecordSessionsPercent: Number.isFinite(mixpanelRecordSessionsPercent)
       ? mixpanelRecordSessionsPercent
       : 0,
+    awsKmsRuntimePrincipalArn: process.env.VAULTPROOF_AWS_KMS_RUNTIME_PRINCIPAL_ARN,
   };
 }
 

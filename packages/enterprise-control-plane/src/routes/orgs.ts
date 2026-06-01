@@ -16,6 +16,11 @@ import {
   resolveRequestedSsoDomain,
   type ResolveOrganizationSsoBody,
 } from '../auth.js';
+import {
+  proxyAccessChecklist,
+  proxyAccessCustomerSummary,
+  readOrganizationProxyAccessPolicy,
+} from '../proxy-access-policy.js';
 import { getSupabase } from '../supabase.js';
 
 interface ConfiguredSsoOrganization {
@@ -24,6 +29,24 @@ interface ConfiguredSsoOrganization {
   sso_provider: string | null;
   login_mode: string | null;
   status: string;
+}
+
+interface OrganizationKmsConnection {
+  id: string;
+  organization_id: string;
+  provider: 'aws-kms';
+  display_name: string | null;
+  status: string;
+  aws_account_id: string | null;
+  aws_region: string | null;
+  aws_kms_key_arn: string | null;
+  aws_role_arn: string | null;
+  external_id: string;
+  last_test_status: string;
+  last_tested_at: string | null;
+  last_test_error: string | null;
+  created_at: string;
+  updated_at: string | null;
 }
 
 interface UpdateOrganizationSsoSettingsBody {
@@ -49,6 +72,93 @@ interface ArchiveOrganizationBody {
 
 interface TransferOwnershipBody {
   target_user_id?: string;
+}
+
+function canViewOrganizationKms(role: string): boolean {
+  return ['owner', 'admin', 'iam_admin', 'security_admin', 'platform_admin', 'auditor'].includes(role);
+}
+
+function canViewOrganizationProxyAccess(role: string): boolean {
+  return ['owner', 'admin', 'iam_admin', 'security_admin', 'platform_admin', 'auditor'].includes(role);
+}
+
+function isMissingOrganizationKmsConnectionsTable(error: { code?: string; message?: string } | null | undefined): boolean {
+  const message = String(error?.message || '').toLowerCase();
+  return error?.code === '42P01'
+    || error?.code === 'PGRST205'
+    || (message.includes('organization_kms_connections') && (
+      message.includes('schema cache')
+      || message.includes('does not exist')
+      || message.includes('could not find')
+    ));
+}
+
+function vaultProofAwsRuntimePrincipalArn(env: EnterpriseControlPlaneEnv): string {
+  return (env.awsKmsRuntimePrincipalArn || 'arn:aws:iam::VAULTPROOF_AWS_ACCOUNT_ID:role/VaultProofRuntimeRole').trim();
+}
+
+function buildAwsKmsTrustPolicy(env: EnterpriseControlPlaneEnv, externalId: string): Record<string, unknown> {
+  return {
+    Version: '2012-10-17',
+    Statement: [{
+      Sid: 'AllowVaultProofRuntimeAssumeRole',
+      Effect: 'Allow',
+      Principal: {
+        AWS: vaultProofAwsRuntimePrincipalArn(env),
+      },
+      Action: 'sts:AssumeRole',
+      Condition: {
+        StringEquals: {
+          'sts:ExternalId': externalId,
+        },
+      },
+    }],
+  };
+}
+
+async function fetchOrganizationKmsConnections(
+  env: EnterpriseControlPlaneEnv,
+  organizationId: string,
+): Promise<{
+  rows: Array<OrganizationKmsConnection & { trust_policy: Record<string, unknown> }>;
+  schemaReady: boolean;
+}> {
+  const supabase = getSupabase(env);
+  const { data, error } = await supabase
+    .from('organization_kms_connections')
+    .select('id, organization_id, provider, display_name, status, aws_account_id, aws_region, aws_kms_key_arn, aws_role_arn, external_id, last_test_status, last_tested_at, last_test_error, created_at, updated_at')
+    .eq('organization_id', organizationId)
+    .order('updated_at', { ascending: false })
+    .limit(10);
+
+  if (error) {
+    if (isMissingOrganizationKmsConnectionsTable(error)) return { rows: [], schemaReady: false };
+    throw new Error(error.message);
+  }
+
+  return {
+    rows: ((data || []) as OrganizationKmsConnection[]).map((connection) => ({
+      ...connection,
+      trust_policy: buildAwsKmsTrustPolicy(env, connection.external_id),
+    })),
+    schemaReady: true,
+  };
+}
+
+async function fetchOrganizationProxyAccessPosture(
+  env: EnterpriseControlPlaneEnv,
+  organizationId: string,
+): Promise<{
+  summary: Record<string, unknown> | null;
+  checklist: ReturnType<typeof proxyAccessChecklist>;
+  schemaReady: boolean;
+}> {
+  const result = await readOrganizationProxyAccessPolicy(env, organizationId);
+  return {
+    summary: result.policy ? proxyAccessCustomerSummary(result.policy) : null,
+    checklist: proxyAccessChecklist(result.policy),
+    schemaReady: result.schemaReady,
+  };
 }
 
 async function findConfiguredSsoOrganizationByDomain(
@@ -409,29 +519,141 @@ export async function handleEnterpriseOrganizationRoutes(
         .is('revoked_at', null),
     ]);
 
-    if (!organization) {
+    const organizationRow = Array.isArray(organization) ? organization[0] : organization;
+    if (!organizationRow) {
       return Response.json({ error: 'Organization not found' }, { status: 404 });
     }
 
-    const ssoSettings = organization.kind === 'team'
+    const ssoSettings = organizationRow.kind === 'team'
       ? await fetchOrganizationSsoSettings(env, activeMembership.organization_id)
       : null;
 
-    const ssoStatus = organization.kind === 'team'
+    const ssoStatus = organizationRow.kind === 'team'
       ? await fetchOrganizationSsoStatus(env, activeMembership.organization_id, ssoSettings)
       : null;
+    const kmsVisible = canViewOrganizationKms(activeMembership.organization_role);
+    let kmsPayload: Awaited<ReturnType<typeof fetchOrganizationKmsConnections>> = {
+      rows: [],
+      schemaReady: true,
+    };
+    if (organizationRow.kind === 'team' && kmsVisible) {
+      try {
+        kmsPayload = await fetchOrganizationKmsConnections(env, activeMembership.organization_id);
+      } catch (error) {
+        return Response.json({
+          error: `Failed to load organization KMS connections: ${error instanceof Error ? error.message : 'unknown error'}`,
+        }, { status: 500 });
+      }
+    }
+    const proxyAccessVisible = canViewOrganizationProxyAccess(activeMembership.organization_role);
+    let proxyAccessPayload: Awaited<ReturnType<typeof fetchOrganizationProxyAccessPosture>> = {
+      summary: null,
+      checklist: [],
+      schemaReady: true,
+    };
+    if (organizationRow.kind === 'team' && proxyAccessVisible) {
+      proxyAccessPayload = await fetchOrganizationProxyAccessPosture(env, activeMembership.organization_id);
+    }
 
     return Response.json({
       organization: {
-        ...organization,
+        ...organizationRow,
         role: activeMembership.organization_role,
         member_count: memberCount || 0,
         project_count: projectCount || 0,
-        can_archive: activeMembership.organization_role === 'owner' && organization.kind === 'team',
-        can_transfer_ownership: activeMembership.organization_role === 'owner' && organization.kind === 'team',
+        can_archive: activeMembership.organization_role === 'owner' && organizationRow.kind === 'team',
+        can_transfer_ownership: activeMembership.organization_role === 'owner' && organizationRow.kind === 'team',
+        proxy_access_summary: proxyAccessVisible ? proxyAccessPayload.summary : null,
+        proxy_access_checklist: proxyAccessVisible ? proxyAccessPayload.checklist : [],
       },
       sso_settings: ssoSettings,
       sso_status: ssoStatus,
+      kms_connections_visible: kmsVisible,
+      kms_connections_schema_ready: kmsPayload.schemaReady,
+      kms_connections: kmsPayload.rows,
+      proxy_access_visible: proxyAccessVisible,
+      proxy_access_policy_schema_ready: proxyAccessPayload.schemaReady,
+      proxy_access_summary: proxyAccessVisible ? proxyAccessPayload.summary : null,
+      proxy_access_checklist: proxyAccessVisible ? proxyAccessPayload.checklist : [],
+    });
+  }
+
+  if (
+    supabaseConfigured &&
+    request.method === 'GET' &&
+    pathSegments.length === 3 &&
+    pathSegments[0] === 'orgs' &&
+    pathSegments[1] === 'current' &&
+    pathSegments[2] === 'kms-connections'
+  ) {
+    const auth = await authenticateUser(request, env);
+    if (!auth) {
+      return Response.json(
+        { error: 'Not authenticated. Sign in to VaultProof Enterprise.' },
+        { status: 401 },
+      );
+    }
+
+    const activeMembership = await resolveOrganizationMembership(request, env, auth.userId);
+    if (!activeMembership) {
+      return Response.json({ error: 'Organization not found' }, { status: 404 });
+    }
+    if (activeMembership.organization_kind !== 'team') {
+      return Response.json({ error: 'KMS connections are only available on shared team organizations' }, { status: 400 });
+    }
+    if (!canViewOrganizationKms(activeMembership.organization_role)) {
+      return Response.json({ error: 'Insufficient organization permissions' }, { status: 403 });
+    }
+
+    try {
+      const kmsPayload = await fetchOrganizationKmsConnections(env, activeMembership.organization_id);
+      return Response.json({
+        kms_connections_schema_ready: kmsPayload.schemaReady,
+        kms_connections: kmsPayload.rows,
+      });
+    } catch (error) {
+      return Response.json({
+        error: `Failed to load organization KMS connections: ${error instanceof Error ? error.message : 'unknown error'}`,
+      }, { status: 500 });
+    }
+  }
+
+  if (
+    supabaseConfigured &&
+    request.method === 'GET' &&
+    pathSegments.length === 3 &&
+    pathSegments[0] === 'orgs' &&
+    pathSegments[1] === 'current' &&
+    pathSegments[2] === 'proxy-access-policy'
+  ) {
+    const auth = await authenticateUser(request, env);
+    if (!auth) {
+      return Response.json(
+        { error: 'Not authenticated. Sign in to VaultProof Enterprise.' },
+        { status: 401 },
+      );
+    }
+
+    const activeMembership = await resolveOrganizationMembership(request, env, auth.userId);
+    if (!activeMembership) {
+      return Response.json({ error: 'Organization not found' }, { status: 404 });
+    }
+    if (activeMembership.organization_kind !== 'team') {
+      return Response.json({ error: 'Proxy access posture is only available on shared team organizations' }, { status: 400 });
+    }
+    if (!canViewOrganizationProxyAccess(activeMembership.organization_role)) {
+      return Response.json({ error: 'Insufficient organization permissions' }, { status: 403 });
+    }
+
+    const proxyAccessPayload = await fetchOrganizationProxyAccessPosture(env, activeMembership.organization_id);
+    return Response.json({
+      proxy_access_policy_schema_ready: proxyAccessPayload.schemaReady,
+      proxy_access_summary: proxyAccessPayload.summary,
+      proxy_access_checklist: proxyAccessPayload.checklist,
+      guardrails: [
+        'This posture is customer-safe and omits raw proxy secrets, provider keys, staff notes, and raw egress CIDR values.',
+        'The vp-proj-* value is a project identifier. Tier controls decide whether it is enough to use the proxy.',
+      ],
     });
   }
 

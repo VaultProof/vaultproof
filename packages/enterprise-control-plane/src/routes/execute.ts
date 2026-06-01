@@ -15,6 +15,11 @@ import {
   hasRequiredProjectRole,
 } from '../auth.js';
 import { writeGovernanceAuditEvent } from '../audit.js';
+import {
+  enforceProxyAccessPolicy,
+  readOrganizationProxyAccessPolicy,
+  type OrganizationProxyAccessPolicyRow,
+} from '../proxy-access-policy.js';
 import { getSupabase } from '../supabase.js';
 
 interface ExecuteBody {
@@ -433,21 +438,35 @@ function verifyEnterpriseRuntimeToken(
   };
 }
 
-function getSourceIp(request: Request, env: EnterpriseControlPlaneEnv): string | null {
+function hasTrustedEdgeFactSecret(request: Request, env: EnterpriseControlPlaneEnv): boolean {
   const expectedSecret = env.trustedSourceIpHeaderSecret?.trim();
-  if (!expectedSecret) return null;
+  if (!expectedSecret) return false;
 
   const actualSecret = firstHeader(request, [
     'x-vaultproof-source-ip-secret',
     'x-vaultproof-client-ip-secret',
   ]);
-  if (!actualSecret || !constantTimeEquals(actualSecret, expectedSecret)) return null;
+  return Boolean(actualSecret && constantTimeEquals(actualSecret, expectedSecret));
+}
+
+function getSourceIp(request: Request, env: EnterpriseControlPlaneEnv): string | null {
+  if (!hasTrustedEdgeFactSecret(request, env)) return null;
 
   const sourceIp = firstHeader(request, [
     'x-vaultproof-source-ip',
     'x-vaultproof-client-ip',
   ]);
   return sourceIp?.split(',')[0]?.trim() || null;
+}
+
+function hasVerifiedPrivateConnectivity(request: Request, env: EnterpriseControlPlaneEnv): boolean {
+  if (!hasTrustedEdgeFactSecret(request, env)) return false;
+  const value = firstHeader(request, [
+    'x-vaultproof-private-connectivity',
+    'x-vaultproof-private-link',
+    'x-vaultproof-private-service-connect',
+  ]);
+  return ['1', 'true', 'yes', 'private', 'verified'].includes(String(value || '').trim().toLowerCase());
 }
 
 function normalizeThumbprint(value: string | null): string | null {
@@ -1416,6 +1435,63 @@ async function auditExecutionRateLimited(
   });
 }
 
+async function maybeAutoFreezeProxyAccess(
+  env: EnterpriseControlPlaneEnv,
+  project: ExecuteProjectContext,
+  actor: ExecuteActor,
+  policy: OrganizationProxyAccessPolicyRow | null,
+  reason: string,
+  metadata: Record<string, unknown>,
+): Promise<void> {
+  if (
+    !project.organization_id
+    || !policy
+    || policy.freeze_state === 'frozen'
+    || policy.enforcement_mode !== 'enforce'
+    || policy.anomaly_auto_freeze_enabled !== true
+  ) {
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const freezeReason = `Auto-freeze after proxy access denial: ${reason}`.slice(0, 1000);
+  try {
+    const { error } = await getSupabase(env)
+      .from('organization_proxy_access_policies')
+      .update({
+        freeze_state: 'frozen',
+        freeze_reason: freezeReason,
+        frozen_at: now,
+        updated_at: now,
+      })
+      .eq('organization_id', project.organization_id);
+    if (error) {
+      console.warn(`proxy access auto-freeze skipped: ${error.message}`);
+      return;
+    }
+  } catch (error) {
+    console.warn(`proxy access auto-freeze failed: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+
+  await writeGovernanceAuditEvent(env, {
+    organization_id: project.organization_id,
+    project_id: project.id,
+    actor_user_id: actor.userId,
+    actor_email: actor.email,
+    event_type: 'enterprise_proxy_access_anomaly_detected',
+    target_type: 'organization_proxy_access_policy',
+    target_id: project.organization_id,
+    description: freezeReason,
+    metadata: {
+      ...metadata,
+      auto_freeze: true,
+      freeze_state: 'frozen',
+      frozen_at: now,
+    },
+  });
+}
+
 export async function handleEnterpriseExecuteRoutes(
   request: Request,
   env: EnterpriseControlPlaneEnv,
@@ -1535,6 +1611,54 @@ export async function handleEnterpriseExecuteRoutes(
   });
 
   const callerLock = await buildCallerLock(request, env);
+  const proxyPolicyResult = await readOrganizationProxyAccessPolicy(env, project.organization_id);
+  const proxyPolicyEnforcement = enforceProxyAccessPolicy({
+    policy: proxyPolicyResult.policy,
+    callerLock,
+    projectCallerLockPolicy: project.caller_lock_policy || null,
+    privateConnectivityVerified: hasVerifiedPrivateConnectivity(request, env),
+  });
+  const proxyAccessAuditMetadata = {
+    proxy_access_policy: {
+      ...proxyPolicyEnforcement.metadata,
+      schema_ready: proxyPolicyResult.schemaReady,
+    },
+  };
+  if (proxyPolicyEnforcement.blockingError) {
+    await maybeAutoFreezeProxyAccess(
+      env,
+      project,
+      actor,
+      proxyPolicyResult.policy,
+      proxyPolicyEnforcement.blockingError,
+      {
+        policy_scope: 'organization_proxy_access',
+        provider,
+        slug,
+        method,
+        upstream_host: getUpstreamHost(upstreamBaseUrl),
+        upstream_path: upstreamPath,
+        ...protectedSecret,
+        ...authAuditMetadata,
+        ...apiInterfaceAuditMetadata,
+        ...proxyAccessAuditMetadata,
+      },
+    );
+    await auditCallerLockDenied(env, project, actor, proxyPolicyEnforcement.blockingError, callerLock, {
+      policy_scope: 'organization_proxy_access',
+      provider,
+      slug,
+      method,
+      upstream_host: getUpstreamHost(upstreamBaseUrl),
+      upstream_path: upstreamPath,
+      ...protectedSecret,
+      ...authAuditMetadata,
+      ...apiInterfaceAuditMetadata,
+      ...proxyAccessAuditMetadata,
+    });
+    return Response.json({ error: proxyPolicyEnforcement.blockingError }, { status: 403 });
+  }
+
   const lockError = enforceOriginLock(project, callerLock) || enforceCallerLockPolicy(project, callerLock);
   if (lockError) {
     await auditCallerLockDenied(env, project, actor, lockError, callerLock, {
@@ -1544,6 +1668,7 @@ export async function handleEnterpriseExecuteRoutes(
       ...protectedSecret,
       ...authAuditMetadata,
       ...apiInterfaceAuditMetadata,
+      ...proxyAccessAuditMetadata,
     });
     return Response.json({ error: lockError }, { status: 403 });
   }
@@ -1633,6 +1758,9 @@ export async function handleEnterpriseExecuteRoutes(
   }
 
   const projectPolicy = getCallerLockPolicy(project);
+  if (!projectPolicy.rate_limit_per_minute && proxyPolicyResult.policy?.default_rate_limit_per_minute) {
+    projectPolicy.rate_limit_per_minute = proxyPolicyResult.policy.default_rate_limit_per_minute;
+  }
   const emailPolicyContext = protectedSecret.protected_secret_kind === 'email_api_key'
     ? buildEmailPolicyContext(parsedBody.value.body_base64)
     : null;
@@ -1770,6 +1898,7 @@ export async function handleEnterpriseExecuteRoutes(
           ...protectedSecret,
           ...authAuditMetadata,
           ...apiInterfaceAuditMetadata,
+          ...proxyAccessAuditMetadata,
           ...buildExecutionAuditMetadata(executionRequest, 202, dryRunData),
           ...emailPolicyMetadata,
         },
@@ -1819,6 +1948,7 @@ export async function handleEnterpriseExecuteRoutes(
         ...protectedSecret,
         ...authAuditMetadata,
         ...apiInterfaceAuditMetadata,
+        ...proxyAccessAuditMetadata,
         ...buildExecutionAuditMetadata(executionRequest, response.status, responseData),
         ...emailPolicyMetadata,
       },
