@@ -1289,21 +1289,6 @@ html body.scanner-app .sidebar-nav-item {
   transform: rotate(-18deg) !important;
 }
 
-.sidebar-icon-changelog::before {
-  width: 17px !important;
-  height: 17px !important;
-  border: 2px solid currentColor !important;
-  border-radius: 50% !important;
-}
-
-.sidebar-icon-changelog::after {
-  width: 6px !important;
-  height: 7px !important;
-  border-left: 2px solid currentColor !important;
-  border-bottom: 2px solid currentColor !important;
-  transform: translate(2px, -1px) !important;
-}
-
 .sidebar-icon-support::before {
   width: 16px !important;
   height: 13px !important;

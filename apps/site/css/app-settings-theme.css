@@ -377,3 +377,445 @@ button,
   border-radius: var(--vp-section-radius) !important;
   overflow: hidden;
 }
+
+.topbar-logo::before {
+  content: none !important;
+}
+
+.topbar-logo,
+.topbar-logo:hover,
+.topbar-logo-name,
+.sidebar-logo,
+.sidebar-logo:hover {
+  text-decoration: none !important;
+}
+
+.topbar-logo-mark {
+  width: 30px !important;
+  height: 30px !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(0, 229, 255, 0.58) !important;
+  border-radius: 10px !important;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(0, 229, 255, 0.16), transparent 62%),
+    rgba(0, 229, 255, 0.06) !important;
+  box-shadow: 0 0 22px rgba(0, 229, 255, 0.16) !important;
+}
+
+.topbar-logo-img {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: cover !important;
+  transform: scale(1.42);
+  transform-origin: center;
+}
+
+.topbar-logo-fallback {
+  display: none;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.topbar-logo-name {
+  letter-spacing: 0.32em !important;
+}
+
+.topbar-menu,
+.sidebar-overlay {
+  display: none !important;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.layout {
+  display: grid !important;
+  grid-template-columns: var(--vp-sidebar-expanded, 260px) minmax(0, 1fr) !important;
+  column-gap: var(--vp-layout-gap, 16px) !important;
+  row-gap: var(--vp-layout-gap, 16px) !important;
+  padding-top: var(--vp-layout-gap, 16px) !important;
+  align-items: start !important;
+  min-height: calc(100vh - var(--vp-topbar-height, 64px) - var(--vp-layout-gap, 16px) - (var(--vp-shell-inset, 12px) * 2)) !important;
+  background: transparent !important;
+}
+
+#sidebar.sidebar.enterprise-app-sidebar {
+  position: sticky !important;
+  top: calc(var(--vp-shell-inset, 12px) + var(--vp-topbar-height, 64px) + var(--vp-layout-gap, 16px)) !important;
+  width: var(--vp-sidebar-expanded, 260px) !important;
+  height: calc(100vh - var(--vp-topbar-height, 64px) - var(--vp-layout-gap, 16px) - (var(--vp-shell-inset, 12px) * 2)) !important;
+  min-height: calc(100vh - var(--vp-topbar-height, 64px) - var(--vp-layout-gap, 16px) - (var(--vp-shell-inset, 12px) * 2)) !important;
+  padding: 20px 16px !important;
+  border: 1px solid rgba(148, 163, 184, 0.14) !important;
+  border-radius: var(--vp-section-radius, 16px) !important;
+  background:
+    linear-gradient(180deg, rgba(8, 13, 22, 0.98), rgba(7, 10, 16, 0.94)),
+    radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.12), transparent 22rem) !important;
+  color: var(--vp-sidebar-text-color) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  box-shadow: 18px 0 48px rgba(0, 0, 0, 0.18) !important;
+  overflow: hidden !important;
+  transform: none !important;
+}
+
+#sidebar.sidebar.enterprise-app-sidebar .sidebar-group {
+  display: grid !important;
+  gap: 6px !important;
+  margin-bottom: 18px !important;
+}
+
+#sidebar.sidebar.enterprise-app-sidebar .sidebar-head,
+#sidebar.sidebar.enterprise-app-sidebar .sidebar-item,
+#sidebar.sidebar.enterprise-app-sidebar .sidebar-label,
+#sidebar.sidebar.enterprise-app-sidebar .sidebar-logo-text,
+#sidebar.sidebar.enterprise-app-sidebar .sidebar-alert-count,
+#sidebar.sidebar.enterprise-app-sidebar .sidebar-update-card,
+#sidebar.sidebar.enterprise-app-sidebar .sidebar-update-card span {
+  color: var(--vp-sidebar-text-color) !important;
+  font-size: var(--vp-sidebar-text-size, 12px) !important;
+  font-weight: var(--vp-sidebar-text-weight, 500) !important;
+}
+
+#sidebar.sidebar.enterprise-app-sidebar .sidebar-item {
+  min-height: 36px !important;
+  padding: 7px 10px !important;
+  border-radius: 8px !important;
+}
+
+.main.settings-main {
+  min-width: 0 !important;
+  min-height: calc(100vh - var(--vp-topbar-height, 64px) - var(--vp-layout-gap, 16px) - (var(--vp-shell-inset, 12px) * 2)) !important;
+  padding: 26px 28px 36px !important;
+  border: 1px solid rgba(148, 163, 184, 0.14) !important;
+  border-radius: var(--vp-section-radius, 16px) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.040), rgba(255, 255, 255, 0.018)),
+    rgba(6, 10, 18, 0.42) !important;
+  color: var(--vp-dashboard-text-color) !important;
+  font-family: var(--body) !important;
+  font-weight: var(--vp-sidebar-text-weight) !important;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.16) !important;
+  overflow: hidden !important;
+}
+
+.settings-main > * + *,
+.settings-wrap > * + * {
+  margin-top: var(--vp-layout-gap, 16px) !important;
+}
+
+.settings-wrap {
+  width: 100% !important;
+  max-width: 1040px !important;
+  display: grid !important;
+  gap: var(--vp-layout-gap, 16px) !important;
+}
+
+.settings-wrap.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0 !important;
+}
+
+.settings-wrap > div:first-child {
+  margin-bottom: 0 !important;
+}
+
+.settings-wrap h1 {
+  color: var(--text) !important;
+  font-family: var(--display) !important;
+  font-size: clamp(28px, 3.2vw, 42px) !important;
+  font-weight: 560 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+}
+
+.settings-wrap h1 + p {
+  max-width: 760px !important;
+  margin-top: 8px !important;
+  color: var(--vp-dashboard-muted-color) !important;
+  font-size: 15px !important;
+  font-weight: var(--vp-sidebar-text-weight) !important;
+}
+
+html body .settings-wrap > section,
+html body .settings-wrap > section.bg-\[\#111118\],
+html body .settings-wrap > section.bg-\[\#0a0a0f\],
+html body .settings-wrap > section.border-red-900\/50 {
+  padding: 22px !important;
+  border: 1px solid rgba(148, 163, 184, 0.22) !important;
+  border-radius: var(--vp-card-radius, 14px) !important;
+  background: var(--settings-card) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.24) !important;
+}
+
+.settings-wrap > section :where(.rounded-2xl, .rounded-xl, .rounded-lg) {
+  border-radius: 8px !important;
+}
+
+.settings-wrap .flex {
+  display: flex !important;
+}
+
+.settings-wrap .inline-flex {
+  display: inline-flex !important;
+}
+
+.settings-wrap .grid {
+  display: grid !important;
+}
+
+.settings-wrap .items-center {
+  align-items: center !important;
+}
+
+.settings-wrap .justify-between {
+  justify-content: space-between !important;
+}
+
+.settings-wrap .text-center {
+  text-align: center !important;
+}
+
+.settings-wrap .grid-cols-1 {
+  grid-template-columns: 1fr !important;
+}
+
+.settings-wrap .grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.settings-wrap .gap-2 {
+  gap: 8px !important;
+}
+
+.settings-wrap .gap-3 {
+  gap: 12px !important;
+}
+
+.settings-wrap .gap-4 {
+  gap: 16px !important;
+}
+
+.settings-wrap .space-y-1 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 4px !important;
+}
+
+.settings-wrap .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 12px !important;
+}
+
+.settings-wrap .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 16px !important;
+}
+
+.settings-wrap .space-y-5 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 20px !important;
+}
+
+.settings-wrap .w-4 {
+  width: 16px !important;
+}
+
+.settings-wrap .h-4 {
+  height: 16px !important;
+}
+
+.settings-wrap .w-5 {
+  width: 20px !important;
+}
+
+.settings-wrap .h-5 {
+  height: 20px !important;
+}
+
+.settings-wrap .w-7 {
+  width: 28px !important;
+}
+
+.settings-wrap .h-7 {
+  height: 28px !important;
+}
+
+.settings-wrap .w-12 {
+  width: 48px !important;
+}
+
+.settings-wrap .h-6 {
+  height: 24px !important;
+}
+
+.settings-wrap .w-14 {
+  width: 56px !important;
+}
+
+.settings-wrap .h-14 {
+  height: 56px !important;
+}
+
+.settings-wrap .w-full {
+  width: 100% !important;
+}
+
+.settings-wrap svg {
+  flex: 0 0 auto !important;
+}
+
+.settings-wrap :where(button, a, input, select, textarea) {
+  border-radius: 8px !important;
+}
+
+#settingsAnnualToggle,
+#settingsAnnualDot,
+.settings-wrap .rounded-full {
+  border-radius: 999px !important;
+}
+
+html body .settings-wrap :where(input, select, textarea),
+html body .settings-wrap input.bg-\[\#111118\],
+html body .settings-wrap input.bg-\[\#0a0a0f\],
+html body .settings-wrap select.bg-\[\#111118\],
+html body .settings-wrap select.bg-\[\#0a0a0f\],
+html body .settings-wrap textarea.bg-\[\#111118\],
+html body .settings-wrap textarea.bg-\[\#0a0a0f\],
+html body #killSwitchModal :where(input, select, textarea),
+html body #killSwitchModal input.bg-\[\#111118\],
+html body #killSwitchModal input.bg-\[\#0a0a0f\] {
+  background-color: rgba(5, 10, 18, 0.72) !important;
+  background-image: none !important;
+  color: var(--vp-dashboard-text-color) !important;
+  color-scheme: dark;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  outline: none !important;
+  box-shadow: inset 0 0 0 999px rgba(5, 10, 18, 0.72) !important;
+  -webkit-text-fill-color: var(--vp-dashboard-text-color) !important;
+}
+
+html body .settings-wrap :where(input, select, textarea) {
+  width: 100% !important;
+  min-height: 38px !important;
+  padding: 0 12px !important;
+  font: inherit !important;
+}
+
+html body .settings-wrap textarea {
+  min-height: 92px !important;
+  padding: 10px 12px !important;
+}
+
+html body .settings-wrap :where(button, a) {
+  min-height: 36px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 0 12px !important;
+}
+
+@media (min-width: 640px) {
+  .settings-wrap .sm\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .settings-wrap .grid-cols-2,
+  .settings-wrap .sm\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+html body .settings-wrap :where(input, textarea)::placeholder,
+html body #killSwitchModal :where(input, textarea)::placeholder {
+  color: var(--vp-dashboard-soft-color) !important;
+}
+
+html body .settings-wrap :where(input, select, textarea):focus,
+html body #killSwitchModal :where(input, select, textarea):focus {
+  border-color: rgba(0, 229, 255, 0.55) !important;
+  box-shadow:
+    inset 0 0 0 999px rgba(5, 10, 18, 0.72),
+    0 0 0 3px rgba(0, 229, 255, 0.12) !important;
+}
+
+@media (max-width: 1180px) {
+  .layout {
+    grid-template-columns: var(--vp-sidebar-expanded, 260px) minmax(0, 1fr) !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1180px) {
+  #sidebar.sidebar,
+  #sidebar.sidebar:hover,
+  #sidebar.sidebar:focus-within {
+    position: sticky !important;
+    top: calc(var(--vp-shell-inset, 12px) + var(--vp-topbar-height, 64px) + var(--vp-layout-gap, 16px)) !important;
+    width: var(--vp-sidebar-expanded, 260px) !important;
+    height: calc(100vh - var(--vp-topbar-height, 64px) - var(--vp-layout-gap, 16px) - (var(--vp-shell-inset, 12px) * 2)) !important;
+    min-height: calc(100vh - var(--vp-topbar-height, 64px) - var(--vp-layout-gap, 16px) - (var(--vp-shell-inset, 12px) * 2)) !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .layout {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  #sidebar.sidebar,
+  #sidebar.sidebar:hover,
+  #sidebar.sidebar:focus-within {
+    position: static !important;
+    display: flex !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    padding: 10px 16px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    transform: none !important;
+  }
+
+  .sidebar-logo,
+  .sidebar-head {
+    display: none !important;
+  }
+
+  .sidebar-group {
+    display: flex !important;
+    gap: 8px !important;
+    margin: 0 8px 0 0 !important;
+  }
+
+  .enterprise-app-sidebar .sidebar-item {
+    flex: 0 0 auto !important;
+    min-width: max-content !important;
+  }
+
+  .sidebar-update-card {
+    width: auto !important;
+    min-height: 36px !important;
+    margin: 0 8px 0 0 !important;
+    padding: 7px 10px !important;
+  }
+
+  .sidebar-update-text {
+    display: none !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .main.settings-main {
+    padding: 20px 16px 32px !important;
+  }
+
+  .settings-wrap > section {
+    padding: 18px !important;
+  }
+}

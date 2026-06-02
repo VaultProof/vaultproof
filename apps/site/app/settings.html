@@ -294,16 +294,18 @@
   <div class="page">
 
   <div class="topbar">
-    <button id="menuBtn" class="topbar-menu" type="button" aria-label="Open sidebar">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-    </button>
-    <div class="topbar-logo">
-      <span class="topbar-logo-name">vaultproof</span>
-    </div>
+    <button id="menuBtn" class="topbar-menu" type="button" aria-label="Open navigation" aria-hidden="true" tabindex="-1" hidden></button>
+    <a href="/app/" class="topbar-logo">
+      <span class="topbar-logo-mark">
+        <img class="topbar-logo-img" src="/og-image2.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <span class="topbar-logo-fallback">VP</span>
+      </span>
+      <span class="topbar-logo-name">VaultProof</span>
+    </a>
     <span class="topbar-sep">/</span>
-    <span>dashboard</span>
+    <span>Dashboard</span>
     <span class="topbar-sep">/</span>
-    <span class="topbar-crumb">settings</span>
+    <span class="topbar-crumb">Settings</span>
 
     <div class="topbar-session">
       <span class="topbar-email" id="user-email">loading...</span>
@@ -315,37 +317,48 @@
   <div id="sidebarOverlay" class="sidebar-overlay hidden"></div>
 
   <div class="layout">
-    <aside id="sidebar" class="sidebar">
+    <aside id="sidebar" class="sidebar enterprise-app-sidebar" aria-label="Dashboard navigation">
+      <a href="/app/" class="sidebar-logo" aria-label="VaultProof dashboard">
+        <span class="sidebar-logo-mark">
+          <img class="sidebar-logo-img" src="/og-image2.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+          <span class="sidebar-logo-fallback">VP</span>
+        </span>
+        <span class="sidebar-logo-text">VaultProof</span>
+      </a>
       <div class="sidebar-group">
-        <div class="sidebar-head">overview</div>
-        <a href="/app/" class="sidebar-item">projects</a>
-        <a href="/app/activity" class="sidebar-item">activity</a>
-        <a href="/app/alerts" class="sidebar-item">alerts</a>
+        <div class="sidebar-head">Overview</div>
+        <a href="/app/" class="sidebar-item" title="Dashboard Overview" data-tooltip="Dashboard Overview"><span class="sidebar-icon sidebar-icon-dashboard" aria-hidden="true"></span><span class="sidebar-label">Dashboard Overview</span></a>
+        <a href="/app/activity" class="sidebar-item" title="Runtime Activity" data-tooltip="Runtime Activity"><span class="sidebar-icon sidebar-icon-activity" aria-hidden="true"></span><span class="sidebar-label">Runtime Activity</span></a>
+        <a href="/app/alerts" class="sidebar-item" title="Security Alerts" data-tooltip="Security Alerts"><span class="sidebar-icon sidebar-icon-alerts" aria-hidden="true"></span><span class="sidebar-label">Security Alerts <span class="sidebar-alert-count" id="sidebarAlertsCount">0</span></span></a>
       </div>
       <div class="sidebar-group">
-        <div class="sidebar-head">vault</div>
-        <a href="/app/keys" class="sidebar-item">keys</a>
-        <a href="/app/settings" class="sidebar-item active">settings</a>
-        <a href="/app/plans" class="sidebar-item">plans</a>
+        <div class="sidebar-head">Vault</div>
+        <a href="/app/keys" class="sidebar-item" title="API Key Vault" data-tooltip="API Key Vault"><span class="sidebar-icon sidebar-icon-key" aria-hidden="true"></span><span class="sidebar-label">API Key Vault</span></a>
+        <a href="/app/settings" class="sidebar-item active" title="Security Settings" data-tooltip="Security Settings"><span class="sidebar-icon sidebar-icon-settings" aria-hidden="true"></span><span class="sidebar-label">Security Settings</span></a>
+        <a href="/app/plans" class="sidebar-item" title="Billing Plans" data-tooltip="Billing Plans"><span class="sidebar-icon sidebar-icon-plans" aria-hidden="true"></span><span class="sidebar-label">Billing Plans</span></a>
       </div>
       <div class="sidebar-group">
-        <div class="sidebar-head">scanner</div>
-        <a href="/app/scanner" class="sidebar-item">repos</a>
+        <div class="sidebar-head">Scanner</div>
+        <a href="/app/scanner" class="sidebar-item" title="Repository Scanner" data-tooltip="Repository Scanner"><span class="sidebar-icon sidebar-icon-scanner" aria-hidden="true"></span><span class="sidebar-label">Repository Scanner</span></a>
       </div>
       <div class="sidebar-group">
-        <div class="sidebar-head">help</div>
-        <a href="/docs" class="sidebar-item">docs</a>
-        <a href="#" class="sidebar-item">changelog</a>
-        <a href="mailto:hello@vaultproof.dev" class="sidebar-item">support</a>
+        <div class="sidebar-head">Help</div>
+        <a href="/docs" class="sidebar-item" title="Documentation" data-tooltip="Documentation"><span class="sidebar-icon sidebar-icon-docs" aria-hidden="true"></span><span class="sidebar-label">Documentation</span></a>
+        <a href="mailto:hello@vaultproof.dev" class="sidebar-item" title="Support" data-tooltip="Support"><span class="sidebar-icon sidebar-icon-support" aria-hidden="true"></span><span class="sidebar-label">Support</span></a>
       </div>
-      <div class="usage-box">
+      <a href="/app/plans" class="sidebar-update-card" title="New release: Runtime Key Shield" data-tooltip="New release: Runtime Key Shield">
+        <span class="sidebar-update-icon" aria-hidden="true"></span>
+        <span class="sidebar-update-copy">
+          <span class="sidebar-update-kicker">Update</span>
+          <span class="sidebar-update-title">Runtime Key Shield</span>
+          <span class="sidebar-update-text">Private beta rollout notes</span>
+        </span>
+      </a>
+      <div class="sidebar-compat-hooks" hidden>
         <div class="usage-label" id="usagePlanLabel">plan loading</div>
         <div class="usage-row"><span id="usageMetricLabel">all calls</span><span id="usageMetricValue">—</span></div>
         <div class="usage-bar-track"><div class="usage-bar-fill" id="usageBarFill"></div></div>
         <div class="usage-reset" id="usageMetricNote">loading…</div>
-      </div>
-
-      <div class="sidebar-bottom">
         <div class="sidebar-user-info" id="sidebarEmail"></div>
         <button id="logoutBtn" type="button" class="logout-btn">sign out</button>
       </div>

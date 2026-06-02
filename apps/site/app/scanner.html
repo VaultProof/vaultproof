@@ -349,6 +349,7 @@
   <!-- No Supabase SDK needed — scanner uses localStorage token only -->
   <link rel="stylesheet" href="/css/site-theme.css">
   <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260530a">
+  <link rel="stylesheet" href="/css/app-scanner-theme.css?v=20260530a">
 </head>
 <body class="scanner-app text-gray-100 min-h-screen flex">
 
@@ -356,39 +357,54 @@
   <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden"></div>
 
   <!-- Left Sidebar -->
-  <aside id="sidebar" class="fixed top-0 left-0 h-full bg-card border-r border-border z-50 flex flex-col -translate-x-full lg:translate-x-0">
-    <nav class="flex-1 px-2 py-5 space-y-0.5 overflow-y-auto">
+  <aside id="sidebar" class="sidebar enterprise-app-sidebar" aria-label="Dashboard navigation">
+    <a href="/app/" class="sidebar-logo" aria-label="VaultProof dashboard">
+      <span class="sidebar-logo-mark">
+        <img class="sidebar-logo-img" src="/og-image2.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <span class="sidebar-logo-fallback">VP</span>
+      </span>
+      <span class="sidebar-logo-text">VaultProof</span>
+    </a>
+    <nav class="scanner-sidebar-nav">
       <div class="sidebar-group">
-        <div class="sidebar-head">overview</div>
-        <a href="/app/" class="sidebar-nav-item"><span class="sidebar-label">projects</span></a>
-        <a href="/app/activity" class="sidebar-nav-item"><span class="sidebar-label">activity</span></a>
-        <a href="/app/alerts" class="sidebar-nav-item"><span class="sidebar-label">alerts</span></a>
+        <div class="sidebar-head">Overview</div>
+        <a href="/app/" class="sidebar-item" title="Dashboard Overview" data-tooltip="Dashboard Overview"><span class="sidebar-icon sidebar-icon-dashboard" aria-hidden="true"></span><span class="sidebar-label">Dashboard Overview</span></a>
+        <a href="/app/activity" class="sidebar-item" title="Runtime Activity" data-tooltip="Runtime Activity"><span class="sidebar-icon sidebar-icon-activity" aria-hidden="true"></span><span class="sidebar-label">Runtime Activity</span></a>
+        <a href="/app/alerts" class="sidebar-item" title="Security Alerts" data-tooltip="Security Alerts"><span class="sidebar-icon sidebar-icon-alerts" aria-hidden="true"></span><span class="sidebar-label">Security Alerts <span class="sidebar-alert-count" id="sidebarAlertsCount">0</span></span></a>
       </div>
       <div class="sidebar-group">
-        <div class="sidebar-head">vault</div>
-        <a href="/app/keys" class="sidebar-nav-item"><span class="sidebar-label">keys</span></a>
-        <a href="/app/settings" class="sidebar-nav-item"><span class="sidebar-label">settings</span></a>
-        <a href="/app/plans" class="sidebar-nav-item"><span class="sidebar-label">plans</span></a>
+        <div class="sidebar-head">Vault</div>
+        <a href="/app/keys" class="sidebar-item" title="API Key Vault" data-tooltip="API Key Vault"><span class="sidebar-icon sidebar-icon-key" aria-hidden="true"></span><span class="sidebar-label">API Key Vault</span></a>
+        <a href="/app/settings" class="sidebar-item" title="Security Settings" data-tooltip="Security Settings"><span class="sidebar-icon sidebar-icon-settings" aria-hidden="true"></span><span class="sidebar-label">Security Settings</span></a>
+        <a href="/app/plans" class="sidebar-item" title="Billing Plans" data-tooltip="Billing Plans"><span class="sidebar-icon sidebar-icon-plans" aria-hidden="true"></span><span class="sidebar-label">Billing Plans</span></a>
       </div>
       <div class="sidebar-group">
-        <div class="sidebar-head">scanner</div>
-        <a href="/app/scanner" class="sidebar-nav-item active"><span class="sidebar-label">repos</span></a>
+        <div class="sidebar-head">Scanner</div>
+        <a href="/app/scanner" class="sidebar-item active" title="Repository Scanner" data-tooltip="Repository Scanner"><span class="sidebar-icon sidebar-icon-scanner" aria-hidden="true"></span><span class="sidebar-label">Repository Scanner</span></a>
       </div>
       <div class="sidebar-group">
-        <div class="sidebar-head">help</div>
-        <a href="/docs" class="sidebar-nav-item"><span class="sidebar-label">docs</span></a>
-        <a href="#" class="sidebar-nav-item"><span class="sidebar-label">changelog</span></a>
-        <a href="mailto:hello@vaultproof.dev" class="sidebar-nav-item"><span class="sidebar-label">support</span></a>
+        <div class="sidebar-head">Help</div>
+        <a href="/docs" class="sidebar-item" title="Documentation" data-tooltip="Documentation"><span class="sidebar-icon sidebar-icon-docs" aria-hidden="true"></span><span class="sidebar-label">Documentation</span></a>
+        <a href="mailto:hello@vaultproof.dev" class="sidebar-item" title="Support" data-tooltip="Support"><span class="sidebar-icon sidebar-icon-support" aria-hidden="true"></span><span class="sidebar-label">Support</span></a>
       </div>
+    </nav>
+
+    <a href="/app/plans" class="sidebar-update-card" title="New release: Runtime Key Shield" data-tooltip="New release: Runtime Key Shield">
+      <span class="sidebar-update-icon" aria-hidden="true"></span>
+      <span class="sidebar-update-copy">
+        <span class="sidebar-update-kicker">Update</span>
+        <span class="sidebar-update-title">Runtime Key Shield</span>
+        <span class="sidebar-update-text">Private beta rollout notes</span>
+      </span>
+    </a>
+
+    <div class="sidebar-compat-hooks" hidden>
       <div class="usage-box">
         <div class="usage-label">plan loading</div>
         <div class="usage-row"><span>all calls</span><span>—</span></div>
         <div class="usage-bar-track"><div class="usage-bar-fill"></div></div>
         <div class="usage-reset">scanner usage refreshes after each run</div>
       </div>
-    </nav>
-
-    <div class="sidebar-bottom px-3 py-3 border-t border-border flex-shrink-0">
       <div class="sidebar-user-info text-xs text-gray-500 truncate mb-2" id="sidebarEmail"></div>
       <button id="logoutBtn" type="button" class="logout-btn">sign out</button>
     </div>
@@ -431,17 +447,19 @@
   <div id="mainWrapper" class="flex-1 flex flex-col min-h-screen transition-all duration-200 lg:ml-[240px]">
 
     <!-- Top Navbar -->
-    <header class="sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-border h-16 flex items-center px-4 lg:px-8 gap-4">
-      <button id="menuBtn" class="lg:hidden text-gray-400 hover:text-white p-1.5 -ml-1.5">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-      </button>
-      <div class="scanner-topbar-logo">vaultproof</div>
+    <header class="scanner-topbar sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-border h-16 flex items-center px-4 lg:px-8 gap-4">
+      <button id="menuBtn" type="button" class="scanner-menu-btn" aria-label="Open navigation" aria-hidden="true" tabindex="-1" hidden></button>
+      <a href="/app/" class="scanner-topbar-logo">
+        <span class="topbar-logo-mark">
+          <img class="topbar-logo-img" src="/og-image2.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+          <span class="topbar-logo-fallback">VP</span>
+        </span>
+        <span class="topbar-logo-name">VaultProof</span>
+      </a>
       <span class="scanner-topbar-sep">/</span>
-      <span class="scanner-topbar-copy">dashboard</span>
+      <span class="scanner-topbar-copy">Dashboard</span>
       <span class="scanner-topbar-sep">/</span>
-      <span class="scanner-topbar-crumb">repos</span>
+      <span class="scanner-topbar-crumb">Scanner</span>
       <div class="scanner-topbar-session">
         <span class="scanner-topbar-email" id="user-email">loading...</span>
         <div class="scanner-topbar-avatar" id="user-avatar">V</div>
@@ -470,7 +488,7 @@
     </div>
 
     <!-- Content -->
-    <main class="flex-1 p-6 lg:p-8">
+    <main class="scanner-main flex-1 p-6 lg:p-8">
 
       <!-- Scanner -->
       <div id="scannerContent" class="max-w-5xl mx-auto space-y-6">

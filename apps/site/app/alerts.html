@@ -206,27 +206,34 @@
           <span class="sidebar-logo-text">VaultProof</span>
         </a>
         <div class="sidebar-group">
-          <div class="sidebar-head">overview</div>
-          <a href="/app/" class="sidebar-item" title="Dashboard"><span class="sidebar-label">dashboard</span></a>
-          <a href="/app/activity" class="sidebar-item" title="Activity"><span class="sidebar-label">activity</span></a>
-          <a href="/app/alerts" class="sidebar-item active" title="Alerts"><span class="sidebar-label">alerts <span class="sidebar-alert-count" id="sidebarAlertsCount">0</span></span></a>
+          <div class="sidebar-head">Overview</div>
+          <a href="/app/" class="sidebar-item" title="Dashboard Overview" data-tooltip="Dashboard Overview"><span class="sidebar-icon sidebar-icon-dashboard" aria-hidden="true"></span><span class="sidebar-label">Dashboard Overview</span></a>
+          <a href="/app/activity" class="sidebar-item" title="Runtime Activity" data-tooltip="Runtime Activity"><span class="sidebar-icon sidebar-icon-activity" aria-hidden="true"></span><span class="sidebar-label">Runtime Activity</span></a>
+          <a href="/app/alerts" class="sidebar-item active" title="Security Alerts" data-tooltip="Security Alerts"><span class="sidebar-icon sidebar-icon-alerts" aria-hidden="true"></span><span class="sidebar-label">Security Alerts <span class="sidebar-alert-count" id="sidebarAlertsCount">0</span></span></a>
         </div>
         <div class="sidebar-group">
-          <div class="sidebar-head">vault</div>
-          <a href="/app/keys" class="sidebar-item" title="Keys"><span class="sidebar-label">keys</span></a>
-          <a href="/app/settings" class="sidebar-item" title="Settings"><span class="sidebar-label">settings</span></a>
-          <a href="/app/plans" class="sidebar-item" title="Plans"><span class="sidebar-label">plans</span></a>
+          <div class="sidebar-head">Vault</div>
+          <a href="/app/keys" class="sidebar-item" title="API Key Vault" data-tooltip="API Key Vault"><span class="sidebar-icon sidebar-icon-key" aria-hidden="true"></span><span class="sidebar-label">API Key Vault</span></a>
+          <a href="/app/settings" class="sidebar-item" title="Security Settings" data-tooltip="Security Settings"><span class="sidebar-icon sidebar-icon-settings" aria-hidden="true"></span><span class="sidebar-label">Security Settings</span></a>
+          <a href="/app/plans" class="sidebar-item" title="Billing Plans" data-tooltip="Billing Plans"><span class="sidebar-icon sidebar-icon-plans" aria-hidden="true"></span><span class="sidebar-label">Billing Plans</span></a>
         </div>
         <div class="sidebar-group">
-          <div class="sidebar-head">scanner</div>
-          <a href="/app/scanner" class="sidebar-item" title="Repos"><span class="sidebar-label">repos</span></a>
+          <div class="sidebar-head">Scanner</div>
+          <a href="/app/scanner" class="sidebar-item" title="Repository Scanner" data-tooltip="Repository Scanner"><span class="sidebar-icon sidebar-icon-scanner" aria-hidden="true"></span><span class="sidebar-label">Repository Scanner</span></a>
         </div>
         <div class="sidebar-group">
-          <div class="sidebar-head">help</div>
-          <a href="/docs" class="sidebar-item" title="Docs"><span class="sidebar-label">docs</span></a>
-          <a href="#" class="sidebar-item" title="Changelog"><span class="sidebar-label">changelog</span></a>
-          <a href="mailto:hello@vaultproof.dev" class="sidebar-item" title="Support"><span class="sidebar-label">support</span></a>
+          <div class="sidebar-head">Help</div>
+          <a href="/docs" class="sidebar-item" title="Documentation" data-tooltip="Documentation"><span class="sidebar-icon sidebar-icon-docs" aria-hidden="true"></span><span class="sidebar-label">Documentation</span></a>
+          <a href="mailto:hello@vaultproof.dev" class="sidebar-item" title="Support" data-tooltip="Support"><span class="sidebar-icon sidebar-icon-support" aria-hidden="true"></span><span class="sidebar-label">Support</span></a>
         </div>
+        <a href="/app/plans" class="sidebar-update-card" title="New release: Runtime Key Shield" data-tooltip="New release: Runtime Key Shield">
+          <span class="sidebar-update-icon" aria-hidden="true"></span>
+          <span class="sidebar-update-copy">
+            <span class="sidebar-update-kicker">Update</span>
+            <span class="sidebar-update-title">Runtime Key Shield</span>
+            <span class="sidebar-update-text">Private beta rollout notes</span>
+          </span>
+        </a>
       </aside>
 
       <main class="main">
