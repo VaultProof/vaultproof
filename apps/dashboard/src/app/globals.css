@@ -11,8 +11,14 @@
   --text-mid: #3f3f37;
   --text-muted: #525252;
   --text-faint: #8a8a82;
-  --font-display: var(--font-inter-tight), "Inter", system-ui, sans-serif;
-  --font-body: var(--font-inter), system-ui, sans-serif;
+  --dashboard-font: var(--font-inter, ui-sans-serif), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --dashboard-readable-size: 14px;
+  --dashboard-readable-weight: 500;
+  --dashboard-section-gap: 2cm;
+  --dashboard-section-radius: 30px;
+  --dashboard-card-radius: 24px;
+  --font-display: var(--font-inter-tight, "Inter"), system-ui, sans-serif;
+  --font-body: var(--font-inter, system-ui), sans-serif;
   --font-mono: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
 }
 
@@ -21,8 +27,12 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-body);
+  font-family: var(--dashboard-font);
+  font-size: var(--dashboard-readable-size);
+  font-weight: var(--dashboard-readable-weight);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .enterprise-dashboard,
@@ -30,13 +40,32 @@ body {
   letter-spacing: 0 !important;
 }
 
+.enterprise-dashboard {
+  font-family: var(--dashboard-font);
+  font-size: var(--dashboard-readable-size);
+  font-weight: var(--dashboard-readable-weight);
+}
+
 .enterprise-content {
-  --enterprise-ink: #17231d;
-  --enterprise-muted: #56665e;
-  --enterprise-soft: #738078;
+  --enterprise-ink: #101a15;
+  --enterprise-muted: #2b4037;
+  --enterprise-soft: #4b6258;
   --enterprise-line: rgba(32, 48, 39, 0.14);
   --enterprise-panel: #ffffff;
   --enterprise-panel-soft: #fbfcf8;
+  color: var(--enterprise-ink);
+  font-family: var(--dashboard-font);
+  font-size: var(--dashboard-readable-size);
+  font-weight: var(--dashboard-readable-weight);
+  line-height: 1.5;
+}
+
+.enterprise-content :where(p, li, label, td, th, input, select, textarea, button) {
+  font-family: var(--dashboard-font);
+}
+
+.enterprise-content :where(p, li, td, th, label) {
+  font-weight: var(--dashboard-readable-weight);
 }
 
 .enterprise-content [class*="bg-white/["],
@@ -65,6 +94,7 @@ body {
 .enterprise-content .text-slate-400,
 .enterprise-content .text-zinc-500 {
   color: var(--enterprise-muted) !important;
+  font-weight: var(--dashboard-readable-weight) !important;
 }
 
 .enterprise-content .text-slate-500,
@@ -122,4 +152,50 @@ body {
 
 .enterprise-content table {
   color: var(--enterprise-ink);
+}
+
+.dashboard-shell-grid {
+  gap: var(--dashboard-section-gap) !important;
+}
+
+.dashboard-rounded-panel {
+  border-radius: var(--dashboard-section-radius) !important;
+  overflow: hidden;
+}
+
+.dashboard-rounded-panel-inner,
+.enterprise-content :where(section, aside) {
+  border-radius: var(--dashboard-section-radius) !important;
+  overflow: hidden;
+}
+
+.dashboard-rounded-card,
+.enterprise-content :where(.rounded-\[30px\], .rounded-\[28px\], .rounded-\[26px\], .rounded-2xl, .rounded-xl) {
+  border-radius: var(--dashboard-card-radius) !important;
+}
+
+.dashboard-card-grid,
+.dashboard-section-stack > :where(.grid) {
+  gap: var(--dashboard-section-gap) !important;
+}
+
+.dashboard-card-grid {
+  margin-top: var(--dashboard-section-gap) !important;
+}
+
+.dashboard-section-stack {
+  margin-top: var(--dashboard-section-gap) !important;
+}
+
+.dashboard-section-stack > * + * {
+  margin-top: var(--dashboard-section-gap) !important;
+}
+
+.dashboard-section-stack > :where(.space-y-6, .space-y-5, .space-y-4, .space-y-3) {
+  display: grid !important;
+  gap: var(--dashboard-section-gap) !important;
+}
+
+.dashboard-section-stack > :where(.space-y-6, .space-y-5, .space-y-4, .space-y-3) > * {
+  margin-top: 0 !important;
 }

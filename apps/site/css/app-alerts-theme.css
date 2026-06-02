@@ -10,8 +10,8 @@
   --hair: 1px solid var(--hair-color);
   --text: #f7fbff;
   --text-mid: #d9e7ef;
-  --text-muted: rgba(235, 245, 255, 0.68);
-  --text-faint: rgba(235, 245, 255, 0.42);
+  --text-muted: rgba(240, 247, 255, 0.86);
+  --text-faint: rgba(229, 240, 250, 0.68);
   --ok: #22e6a8;
   --warn: #f8c038;
   --danger: #fb7185;
@@ -30,6 +30,10 @@ body {
     linear-gradient(135deg, #070a10 0%, #0b1220 46%, #08111b 100%) !important;
   color: var(--text) !important;
   font-family: var(--body) !important;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
 }
 
 .page {
@@ -402,4 +406,28 @@ body {
   .page-actions {
     width: 100% !important;
   }
+}
+
+:root {
+  --vp-section-gap: 2cm;
+  --vp-section-radius: 30px;
+  --vp-card-radius: 24px;
+}
+
+.main > * + *,
+.main-shell > * + * {
+  margin-top: var(--vp-section-gap) !important;
+}
+
+.kpi-grid,
+.resource-grid,
+.destinations-grid,
+.panel-grid {
+  gap: var(--vp-section-gap) !important;
+}
+
+.main > :where(section, .panel, .card),
+:where(.panel, .kpi-cell, .card, .resource-card, .destination-card, .form-card, .empty, .rounded-2xl, .rounded-xl, .rounded-lg) {
+  border-radius: var(--vp-section-radius) !important;
+  overflow: hidden;
 }

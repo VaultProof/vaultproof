@@ -10,15 +10,20 @@
   --hair: 1px solid var(--hair-color);
   --text: #f7fbff;
   --text-mid: #d9e7ef;
-  --text-muted: rgba(235, 245, 255, 0.68);
-  --text-faint: rgba(235, 245, 255, 0.42);
+  --text-muted: rgba(240, 247, 255, 0.86);
+  --text-faint: rgba(229, 240, 250, 0.68);
   --ok: #22e6a8;
   --warn: #fbbf24;
   --danger: #fb7185;
   --success: #22e6a8;
-  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --display: "Inter Tight", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --body: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --display: "Geist", "Inter Tight", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --body: "Geist", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --vp-readable-size: 14px;
+  --vp-readable-weight: 500;
+  --vp-section-gap: 2cm;
+  --vp-section-radius: 30px;
+  --vp-card-radius: 24px;
   --vp-sidebar-expanded: 224px;
   --vp-panel: rgba(14, 22, 34, 0.82);
   --vp-panel-strong: rgba(12, 18, 29, 0.96);
@@ -36,6 +41,10 @@ body {
     linear-gradient(135deg, #070a10 0%, #0b1220 46%, #08111b 100%) !important;
   color: var(--text) !important;
   font-family: var(--body) !important;
+  font-size: var(--vp-readable-size);
+  font-weight: var(--vp-readable-weight);
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
 }
 
 body,
@@ -46,6 +55,10 @@ body.scanner-app {
     radial-gradient(circle at 86% 0%, rgba(34, 230, 168, 0.12), transparent 28rem),
     linear-gradient(135deg, #070a10 0%, #0b1220 46%, #08111b 100%) !important;
   color: var(--text) !important;
+  font-family: var(--body) !important;
+  font-size: var(--vp-readable-size);
+  font-weight: var(--vp-readable-weight);
+  line-height: 1.5;
 }
 
 body::before,
@@ -198,6 +211,7 @@ body.scanner-app header {
 .layout,
 .app-layout {
   grid-template-columns: var(--vp-sidebar-expanded) minmax(0, 1fr) !important;
+  column-gap: var(--vp-section-gap) !important;
   min-height: calc(100vh - 64px) !important;
   background: transparent !important;
 }
@@ -208,6 +222,30 @@ body.scanner-app #mainWrapper {
   min-width: 0;
   background: transparent !important;
   color: var(--text) !important;
+  font-family: var(--body) !important;
+  font-size: var(--vp-readable-size);
+  font-weight: var(--vp-readable-weight);
+}
+
+.main-shell > * + *,
+.main > * + *,
+.settings-wrap > * + *,
+.plans-wrap > * + *,
+.app-main > * + *,
+#projectsContainer > * + *,
+#scannerContent > * + * {
+  margin-top: var(--vp-section-gap) !important;
+}
+
+.main-shell > :where(section, .panel, .card, .hero-card, .feature-panel, .enterprise-panel),
+.main > :where(section, .panel, .card, .hero-card, .feature-panel, .enterprise-panel),
+.settings-wrap > section,
+.plans-wrap > section,
+.app-main > :where(section, .panel, .card),
+#projectsContainer > :where(section, .anim-card, .card),
+#scannerContent > :where(section, .bg-card, .panel, .card) {
+  border-radius: var(--vp-section-radius) !important;
+  overflow: hidden;
 }
 
 body.scanner-app #mainWrapper {
@@ -249,9 +287,10 @@ body.scanner-app #sidebar:focus-within {
   min-height: 24px;
   padding: 8px 10px !important;
   color: var(--text-faint) !important;
-  font-family: var(--mono) !important;
-  font-size: 10px !important;
-  letter-spacing: 0.12em !important;
+  font-family: var(--body) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
   text-transform: uppercase !important;
   white-space: nowrap;
   opacity: 1;
@@ -279,9 +318,10 @@ body.scanner-app .sidebar-nav-item {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
-  font-family: var(--mono) !important;
-  font-size: 12.5px !important;
-  line-height: 1 !important;
+  font-family: var(--body) !important;
+  font-size: var(--vp-readable-size) !important;
+  font-weight: var(--vp-readable-weight) !important;
+  line-height: 1.22 !important;
   text-decoration: none !important;
   white-space: nowrap;
   transition: color 0.16s ease, background 0.16s ease, border-color 0.16s ease;
@@ -294,7 +334,7 @@ body.scanner-app .sidebar-nav-item {
 body.scanner-app #sidebar:hover .sidebar-nav-item,
 body.scanner-app #sidebar:focus-within .sidebar-nav-item {
   color: var(--text-muted) !important;
-  font-size: 12.5px !important;
+  font-size: var(--vp-readable-size) !important;
 }
 
 .sidebar-item:hover,
@@ -391,7 +431,8 @@ body.scanner-app #sidebar:focus-within .sidebar-label {
   border-radius: 8px !important;
   overflow: hidden !important;
   color: var(--text-muted) !important;
-  font-size: 12.5px !important;
+  font-size: var(--vp-readable-size) !important;
+  font-weight: var(--vp-readable-weight) !important;
 }
 
 .enterprise-app-sidebar:hover .sidebar-item,
@@ -483,12 +524,13 @@ h3 {
 p,
 .text-gray-300,
 .text-gray-400 {
-  color: var(--text-muted) !important;
+  color: var(--text-mid) !important;
+  font-weight: var(--vp-readable-weight) !important;
 }
 
 .text-gray-500,
 .text-gray-600 {
-  color: var(--text-faint) !important;
+  color: var(--text-muted) !important;
 }
 
 .text-white,
@@ -561,6 +603,8 @@ p,
   border-color: rgba(148, 163, 184, 0.16) !important;
   color: var(--text) !important;
   box-shadow: 0 22px 60px rgba(0, 0, 0, 0.22) !important;
+  border-radius: var(--vp-section-radius) !important;
+  overflow: hidden;
 }
 
 .plan-card.featured {
@@ -597,7 +641,8 @@ thead tr,
 .table tbody td,
 tbody td,
 .compare-table td {
-  color: var(--text-muted) !important;
+  color: var(--text-mid) !important;
+  font-weight: var(--vp-readable-weight) !important;
 }
 
 .table tbody tr:hover,
@@ -654,7 +699,7 @@ textarea,
 .bg-\[\#111118\],
 .bg-surface {
   background: rgba(255, 255, 255, 0.045) !important;
-  color: var(--text-muted) !important;
+  color: var(--text-mid) !important;
 }
 
 .btn-outline:hover,
@@ -775,7 +820,7 @@ textarea:focus,
 .hero-card,
 .modal-card,
 .toast-card {
-  border-radius: 16px !important;
+  border-radius: var(--vp-card-radius) !important;
 }
 
 .shadow-2xl,
@@ -828,7 +873,7 @@ textarea:focus,
   .sidebar-nav-item,
   body.scanner-app .sidebar-nav-item {
     color: var(--text-muted) !important;
-    font-size: 12.5px !important;
+    font-size: var(--vp-readable-size) !important;
   }
 
   .sidebar-head,
