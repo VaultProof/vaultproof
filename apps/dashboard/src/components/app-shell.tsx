@@ -191,8 +191,8 @@ export function AppShell({
 
   return (
     <div className="enterprise-dashboard min-h-screen bg-[#f6f7f2] text-[#18231d]">
-      <div className="dashboard-shell-grid mx-auto grid max-w-[1480px] gap-5 px-4 py-4 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-6">
-        <aside className="order-2 w-full lg:order-1 lg:self-start">
+      <div className="dashboard-shell-grid mx-auto grid max-w-[1480px] gap-5 px-4 py-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-6">
+        <aside className="dashboard-sidebar-section order-2 w-full lg:order-1 lg:self-start">
           <div className="dashboard-rounded-panel flex flex-col rounded-[22px] border border-[#17372f]/20 bg-[#10231d] p-4 text-[#f2f7f4] shadow-[0_22px_60px_rgba(22,35,29,0.18)]">
             <div className="border-b border-white/10 pb-4">
               <div className="text-[15px] font-semibold text-[#f2f7f4]">VaultProof Enterprise</div>
@@ -226,6 +226,7 @@ export function AppShell({
                           href={item.href}
                           target={external ? "_blank" : undefined}
                           rel={external ? "noreferrer" : undefined}
+                          title={`${item.label}: ${item.blurb}`}
                           className={classNames(
                             "block rounded-[14px] border px-3 py-2.5 transition",
                             active
@@ -249,10 +250,23 @@ export function AppShell({
                 </div>
               ))}
             </nav>
+
+            <Link
+              href="/app/plans"
+              title="New release: Runtime Key Shield"
+              className="dashboard-sidebar-update mt-auto flex items-center gap-3 rounded-[14px] border border-[#8fe0c1]/20 bg-[#8fe0c1]/8 p-3 text-left transition hover:border-[#8fe0c1]/35 hover:bg-[#8fe0c1]/12"
+            >
+              <span className="grid h-7 w-7 flex-none place-items-center rounded-full border border-[#8fe0c1]/30 text-[12px] text-[#8fe0c1]">i</span>
+              <span className="min-w-0">
+                <span className="block text-[10px] uppercase leading-4 text-[#9fe4ca]">Update</span>
+                <span className="block truncate text-[12px] font-medium text-[#f2f7f4]">Runtime Key Shield</span>
+                <span className="block text-[11px] leading-4 text-[#cbd8d2]">Private beta rollout notes</span>
+              </span>
+            </Link>
           </div>
         </aside>
 
-        <main className="enterprise-content order-1 min-w-0 lg:order-2">
+        <main className="dashboard-main-section enterprise-content order-1 min-w-0 lg:order-2">
           <div className="dashboard-rounded-panel rounded-[22px] border border-[#dfe5dc] bg-white p-4 shadow-[0_18px_60px_rgba(22,35,29,0.08)] sm:p-5">
             <div className="dashboard-rounded-panel-inner rounded-[18px] border border-[#dfe5dc] bg-[#fbfcf8] p-4 sm:p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

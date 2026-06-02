@@ -80,7 +80,7 @@ body {
 }
 
 .layout {
-  grid-template-columns: var(--vp-sidebar-expanded, 224px) minmax(0, 1fr) 330px !important;
+  grid-template-columns: var(--vp-sidebar-expanded, 260px) minmax(0, 1fr) 330px !important;
   min-height: calc(100vh - 64px) !important;
 }
 
@@ -242,14 +242,16 @@ body {
 
 .live-panel {
   position: sticky;
-  top: 64px;
-  height: calc(100vh - 64px);
+  top: calc(var(--vp-shell-inset, 24px) + var(--vp-topbar-height, 64px) + var(--vp-layout-gap, 1cm));
+  height: calc(100vh - var(--vp-topbar-height, 64px) - var(--vp-layout-gap, 1cm) - (var(--vp-shell-inset, 24px) * 2));
   padding: 22px 18px;
-  border-left: 1px solid rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: var(--vp-section-radius, 16px);
   background:
     radial-gradient(circle at 60% 8%, rgba(0, 229, 255, 0.11), transparent 15rem),
     rgba(6, 9, 15, 0.78);
   color: var(--text);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.16);
   overflow: hidden;
 }
 
@@ -477,7 +479,7 @@ body {
 
 @media (max-width: 1180px) {
   .layout {
-    grid-template-columns: var(--vp-sidebar-expanded, 224px) minmax(0, 1fr) !important;
+    grid-template-columns: var(--vp-sidebar-expanded, 260px) minmax(0, 1fr) !important;
   }
 
   .live-panel {
@@ -513,22 +515,16 @@ body {
   }
 }
 
-:root {
-  --vp-section-gap: 2cm;
-  --vp-section-radius: 30px;
-  --vp-card-radius: 24px;
-}
-
 .main > * + *,
 .main-shell > * + * {
-  margin-top: var(--vp-section-gap) !important;
+  margin-top: var(--vp-layout-gap) !important;
 }
 
 .kpi-grid,
 .activity-side-grid,
 .live-grid,
 .panel-grid {
-  gap: var(--vp-section-gap) !important;
+  gap: var(--vp-layout-gap) !important;
 }
 
 .main > :where(section, .panel, .card),

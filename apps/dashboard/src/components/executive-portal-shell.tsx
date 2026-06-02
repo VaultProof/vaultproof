@@ -740,7 +740,7 @@ export function ExecutivePortalShell() {
           </div>
         </section>
 
-        <aside className="space-y-5">
+        <aside className="dashboard-right-sidebar space-y-5">
           <section className="rounded-[28px] border border-white/10 bg-slate-950/40 p-5">
             <div className="flex items-center justify-between">
               <div>

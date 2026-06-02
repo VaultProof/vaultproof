@@ -14,9 +14,16 @@
   --dashboard-font: var(--font-inter, ui-sans-serif), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --dashboard-readable-size: 14px;
   --dashboard-readable-weight: 500;
-  --dashboard-section-gap: 2cm;
-  --dashboard-section-radius: 30px;
-  --dashboard-card-radius: 24px;
+  --dashboard-sidebar-text-size: 12px;
+  --dashboard-sidebar-text-weight: 500;
+  --dashboard-sidebar-text-color: #ffffff;
+  --dashboard-sidebar-expanded: 260px;
+  --dashboard-sidebar-collapsed: 56px;
+  --dashboard-section-gap: 16px;
+  --dashboard-section-radius: 16px;
+  --dashboard-card-radius: 14px;
+  --dashboard-layout-gap: var(--dashboard-section-gap);
+  --dashboard-shell-inset: 12px;
   --font-display: var(--font-inter-tight, "Inter"), system-ui, sans-serif;
   --font-body: var(--font-inter, system-ui), sans-serif;
   --font-mono: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
@@ -155,7 +162,40 @@ body {
 }
 
 .dashboard-shell-grid {
-  gap: var(--dashboard-section-gap) !important;
+  align-items: start;
+  gap: var(--dashboard-layout-gap) !important;
+}
+
+.dashboard-sidebar-section,
+.dashboard-main-section,
+.dashboard-right-sidebar {
+  border-radius: var(--dashboard-section-radius) !important;
+}
+
+.dashboard-sidebar-section,
+.dashboard-sidebar-section :where(a, div, span, p, button) {
+  color: var(--dashboard-sidebar-text-color) !important;
+  font-size: var(--dashboard-sidebar-text-size) !important;
+  font-weight: var(--dashboard-sidebar-text-weight) !important;
+}
+
+.dashboard-sidebar-section :where(a, p, div) {
+  line-height: 1.4;
+}
+
+.dashboard-sidebar-section > .dashboard-rounded-panel,
+.dashboard-main-section > .dashboard-rounded-panel {
+  min-height: calc(100vh - (var(--dashboard-shell-inset) * 2));
+}
+
+.dashboard-right-sidebar {
+  display: grid !important;
+  gap: var(--dashboard-layout-gap) !important;
+}
+
+.dashboard-right-sidebar > * {
+  border-radius: var(--dashboard-section-radius) !important;
+  overflow: hidden;
 }
 
 .dashboard-rounded-panel {
@@ -176,26 +216,46 @@ body {
 
 .dashboard-card-grid,
 .dashboard-section-stack > :where(.grid) {
-  gap: var(--dashboard-section-gap) !important;
+  gap: var(--dashboard-layout-gap) !important;
 }
 
 .dashboard-card-grid {
-  margin-top: var(--dashboard-section-gap) !important;
+  margin-top: var(--dashboard-layout-gap) !important;
 }
 
 .dashboard-section-stack {
-  margin-top: var(--dashboard-section-gap) !important;
+  margin-top: var(--dashboard-layout-gap) !important;
 }
 
 .dashboard-section-stack > * + * {
-  margin-top: var(--dashboard-section-gap) !important;
+  margin-top: var(--dashboard-layout-gap) !important;
 }
 
 .dashboard-section-stack > :where(.space-y-6, .space-y-5, .space-y-4, .space-y-3) {
   display: grid !important;
-  gap: var(--dashboard-section-gap) !important;
+  gap: var(--dashboard-layout-gap) !important;
 }
 
 .dashboard-section-stack > :where(.space-y-6, .space-y-5, .space-y-4, .space-y-3) > * {
   margin-top: 0 !important;
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --dashboard-layout-gap: 16px;
+    --dashboard-shell-inset: 12px;
+  }
+
+  .dashboard-sidebar-section > .dashboard-rounded-panel,
+  .dashboard-main-section > .dashboard-rounded-panel {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 680px) {
+  :root {
+    --dashboard-layout-gap: 12px;
+    --dashboard-section-radius: 14px;
+    --dashboard-card-radius: 12px;
+  }
 }

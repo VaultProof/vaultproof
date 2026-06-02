@@ -48,7 +48,7 @@ body {
 
 .app-layout {
   display: grid !important;
-  grid-template-columns: var(--vp-sidebar-expanded, 224px) minmax(0, 1fr) !important;
+  grid-template-columns: var(--vp-sidebar-expanded, 260px) minmax(0, 1fr) !important;
   min-height: calc(100vh - 64px) !important;
   background: transparent !important;
 }
@@ -347,17 +347,11 @@ body {
   }
 }
 
-:root {
-  --vp-section-gap: 2cm;
-  --vp-section-radius: 30px;
-  --vp-card-radius: 24px;
-}
-
 .main > * + *,
 .main-shell > * + *,
 .content > * + *,
 #projectsContainer > * + * {
-  margin-top: var(--vp-section-gap) !important;
+  margin-top: var(--vp-layout-gap) !important;
 }
 
 .content,
@@ -365,7 +359,7 @@ body {
 #projectsContainer,
 .provider-grid,
 .project-grid {
-  gap: var(--vp-section-gap) !important;
+  gap: var(--vp-layout-gap) !important;
 }
 
 .main > :where(section, .panel, .card),
