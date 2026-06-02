@@ -19,44 +19,6 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-.topbar-logo::before {
-  content: none !important;
-}
-
-.topbar-logo-mark {
-  width: 30px !important;
-  height: 30px !important;
-  display: grid !important;
-  place-items: center !important;
-  overflow: hidden !important;
-  border: 1px solid rgba(0, 229, 255, 0.58) !important;
-  border-radius: 10px !important;
-  background:
-    radial-gradient(circle at 50% 45%, rgba(0, 229, 255, 0.16), transparent 62%),
-    rgba(0, 229, 255, 0.06) !important;
-  box-shadow: 0 0 22px rgba(0, 229, 255, 0.16) !important;
-}
-
-.topbar-logo-img {
-  width: 100% !important;
-  height: 100% !important;
-  display: block !important;
-  object-fit: cover !important;
-  transform: scale(1.42);
-  transform-origin: center;
-}
-
-.topbar-logo-fallback {
-  display: none;
-  color: var(--accent);
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-}
-
-.topbar-logo-name {
-  letter-spacing: 0.32em !important;
-}
 
 .layout {
   grid-template-columns: var(--vp-sidebar-expanded, 260px) minmax(0, 1fr) 330px !important;
@@ -512,61 +474,9 @@ body {
   }
 }
 
-@media (min-width: 901px) and (max-width: 1180px) {
-  .sidebar,
-  .sidebar:hover,
-  .sidebar:focus-within {
-    position: sticky !important;
-    top: calc(var(--vp-shell-inset, 12px) + var(--vp-topbar-height, 64px) + var(--vp-layout-gap, 16px)) !important;
-    width: var(--vp-sidebar-expanded, 260px) !important;
-    height: calc(100vh - var(--vp-topbar-height, 64px) - var(--vp-layout-gap, 16px) - (var(--vp-shell-inset, 12px) * 2)) !important;
-    min-height: calc(100vh - var(--vp-topbar-height, 64px) - var(--vp-layout-gap, 16px) - (var(--vp-shell-inset, 12px) * 2)) !important;
-  }
-}
-
 @media (max-width: 900px) {
   .layout {
     grid-template-columns: 1fr !important;
-  }
-
-  .sidebar,
-  .sidebar:hover,
-  .sidebar:focus-within {
-    position: static !important;
-    display: flex !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: auto !important;
-    padding: 10px 16px !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-  }
-
-  .sidebar-logo,
-  .sidebar-head {
-    display: none !important;
-  }
-
-  .sidebar-group {
-    display: flex !important;
-    gap: 8px !important;
-    margin: 0 8px 0 0 !important;
-  }
-
-  .enterprise-app-sidebar .sidebar-item {
-    flex: 0 0 auto !important;
-    min-width: max-content !important;
-  }
-
-  .sidebar-update-card {
-    width: auto !important;
-    min-height: 36px !important;
-    margin: 0 8px 0 0 !important;
-    padding: 7px 10px !important;
-  }
-
-  .sidebar-update-text {
-    display: none !important;
   }
 
   .kpi-grid {

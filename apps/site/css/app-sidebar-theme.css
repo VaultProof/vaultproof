@@ -44,8 +44,15 @@
   --vp-orange: #f59e0b;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html,
 body {
+  margin: 0;
   background:
     radial-gradient(circle at 14% 10%, rgba(0, 229, 255, 0.14), transparent 30rem),
     radial-gradient(circle at 86% 0%, rgba(34, 230, 168, 0.12), transparent 28rem),
@@ -60,6 +67,7 @@ body {
 
 body,
 body.scanner-app {
+  margin: 0;
   min-height: 100vh;
   background:
     radial-gradient(circle at 14% 10%, rgba(0, 229, 255, 0.14), transparent 30rem),
@@ -88,6 +96,14 @@ body.scanner-app::before {
 
 a {
   color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 ::selection {
@@ -125,8 +141,39 @@ a {
   overflow: visible !important;
 }
 
+.page-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 16px 20px !important;
+  flex-wrap: wrap !important;
+  margin-bottom: 4px !important;
+}
+
+.page-heading {
+  display: grid !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  flex: 1 1 280px !important;
+}
+
+.page-actions {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  flex: 0 1 auto !important;
+  flex-wrap: wrap !important;
+  margin-left: auto !important;
+}
+
 .topbar,
 body.scanner-app header {
+  position: sticky !important;
+  top: var(--vp-shell-inset) !important;
+  z-index: 100 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
   min-height: var(--vp-topbar-height) !important;
   height: auto !important;
   padding: 14px 24px !important;
@@ -148,34 +195,60 @@ body.scanner-app header {
   align-items: center !important;
   gap: 8px !important;
   color: var(--text) !important;
+  text-decoration: none !important;
 }
 
 .topbar-logo-name,
-.scanner-topbar-logo {
+.scanner-topbar-logo,
+.scanner-topbar-logo .topbar-logo-name {
   color: var(--text) !important;
   font-family: var(--mono) !important;
   font-size: 12px !important;
   font-weight: var(--vp-sidebar-text-weight) !important;
-  letter-spacing: 0.18em !important;
+  letter-spacing: 0.32em !important;
   text-transform: uppercase !important;
 }
 
 .topbar-logo::before,
 .scanner-topbar-logo::before {
-  content: "";
-  width: 22px;
-  height: 22px;
-  border-radius: 7px;
+  content: none !important;
+}
+
+.topbar-logo-mark {
+  width: 30px !important;
+  height: 30px !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(0, 229, 255, 0.58) !important;
+  border-radius: 10px !important;
   background:
-    linear-gradient(135deg, rgba(0, 229, 255, 0.26), rgba(34, 230, 168, 0.10)),
-    url("/og-image2.png") center / cover no-repeat;
-  border: 1px solid rgba(0, 229, 255, 0.34);
-  box-shadow: 0 0 18px rgba(0, 229, 255, 0.18);
+    radial-gradient(circle at 50% 45%, rgba(0, 229, 255, 0.16), transparent 62%),
+    rgba(0, 229, 255, 0.06) !important;
+  box-shadow: 0 0 22px rgba(0, 229, 255, 0.16) !important;
+}
+
+.topbar-logo-img {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: cover !important;
+  transform: scale(1.42);
+  transform-origin: center;
+}
+
+.topbar-logo-fallback {
+  display: none;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
 }
 
 .topbar-sep,
 .scanner-topbar-sep {
   color: rgba(0, 229, 255, 0.42) !important;
+  margin: 0 4px !important;
 }
 
 .topbar-crumb,
@@ -188,6 +261,9 @@ body.scanner-app header {
 .topbar-session,
 .scanner-topbar-session {
   margin-left: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
 }
 
 .topbar-email,
@@ -228,6 +304,7 @@ body.scanner-app header {
 
 .layout,
 .app-layout {
+  display: grid !important;
   grid-template-columns: var(--vp-sidebar-expanded) minmax(0, 1fr) !important;
   column-gap: var(--vp-layout-gap) !important;
   row-gap: var(--vp-layout-gap) !important;
@@ -302,6 +379,8 @@ body.scanner-app #mainWrapper {
 }
 
 .sidebar,
+#sidebar.sidebar,
+aside[id="sidebar"].sidebar,
 body.scanner-app #sidebar {
   width: var(--vp-sidebar-expanded) !important;
   background:
@@ -323,10 +402,31 @@ body.scanner-app #sidebar {
 
 .layout > .sidebar,
 .app-layout > .sidebar,
+.layout > #sidebar.sidebar,
+.app-layout > #sidebar.sidebar,
 body.scanner-app #sidebar {
   position: sticky;
   top: calc(var(--vp-shell-inset) + var(--vp-topbar-height) + var(--vp-layout-gap));
   height: calc(100vh - var(--vp-topbar-height) - var(--vp-layout-gap) - (var(--vp-shell-inset) * 2));
+}
+
+body.scanner-app #sidebar.sidebar.enterprise-app-sidebar {
+  position: fixed !important;
+  top: calc(var(--vp-shell-inset) + var(--vp-topbar-height) + var(--vp-layout-gap)) !important;
+  left: var(--vp-shell-inset) !important;
+  width: var(--vp-sidebar-expanded) !important;
+  height: calc(100vh - var(--vp-topbar-height) - var(--vp-layout-gap) - (var(--vp-shell-inset) * 2)) !important;
+  min-height: auto !important;
+  padding: 20px 16px !important;
+  transform: none !important;
+}
+
+.scanner-sidebar-nav {
+  display: block !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow-y: auto !important;
 }
 
 .live-panel {
@@ -1059,7 +1159,7 @@ textarea:focus,
   }
 }
 
-@media (max-width: 960px) {
+@media (max-width: 900px) {
   :root {
     --vp-layout-gap: 16px;
     --vp-shell-inset: 12px;
@@ -1073,18 +1173,59 @@ textarea:focus,
   }
 
   .sidebar,
-  body.scanner-app #sidebar {
+  body.scanner-app #sidebar,
+  #sidebar.sidebar {
     position: static !important;
-    width: min(86vw, 280px) !important;
+    display: flex !important;
+    width: 100% !important;
     height: auto !important;
     min-height: auto !important;
+    padding: 10px 16px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    transform: none !important;
   }
 
   .sidebar:hover,
   .sidebar:focus-within,
   body.scanner-app #sidebar:hover,
-  body.scanner-app #sidebar:focus-within {
-    width: min(86vw, 280px) !important;
+  body.scanner-app #sidebar:focus-within,
+  #sidebar.sidebar:hover,
+  #sidebar.sidebar:focus-within {
+    width: 100% !important;
+  }
+
+  .scanner-sidebar-nav {
+    display: flex !important;
+    gap: 8px !important;
+    overflow: visible !important;
+  }
+
+  .sidebar-logo,
+  .sidebar-head {
+    display: none !important;
+  }
+
+  .sidebar-group {
+    display: flex !important;
+    gap: 8px !important;
+    margin: 0 8px 0 0 !important;
+  }
+
+  .enterprise-app-sidebar .sidebar-item {
+    flex: 0 0 auto !important;
+    min-width: max-content !important;
+  }
+
+  .sidebar-update-card {
+    width: auto !important;
+    min-height: 36px !important;
+    margin: 0 8px 0 0 !important;
+    padding: 7px 10px !important;
+  }
+
+  .sidebar-update-text {
+    display: none !important;
   }
 
   .sidebar-head,
