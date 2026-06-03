@@ -15,6 +15,7 @@ dist/
 *.pem
 .worktrees/
 .claude/
+.wrangler/
 deploy.log
 output/
 packages/init-worker/.wrangler/

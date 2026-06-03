@@ -5,8 +5,8 @@
   const INIT_API = window.location.hostname.includes('dev.vaultproof')
     ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
     : 'https://init.vaultproof.dev/api/v1/init';
-  const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
   const ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
+  const session = window.VaultProofSession;
   const ACCENT = '#00e5ff';
   const ACTION_LABELS = {
     api_call: 'API Call',
@@ -34,8 +34,10 @@
     'transparent_proxy',
     'upstream_request',
   ]);
-  let token = localStorage.getItem('vaultproof_token');
-  const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
+  let token = (session && session.getAccessToken())
+    || localStorage.getItem('vaultproof_token');
+  const user = (session && session.getUser())
+    || JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
   let refreshAttempted = false;
   let refreshPromise = null;
   let currentProjectRows = [];
@@ -56,7 +58,7 @@
 
   cleanDashboardOrgParam();
 
-  if (!token) {
+  if (!token && !(session && session.hasRefreshToken())) {
     window.location.href = 'login';
     return;
   }
@@ -79,55 +81,16 @@
     return String(value || 'unknown').toLowerCase().replace(/[^a-z0-9_-]/g, '-');
   }
 
-  function extractRefreshToken(value) {
-    if (!value) return null;
-    if (typeof value === 'string') {
-      try {
-        return extractRefreshToken(JSON.parse(value));
-      } catch {
-        return null;
-      }
-    }
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        const found = extractRefreshToken(item);
-        if (found) return found;
-      }
-      return null;
-    }
-    if (typeof value === 'object') {
-      if (typeof value.refresh_token === 'string' && value.refresh_token) return value.refresh_token;
-      for (const key in value) {
-        const found = extractRefreshToken(value[key]);
-        if (found) return found;
-      }
-    }
-    return null;
-  }
-
-  function getStoredRefreshToken() {
-    return localStorage.getItem('vaultproof_refresh_token') ||
-      extractRefreshToken(localStorage.getItem(SUPABASE_AUTH_STORAGE_KEY));
-  }
-
   async function tryRefreshToken() {
     if (refreshPromise) return refreshPromise;
-    const refreshToken = getStoredRefreshToken();
-    if (!refreshToken) return false;
 
     refreshPromise = (async () => {
       try {
-        const res = await fetch(`${API}/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken }),
-        });
-        if (!res.ok) return false;
-        const data = await res.json().catch(() => null);
-        if (!data?.token) return false;
-        token = data.token;
-        localStorage.setItem('vaultproof_token', data.token);
-        if (data.refreshToken) localStorage.setItem('vaultproof_refresh_token', data.refreshToken);
+        const refreshedToken = session
+          ? await session.refresh()
+          : '';
+        if (!refreshedToken) return false;
+        token = refreshedToken;
         return true;
       } catch {
         return false;

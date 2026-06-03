@@ -525,65 +525,6 @@ body.scanner-app #sidebar:focus-within .sidebar-label {
   transform: translateX(0);
 }
 
-.enterprise-app-sidebar .sidebar-logo {
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  height: 38px !important;
-  margin-bottom: 20px !important;
-  overflow: hidden !important;
-  text-decoration: none !important;
-}
-
-.enterprise-app-sidebar .sidebar-logo-mark {
-  width: 34px !important;
-  height: 34px !important;
-  flex: 0 0 34px;
-  display: grid !important;
-  place-items: center !important;
-  overflow: hidden !important;
-  border: 1px solid rgba(0, 229, 255, 0.42) !important;
-  border-radius: 10px !important;
-  background:
-    radial-gradient(circle at 50% 45%, rgba(0, 229, 255, 0.16), transparent 62%),
-    rgba(0, 229, 255, 0.06) !important;
-  box-shadow: 0 0 24px rgba(0, 229, 255, 0.18) !important;
-}
-
-.enterprise-app-sidebar .sidebar-logo-img {
-  width: 34px !important;
-  height: 34px !important;
-  display: block !important;
-  object-fit: cover !important;
-  transform: scale(1.42);
-  transform-origin: center;
-}
-
-.enterprise-app-sidebar .sidebar-logo-fallback {
-  display: none;
-  color: var(--vp-cyan);
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: var(--vp-sidebar-text-weight);
-}
-
-.enterprise-app-sidebar .sidebar-logo-text {
-  opacity: 1;
-  color: var(--vp-sidebar-text-color) !important;
-  font-family: var(--mono) !important;
-  font-size: var(--vp-sidebar-text-size) !important;
-  font-weight: var(--vp-sidebar-text-weight) !important;
-  letter-spacing: 0.18em !important;
-  text-transform: uppercase !important;
-  white-space: nowrap;
-  transition: opacity 0.16s ease;
-}
-
-.enterprise-app-sidebar:hover .sidebar-logo-text,
-.enterprise-app-sidebar:focus-within .sidebar-logo-text {
-  opacity: 1;
-}
-
 .enterprise-app-sidebar .sidebar-item {
   display: flex !important;
   grid-template-columns: none !important;
@@ -1144,7 +1085,6 @@ textarea:focus,
     overflow: visible !important;
   }
 
-  .sidebar-logo,
   .sidebar-head {
     display: none !important;
   }
@@ -1236,7 +1176,6 @@ html body .page .sidebar-item,
 html body .page .sidebar-nav-item,
 html body .page .sidebar-label,
 html body .page .sidebar-user-info,
-html body .page .sidebar-logo-text,
 html body .page .sidebar-alert-count,
 html body .page .usage-label,
 html body .page .usage-reset,

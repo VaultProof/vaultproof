@@ -30,13 +30,17 @@
     const API = window.location.hostname.includes('dev.vaultproof')
       ? 'https://vaultproof-init-staging.vaultproof.workers.dev/api/v1/init'
       : 'https://init.vaultproof.dev/api/v1/init';
-    let token = localStorage.getItem('vaultproof_token');
-    const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
-    const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
+    const session = window.VaultProofSession;
+    let token = (session && session.getAccessToken())
+      || localStorage.getItem('vaultproof_token');
+    const user = (session && session.getUser())
+      || JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
     let _refreshAttempted = false;
     let _refreshPromise = null;
 
-    if (!token) { window.location.href = 'login'; }
+    if (!token && !(session && session.hasRefreshToken())) {
+      window.location.href = 'login';
+    }
 
     // --- Confirm modal state ---
     let _confirmCallback = null;
@@ -61,55 +65,16 @@
       closeConfirmModal();
     }
 
-    // --- Auth helpers ---
-    function extractRefreshToken(value) {
-      if (!value) return null;
-      if (typeof value === 'string') {
-        try { return extractRefreshToken(JSON.parse(value)); } catch { return null; }
-      }
-      if (Array.isArray(value)) {
-        for (const item of value) {
-          const found = extractRefreshToken(item);
-          if (found) return found;
-        }
-        return null;
-      }
-      if (typeof value === 'object') {
-        if (typeof value.refresh_token === 'string' && value.refresh_token) return value.refresh_token;
-        for (const key in value) {
-          const found = extractRefreshToken(value[key]);
-          if (found) return found;
-        }
-      }
-      return null;
-    }
-
-    function getStoredRefreshToken() {
-      const explicit = localStorage.getItem('vaultproof_refresh_token');
-      if (explicit) return explicit;
-      return extractRefreshToken(localStorage.getItem(SUPABASE_AUTH_STORAGE_KEY));
-    }
-
     async function tryRefreshToken() {
       if (_refreshPromise) return _refreshPromise;
-      const refreshToken = getStoredRefreshToken();
-      if (!refreshToken) return false;
 
       _refreshPromise = (async function() {
         try {
-          const res = await fetch(API + '/auth/refresh', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refreshToken })
-          });
-          if (!res.ok) return false;
-          const data = await res.json().catch(() => null);
-          if (!data || !data.token) return false;
-          token = data.token;
-          localStorage.setItem('vaultproof_token', data.token);
-          if (data.refreshToken) {
-            localStorage.setItem('vaultproof_refresh_token', data.refreshToken);
-          }
+          const refreshedToken = session
+            ? await session.refresh()
+            : '';
+          if (!refreshedToken) return false;
+          token = refreshedToken;
           return true;
         } catch {
           return false;
@@ -328,7 +293,7 @@
         }
       } catch (err) {
         if (loading) loading.remove();
-        container.innerHTML = '<div class="text-center py-12"><div class="text-gray-400 mb-3">Unable to load projects</div><button type="button" data-action="retry-load-projects" class="px-4 py-2 bg-[#6366f1]/20 border border-[#6366f1]/30 text-[#6366f1] rounded-xl text-sm hover:bg-[#6366f1]/30 transition">Retry</button></div>';
+        container.innerHTML = '<div class="load-error"><div class="load-error-title">Unable to load projects</div><button type="button" data-action="retry-load-projects" class="btn btn-outline">retry</button></div>';
       }
     }
 
@@ -369,32 +334,32 @@
         var keysHtml = '';
         if (isExpanded) {
           if (keys.length === 0) {
-            keysHtml = '<div class="px-5 py-6 border-t border-border text-center">' +
+            keysHtml = '<div class="keys-empty">' +
               '<p class="text-sm text-gray-500">No keys in this project yet.</p>' +
               '<p class="text-xs text-gray-600 mt-2">Run <code class="text-indigo-400 font-mono">npx @vaultproof/init</code> to scan and protect all keys at once, or</p>' +
-              '<button type="button" data-action="open-add-key-modal" data-project-id="' + escapeHtml(projId) + '" class="mt-2 px-4 py-2 bg-brand/10 border border-brand/20 text-brand text-sm rounded-lg hover:bg-brand/20 transition">Add a key manually</button>' +
+              '<button type="button" data-action="open-add-key-modal" data-project-id="' + escapeHtml(projId) + '" class="keys-add-empty">Add a key manually</button>' +
             '</div>';
           } else {
-            keysHtml = '<div class="border-t border-border">' +
+            keysHtml = '<div class="keys-list">' +
               keys.map(function(key) {
                 var keyId = key.id || '';
                 keyId = /^[a-f0-9-]+$/i.test(keyId) ? keyId : '';
                 var envVarName = key.env_var || key.slug || (key.provider ? key.provider.toUpperCase() + '_API_KEY' : '\u2014');
-                return '<div class="flex items-center justify-between py-3 px-4 border-b border-border last:border-b-0">' +
-                  '<div class="flex items-center gap-3 min-w-0 flex-1">' +
+                return '<div class="keys-key-row">' +
+                  '<div class="keys-key-main">' +
                     providerBadge(key.provider) +
-                    '<div class="min-w-0">' +
-                      '<div class="text-sm font-mono text-white truncate">' + escapeHtml(envVarName) + '</div>' +
-                      '<div class="text-xs text-gray-600 truncate">' + escapeHtml(key.upstream_base_url || '\u2014') + '</div>' +
+                    '<div class="keys-key-copy">' +
+                      '<div class="keys-key-title">' + escapeHtml(envVarName) + '</div>' +
+                      '<div class="keys-key-url">' + escapeHtml(key.upstream_base_url || '\u2014') + '</div>' +
                     '</div>' +
                   '</div>' +
-                  '<div class="flex items-center gap-2 flex-shrink-0 ml-4">' +
-                    '<span class="text-xs text-gray-600 hidden sm:inline">' + formatDate(key.created_at) + '</span>' +
-                    '<button type="button" data-action="open-rotate-key-modal" data-project-id="' + escapeHtml(projId) + '" data-key-id="' + escapeHtml(keyId) + '" data-provider="' + escapeHtml(key.provider || '') + '" class="px-2.5 py-1.5 text-xs text-indigo-400 hover:text-indigo-300 border border-indigo-900/50 hover:border-indigo-800 hover:bg-indigo-900/20 rounded-lg transition whitespace-nowrap flex items-center gap-1">' +
+                  '<div class="keys-key-actions">' +
+                    '<span class="keys-key-date">' + formatDate(key.created_at) + '</span>' +
+                    '<button type="button" data-action="open-rotate-key-modal" data-project-id="' + escapeHtml(projId) + '" data-key-id="' + escapeHtml(keyId) + '" data-provider="' + escapeHtml(key.provider || '') + '" class="keys-row-action">' +
                       '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>' +
                       'Rotate' +
                     '</button>' +
-                    '<button type="button" data-action="confirm-delete-key" data-project-id="' + escapeHtml(projId) + '" data-key-id="' + escapeHtml(keyId) + '" data-provider="' + escapeHtml(key.provider || '') + '" class="px-2.5 py-1.5 text-xs text-red-400 hover:text-red-300 border border-red-900/50 hover:border-red-800 hover:bg-red-900/20 rounded-lg transition whitespace-nowrap flex items-center gap-1">' +
+                    '<button type="button" data-action="confirm-delete-key" data-project-id="' + escapeHtml(projId) + '" data-key-id="' + escapeHtml(keyId) + '" data-provider="' + escapeHtml(key.provider || '') + '" class="keys-row-action keys-row-danger">' +
                       '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>' +
                       'Delete' +
                     '</button>' +
@@ -405,31 +370,31 @@
           }
         }
 
-        return '<div class="anim-card bg-card border border-border rounded-lg overflow-hidden hover:border-gray-600 transition-all duration-200 mb-4" style="animation-delay:' + delay + 'ms">' +
+        return '<div class="keys-project-card anim-card" style="animation-delay:' + delay + 'ms">' +
           // Project header
-          '<div class="p-5 cursor-pointer" data-action="toggle-project" data-project-id="' + escapeHtml(projId) + '">' +
-            '<div class="flex items-center justify-between">' +
-              '<div class="flex items-center gap-3 min-w-0">' +
-                '<div class="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">' +
+          '<div class="keys-project-header" data-action="toggle-project" data-project-id="' + escapeHtml(projId) + '">' +
+            '<div class="keys-project-layout">' +
+              '<div class="keys-project-main">' +
+                '<div class="keys-project-icon">' +
                   '<svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>' +
                 '</div>' +
-                '<div class="min-w-0">' +
-                  (name ? '<h3 class="font-semibold text-white text-base truncate">' + escapeHtml(name) + '</h3>' : '') +
-                  '<div class="flex items-center gap-2 mt-0.5">' +
-                    '<code class="text-xs font-mono text-indigo-400">' + escapeHtml(vpProjId) + '</code>' +
-                    '<button type="button" data-action="copy-text" data-text="' + escapeHtml(vpProjId) + '" class="text-gray-500 hover:text-gray-300 transition p-0.5" title="Copy project ID">' +
+                '<div class="keys-project-copy">' +
+                  (name ? '<h3 class="keys-project-title">' + escapeHtml(name) + '</h3>' : '') +
+                  '<div class="keys-project-id-row">' +
+                    '<code class="keys-project-code">' + escapeHtml(vpProjId) + '</code>' +
+                    '<button type="button" data-action="copy-text" data-text="' + escapeHtml(vpProjId) + '" class="keys-icon-button" title="Copy project ID">' +
                       '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>' +
                     '</button>' +
                   '</div>' +
                 '</div>' +
               '</div>' +
-              '<div class="flex items-center gap-3 flex-shrink-0">' +
-                '<span class="text-xs text-gray-500">' + keys.length + ' key' + (keys.length !== 1 ? 's' : '') + '</span>' +
-                '<span class="text-xs text-gray-600">Created ' + created + '</span>' +
-                '<button type="button" data-action="open-add-key-modal" data-project-id="' + escapeHtml(projId) + '" class="p-1.5 text-gray-600 hover:text-indigo-400 transition rounded" title="Add key">' +
+              '<div class="keys-project-actions">' +
+                '<span class="keys-count-pill">' + keys.length + ' key' + (keys.length !== 1 ? 's' : '') + '</span>' +
+                '<span class="keys-created">Created ' + created + '</span>' +
+                '<button type="button" data-action="open-add-key-modal" data-project-id="' + escapeHtml(projId) + '" class="keys-icon-button" title="Add key">' +
                   '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>' +
                 '</button>' +
-                '<button type="button" data-action="confirm-delete-project" data-project-id="' + escapeHtml(projId) + '" data-vp-proj-id="' + escapeHtml(vpProjId) + '" class="p-1.5 text-gray-600 hover:text-red-400 transition rounded" title="Delete project">' +
+                '<button type="button" data-action="confirm-delete-project" data-project-id="' + escapeHtml(projId) + '" data-vp-proj-id="' + escapeHtml(vpProjId) + '" class="keys-icon-button keys-icon-danger" title="Delete project">' +
                   '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>' +
                 '</button>' +
                 '<svg class="w-4 h-4 text-gray-500 transition-transform duration-200 ' + (isExpanded ? 'rotate-180' : '') + '" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>' +

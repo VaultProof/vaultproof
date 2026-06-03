@@ -5,6 +5,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
   <script src="/js/app-index-1.js" defer></script>
   <script src="/js/app-toast-1.js" defer data-app-shell-page-script></script>
+  <script src="/js/app-session.js?v=20260603b" defer></script>
   <script src="/js/app-alerts-1.js?v=20260530a" defer data-app-shell-page-script></script>
   <script src="/js/app-shell-router-1.js?v=20260603b" defer></script>
 
@@ -16,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260603d">
-  <link rel="stylesheet" href="/css/app-alerts-theme.css?v=20260603b" data-app-shell-stylesheet>
+  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260603e">
+  <link rel="stylesheet" href="/css/app-alerts-theme.css?v=20260603c" data-app-shell-stylesheet>
 </head>
 <body>
   <div class="page">
@@ -41,13 +42,6 @@
 
     <div class="layout">
       <aside class="sidebar enterprise-app-sidebar" aria-label="VaultProof app navigation" data-i18n-lock>
-        <a href="/app/" class="sidebar-logo" aria-label="VaultProof dashboard">
-          <span class="sidebar-logo-mark">
-            <img class="sidebar-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
-            <span class="sidebar-logo-fallback">VP</span>
-          </span>
-          <span class="sidebar-logo-text">VaultProof</span>
-        </a>
         <div class="sidebar-group">
           <div class="sidebar-head">Monitor</div>
           <a href="/app/" class="sidebar-item" title="Dashboard" data-tooltip="Dashboard"><span class="sidebar-icon sidebar-icon-dashboard" aria-hidden="true"></span><span class="sidebar-label">Dashboard</span></a>
@@ -222,24 +216,33 @@
 
             <section class="panel">
               <div class="panel-head">dispatch runs<span class="panel-head-right" id="runsStatus">loading…</span></div>
-              <div class="filters">
-                <select id="activityWindow" class="form-select">
-                  <option value="24h">24h</option>
-                  <option value="7d" selected>7d</option>
-                  <option value="30d">30d</option>
-                  <option value="all">all</option>
-                </select>
-                <select id="runStatusFilter" class="form-select">
-                  <option value="all">all statuses</option>
-                  <option value="dispatched">dispatched</option>
-                  <option value="skipped">skipped</option>
-                  <option value="failed">failed</option>
-                </select>
-                <select id="runTriggerFilter" class="form-select">
-                  <option value="all">all triggers</option>
-                  <option value="manual">manual</option>
-                  <option value="scheduled">scheduled</option>
-                </select>
+              <div class="filters alerts-filter-grid">
+                <div class="filter-field">
+                  <label class="filter-label" for="activityWindow">Window</label>
+                  <select id="activityWindow" class="form-select">
+                    <option value="24h">24h</option>
+                    <option value="7d" selected>7d</option>
+                    <option value="30d">30d</option>
+                    <option value="all">All time</option>
+                  </select>
+                </div>
+                <div class="filter-field">
+                  <label class="filter-label" for="runStatusFilter">Run status</label>
+                  <select id="runStatusFilter" class="form-select">
+                    <option value="all">All statuses</option>
+                    <option value="dispatched">Dispatched</option>
+                    <option value="skipped">Skipped</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                </div>
+                <div class="filter-field">
+                  <label class="filter-label" for="runTriggerFilter">Trigger</label>
+                  <select id="runTriggerFilter" class="form-select">
+                    <option value="all">All triggers</option>
+                    <option value="manual">Manual</option>
+                    <option value="scheduled">Scheduled</option>
+                  </select>
+                </div>
               </div>
               <div class="list" id="runsList"><div class="empty">Loading dispatch runs…</div></div>
               <div class="panel-actions">
@@ -249,23 +252,32 @@
 
             <section class="panel">
               <div class="panel-head">delivery logs<span class="panel-head-right" id="deliveryStatus">loading…</span></div>
-              <div class="filters">
-                <select id="deliveryStatusFilter" class="form-select">
-                  <option value="all">all statuses</option>
-                  <option value="delivered">delivered</option>
-                  <option value="failed">failed</option>
-                  <option value="skipped">skipped</option>
-                </select>
-                <select id="deliveryChannelFilter" class="form-select">
-                  <option value="all">all channels</option>
-                  <option value="webhook">webhook</option>
-                  <option value="email">email</option>
-                </select>
-                <select id="deliveryKindFilter" class="form-select">
-                  <option value="all">all kinds</option>
-                  <option value="test_send">test send</option>
-                  <option value="policy_dispatch">policy dispatch</option>
-                </select>
+              <div class="filters alerts-filter-grid">
+                <div class="filter-field">
+                  <label class="filter-label" for="deliveryStatusFilter">Delivery status</label>
+                  <select id="deliveryStatusFilter" class="form-select">
+                    <option value="all">All statuses</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="failed">Failed</option>
+                    <option value="skipped">Skipped</option>
+                  </select>
+                </div>
+                <div class="filter-field">
+                  <label class="filter-label" for="deliveryChannelFilter">Channel</label>
+                  <select id="deliveryChannelFilter" class="form-select">
+                    <option value="all">All channels</option>
+                    <option value="webhook">Webhook</option>
+                    <option value="email">Email</option>
+                  </select>
+                </div>
+                <div class="filter-field">
+                  <label class="filter-label" for="deliveryKindFilter">Kind</label>
+                  <select id="deliveryKindFilter" class="form-select">
+                    <option value="all">All kinds</option>
+                    <option value="test_send">Test send</option>
+                    <option value="policy_dispatch">Policy dispatch</option>
+                  </select>
+                </div>
               </div>
               <div class="list" id="deliveryList"><div class="empty">Loading delivery logs…</div></div>
               <div class="panel-actions">

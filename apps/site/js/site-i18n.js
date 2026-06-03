@@ -139,7 +139,6 @@
       'login.placeholder.minChars': 'min 8 characters',
       'dashboard.browserTitle': 'Production Gateway — VaultProof',
       'dashboard.title': 'Production gateway',
-      'dashboard.desc': 'Monitor protected third-party key routes, request volume, latency posture, and scanner alerts from one dark operations console.',
       'dashboard.keysUnderVault': 'requests today',
       'dashboard.proxiedCalls': 'p99 latency',
       'dashboard.activeProviders': 'success rate',
@@ -309,7 +308,6 @@
       'login.placeholder.minChars': 'mínimo 8 caracteres',
       'dashboard.browserTitle': 'Gateway de producción — VaultProof',
       'dashboard.title': 'Gateway de producción',
-      'dashboard.desc': 'Monitorea rutas protegidas de claves de terceros, volumen de solicitudes, latencia y alertas del escáner desde una consola oscura de operaciones.',
       'dashboard.keysUnderVault': 'solicitudes hoy',
       'dashboard.proxiedCalls': 'latencia p99',
       'dashboard.activeProviders': 'tasa de éxito',
@@ -548,7 +546,6 @@
     'login.signInAgain': 'Войти снова',
     'dashboard.browserTitle': 'Проекты — VaultProof',
     'dashboard.title': 'Проекты',
-    'dashboard.desc': 'Каждый проект хранит разделенные ключи, прокси-маршруты и историю сканирования. Оповещения срабатывают, когда ключ снова появляется в новом коммите.',
     'dashboard.openAlerts': 'оповещения',
     'dashboard.clear': 'чисто',
     'dashboard.needsReview': 'проверить',
@@ -645,7 +642,6 @@
     'login.signInAgain': 'התחברו שוב',
     'dashboard.browserTitle': 'פרויקטים — VaultProof',
     'dashboard.title': 'פרויקטים',
-    'dashboard.desc': 'כל פרויקט כולל מפתחות מפוצלים, נתיבי proxy והיסטוריית סריקות. התראות מופעלות כשמפתח מופיע מחדש ב-commit חדש.',
     'dashboard.keysUnderVault': 'מפתחות ב-vault',
     'dashboard.proxiedCalls': 'קריאות proxy · סה״כ',
     'dashboard.activeProviders': 'ספקים פעילים',
@@ -1008,7 +1004,6 @@
       '/app': function () {
         document.title = t('dashboard.browserTitle');
         setText('.page-title', 'dashboard.title');
-        setText('.page-desc', 'dashboard.desc');
         setText('#openAlertsLabel', 'dashboard.openAlerts');
         setText('.kpi-cell:nth-child(1) .kpi-label', 'dashboard.keysUnderVault');
         setText('.kpi-cell:nth-child(2) .kpi-label', 'dashboard.proxiedCalls');

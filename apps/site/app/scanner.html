@@ -81,7 +81,7 @@
 
   </style>
   <!-- No Supabase SDK needed — scanner uses localStorage token only -->
-  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260603d">
+  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260603e">
   <link rel="stylesheet" href="/css/app-scanner-theme.css?v=20260603b">
 </head>
 <body class="scanner-app text-gray-100 min-h-screen flex">
@@ -91,13 +91,6 @@
 
   <!-- Left Sidebar -->
   <aside id="sidebar" class="sidebar enterprise-app-sidebar" aria-label="VaultProof app navigation" data-i18n-lock>
-    <a href="/app/" class="sidebar-logo" aria-label="VaultProof dashboard">
-      <span class="sidebar-logo-mark">
-        <img class="sidebar-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
-        <span class="sidebar-logo-fallback">VP</span>
-      </span>
-      <span class="sidebar-logo-text">VaultProof</span>
-    </a>
     <nav class="scanner-sidebar-nav">
       <div class="sidebar-group">
         <div class="sidebar-head">Monitor</div>
@@ -775,6 +768,7 @@ pre-commit install</pre>
 
   </div>
 
+  <script src="/js/app-session.js?v=20260603b" defer></script>
   <script src="/js/app-scanner-3.js" defer></script>
   <script src="/js/analytics.js" defer></script>
 </body>

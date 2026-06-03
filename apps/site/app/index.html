@@ -7,6 +7,7 @@
   <script src="/js/app-index-1.js" defer></script>
   <script src="/js/app-index-7.js" defer></script>
   <script src="/js/site-i18n.js?v=20260603c" defer></script>
+  <script src="/js/app-session.js?v=20260603b" defer></script>
   <script src="/js/app-dashboard-1.js?v=20260529c" defer data-app-shell-page-script></script>
   <script src="/js/app-shell-router-1.js?v=20260603b" defer></script>
 
@@ -18,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260603d">
+  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260603e">
   <link rel="stylesheet" href="/css/app-dashboard-theme.css?v=20260603c" data-app-shell-stylesheet>
 </head>
 <body>
@@ -50,13 +51,6 @@
 
   <!-- SIDEBAR -->
   <aside class="sidebar enterprise-app-sidebar" aria-label="VaultProof app navigation" data-i18n-lock>
-    <a href="/app/" class="sidebar-logo" aria-label="VaultProof dashboard">
-      <span class="sidebar-logo-mark">
-        <img class="sidebar-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
-        <span class="sidebar-logo-fallback">VP</span>
-      </span>
-      <span class="sidebar-logo-text">VaultProof</span>
-    </a>
     <div class="sidebar-group">
       <div class="sidebar-head">Monitor</div>
       <a href="/app/" class="sidebar-item active" title="Dashboard" data-tooltip="Dashboard"><span class="sidebar-icon sidebar-icon-dashboard" aria-hidden="true"></span><span class="sidebar-label">Dashboard</span></a>
@@ -96,8 +90,6 @@
         <span class="page-meta" id="pageMeta">/ loading…</span>
       </div>
     </div>
-    <p class="page-desc">Monitor protected third-party key routes, request volume, latency posture, and scanner alerts from one dark operations console.</p>
-
     <!-- KPI GRID -->
     <div class="kpi-grid">
       <div class="kpi-cell">

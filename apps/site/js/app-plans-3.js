@@ -1,60 +1,28 @@
 const API = window.location.hostname.includes('dev.vaultproof') ? 'https://staging-api.vaultproof.dev/api/v1' : 'https://api.vaultproof.dev/api/v1';
-let token = localStorage.getItem('vaultproof_token');
-const user = JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
-const SUPABASE_AUTH_STORAGE_KEY = 'sb-gwzkjiomemjlhtrdrlan-auth-token';
+const session = window.VaultProofSession;
+let token = (session && session.getAccessToken())
+  || localStorage.getItem('vaultproof_token');
+const user = (session && session.getUser())
+  || JSON.parse(localStorage.getItem('vaultproof_user') || '{}');
 let refreshAttempted = false;
 let refreshPromise = null;
 let isAnnual = false;
 let currentTier = 'free';
 
-if (!token) window.location.href = 'login';
-
-function extractRefreshToken(value) {
-  if (!value) return null;
-  if (typeof value === 'string') {
-    try { return extractRefreshToken(JSON.parse(value)); } catch { return null; }
-  }
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const found = extractRefreshToken(item);
-      if (found) return found;
-    }
-    return null;
-  }
-  if (typeof value === 'object') {
-    if (typeof value.refresh_token === 'string' && value.refresh_token) return value.refresh_token;
-    for (const key in value) {
-      const found = extractRefreshToken(value[key]);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
-function getStoredRefreshToken() {
-  const explicit = localStorage.getItem('vaultproof_refresh_token');
-  if (explicit) return explicit;
-  return extractRefreshToken(localStorage.getItem(SUPABASE_AUTH_STORAGE_KEY));
+if (!token && !(session && session.hasRefreshToken())) {
+  window.location.href = 'login';
 }
 
 async function tryRefreshToken() {
   if (refreshPromise) return refreshPromise;
-  const refreshToken = getStoredRefreshToken();
-  if (!refreshToken) return false;
 
   refreshPromise = (async function() {
     try {
-      const res = await fetch(`${API}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      });
-      if (!res.ok) return false;
-      const data = await res.json().catch(() => null);
-      if (!data || !data.token) return false;
-      token = data.token;
-      localStorage.setItem('vaultproof_token', data.token);
-      if (data.refreshToken) localStorage.setItem('vaultproof_refresh_token', data.refreshToken);
+      const refreshedToken = session
+        ? await session.refresh()
+        : '';
+      if (!refreshedToken) return false;
+      token = refreshedToken;
       return true;
     } catch {
       return false;

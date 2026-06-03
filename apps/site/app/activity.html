@@ -4,6 +4,7 @@
   <script src="/js/auth-callback-guard.js?v=20260530a"></script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
   <script src="/js/app-index-1.js" defer></script>
+  <script src="/js/app-session.js?v=20260603b" defer></script>
   <script src="/js/app-activity-1.js?v=20260530a" defer data-app-shell-page-script></script>
   <script src="/js/app-shell-router-1.js?v=20260603b" defer></script>
 
@@ -16,8 +17,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260603d">
-  <link rel="stylesheet" href="/css/app-activity-theme.css?v=20260603b" data-app-shell-stylesheet>
+  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260603e">
+  <link rel="stylesheet" href="/css/app-activity-theme.css?v=20260603c" data-app-shell-stylesheet>
 </head>
 <body>
   <div class="page">
@@ -42,13 +43,6 @@
 
     <div class="layout">
       <aside class="sidebar enterprise-app-sidebar" aria-label="VaultProof app navigation" data-i18n-lock>
-        <a href="/app/" class="sidebar-logo" aria-label="VaultProof dashboard">
-          <span class="sidebar-logo-mark">
-            <img class="sidebar-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
-            <span class="sidebar-logo-fallback">VP</span>
-          </span>
-          <span class="sidebar-logo-text">VaultProof</span>
-        </a>
         <div class="sidebar-group">
           <div class="sidebar-head">Monitor</div>
           <a href="/app/" class="sidebar-item" title="Dashboard" data-tooltip="Dashboard"><span class="sidebar-icon sidebar-icon-dashboard" aria-hidden="true"></span><span class="sidebar-label">Dashboard</span></a>
@@ -127,24 +121,42 @@
         </div>
 
         <div class="filters">
-          <div class="filters-row">
-            <div class="search-wrap">
-              <span class="search-icon">/</span>
-              <input id="searchInput" class="search-input" type="text" placeholder="Search by project, provider, endpoint, key, or request id">
+          <div class="filters-row filters-control-row">
+            <div class="filter-field filter-field-search">
+              <label class="filter-label" for="searchInput">Search projects</label>
+              <div class="search-wrap">
+                <span class="search-icon">/</span>
+                <input id="searchInput" class="search-input" type="text" placeholder="Project, provider, endpoint, key, or request id" autocomplete="off">
+              </div>
             </div>
-            <select id="projectFilter" class="select-input">
-              <option value="">all projects</option>
-            </select>
-            <select id="providerFilter" class="select-input">
-              <option value="">all providers</option>
-            </select>
-            <select id="statusFilter" class="select-input">
-              <option value="">all status</option>
-              <option value="ok">success</option>
-              <option value="error">error</option>
-            </select>
+            <div class="filter-field">
+              <label class="filter-label" for="projectFilter">Project</label>
+              <div class="select-wrap">
+                <select id="projectFilter" class="select-input">
+                  <option value="">All projects</option>
+                </select>
+              </div>
+            </div>
+            <div class="filter-field">
+              <label class="filter-label" for="providerFilter">Provider</label>
+              <div class="select-wrap">
+                <select id="providerFilter" class="select-input">
+                  <option value="">All providers</option>
+                </select>
+              </div>
+            </div>
+            <div class="filter-field">
+              <label class="filter-label" for="statusFilter">Status</label>
+              <div class="select-wrap">
+                <select id="statusFilter" class="select-input">
+                  <option value="">All status</option>
+                  <option value="ok">Success</option>
+                  <option value="error">Error</option>
+                </select>
+              </div>
+            </div>
           </div>
-          <div class="filters-row">
+          <div class="filters-row filters-time-row">
             <button type="button" class="filter-chip active" data-days="1">24h</button>
             <button type="button" class="filter-chip" data-days="7">7d</button>
             <button type="button" class="filter-chip" data-days="30">30d</button>
