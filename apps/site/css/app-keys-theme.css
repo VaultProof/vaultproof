@@ -6,20 +6,6 @@
   --keys-button: rgba(15, 23, 42, 0.72);
 }
 
-html,
-body {
-  background:
-    radial-gradient(circle at 14% 10%, rgba(0, 229, 255, 0.14), transparent 30rem),
-    radial-gradient(circle at 86% 0%, rgba(34, 230, 168, 0.12), transparent 28rem),
-    linear-gradient(135deg, #070a10 0%, #0b1220 46%, #08111b 100%) !important;
-  color: var(--vp-dashboard-text-color) !important;
-  font-family: var(--body) !important;
-  font-size: var(--vp-readable-size, 14px);
-  font-weight: var(--vp-sidebar-text-weight);
-  text-rendering: optimizeLegibility;
-}
-
-
 .main-shell > * + * {
   margin-top: 0 !important;
 }
