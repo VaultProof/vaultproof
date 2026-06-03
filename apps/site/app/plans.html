@@ -8,14 +8,14 @@
   <link rel="icon" type="image/png" href="/favicon.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Plans — VaultProof</title>
+  <title>Plans &amp; Billing — VaultProof</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <script src="/js/app-plans-2.js" defer></script>
   <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260603e">
-  <link rel="stylesheet" href="/css/app-plans-theme.css?v=20260603b">
+  <link rel="stylesheet" href="/css/app-plans-theme.css?v=20260603c">
 </head>
 <body>
   <div class="page">
@@ -75,14 +75,6 @@
           </span>
         </a>
 
-        <div class="sidebar-compat-hooks" hidden>
-          <div class="usage-label" id="usagePlanLabel">current tier</div>
-          <div class="usage-row"><span id="usageMetricLabel">billing</span><span id="usageMetricValue">loading</span></div>
-          <div class="usage-bar-track"><div class="usage-bar-fill" id="usageBarFill"></div></div>
-          <div class="usage-reset" id="usageMetricNote">pricing loads after account sync</div>
-          <div class="sidebar-user-info" id="sidebarEmail"></div>
-          <button id="logoutBtn" type="button" class="logout-btn">sign out</button>
-        </div>
       </aside>
 
       <main class="main plans-main">
@@ -91,29 +83,29 @@
             <h1 class="page-title">Plans & Billing</h1>
             <span class="page-meta">/ subscription controls</span>
           </div>
-          <p class="page-desc">Choose the tier that fits your traffic, key volume, and operational controls. Billing stays self-serve for standard plans, and enterprise can expand limits without forcing you into overage surprises.</p>
+          <p class="page-desc">Choose the tier that fits your protected keys, monthly traffic, and billing needs. Standard plans stay self-serve, and enterprise adds custom limits when your rollout grows.</p>
 
           <div class="hero-card">
             <div>
               <div class="hero-label">subscription overview</div>
-              <h2 class="hero-title">Simple plans for dev, prod, and larger teams.</h2>
-              <p class="hero-copy">Every plan keeps the same VaultProof workflow: protected keys, controlled proxy access, and clear upgrade paths when your traffic or team size grows.</p>
+              <h2 class="hero-title">Simple plans for dev, production, and larger teams.</h2>
+              <p class="hero-copy">Every tier keeps the same VaultProof workflow: protect keys, route calls through the proxy, and scale when traffic grows.</p>
               <div class="hero-details">
                 <div class="hero-detail">
                   <strong>Monthly or annual</strong>
-                  <span>Annual billing keeps the same limits with a lower effective rate.</span>
+                  <span>Annual billing keeps the same limits with lower effective pricing.</span>
                 </div>
                 <div class="hero-detail">
-                  <strong>No hidden SKU maze</strong>
-                  <span>Calls, key slots, retention, and core controls stay easy to compare.</span>
+                  <strong>Clear limits</strong>
+                  <span>Compare calls, key slots, retention, and controls at a glance.</span>
                 </div>
                 <div class="hero-detail">
                   <strong>Self-serve billing</strong>
-                  <span>Upgrade, downgrade, or manage invoices directly from the billing portal.</span>
+                  <span>Upgrade, downgrade, and manage invoices in the billing portal.</span>
                 </div>
                 <div class="hero-detail">
-                  <strong>Enterprise when needed</strong>
-                  <span>Custom limits, priority support, and larger rollouts when your team is ready.</span>
+                  <strong>Enterprise path</strong>
+                  <span>Custom capacity, priority support, and rollout help.</span>
                 </div>
               </div>
             </div>
@@ -136,6 +128,40 @@
 
           <div id="billingMsg" class="billing-msg"></div>
 
+          <section class="usage-card" aria-labelledby="usageTitle">
+            <div class="usage-card-head">
+              <div>
+                <div class="section-label">included usage</div>
+                <h2 id="usageTitle" class="usage-title">Plan usage</h2>
+              </div>
+              <a href="/app/keys" class="btn-outline usage-link">manage protected keys</a>
+            </div>
+
+            <div class="usage-grid">
+              <div class="usage-meter">
+                <div class="usage-meter-head">
+                  <span>Protected keys</span>
+                  <strong><span id="keysUsed">--</span> / <span id="keysLimit">--</span></strong>
+                </div>
+                <div class="usage-meter-track">
+                  <div id="keysBar" class="usage-meter-fill"></div>
+                </div>
+              </div>
+
+              <div class="usage-meter">
+                <div class="usage-meter-head">
+                  <span>API calls this month</span>
+                  <strong><span id="callsUsed">--</span> / <span id="callsLimit">--</span></strong>
+                </div>
+                <div class="usage-meter-track">
+                  <div id="callsBar" class="usage-meter-fill"></div>
+                </div>
+              </div>
+            </div>
+
+            <p class="usage-note" id="usageNote">Usage refreshes after your account syncs.</p>
+          </section>
+
           <div class="toggle-row">
             <span>monthly</span>
             <button type="button" id="annualToggle" class="toggle-switch" aria-label="Toggle annual pricing">
@@ -150,7 +176,7 @@
                 <div class="plan-name">Free</div>
               </div>
               <div class="plan-price">$0<small>/mo</small></div>
-              <p class="plan-note">For initial projects, testing flows, and lighter proxy traffic.</p>
+              <p class="plan-note">For initial projects, testing flows, and light proxy traffic.</p>
               <div class="plan-stats">
                 <div><strong>10k</strong><span>calls / month</span></div>
                 <div><strong>3</strong><span>key slots</span></div>
@@ -159,8 +185,8 @@
               </div>
               <ul class="feature-list">
                 <li><span class="feature-glyph">+</span><span>Vault-backed project keys</span></li>
-                <li><span class="feature-glyph">+</span><span>Basic usage visibility and scanner access</span></li>
-                <li><span class="feature-glyph">+</span><span>Good fit for dev sandboxes and proofs of concept</span></li>
+                <li><span class="feature-glyph">+</span><span>Basic usage visibility</span></li>
+                <li><span class="feature-glyph">+</span><span>Scanner access for early testing</span></li>
               </ul>
               <button id="freeBtn" type="button" class="btn-outline">Current Plan</button>
             </section>
@@ -170,7 +196,7 @@
                 <div class="plan-name">Starter</div>
               </div>
               <div class="plan-price"><span data-monthly="$5" data-annual="$50">$5</span><small data-period>/mo</small></div>
-              <p class="plan-note">For solo builders and early production traffic that needs room to grow.</p>
+              <p class="plan-note">For solo builders and early production traffic.</p>
               <div class="plan-stats">
                 <div><strong>50k</strong><span>calls / month</span></div>
                 <div><strong>10</strong><span>key slots</span></div>
@@ -178,9 +204,9 @@
                 <div><strong>3</strong><span>projects included</span></div>
               </div>
               <ul class="feature-list">
-                <li><span class="feature-glyph">+</span><span>More protected keys and longer activity history</span></li>
-                <li><span class="feature-glyph">+</span><span>Enough headroom for early production workloads</span></li>
-                <li><span class="feature-glyph">+</span><span>Predictable pricing for a single operator or small app</span></li>
+                <li><span class="feature-glyph">+</span><span>More protected keys</span></li>
+                <li><span class="feature-glyph">+</span><span>Longer activity history</span></li>
+                <li><span class="feature-glyph">+</span><span>Room for early production workloads</span></li>
               </ul>
               <button type="button" data-tier="starter" class="billing-upgrade-btn btn-primary">Upgrade to Starter</button>
             </section>
@@ -191,7 +217,7 @@
                 <div class="plan-chip">Most popular</div>
               </div>
               <div class="plan-price"><span data-monthly="$20" data-annual="$200">$20</span><small data-period>/mo</small></div>
-              <p class="plan-note">For production apps, shared teams, and anyone who needs stronger guardrails around spend and access.</p>
+              <p class="plan-note">For production apps and teams that need stronger spend and access guardrails.</p>
               <div class="plan-stats">
                 <div><strong>500k</strong><span>calls / month</span></div>
                 <div><strong>100</strong><span>key slots</span></div>
@@ -199,9 +225,9 @@
                 <div><strong>10</strong><span>projects included</span></div>
               </div>
               <ul class="feature-list">
-                <li><span class="feature-glyph">+</span><span>IP allowlists, budget caps, and usage alerts</span></li>
-                <li><span class="feature-glyph">+</span><span>CSV export and cleaner audit visibility</span></li>
-                <li><span class="feature-glyph">+</span><span>Best fit for real customer traffic and multi-service setups</span></li>
+                <li><span class="feature-glyph">+</span><span>IP allowlists and budget caps</span></li>
+                <li><span class="feature-glyph">+</span><span>Usage alerts and CSV export</span></li>
+                <li><span class="feature-glyph">+</span><span>Better fit for customer traffic</span></li>
               </ul>
               <button type="button" data-tier="pro" class="billing-upgrade-btn btn-primary">Upgrade to Pro</button>
             </section>
@@ -215,7 +241,7 @@
   </div>
 
   <script src="/js/app-session.js?v=20260603b" defer></script>
-  <script src="/js/app-plans-3.js" defer></script>
+  <script src="/js/app-plans-3.js?v=20260603b" defer></script>
   <script src="/js/analytics.js" defer></script>
 </body>
 </html>

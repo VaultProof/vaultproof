@@ -41,6 +41,27 @@
   margin-bottom: 4px !important;
 }
 
+.settings-two-col {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+
+.settings-section-divider {
+  height: 1px !important;
+  margin: 20px 0 !important;
+  background: rgba(148, 163, 184, 0.16) !important;
+}
+
+.settings-subtitle {
+  margin: 0 0 14px !important;
+  color: var(--vp-dashboard-text-color, var(--text)) !important;
+  font-family: var(--display) !important;
+  font-size: 16px !important;
+  font-weight: var(--vp-sidebar-text-weight, 500) !important;
+  line-height: 1.35 !important;
+}
+
 .settings-wrap h1 {
   color: var(--text) !important;
   font-family: var(--display) !important;
@@ -84,7 +105,6 @@
 .settings-wrap .bg-\[\#0a0a0f\],
 #sessionExpired > div,
 #killSwitchModal > div,
-#billingMsg,
 #killSwitchActive,
 #deleteConfirm1,
 #deleteConfirm2 {
@@ -155,13 +175,9 @@ button,
 
 .settings-wrap .bg-\[\#6366f1\],
 .settings-wrap .hover\:bg-\[\#5558e6\]:hover,
-.settings-wrap .billing-upgrade-btn,
 #saveGlobalLimitsBtn,
-#billingManageBtn,
 #deleteBtn + div button,
-#confirmKillBtn,
-.settings-wrap a[href="#billing"],
-.settings-wrap a[href="/app/keys"] {
+#confirmKillBtn {
   background: linear-gradient(135deg, var(--accent), var(--success)) !important;
   border-color: transparent !important;
   color: #001016 !important;
@@ -169,11 +185,8 @@ button,
 }
 
 .settings-wrap .bg-\[\#6366f1\]:hover,
-.settings-wrap .billing-upgrade-btn:hover,
 #saveGlobalLimitsBtn:hover,
-#billingManageBtn:hover,
-.settings-wrap a[href="#billing"]:hover,
-.settings-wrap a[href="/app/keys"]:hover {
+#confirmKillBtn:hover {
   background: linear-gradient(135deg, #4df0ff, #4ff0bd) !important;
   color: #001016 !important;
 }
@@ -227,24 +240,12 @@ button,
   color: var(--danger) !important;
 }
 
-.settings-wrap .bg-\[\#6366f1\],
-#keysBar,
-#callsBar,
-.usage-bar-fill {
+.settings-wrap .bg-\[\#6366f1\] {
   background: linear-gradient(90deg, var(--accent), var(--success)) !important;
 }
 
-.settings-wrap .w-full.bg-\[\#0a0a0f\],
-.usage-bar-track {
+.settings-wrap .w-full.bg-\[\#0a0a0f\] {
   background: rgba(148, 163, 184, 0.16) !important;
-}
-
-#settingsAnnualToggle {
-  background: rgba(148, 163, 184, 0.16) !important;
-}
-
-#settingsAnnualDot {
-  background: var(--text-muted) !important;
 }
 
 #toastInner {
@@ -273,10 +274,13 @@ button,
   }
 
   #deleteConfirm2 .flex,
-  #killSwitchModal .flex,
-  #upgradeProBanner .flex {
+  #killSwitchModal .flex {
     flex-direction: column !important;
     align-items: stretch !important;
+  }
+
+  .settings-two-col {
+    grid-template-columns: 1fr !important;
   }
 }
 
@@ -294,7 +298,6 @@ button,
 .settings-wrap :where(.rounded-2xl, .rounded-xl, .rounded-lg),
 #sessionExpired > div,
 #killSwitchModal > div,
-#billingMsg,
 #killSwitchActive,
 #deleteConfirm1,
 #deleteConfirm2 {
@@ -486,8 +489,6 @@ html body .settings-wrap > section.border-red-900\/50 {
   border-radius: 8px !important;
 }
 
-#settingsAnnualToggle,
-#settingsAnnualDot,
 .settings-wrap .rounded-full {
   border-radius: 999px !important;
 }

@@ -8,6 +8,15 @@ let refreshAttempted = false;
 let refreshPromise = null;
 let isAnnual = false;
 let currentTier = 'free';
+let usageData = { keysUsed: 0, callsUsed: 0 };
+
+const tierLimits = {
+  free: { keys: 3, calls: 10000 },
+  starter: { keys: 10, calls: 50000 },
+  pro: { keys: 100, calls: 500000 },
+  team: { keys: 500, calls: 2000000 },
+  enterprise: { keys: Infinity, calls: Infinity },
+};
 
 if (!token && !(session && session.hasRefreshToken())) {
   window.location.href = 'login';
@@ -56,24 +65,6 @@ function syncUserChrome(emailValue) {
 
   const emailLabel = document.getElementById('user-email');
   if (emailLabel) emailLabel.textContent = email || 'unknown user';
-}
-
-function syncSidebarUsage() {
-  const usagePlanLabel = document.getElementById('usagePlanLabel');
-  const usageMetricValue = document.getElementById('usageMetricValue');
-  const usageMetricNote = document.getElementById('usageMetricNote');
-  const usageBarFill = document.getElementById('usageBarFill');
-  if (!usagePlanLabel || !usageMetricValue || !usageMetricNote || !usageBarFill) return;
-
-  const rank = { free: 18, starter: 42, pro: 76, team: 90, enterprise: 100 };
-  usagePlanLabel.textContent = formatTierLabel(currentTier).toLowerCase();
-  usageMetricValue.textContent = currentTier;
-  usageMetricNote.textContent = currentTier === 'free'
-    ? 'upgrade for more volume and controls'
-    : currentTier === 'enterprise'
-      ? 'custom billing and support path'
-      : 'self-serve billing is active';
-  usageBarFill.style.width = `${rank[currentTier] || 18}%`;
 }
 
 const sidebarEl = document.getElementById('sidebar');
@@ -160,11 +151,52 @@ function showBillingMessage(text, tone) {
   msg.style.color = theme.color;
 }
 
+function formatLimit(value) {
+  return value === Infinity ? 'Unlimited' : value.toLocaleString();
+}
+
+function meterWidth(used, limit) {
+  if (limit === Infinity) return used > 0 ? 8 : 0;
+  if (!limit) return 0;
+  return Math.min(100, (used / limit) * 100);
+}
+
+function updateUsageDisplay() {
+  const limits = tierLimits[currentTier] || tierLimits.free;
+  const keysUsed = Number(usageData.keysUsed || 0);
+  const callsUsed = Number(usageData.callsUsed || 0);
+
+  const keysUsedEl = document.getElementById('keysUsed');
+  const keysLimitEl = document.getElementById('keysLimit');
+  const keysBar = document.getElementById('keysBar');
+  const callsUsedEl = document.getElementById('callsUsed');
+  const callsLimitEl = document.getElementById('callsLimit');
+  const callsBar = document.getElementById('callsBar');
+  const usageNote = document.getElementById('usageNote');
+
+  if (keysUsedEl) keysUsedEl.textContent = keysUsed.toLocaleString();
+  if (keysLimitEl) keysLimitEl.textContent = formatLimit(limits.keys);
+  if (keysBar) keysBar.style.width = `${meterWidth(keysUsed, limits.keys)}%`;
+
+  if (callsUsedEl) callsUsedEl.textContent = callsUsed.toLocaleString();
+  if (callsLimitEl) callsLimitEl.textContent = formatLimit(limits.calls);
+  if (callsBar) callsBar.style.width = `${meterWidth(callsUsed, limits.calls)}%`;
+
+  if (usageNote) {
+    if (limits.calls === Infinity) {
+      usageNote.textContent = 'Enterprise usage uses custom billing and support limits.';
+    } else {
+      const callsLeft = Math.max(limits.calls - callsUsed, 0).toLocaleString();
+      usageNote.textContent = `${callsLeft} API calls left in the current monthly allowance.`;
+    }
+  }
+}
+
 const tierRank = { free: 0, starter: 1, pro: 2, team: 3, enterprise: 4 };
 
 function showPlan(tier, hasSubscription, expiresAt) {
   currentTier = normalizeTier(tier);
-  syncSidebarUsage();
+  updateUsageDisplay();
 
   const badge = document.getElementById('currentPlanBadge');
   const planExpiry = document.getElementById('planExpiry');
@@ -258,6 +290,25 @@ async function loadPlan() {
     showPlan(tier, hasSubscription, expiresAt);
   } catch {
     showPlan('free', false);
+  }
+}
+
+async function loadUsage() {
+  try {
+    const res = await apiFetch('/stats/overview');
+    if (!res || !res.ok) {
+      updateUsageDisplay();
+      return;
+    }
+
+    const data = await res.json().catch(() => ({}));
+    usageData = {
+      keysUsed: Number(data.totalKeys || data.keysUsed || 0),
+      callsUsed: Number(data.totalCalls || data.callsUsed || 0),
+    };
+    updateUsageDisplay();
+  } catch {
+    updateUsageDisplay();
   }
 }
 
@@ -366,3 +417,4 @@ if (params.get('billing') === 'success') {
 
 bindPageActions();
 loadPlan();
+loadUsage();
