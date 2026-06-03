@@ -3329,11 +3329,11 @@ async function assertEnterpriseLoginRoute() {
     'Keep provider keys out of <em>applications, agents, and build systems.</em>',
     'Keep the provider workflow. <em>Move the raw key out.</em>',
     'enterprise-homepage-business-match',
-    'color-scheme: light',
-    '--bg: #e7eef6',
-    '--paper: #f5f8fb',
-    '--accent: #0f766e',
-    '--primary-bg: #142235',
+    'color-scheme: dark',
+    '--bg: #070b10',
+    '--paper: #0b1118',
+    '--accent: #6ee7c8',
+    '--primary-bg: #f6fbff',
     '--body: ui-sans-serif',
     'letter-spacing: -0.02em !important',
     'border-radius: 8px',
@@ -3348,6 +3348,11 @@ async function assertEnterpriseLoginRoute() {
   }
   if (rootHtml.includes('https://init.vaultproof.dev') || rootHtml.includes('https://api.vaultproof.dev')) {
     throw new Error('Enterprise homepage must not reference B2C API origins');
+  }
+  for (const oldThemeToken of ['background: #ffffff', '#dbe7f3', '#edf4fa', 'rgba(255, 255, 255']) {
+    if (rootHtml.includes(oldThemeToken)) {
+      throw new Error(`Enterprise homepage must not include old light theme token ${oldThemeToken}`);
+    }
   }
   if (rootHtml.includes('fonts.googleapis.com') || rootHtml.includes('Newsreader') || rootHtml.includes('Inter Tight')) {
     throw new Error('Enterprise homepage must use the dashboard system-font theme, not the old editorial font theme');

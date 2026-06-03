@@ -11,26 +11,26 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
   <meta name="description" content="VaultProof Enterprise helps security and platform teams keep raw provider keys out of applications, agents, CI, and logs while preserving policy controls and audit evidence for approved API calls." />
   <style>
     :root {
-      color-scheme: light;
-      --bg: #e7eef6;
-      --paper: #f5f8fb;
-      --surface: #ffffff;
-      --card-bg: rgba(255, 255, 255, 0.88);
-      --row-bg: rgba(247, 251, 255, 0.92);
-      --ink: #142235;
-      --ink-soft: #536276;
-      --muted: #8290a3;
-      --line: #d7e0eb;
-      --line-strong: #bcc9d8;
-      --line-soft: rgba(20, 34, 53, 0.08);
-      --accent: #0f766e;
-      --accent-ink: #ffffff;
-      --accent-soft: rgba(15, 118, 110, 0.10);
-      --primary-bg: #142235;
-      --success: #0f766e;
-      --danger: #c2410c;
-      --blue: #1d4ed8;
-      --shadow: 0 24px 70px rgba(15, 23, 42, 0.10);
+      color-scheme: dark;
+      --bg: #070b10;
+      --paper: #0b1118;
+      --surface: #101821;
+      --card-bg: rgba(14, 22, 31, 0.88);
+      --row-bg: rgba(16, 24, 33, 0.76);
+      --ink: #f6fbff;
+      --ink-soft: #c7d3df;
+      --muted: #8997a5;
+      --line: rgba(248, 250, 252, 0.12);
+      --line-strong: rgba(138, 180, 248, 0.30);
+      --line-soft: rgba(248, 250, 252, 0.08);
+      --accent: #6ee7c8;
+      --accent-ink: #06100d;
+      --accent-soft: rgba(110, 231, 200, 0.12);
+      --primary-bg: #f6fbff;
+      --success: #6ee7c8;
+      --danger: #fb7185;
+      --blue: #8ab4f8;
+      --shadow: 0 28px 84px rgba(0, 0, 0, 0.38);
       --display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -1062,33 +1062,38 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     /* enterprise-homepage-business-match */
     body {
-      background: #ffffff;
+      background: var(--bg);
       color: var(--ink);
       font-size: 16px;
-      font-weight: 400;
+      font-weight: 430;
     }
     .vp-page {
       background:
-        linear-gradient(180deg, #dbe7f3 0%, var(--bg) 24%, #edf4fa 58%, #ffffff 100%);
+        linear-gradient(180deg, #070b10 0%, #0a1017 42%, #070b10 100%);
       color: var(--ink);
     }
     .vp-page::before {
-      opacity: 0.58;
+      opacity: 0.56;
       background-image:
-        linear-gradient(90deg, rgba(20, 34, 53, 0.05) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(20, 34, 53, 0.045) 1px, transparent 1px);
-      background-size: 72px 72px;
-      mask-image: linear-gradient(to bottom, black 0%, transparent 74%);
-      -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 74%);
+        linear-gradient(90deg, rgba(138, 180, 248, 0.09) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(248, 250, 252, 0.045) 1px, transparent 1px),
+        linear-gradient(145deg, transparent 48%, rgba(110, 231, 200, 0.12) 48.15%, transparent 48.45%);
+      background-size: 86px 86px, 86px 86px, 760px 760px;
+      mask-image: linear-gradient(to bottom, black 0%, transparent 78%);
+      -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 78%);
     }
     .vp-page::after {
-      display: none;
+      display: block;
+      opacity: 0.10;
+      background-image: linear-gradient(rgba(248, 250, 252, 0.12) 1px, transparent 1px);
+      background-size: 100% 9px;
+      mix-blend-mode: screen;
     }
     .vp-container {
       width: min(1180px, calc(100vw - 72px));
     }
     .vp-nav {
-      background: rgba(248, 251, 255, 0.88);
+      background: rgba(7, 11, 16, 0.84);
       border-bottom: 1px solid var(--line);
       -webkit-backdrop-filter: blur(18px);
       backdrop-filter: blur(18px);
@@ -1104,12 +1109,12 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-brand-title {
       color: var(--ink);
       font-size: 15px;
-      font-weight: 700;
+      font-weight: 760;
       text-transform: none;
     }
     .vp-brand-sub {
-      color: var(--muted);
-      font: 600 11px/1 var(--mono);
+      color: var(--accent);
+      font: 650 11px/1 var(--mono);
       text-transform: uppercase;
     }
     .vp-links {
@@ -1117,8 +1122,8 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-links a,
     .vp-signin {
-      color: var(--ink-soft);
-      font: 500 13px/1 var(--body);
+      color: rgba(246, 251, 255, 0.72);
+      font: 560 13px/1 var(--body);
       text-transform: none;
     }
     .vp-links a:hover,
@@ -1130,27 +1135,30 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       padding: 0 15px;
       border-radius: 4px;
       border: 1px solid var(--line);
-      font: 650 13px/1 var(--body);
+      font: 680 13px/1 var(--body);
       text-transform: none;
       box-shadow: none;
     }
     .vp-btn.primary {
       background: var(--primary-bg);
-      color: #ffffff;
-      border-color: var(--primary-bg);
+      color: #071018;
+      border-color: rgba(246, 251, 255, 0.88);
     }
     .vp-btn.secondary {
-      background: rgba(255, 255, 255, 0.82);
+      background: rgba(16, 24, 33, 0.78);
       color: var(--ink);
       border-color: var(--line);
     }
+    .vp-btn.secondary:hover {
+      background: rgba(20, 31, 43, 0.92);
+    }
     .vp-section {
-      background: transparent;
+      background: rgba(7, 11, 16, 0.34);
       border-bottom: 1px solid var(--line);
     }
     .vp-section.surface,
     .vp-footer {
-      background: rgba(245, 248, 251, 0.78);
+      background: rgba(10, 16, 23, 0.82);
     }
     .vp-pad {
       padding: 92px 0;
@@ -1160,10 +1168,10 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       padding: 92px 0 86px;
     }
     .vp-grid-bg {
-      opacity: 0.44;
+      opacity: 0.42;
       background-image:
-        linear-gradient(90deg, rgba(20, 34, 53, 0.08) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(20, 34, 53, 0.05) 1px, transparent 1px);
+        linear-gradient(90deg, rgba(138, 180, 248, 0.12) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(248, 250, 252, 0.055) 1px, transparent 1px);
       background-size: 96px 96px;
       mask-image: radial-gradient(ellipse at center, black 22%, transparent 72%);
       -webkit-mask-image: radial-gradient(ellipse at center, black 22%, transparent 72%);
@@ -1189,9 +1197,9 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       gap: 8px;
       width: auto;
       padding: 7px 10px;
-      border: 1px solid var(--line);
+      border: 1px solid rgba(110, 231, 200, 0.26);
       border-radius: 4px;
-      background: rgba(255, 255, 255, 0.74);
+      background: rgba(110, 231, 200, 0.08);
       color: var(--accent);
       font: 750 11px/1.2 var(--mono);
       text-transform: uppercase;
@@ -1267,7 +1275,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-compliance-card p {
       color: var(--muted);
       font-family: var(--body);
-      font-weight: 400;
+      font-weight: 430;
     }
     .vp-proof-stat {
       max-width: 560px;
@@ -1299,60 +1307,58 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       text-transform: uppercase;
     }
     .vp-feed-card,
-    .vp-code-card {
-      background: #0d1521;
-      border: 1px solid rgba(20, 34, 53, 0.18);
-      border-radius: 8px;
-      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.14);
-    }
-    .vp-feed-card {
-      padding: 46px 18px 10px;
-    }
-    .vp-feed-row {
-      color: #f7fbff;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.10);
-      font-family: var(--mono);
-    }
-    .vp-feed-row .muted,
-    .vp-code-muted,
-    .vp-code-remove {
-      color: rgba(247, 251, 255, 0.58);
-    }
-    .vp-feed-row .accent,
-    .vp-feed-row .ok,
-    .vp-code-sign,
-    .vp-code-add {
-      color: #7df1d1;
-    }
-    .vp-code-card .vp-code-add,
-    .vp-code-add {
-      background: rgba(34, 230, 168, 0.12);
-    }
-    .vp-code-card pre {
-      color: rgba(247, 251, 255, 0.80);
-      font-family: var(--mono);
-    }
+    .vp-code-card,
     .vp-figure,
     .vp-card,
     .vp-compliance-card,
     .vp-belief,
     .vp-final {
-      background: rgba(255, 255, 255, 0.86);
+      background: var(--card-bg);
       border: 1px solid var(--line);
       border-radius: 8px;
-      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+    }
+    .vp-feed-card {
+      padding: 46px 18px 10px;
+      background:
+        linear-gradient(180deg, rgba(246, 251, 255, 0.045), transparent 42%),
+        rgba(9, 14, 20, 0.92);
+    }
+    .vp-feed-row {
+      color: var(--ink);
+      border-bottom: 1px solid var(--line-soft);
+      font-family: var(--mono);
+    }
+    .vp-feed-row .muted,
+    .vp-code-muted,
+    .vp-code-remove {
+      color: rgba(246, 251, 255, 0.55);
+    }
+    .vp-feed-row .accent,
+    .vp-feed-row .ok,
+    .vp-code-sign,
+    .vp-code-add {
+      color: var(--accent);
+    }
+    .vp-code-card .vp-code-add,
+    .vp-code-add {
+      background: var(--accent-soft);
+    }
+    .vp-code-card pre {
+      color: rgba(246, 251, 255, 0.80);
+      font-family: var(--mono);
     }
     .vp-figure {
       background:
-        radial-gradient(circle at 58% 42%, rgba(15, 118, 110, 0.12), transparent 18rem),
-        rgba(255, 255, 255, 0.88);
-      border-color: var(--line);
+        linear-gradient(180deg, rgba(110, 231, 200, 0.075), transparent 46%),
+        rgba(14, 22, 31, 0.86);
+      border-color: rgba(138, 180, 248, 0.18);
     }
     .vp-figure-grid {
       opacity: 0.76;
       background-image:
-        linear-gradient(rgba(20, 34, 53, 0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(20, 34, 53, 0.06) 1px, transparent 1px);
+        linear-gradient(rgba(138, 180, 248, 0.09) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(248, 250, 252, 0.055) 1px, transparent 1px);
       background-size: 52px 52px;
     }
     .vp-key-core,
@@ -1360,9 +1366,9 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-region i,
     .vp-window-dots i,
     .vp-dot {
-      border-color: rgba(15, 118, 110, 0.30);
+      border-color: rgba(110, 231, 200, 0.34);
       background: var(--accent);
-      color: #ffffff;
+      color: #071018;
     }
     .vp-key-glyph,
     .vp-key-glyph::before,
@@ -1376,7 +1382,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       border-bottom: 1px dashed var(--line);
     }
     .vp-node-dot {
-      background: var(--surface);
+      background: rgba(246, 251, 255, 0.045);
       border: 1px solid var(--line-strong);
       color: var(--accent);
       font-family: var(--mono);
@@ -1416,6 +1422,8 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-belief {
       min-height: auto;
       padding: 28px;
+      background: rgba(14, 22, 31, 0.78);
+      box-shadow: none;
     }
     .vp-belief:first-child {
       padding-left: 28px;
@@ -1423,11 +1431,11 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-final {
       padding: 58px 34px;
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(245, 248, 251, 0.92)),
-        rgba(255, 255, 255, 0.94);
+        linear-gradient(180deg, rgba(246, 251, 255, 0.055), rgba(110, 231, 200, 0.045)),
+        rgba(14, 22, 31, 0.88);
     }
     .vp-footer {
-      background: #ffffff;
+      background: #070b10;
       border-top: 1px solid var(--line);
     }
     .vp-footer-grid {
