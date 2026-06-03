@@ -701,8 +701,6 @@
   }
   async function load(loadMoreKind) {
     setText('user-email', user.email || 'loading...');
-    const avatar = $('user-avatar');
-    if (avatar) avatar.textContent = (user.email || 'VP').charAt(0).toUpperCase();
 
     const orgsPayload = await apiFetch(INIT_API, '/orgs', { includeOrganization: false });
     const orgsData = unwrapPayload(orgsPayload?.data) || {};

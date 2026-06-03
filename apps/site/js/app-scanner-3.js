@@ -103,8 +103,6 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
     document.getElementById('sidebarEmail').textContent = user.email || '';
     const userEmail = document.getElementById('user-email');
     if (userEmail) userEmail.textContent = user.email || 'unknown user';
-    const userAvatar = document.getElementById('user-avatar');
-    if (userAvatar) userAvatar.textContent = (user.email || 'V').charAt(0).toUpperCase();
     document.getElementById('menuBtn').addEventListener('click', toggleMobileSidebar);
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.addEventListener('click', logout);
@@ -628,7 +626,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
           '<div class="mt-2">' +
             '<div class="flex items-center gap-2 px-3 py-2 bg-surface border border-border rounded-xl">' +
               '<svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
-              '<span class="text-xs text-gray-400">You will store this key securely via the <a href="/app/keys" class="text-brand hover:underline">Keys page</a> after migration.</span>' +
+              '<span class="text-xs text-gray-400">You will store this key securely via the <a href="/app/keys.html" class="text-brand hover:underline">Keys page</a> after migration.</span>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -1321,7 +1319,7 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
       var envRefFindings = findings.filter(function(f) { return f.type === 'env-ref'; });
       var codeChangeFindings = sdkFindings.concat(httpFindings).concat(envRefFindings);
 
-      // Collect checked key findings (no raw keys — users store keys via /app/keys after migration)
+      // Collect checked key findings (no raw keys; users store keys via the Keys page after migration)
       var selectedKeys = [];
       document.querySelectorAll('.migrate-key-cb:checked').forEach(function(cb) {
         var idx = parseInt(cb.dataset.keyIdx);

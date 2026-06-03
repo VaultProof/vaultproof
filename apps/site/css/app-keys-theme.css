@@ -6,18 +6,6 @@
   --keys-button: rgba(15, 23, 42, 0.72);
 }
 
-.main-shell > * + * {
-  margin-top: 0 !important;
-}
-
-.subbar {
-  min-height: 58px !important;
-  padding: 0 28px !important;
-  border-bottom: 1px solid var(--keys-border-soft) !important;
-  background: rgba(15, 23, 42, 0.42) !important;
-}
-
-.subbar-title,
 .page-title,
 .project-section-title,
 .modal-title {
@@ -27,11 +15,6 @@
   letter-spacing: 0 !important;
 }
 
-.subbar-title {
-  font-size: 18px !important;
-}
-
-.subbar-caption,
 .page-meta,
 .page-desc,
 .project-section-sub,
@@ -49,20 +32,10 @@
   font-weight: var(--vp-sidebar-text-weight) !important;
 }
 
-.main {
+.keys-main {
   padding: 26px 28px 36px !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
 }
 
-.content {
-  display: grid !important;
-  gap: var(--vp-layout-gap, 16px) !important;
-}
-
-.content > * + *,
 #projectsContainer > * + * {
   margin-top: 0 !important;
 }
@@ -73,7 +46,7 @@
 }
 
 .page-title {
-  font-size: clamp(28px, 3.2vw, 42px) !important;
+  font-size: 42px !important;
   line-height: 1 !important;
 }
 
@@ -189,7 +162,7 @@
   margin-top: 6px !important;
   color: var(--vp-dashboard-text-color) !important;
   font-family: var(--mono) !important;
-  font-size: clamp(24px, 2.4vw, 32px) !important;
+  font-size: 32px !important;
   letter-spacing: 0 !important;
 }
 
@@ -311,8 +284,16 @@ html body .modal-shell select.form-control {
 
 
 @media (max-width: 680px) {
-  .main {
+  .keys-main {
     padding: 20px 16px 32px !important;
+  }
+
+  .page-title {
+    font-size: 30px !important;
+  }
+
+  .kpi-value {
+    font-size: 26px !important;
   }
 
   .kpi-grid {

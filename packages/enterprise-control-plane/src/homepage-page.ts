@@ -7,30 +7,30 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VaultProof - API keys that are harder to steal</title>
-  <meta name="description" content="VaultProof protects important API keys. Your app calls VaultProof instead of storing the real key, and VaultProof safely uses the key for one request at a time." />
+  <title>VaultProof Enterprise | Runtime API key protection</title>
+  <meta name="description" content="VaultProof Enterprise helps security and platform teams keep raw provider keys out of applications, agents, CI, and logs while preserving policy controls and audit evidence for approved API calls." />
   <style>
     :root {
-      color-scheme: dark;
-      --bg: #0b0f14;
-      --paper: #111827;
-      --surface: #151d29;
-      --card-bg: rgba(17, 24, 39, 0.88);
-      --row-bg: rgba(21, 29, 41, 0.82);
-      --ink: #f8fafc;
-      --ink-soft: #a8b3c2;
-      --muted: #7d8794;
-      --line: rgba(248, 250, 252, 0.12);
-      --line-strong: rgba(138, 180, 248, 0.34);
-      --line-soft: rgba(248, 250, 252, 0.07);
-      --accent: #8ab4f8;
-      --accent-ink: #08111f;
-      --accent-soft: rgba(138, 180, 248, 0.14);
-      --primary-bg: #8ab4f8;
-      --success: #8ab4f8;
-      --danger: #f87171;
-      --blue: #8ab4f8;
-      --shadow: 0 26px 80px rgba(0, 0, 0, 0.46);
+      color-scheme: light;
+      --bg: #e7eef6;
+      --paper: #f5f8fb;
+      --surface: #ffffff;
+      --card-bg: rgba(255, 255, 255, 0.88);
+      --row-bg: rgba(247, 251, 255, 0.92);
+      --ink: #142235;
+      --ink-soft: #536276;
+      --muted: #8290a3;
+      --line: #d7e0eb;
+      --line-strong: #bcc9d8;
+      --line-soft: rgba(20, 34, 53, 0.08);
+      --accent: #0f766e;
+      --accent-ink: #ffffff;
+      --accent-soft: rgba(15, 118, 110, 0.10);
+      --primary-bg: #142235;
+      --success: #0f766e;
+      --danger: #c2410c;
+      --blue: #1d4ed8;
+      --shadow: 0 24px 70px rgba(15, 23, 42, 0.10);
       --display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -133,7 +133,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-hero-title {
       max-width: 13.8ch;
       margin: 24px 0 0;
-      font: 400 clamp(66px, 10.4vw, 164px)/0.92 var(--display);
+      font: 400 92px/0.92 var(--display);
       letter-spacing: -0.045em;
       text-wrap: balance;
     }
@@ -220,7 +220,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-heading {
       margin: 20px 0 0;
       color: var(--ink);
-      font: 400 clamp(40px, 4.4vw, 64px)/1 var(--display);
+      font: 400 56px/1 var(--display);
       letter-spacing: -0.026em;
       text-wrap: balance;
     }
@@ -542,7 +542,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     .vp-final h2 {
       max-width: 14ch;
       margin: 20px auto 0;
-      font: 400 clamp(54px, 7vw, 112px)/0.96 var(--display);
+      font: 400 72px/0.96 var(--display);
       letter-spacing: -0.035em;
       text-wrap: balance;
     }
@@ -755,15 +755,15 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     }
     .vp-hero-title {
       max-width: 920px;
-      font-size: clamp(56px, 7.1vw, 116px) !important;
+      font-size: 82px !important;
       line-height: 0.9;
     }
     .vp-heading {
       max-width: 780px;
-      font-size: clamp(38px, 4.4vw, 66px);
+      font-size: 56px;
     }
     .vp-final h2 {
-      font-size: clamp(46px, 6vw, 92px);
+      font-size: 72px;
     }
     .vp-hero-title em,
     .vp-heading em,
@@ -1008,7 +1008,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       .vp-signin { display: none; }
       .vp-hero { min-height: auto; padding: 72px 0 76px; }
       .vp-dateline { flex-direction: column; gap: 8px; }
-      .vp-hero-title { font-size: clamp(46px, 15vw, 86px) !important; }
+      .vp-hero-title { font-size: 46px !important; }
       .vp-hero-lower,
       .vp-two-col,
       .vp-threat-layout,
@@ -1047,7 +1047,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       .vp-brand { min-width: auto; }
       .vp-signin { display: none; }
       .vp-dateline { flex-direction: column; gap: 8px; }
-      .vp-hero-title { font-size: clamp(60px, 17vw, 112px); }
+      .vp-hero-title { font-size: 46px; }
       .vp-hero-lower, .vp-two-col, .vp-threat-layout, .vp-code-layout { grid-template-columns: 1fr; gap: 40px; }
       .vp-proof-stat { grid-template-columns: 1fr; }
       .vp-sticky { position: static; }
@@ -1059,6 +1059,443 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       .vp-threat-row { grid-template-columns: 1fr; gap: 14px; }
       .vp-code-card pre { font-size: 12px; }
       .vp-footer-bottom { flex-direction: column; }
+    }
+    /* enterprise-homepage-business-match */
+    body {
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 400;
+    }
+    .vp-page {
+      background:
+        linear-gradient(180deg, #dbe7f3 0%, var(--bg) 24%, #edf4fa 58%, #ffffff 100%);
+      color: var(--ink);
+    }
+    .vp-page::before {
+      opacity: 0.58;
+      background-image:
+        linear-gradient(90deg, rgba(20, 34, 53, 0.05) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(20, 34, 53, 0.045) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: linear-gradient(to bottom, black 0%, transparent 74%);
+      -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 74%);
+    }
+    .vp-page::after {
+      display: none;
+    }
+    .vp-container {
+      width: min(1180px, calc(100vw - 72px));
+    }
+    .vp-nav {
+      background: rgba(248, 251, 255, 0.88);
+      border-bottom: 1px solid var(--line);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+    }
+    .vp-nav-inner {
+      min-height: 58px;
+      padding: 0;
+    }
+    .vp-brand {
+      min-width: 230px;
+      color: var(--ink);
+    }
+    .vp-brand-title {
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: none;
+    }
+    .vp-brand-sub {
+      color: var(--muted);
+      font: 600 11px/1 var(--mono);
+      text-transform: uppercase;
+    }
+    .vp-links {
+      gap: 24px;
+    }
+    .vp-links a,
+    .vp-signin {
+      color: var(--ink-soft);
+      font: 500 13px/1 var(--body);
+      text-transform: none;
+    }
+    .vp-links a:hover,
+    .vp-signin:hover {
+      color: var(--ink);
+    }
+    .vp-btn {
+      min-height: 38px;
+      padding: 0 15px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+      font: 650 13px/1 var(--body);
+      text-transform: none;
+      box-shadow: none;
+    }
+    .vp-btn.primary {
+      background: var(--primary-bg);
+      color: #ffffff;
+      border-color: var(--primary-bg);
+    }
+    .vp-btn.secondary {
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--ink);
+      border-color: var(--line);
+    }
+    .vp-section {
+      background: transparent;
+      border-bottom: 1px solid var(--line);
+    }
+    .vp-section.surface,
+    .vp-footer {
+      background: rgba(245, 248, 251, 0.78);
+    }
+    .vp-pad {
+      padding: 92px 0;
+    }
+    .vp-hero {
+      min-height: auto;
+      padding: 92px 0 86px;
+    }
+    .vp-grid-bg {
+      opacity: 0.44;
+      background-image:
+        linear-gradient(90deg, rgba(20, 34, 53, 0.08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(20, 34, 53, 0.05) 1px, transparent 1px);
+      background-size: 96px 96px;
+      mask-image: radial-gradient(ellipse at center, black 22%, transparent 72%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 22%, transparent 72%);
+    }
+    .vp-dateline {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      max-width: none;
+      margin: 0 0 34px;
+      padding: 0 0 14px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font: 650 11px/1.35 var(--mono);
+    }
+    .vp-dateline span:nth-child(2) {
+      text-align: center;
+    }
+    .vp-dateline span:last-child {
+      text-align: right;
+    }
+    .vp-eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      width: auto;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.74);
+      color: var(--accent);
+      font: 750 11px/1.2 var(--mono);
+      text-transform: uppercase;
+    }
+    .vp-eyebrow strong,
+    .vp-card-num,
+    .vp-steps b {
+      color: var(--accent);
+      font-weight: 750;
+    }
+    .vp-hero-title,
+    .vp-heading,
+    .vp-final h2 {
+      color: var(--ink);
+      font-family: var(--display);
+      font-weight: 760;
+      letter-spacing: -0.02em !important;
+      line-height: 1;
+      text-wrap: balance;
+    }
+    .vp-hero-title {
+      max-width: 990px;
+      margin-top: 18px;
+      font-size: 72px !important;
+      line-height: 0.97;
+    }
+    .vp-heading {
+      max-width: 780px;
+      font-size: 48px;
+      line-height: 1.02;
+    }
+    .vp-final h2 {
+      max-width: 820px;
+      font-size: 58px;
+      line-height: 1.02;
+    }
+    .vp-hero-title em,
+    .vp-heading em,
+    .vp-final h2 em {
+      color: var(--accent);
+      font-style: normal;
+    }
+    .vp-hero-lower {
+      grid-template-columns: minmax(0, 1fr) minmax(380px, 0.72fr);
+      gap: 46px;
+      margin-top: 38px;
+      padding-top: 0;
+      border-top: 0;
+      align-items: start;
+    }
+    .vp-two-col,
+    .vp-threat-layout,
+    .vp-code-layout {
+      gap: 56px;
+    }
+    .vp-lede,
+    .vp-copy,
+    .vp-final p {
+      color: var(--ink-soft);
+      font-family: var(--body);
+      font-size: 17px;
+      line-height: 1.66;
+    }
+    .vp-lede {
+      max-width: 660px;
+      font-size: 18px;
+    }
+    .vp-note,
+    .vp-stat-caption,
+    .vp-source,
+    .vp-footer p,
+    .vp-footer-bottom,
+    .vp-compliance-card p {
+      color: var(--muted);
+      font-family: var(--body);
+      font-weight: 400;
+    }
+    .vp-proof-stat {
+      max-width: 560px;
+      grid-template-columns: 110px minmax(0, 1fr);
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .vp-stat-big,
+    .vp-threat-stat {
+      color: var(--accent);
+      font: 760 42px/1 var(--body);
+      letter-spacing: -0.015em !important;
+    }
+    .vp-stat-caption {
+      font: 13px/1.5 var(--body);
+      letter-spacing: 0 !important;
+    }
+    .vp-feed-head,
+    .vp-code-head,
+    .vp-code-foot,
+    .vp-region,
+    .vp-region-strip,
+    .vp-card-num,
+    .vp-footer h3 {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-weight: 650;
+      text-transform: uppercase;
+    }
+    .vp-feed-card,
+    .vp-code-card {
+      background: #0d1521;
+      border: 1px solid rgba(20, 34, 53, 0.18);
+      border-radius: 8px;
+      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.14);
+    }
+    .vp-feed-card {
+      padding: 46px 18px 10px;
+    }
+    .vp-feed-row {
+      color: #f7fbff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+      font-family: var(--mono);
+    }
+    .vp-feed-row .muted,
+    .vp-code-muted,
+    .vp-code-remove {
+      color: rgba(247, 251, 255, 0.58);
+    }
+    .vp-feed-row .accent,
+    .vp-feed-row .ok,
+    .vp-code-sign,
+    .vp-code-add {
+      color: #7df1d1;
+    }
+    .vp-code-card .vp-code-add,
+    .vp-code-add {
+      background: rgba(34, 230, 168, 0.12);
+    }
+    .vp-code-card pre {
+      color: rgba(247, 251, 255, 0.80);
+      font-family: var(--mono);
+    }
+    .vp-figure,
+    .vp-card,
+    .vp-compliance-card,
+    .vp-belief,
+    .vp-final {
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+    }
+    .vp-figure {
+      background:
+        radial-gradient(circle at 58% 42%, rgba(15, 118, 110, 0.12), transparent 18rem),
+        rgba(255, 255, 255, 0.88);
+      border-color: var(--line);
+    }
+    .vp-figure-grid {
+      opacity: 0.76;
+      background-image:
+        linear-gradient(rgba(20, 34, 53, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20, 34, 53, 0.06) 1px, transparent 1px);
+      background-size: 52px 52px;
+    }
+    .vp-key-core,
+    .vp-shard,
+    .vp-region i,
+    .vp-window-dots i,
+    .vp-dot {
+      border-color: rgba(15, 118, 110, 0.30);
+      background: var(--accent);
+      color: #ffffff;
+    }
+    .vp-key-glyph,
+    .vp-key-glyph::before,
+    .vp-key-glyph::after,
+    .vp-beam,
+    .vp-cursor {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+    .vp-region-strip {
+      border-bottom: 1px dashed var(--line);
+    }
+    .vp-node-dot {
+      background: var(--surface);
+      border: 1px solid var(--line-strong);
+      color: var(--accent);
+      font-family: var(--mono);
+      font-weight: 750;
+    }
+    .vp-node h3,
+    .vp-card h3,
+    .vp-compliance-card h3,
+    .vp-belief h3 {
+      color: var(--ink);
+      font: 750 20px/1.2 var(--body);
+      letter-spacing: -0.01em !important;
+    }
+    .vp-threat-row,
+    .vp-mechanism-grid,
+    .vp-footer-bottom {
+      border-color: var(--line);
+    }
+    .vp-threat-row p,
+    .vp-card p,
+    .vp-node p,
+    .vp-compliance-card p,
+    .vp-belief p,
+    .vp-footer ul {
+      color: var(--ink-soft);
+      font-size: 14px;
+      line-height: 1.56;
+    }
+    .vp-feature-grid,
+    .vp-compliance-grid,
+    .vp-belief-grid {
+      gap: 16px;
+      border: 0;
+    }
+    .vp-card,
+    .vp-compliance-card,
+    .vp-belief {
+      min-height: auto;
+      padding: 28px;
+    }
+    .vp-belief:first-child {
+      padding-left: 28px;
+    }
+    .vp-final {
+      padding: 58px 34px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(245, 248, 251, 0.92)),
+        rgba(255, 255, 255, 0.94);
+    }
+    .vp-footer {
+      background: #ffffff;
+      border-top: 1px solid var(--line);
+    }
+    .vp-footer-grid {
+      border-top: 1px solid var(--line);
+      padding-top: 32px;
+    }
+    @media (max-width: 980px) {
+      .vp-container {
+        width: min(100% - 32px, 760px);
+      }
+      .vp-nav-inner {
+        min-height: 58px;
+      }
+      .vp-brand {
+        min-width: auto;
+      }
+      .vp-links,
+      .vp-signin {
+        display: none;
+      }
+      .vp-hero {
+        padding: 68px 0 72px;
+      }
+      .vp-dateline {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .vp-dateline span,
+      .vp-dateline span:nth-child(2),
+      .vp-dateline span:last-child {
+        text-align: left;
+      }
+      .vp-hero-title {
+        font-size: 44px !important;
+      }
+      .vp-heading {
+        font-size: 34px;
+      }
+      .vp-final h2 {
+        font-size: 36px;
+      }
+      .vp-hero-lower,
+      .vp-two-col,
+      .vp-threat-layout,
+      .vp-code-layout {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+      .vp-pad {
+        padding: 64px 0;
+      }
+      .vp-proof-stat {
+        grid-template-columns: 1fr;
+      }
+      .vp-feature-grid,
+      .vp-compliance-grid,
+      .vp-belief-grid,
+      .vp-footer-grid {
+        grid-template-columns: 1fr;
+      }
+      .vp-card,
+      .vp-compliance-card,
+      .vp-belief {
+        padding: 22px;
+      }
+      .vp-belief:first-child {
+        padding-left: 22px;
+      }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 1ms !important; }
@@ -1083,7 +1520,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
         </nav>
         <div class="vp-actions">
           <a class="vp-signin" href="/app/login">Sign in</a>
-          <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20Enterprise%20pilot%20walkthrough">Book a walkthrough →</a>
+          <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20Enterprise%20walkthrough">Talk to sales →</a>
         </div>
       </div>
     </header>
@@ -1092,29 +1529,29 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       <section class="vp-section vp-hero" id="platform">
         <div class="vp-grid-bg" aria-hidden="true"></div>
         <div class="vp-container">
-          <div class="vp-dateline" aria-label="VaultProof edition metadata">
-            <span>VOL · I / ISSUE 01 · APRIL 2026</span>
-            <span>VAULTPROOF · ENTERPRISE EDITION</span>
-            <span>v0.9 · PRIVATE BETA</span>
+          <div class="vp-dateline" aria-label="VaultProof Enterprise positioning">
+            <span>VAULTPROOF ENTERPRISE</span>
+            <span>FOR SECURITY, PLATFORM, AND AI TEAMS</span>
+            <span>DEDICATED RUNTIME · AUDITABLE PROXY</span>
           </div>
-          <div class="vp-eyebrow"><strong>§ 01</strong><span>What VaultProof is</span></div>
-          <h1 class="vp-hero-title">Active Key Protection<br><em>for every API call.</em></h1>
+          <div class="vp-eyebrow"><strong>01</strong><span>Enterprise platform</span></div>
+          <h1 class="vp-hero-title">Enterprise API key protection<br><em>without raw secrets in apps.</em></h1>
           <div class="vp-hero-lower">
             <div>
-              <p class="vp-lede">VaultProof is a safe middle layer for important API keys. Your app calls VaultProof instead of storing the real key. VaultProof unlocks the key in a protected GCP runtime, uses it for one request, then erases it.</p>
+              <p class="vp-lede">VaultProof Enterprise routes high-risk provider calls through a governed runtime so applications, agents, CI, and support tools do not handle raw provider secrets. Security teams get policy controls, custody options, and audit evidence for every approved call.</p>
               <div class="vp-cta-row">
-                <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20Enterprise%20early%20access">Request early access →</a>
-                <a class="vp-btn secondary" href="/app/login">Enterprise sign in</a>
+                <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20Enterprise%20walkthrough">Schedule enterprise walkthrough →</a>
+                <a class="vp-btn secondary" href="/readiness">View readiness</a>
               </div>
               <div class="vp-proof-stat">
-                <div class="vp-stat-big" data-count="99.998" data-suffix="%">0%</div>
-                <p class="vp-stat-caption">Illustrative successful safe API calls across 1.42 million requests in a 30-day test run.</p>
+                <div class="vp-stat-big" data-count="0">0</div>
+                <p class="vp-stat-caption">raw provider keys in app config after routed workloads move behind VaultProof.</p>
               </div>
             </div>
             <div>
-              <div class="vp-feed-head"><span>Illustrative · safe API calls</span><span class="vp-live"><span class="vp-dot"></span>streaming</span></div>
+              <div class="vp-feed-head"><span>Enterprise proxy events</span><span class="vp-live"><span class="vp-dot"></span>streaming</span></div>
               <div class="vp-feed-card" id="proxy-feed" aria-live="polite"></div>
-              <p class="vp-note">An animated example of VaultProof protecting each request. Not real customer traffic; the live production check is available at <a href="/readiness">/readiness</a>.</p>
+              <p class="vp-note">Illustrative operational feed. Production readiness, health checks, and enterprise evidence are available from <a href="/readiness">/readiness</a>.</p>
             </div>
           </div>
         </div>
@@ -1123,14 +1560,14 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       <section class="vp-section surface vp-pad vp-reveal" id="security">
         <div class="vp-container vp-two-col">
           <div>
-            <div class="vp-eyebrow"><span>The simple picture</span></div>
-            <h2 class="vp-heading">Your app talks to <em>VaultProof</em> instead of holding keys.</h2>
-            <p class="vp-copy">Think of VaultProof like a locked key room. Your app asks for an API call. VaultProof checks that the call is allowed, briefly unlocks the key in a safe place, makes the call, and locks everything back up.</p>
+            <div class="vp-eyebrow"><span>The operating model</span></div>
+            <h2 class="vp-heading">Keep provider keys out of <em>applications, agents, and build systems.</em></h2>
+            <p class="vp-copy">VaultProof sits between your workload and sensitive providers. The application sends an approved request, VaultProof enforces policy, the runtime uses the upstream key only for that call, and your team gets a clear record of what happened.</p>
             <div class="vp-steps">
-              <b>01</b><span>Your app sends the request to VaultProof</span>
-              <b>02</b><span>VaultProof checks if the request is allowed</span>
-              <b>03</b><span>The key appears only briefly in a safe machine</span>
-              <b>04</b><span>VaultProof calls the provider, erases the key, and saves a receipt</span>
+              <b>01</b><span>Route approved provider calls through VaultProof</span>
+              <b>02</b><span>Enforce project, provider, source, and budget policy</span>
+              <b>03</b><span>Use upstream key material only inside the protected runtime</span>
+              <b>04</b><span>Clear memory and write an audit event for review</span>
             </div>
           </div>
           <div class="vp-figure" aria-label="Animated key sharding diagram">
@@ -1149,14 +1586,14 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       <section class="vp-section vp-pad vp-reveal">
         <div class="vp-container vp-threat-layout">
           <div class="vp-sticky">
-            <div class="vp-eyebrow"><strong>§ 02</strong><span>Why it matters</span></div>
-            <h2 class="vp-heading">API keys are like passwords for your business. <em>Do not leave them lying around.</em></h2>
+            <div class="vp-eyebrow"><strong>02</strong><span>Why it matters</span></div>
+            <h2 class="vp-heading">Leaked API keys become production incidents fast. <em>Reduce where raw secrets can exist.</em></h2>
           </div>
           <div>
-            <article class="vp-threat-row"><div class="vp-threat-stat" data-count="80" data-prefix="~" data-suffix="%">~0%</div><div><p>of breaches involve stolen or misused login details, passwords, or keys in industry reports like Verizon's DBIR.</p><div class="vp-source">— Verizon DBIR, recent years</div></div></article>
-            <article class="vp-threat-row"><div class="vp-threat-stat" data-count="4.88" data-prefix="$" data-suffix="M">$0M</div><div><p>is the average global cost of one data breach, per IBM's annual study.</p><div class="vp-source">— IBM Cost of a Data Breach Report</div></div></article>
-            <article class="vp-threat-row"><div class="vp-threat-stat">minutes</div><div><p>is all it can take for a leaked key in GitHub, logs, a laptop, or a build system to become a real problem.</p><div class="vp-source">— Common incident pattern</div></div></article>
-            <article class="vp-threat-row"><div class="vp-threat-stat" data-count="0">0</div><div><p>raw keys should live in your app. VaultProof keeps the dangerous key out of your code, settings, logs, and database.</p><div class="vp-source">— Our operating model</div></div></article>
+            <article class="vp-threat-row"><div class="vp-threat-stat">sprawl</div><div><p>happens when provider keys sit across app configs, CI variables, local developer machines, SaaS settings, and support tooling.</p><div class="vp-source">Operational risk</div></div></article>
+            <article class="vp-threat-row"><div class="vp-threat-stat">agents</div><div><p>increase the number of systems that can trigger provider calls, making source controls and scoped runtime access more important.</p><div class="vp-source">AI rollout risk</div></div></article>
+            <article class="vp-threat-row"><div class="vp-threat-stat">minutes</div><div><p>can be enough time for a leaked key in GitHub, logs, a laptop, or a build system to become expensive abuse.</p><div class="vp-source">Common incident pattern</div></div></article>
+            <article class="vp-threat-row"><div class="vp-threat-stat" data-count="0">0</div><div><p>raw keys should live in application runtime once the workload is routed through VaultProof.</p><div class="vp-source">VaultProof operating model</div></div></article>
           </div>
         </div>
       </section>
@@ -1165,20 +1602,20 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
         <div class="vp-container">
           <div class="vp-two-col" style="align-items:end;margin-bottom:44px">
             <div>
-              <div class="vp-eyebrow"><strong>§ 03</strong><span>How one request works</span></div>
-              <h2 class="vp-heading"><em>Ask.</em> Check. Use. Erase.</h2>
+              <div class="vp-eyebrow"><strong>03</strong><span>Request path</span></div>
+              <h2 class="vp-heading"><em>Route.</em> Authorize. Execute. Record.</h2>
             </div>
-            <p class="vp-copy" style="margin:0">Your app sends a normal API request through VaultProof. VaultProof checks the request, uses the key in a safe machine, sends the provider call, then erases the key from memory.</p>
+            <p class="vp-copy" style="margin:0">Your application keeps its existing provider logic while sensitive calls are routed through VaultProof for policy checks, protected key use, and audit capture.</p>
           </div>
           <div class="vp-region-strip">
             <span><i></i>1/5 · us-east-1</span><span><i></i>2/5 · eu-west-2</span><span><i></i>3/5 · ap-south-1</span><span><i></i>4/5 · us-west-2</span><span><i></i>5/5 · eu-north-1</span>
           </div>
           <div class="vp-mechanism-grid">
             <div class="vp-wire"></div><div class="vp-beam"></div>
-            <article class="vp-node"><div class="vp-node-dot">01</div><div><h3>Your app</h3><p>Your app calls VaultProof instead of putting the API key in code or an env var.</p></div></article>
-            <article class="vp-node"><div class="vp-node-dot">02</div><div><h3>VaultProof</h3><p>We check the rules, gather the key pieces, and unlock the key inside a protected GCP runtime.</p></div></article>
-            <article class="vp-node"><div class="vp-node-dot">03</div><div><h3>Provider</h3><p>VaultProof sends the approved request to OpenAI, DeepL, Stripe, Twilio, Snowflake, or another provider.</p></div></article>
-            <article class="vp-node"><div class="vp-node-dot">04</div><div><h3>Receipt</h3><p>The key is erased from memory and your security team gets a record of what happened.</p></div></article>
+            <article class="vp-node"><div class="vp-node-dot">01</div><div><h3>Workload</h3><p>The app, agent, or automation calls VaultProof instead of carrying a raw upstream key.</p></div></article>
+            <article class="vp-node"><div class="vp-node-dot">02</div><div><h3>Policy runtime</h3><p>VaultProof checks organization, project, provider, source, and budget rules before execution.</p></div></article>
+            <article class="vp-node"><div class="vp-node-dot">03</div><div><h3>Provider</h3><p>The approved request reaches OpenAI, Stripe, Twilio, Snowflake, Datadog, or another provider.</p></div></article>
+            <article class="vp-node"><div class="vp-node-dot">04</div><div><h3>Evidence</h3><p>The key is cleared from memory and the security team gets an audit event it can review.</p></div></article>
           </div>
         </div>
       </section>
@@ -1186,14 +1623,14 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       <section class="vp-section vp-pad vp-reveal" id="integrations">
         <div class="vp-container vp-code-layout">
           <div>
-            <div class="vp-eyebrow"><strong>§ 04</strong><span>How teams start</span></div>
-            <h2 class="vp-heading">Keep your code. <em>Stop storing the key.</em></h2>
-            <p class="vp-copy">You keep using OpenAI, DeepL, Stripe, Twilio, Snowflake, and the tools you already have. The change is simple: the real key moves out of your app and into VaultProof.</p>
+            <div class="vp-eyebrow"><strong>04</strong><span>Rollout</span></div>
+            <h2 class="vp-heading">Keep the provider workflow. <em>Move the raw key out.</em></h2>
+            <p class="vp-copy">Start with the highest-risk provider key and route that workload through VaultProof. Existing SDKs, model providers, payment APIs, messaging tools, and data platforms can keep their familiar request patterns.</p>
             <div class="vp-checklist">
-              <span>Start with one important API key</span>
-              <span>Keep your current provider SDKs and app logic</span>
-              <span>Use Cloud KMS or a customer-owned gateway pattern when your company wants stronger custody controls</span>
-              <span>Send clear request records to your security tools</span>
+              <span>Start with one critical provider or agent workflow</span>
+              <span>Keep provider-compatible SDKs, URLs, and app logic where possible</span>
+              <span>Use Cloud KMS or customer-managed gateway patterns for stronger custody controls</span>
+              <span>Export request evidence to security and compliance review workflows</span>
             </div>
           </div>
           <div class="vp-code-card">
@@ -1204,7 +1641,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
             </div>
             <pre><code id="code-sample" aria-live="polite"></code></pre>
             <div class="vp-code-foot">
-              <span>vault-id found · key used inside safe machine · memory erased</span>
+              <span>vault-id found · policy approved · runtime used key · memory cleared</span>
               <span class="vp-code-sign"><span class="vp-dot"></span>signed audit event #<span id="audit-id">84,127,902</span></span>
             </div>
           </div>
@@ -1215,18 +1652,18 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
         <div class="vp-container">
           <div class="vp-features-head">
             <div>
-              <div class="vp-eyebrow"><strong>§ 05</strong><span>What you get</span></div>
-              <h2 class="vp-heading" style="font-size:48px">A safer home for API keys.</h2>
+              <div class="vp-eyebrow"><strong>05</strong><span>Controls</span></div>
+              <h2 class="vp-heading" style="font-size:48px">Enterprise controls for critical API usage.</h2>
             </div>
             <a href="mailto:security@vaultproof.dev?subject=VaultProof%20architecture%20brief" style="color:var(--accent);font-weight:500;font-size:13px">Architecture brief →</a>
           </div>
           <div class="vp-feature-grid">
-            <article class="vp-card"><div class="vp-card-num">01 / 06</div><h3>No raw keys in apps</h3><p>Move API keys out of code, env vars, CI logs, and app databases.</p></article>
-            <article class="vp-card"><div class="vp-card-num">02 / 06</div><h3>Keys used safely</h3><p>Keys are unlocked only inside a protected GCP runtime, only when a request needs them.</p></article>
-            <article class="vp-card"><div class="vp-card-num">03 / 06</div><h3>Clear rules</h3><p>Choose which project, website, provider, and customer gateway is allowed to use each key.</p></article>
-            <article class="vp-card"><div class="vp-card-num">04 / 06</div><h3>Simple audit records</h3><p>Every key use creates a clear record your security team can review.</p></article>
-            <article class="vp-card"><div class="vp-card-num">05 / 06</div><h3>You can own the keys</h3><p>Use Cloud KMS or a customer-owned gateway pattern when your company needs ownership and shutoff controls.</p></article>
-            <article class="vp-card"><div class="vp-card-num">06 / 06</div><h3>Works with major APIs</h3><p>Protect calls to OpenAI, DeepL, Stripe, Twilio, Snowflake, Datadog, and other APIs from one place.</p></article>
+            <article class="vp-card"><div class="vp-card-num">01 / 06</div><h3>No raw keys in apps</h3><p>Move provider secrets out of code, env vars, CI logs, app databases, agent prompts, and support tooling.</p></article>
+            <article class="vp-card"><div class="vp-card-num">02 / 06</div><h3>Policy-gated proxy</h3><p>Approve usage by organization, project, provider, source, budget, and customer gateway pattern.</p></article>
+            <article class="vp-card"><div class="vp-card-num">03 / 06</div><h3>Protected runtime use</h3><p>Use upstream key material only inside the controlled execution path required for an approved request.</p></article>
+            <article class="vp-card"><div class="vp-card-num">04 / 06</div><h3>Audit-ready records</h3><p>Capture request metadata that helps security teams review access without exposing raw provider secrets.</p></article>
+            <article class="vp-card"><div class="vp-card-num">05 / 06</div><h3>Customer custody paths</h3><p>Use Cloud KMS or customer-managed gateway patterns when ownership and shutdown controls matter.</p></article>
+            <article class="vp-card"><div class="vp-card-num">06 / 06</div><h3>Provider-compatible rollout</h3><p>Protect calls to OpenAI, Stripe, Twilio, Snowflake, Datadog, internal APIs, and other sensitive providers.</p></article>
           </div>
         </div>
       </section>
@@ -1234,12 +1671,12 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       <section class="vp-section vp-pad vp-reveal">
         <div class="vp-grid-bg" aria-hidden="true"></div>
         <div class="vp-container" style="position:relative">
-          <div class="vp-eyebrow"><strong>§ 06</strong><span>Our promise</span></div>
-          <h2 class="vp-heading" style="max-width:14ch;font-size:clamp(48px,5.6vw,88px);margin-bottom:64px">Simple rules for <em>important keys.</em></h2>
+          <div class="vp-eyebrow"><strong>06</strong><span>Security review</span></div>
+          <h2 class="vp-heading" style="max-width:15ch;font-size:64px;margin-bottom:48px">Designed for <em>security review.</em></h2>
           <div class="vp-belief-grid">
-            <article class="vp-belief"><div class="vp-card-num">01</div><h3>Do not leave keys in apps.</h3><p>If the real key is not sitting in your app, repo, or database, attackers have less to steal.</p></article>
-            <article class="vp-belief"><div class="vp-card-num">02</div><h3>Use keys only for the request.</h3><p>VaultProof unlocks keys for one approved API call at a time, not forever.</p></article>
-            <article class="vp-belief"><div class="vp-card-num">03</div><h3>Show what happened.</h3><p>Every safe request leaves behind a clear record: who used what, for which provider, and when.</p></article>
+            <article class="vp-belief"><div class="vp-card-num">01</div><h3>Reduce key sprawl.</h3><p>Fewer places hold raw provider secrets, so security teams have a smaller surface to monitor and defend.</p></article>
+            <article class="vp-belief"><div class="vp-card-num">02</div><h3>Authorize every critical call.</h3><p>VaultProof evaluates policy at the moment of use instead of trusting a secret that can be copied elsewhere.</p></article>
+            <article class="vp-belief"><div class="vp-card-num">03</div><h3>Produce readable evidence.</h3><p>Every approved or denied call can leave an audit record your team can inspect during review or incident response.</p></article>
           </div>
         </div>
       </section>
@@ -1248,18 +1685,18 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
         <div class="vp-container">
           <div class="vp-two-col" style="align-items:baseline;margin-bottom:32px">
             <div>
-              <div class="vp-eyebrow"><strong>§ 07</strong><span>Trust · the honest version</span></div>
-              <h2 class="vp-heading">We're early. <em>The guided pilot environment is live.</em></h2>
+              <div class="vp-eyebrow"><strong>07</strong><span>Trust program</span></div>
+              <h2 class="vp-heading">Evidence for the review process. <em>No vague security theater.</em></h2>
             </div>
-            <p class="vp-copy" style="margin:0">VaultProof is in private beta. We do not claim certifications before auditors sign them. Today we have a live secure GCP pilot environment, a clear enterprise dashboard, and a roadmap toward the proof big companies need.</p>
+            <p class="vp-copy" style="margin:0">VaultProof makes formal compliance claims only when the evidence is ready. Enterprise pilots receive architecture notes, readiness checks, health views, audit exports, and clear boundaries for what VaultProof can and cannot prove.</p>
           </div>
           <div class="vp-compliance-grid">
-            <article class="vp-compliance-card"><h3>SOC 2 Type II</h3><p>Pursuing · Type I observation underway</p></article>
-            <article class="vp-compliance-card"><h3>ISO 27001</h3><p>Gap analysis complete · audit planned</p></article>
-            <article class="vp-compliance-card"><h3>HIPAA</h3><p>BAA template · architecture HIPAA-aligned</p></article>
+            <article class="vp-compliance-card"><h3>SOC 2 Type II</h3><p>Roadmap · evidence program in progress</p></article>
+            <article class="vp-compliance-card"><h3>ISO 27001</h3><p>Control mapping and audit planning</p></article>
+            <article class="vp-compliance-card"><h3>HIPAA</h3><p>Architecture review and BAA path available</p></article>
             <article class="vp-compliance-card"><h3>GDPR</h3><p>EU data residency available · DPA on request</p></article>
-            <article class="vp-compliance-card"><h3>PCI DSS</h3><p>Design-partner scope · audit planned</p></article>
-            <article class="vp-compliance-card"><h3>FedRAMP</h3><p>Roadmap item · post-GA</p></article>
+            <article class="vp-compliance-card"><h3>PCI DSS</h3><p>Scoped review for payment-adjacent workflows</p></article>
+            <article class="vp-compliance-card"><h3>FedRAMP</h3><p>Roadmap item for later public-sector work</p></article>
           </div>
         </div>
       </section>
@@ -1267,11 +1704,11 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       <section class="vp-section vp-pad vp-reveal">
         <div class="vp-container">
           <div class="vp-final">
-            <div class="vp-eyebrow" style="justify-content:center"><span>Private beta · design partners welcome</span></div>
-            <h2>Start with the API key <em>you worry about most.</em></h2>
-            <p>We're working with a small number of design partners while we harden the platform. Bring one important provider key, and we will help you move it out of your app and behind VaultProof.</p>
+            <div class="vp-eyebrow" style="justify-content:center"><span>Enterprise walkthrough</span></div>
+            <h2>Protect the API keys <em>your business cannot afford to leak.</em></h2>
+            <p>Bring one critical provider workflow. We will map the rollout, custody model, policy controls, and audit evidence your security team needs before production traffic moves behind VaultProof.</p>
             <div class="vp-cta-row" style="justify-content:center;margin-top:40px">
-              <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20Enterprise%20early%20access">Request early access</a>
+              <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20Enterprise%20walkthrough">Talk to enterprise sales</a>
               <a class="vp-btn secondary" href="/app/login">Sign in to enterprise</a>
             </div>
           </div>
@@ -1284,14 +1721,14 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
         <div class="vp-footer-grid">
           <div>
             <div class="vp-brand" style="min-width:0"><span class="vp-brand-title">VaultProof</span></div>
-            <p>A safer home for enterprise API keys. Your app calls VaultProof; VaultProof safely uses the key; your app never stores the raw secret.</p>
+            <p>Runtime API key protection for enterprise teams that need provider access without raw secrets spread across apps, agents, logs, and build systems.</p>
           </div>
-          <div><h3>Platform</h3><ul><li>Secure API gateway</li><li>Safe key use</li><li>Access rules</li><li>Audit records</li><li>Cloud KMS custody</li></ul></div>
+          <div><h3>Platform</h3><ul><li>Policy-gated proxy</li><li>Protected runtime use</li><li>Access rules</li><li>Audit records</li><li>Cloud KMS custody</li></ul></div>
           <div><h3>Resources</h3><ul><li><a href="/readiness">Readiness</a></li><li><a href="/health">Health</a></li><li><a href="/app/dashboard">Dashboard</a></li><li><a href="/app/alerts">Alerts</a></li></ul></div>
-          <div><h3>Company</h3><ul><li>Private beta</li><li>Design partners</li><li>Security review</li><li>Founder-led support</li></ul></div>
+          <div><h3>Company</h3><ul><li>Enterprise pilots</li><li>Design partners</li><li>Security review</li><li>Launch support</li></ul></div>
           <div><h3>Contact</h3><ul><li><a href="mailto:hello@vaultproof.dev">hello@vaultproof.dev</a></li><li><a href="mailto:security@vaultproof.dev">security@vaultproof.dev</a></li><li>San Francisco, CA</li></ul></div>
         </div>
-        <div class="vp-footer-bottom"><span>© 2026 VaultProof, Inc.</span><span>STATUS · <span style="color:var(--success)">BETA</span> · v0.9</span><span>Privacy · Terms · Security</span></div>
+        <div class="vp-footer-bottom"><span>© 2026 VaultProof, Inc.</span><span>ENTERPRISE · <span style="color:var(--success)">PILOT READY</span></span><span>Privacy · Terms · Security</span></div>
       </div>
     </footer>
   </div>

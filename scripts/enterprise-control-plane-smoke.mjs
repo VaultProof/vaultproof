@@ -3319,23 +3319,23 @@ async function assertEnterpriseLoginRoute() {
     },
   );
   const rootHtml = await rootResponse.text();
-  if (rootResponse.status !== 200 || !rootHtml.includes('VaultProof - API keys that are harder to steal')) {
+  if (rootResponse.status !== 200 || !rootHtml.includes('VaultProof Enterprise | Runtime API key protection')) {
     throw new Error(`Expected enterprise root homepage, got ${rootResponse.status}`);
   }
   for (const required of [
-    'Active Key Protection<br><em>for every API call.</em>',
-    'VaultProof is a safe middle layer for important API keys',
-    'Illustrative · safe API calls',
-    'Your app talks to <em>VaultProof</em> instead of holding keys.',
-    'Keep your code. <em>Stop storing the key.</em>',
-    'enterprise-homepage-dashboard-match',
-    'color-scheme: dark',
-    '--bg: #0b0f14',
-    '--paper: #111827',
-    '--accent: #8ab4f8',
-    '--primary-bg: #8ab4f8',
+    'Enterprise API key protection<br><em>without raw secrets in apps.</em>',
+    'VaultProof Enterprise routes high-risk provider calls through a governed runtime',
+    'Enterprise proxy events',
+    'Keep provider keys out of <em>applications, agents, and build systems.</em>',
+    'Keep the provider workflow. <em>Move the raw key out.</em>',
+    'enterprise-homepage-business-match',
+    'color-scheme: light',
+    '--bg: #e7eef6',
+    '--paper: #f5f8fb',
+    '--accent: #0f766e',
+    '--primary-bg: #142235',
     '--body: ui-sans-serif',
-    'letter-spacing: 0 !important',
+    'letter-spacing: -0.02em !important',
     'border-radius: 8px',
     'gap: 16px',
     '/app/login',

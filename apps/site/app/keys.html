@@ -16,9 +16,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
   <script src="/js/app-keys-2.js" defer></script>
-  <link rel="stylesheet" href="/css/site-theme.css">
-  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260603c">
-  <link rel="stylesheet" href="/css/app-keys-theme.css?v=20260603b" data-app-shell-stylesheet>
+  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260603d">
+  <link rel="stylesheet" href="/css/app-keys-theme.css?v=20260603c" data-app-shell-stylesheet>
 </head>
 <body>
   <div class="page">
@@ -39,12 +38,11 @@
       <span class="topbar-crumb">Keys</span>
       <div class="topbar-session">
         <span class="topbar-email" id="user-email">loading...</span>
-        <div class="topbar-avatar" id="user-avatar">V</div>
         <button type="button" class="topbar-signout" id="signOutBtn">sign out</button>
       </div>
     </div>
 
-    <div class="app-layout">
+    <div class="layout">
       <aside id="sidebar" class="sidebar enterprise-app-sidebar" aria-label="VaultProof app navigation" data-i18n-lock>
         <a href="/app/" class="sidebar-logo" aria-label="VaultProof dashboard">
           <span class="sidebar-logo-mark">
@@ -88,12 +86,7 @@
         </button>
       </aside>
 
-      <div id="mainWrapper" class="main-shell">
-        <header class="subbar">
-          <h1 class="subbar-title">Projects &amp; Keys</h1>
-          <p class="subbar-caption" id="headerSubtitle">manage split keys and provider routes</p>
-        </header>
-
+      <main id="mainWrapper" class="main keys-main">
         <div id="toast" class="toast hidden">
           <div id="toastInner" class="toast-card">
             <span id="toastMsg"></span>
@@ -110,9 +103,7 @@
           </div>
         </div>
 
-        <main class="main">
-          <div class="content">
-            <section class="page-header">
+        <section class="page-header">
               <div>
                 <div class="page-title-row">
                   <h2 class="page-title">API Keys</h2>
@@ -124,9 +115,9 @@
                 <button type="button" data-action="copy-text" data-text="npx @vaultproof/init" class="btn btn-outline">copy init</button>
                 <button type="button" data-action="open-create-project-modal" class="btn btn-primary">+ new project</button>
               </div>
-            </section>
+        </section>
 
-            <section id="statsRow" class="kpi-grid">
+        <section id="statsRow" class="kpi-grid">
               <div class="kpi-cell anim-card" style="animation-delay:0ms">
                 <div class="kpi-label">projects</div>
                 <div class="kpi-value" id="statProjects">--</div>
@@ -142,15 +133,15 @@
                 <div class="kpi-value" id="statProviders">--</div>
                 <div class="kpi-sub">proxied routes</div>
               </div>
-            </section>
+        </section>
 
-            <section id="initTip" class="tip">
+        <section id="initTip" class="tip">
               <span class="tip-glyph">&gt;</span>
               <p>Quick start: run <code>npx @vaultproof/init</code> in your project to scan and protect all keys at once.</p>
               <button type="button" data-action="dismiss-init-tip" class="tip-close" aria-label="Dismiss">&times;</button>
-            </section>
+        </section>
 
-            <section>
+        <section>
               <div class="project-section-head">
                 <div>
                   <h2 class="project-section-title">Projects</h2>
@@ -158,15 +149,15 @@
                 </div>
                 <button type="button" data-action="open-create-project-modal" class="btn btn-outline">create manually</button>
               </div>
-            </section>
+        </section>
 
-            <section id="projectsContainer">
+        <section id="projectsContainer">
               <div id="projectsLoading">
                 loading projects...
               </div>
-            </section>
+        </section>
 
-            <section id="emptyState" class="empty-state hidden">
+        <section id="emptyState" class="empty-state hidden">
               <h3 style="font-family:var(--display);font-size:20px;color:var(--text);margin-bottom:6px">No projects yet</h3>
               <p style="margin-bottom:16px">Run the init command in your project directory to create one and protect your API keys.</p>
               <div style="display:inline-flex;align-items:center;gap:8px">
@@ -174,10 +165,8 @@
                 <button type="button" data-action="copy-text" data-text="npx @vaultproof/init" class="btn btn-outline">copy</button>
               </div>
               <p style="margin-top:14px">or <button type="button" data-action="open-create-project-modal" style="border:0;background:transparent;color:var(--accent);font-family:var(--mono)">create a project manually</button></p>
-            </section>
-          </div>
-        </main>
-      </div>
+        </section>
+      </main>
     </div>
   </div>
 

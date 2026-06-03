@@ -657,8 +657,6 @@
   function initHeader() {
     const email = user.email || '';
     setText('user-email', email || 'unknown user');
-    const avatar = document.getElementById('user-avatar');
-    if (avatar) avatar.textContent = (email || 'U').charAt(0).toUpperCase();
   }
 
   async function loadActivity() {

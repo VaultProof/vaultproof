@@ -12,6 +12,8 @@
 
   function normalizePath(pathname) {
     if (!pathname) return '/';
+    if (pathname === '/app/index.html') return '/app/';
+    if (pathname.endsWith('.html')) return pathname.slice(0, -5);
     if (pathname === '/app') return '/app/';
     if (pathname.length > 1 && pathname.endsWith('/')) return pathname.slice(0, -1);
     return pathname;

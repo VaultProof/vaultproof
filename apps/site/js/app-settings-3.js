@@ -16,9 +16,6 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
 
       const emailLabel = document.getElementById('user-email');
       if (emailLabel) emailLabel.textContent = email || 'unknown user';
-
-      const avatar = document.getElementById('user-avatar');
-      if (avatar) avatar.textContent = (email || 'V').charAt(0).toUpperCase();
     }
 
     function syncSidebarUsage() {

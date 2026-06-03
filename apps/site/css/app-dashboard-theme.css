@@ -566,18 +566,13 @@
     grid-template-columns: var(--vp-sidebar-expanded, 260px) minmax(0, 1fr) !important;
   }
 
-  .page.sidebar-collapsed .layout {
-    grid-template-columns: var(--vp-sidebar-collapsed, 56px) minmax(0, 1fr) !important;
-  }
-
   .live-panel {
     display: none !important;
   }
 }
 
 @media (max-width: 900px) {
-  .layout,
-  .page.sidebar-collapsed .layout {
+  .layout {
     grid-template-columns: 1fr !important;
   }
 

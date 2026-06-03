@@ -756,10 +756,8 @@
 
   function initHeader() {
     const email = user.email || '';
-    const avatar = document.getElementById('user-avatar');
     const emailLabel = document.getElementById('user-email');
     if (emailLabel) emailLabel.textContent = email || 'unknown user';
-    if (avatar) avatar.textContent = (email || 'U').charAt(0).toUpperCase();
     const signOutBtn = document.getElementById('signOutBtn');
     if (signOutBtn) signOutBtn.addEventListener('click', logout);
   }

@@ -199,8 +199,6 @@
       'alerts.reposFindings': 'repositories with exposed findings',
       'alerts.queueClear': 'scanner queue is clear',
       'keys.browserTitle': 'API Keys - VaultProof',
-      'keys.subbarTitle': 'Projects & Keys',
-      'keys.subbarCaption': 'manage split keys and provider routes',
       'keys.title': 'API Keys',
       'keys.desc': 'Create projects, split provider keys in-browser, rotate encrypted shares, and copy project IDs for your SDK configuration.',
       'settings.browserTitle': 'Settings — VaultProof',
@@ -371,8 +369,6 @@
       'alerts.reposFindings': 'repositorios con hallazgos expuestos',
       'alerts.queueClear': 'la cola del escáner está limpia',
       'keys.browserTitle': 'Claves API - VaultProof',
-      'keys.subbarTitle': 'Proyectos y claves',
-      'keys.subbarCaption': 'gestiona claves divididas y rutas de proveedor',
       'keys.title': 'Claves API',
       'keys.desc': 'Crea proyectos, divide claves de proveedor en el navegador, rota fragmentos cifrados y copia IDs de proyecto para la configuración de tu SDK.',
       'settings.browserTitle': 'Ajustes — VaultProof',
@@ -1050,8 +1046,6 @@
       },
       '/app/keys': function () {
         document.title = t('keys.browserTitle');
-        setText('.subbar-title', 'keys.subbarTitle');
-        setText('#headerSubtitle', 'keys.subbarCaption');
         setText('.page-title', 'keys.title');
         setText('.page-desc', 'keys.desc');
       },

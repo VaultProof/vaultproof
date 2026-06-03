@@ -100,17 +100,7 @@ body.scanner-app .scanner-topbar-session {
 }
 
 body.scanner-app .scanner-topbar-avatar {
-  width: 28px !important;
-  height: 28px !important;
-  border-radius: 999px !important;
-  background: linear-gradient(135deg, var(--accent), var(--ok)) !important;
-  color: #001016 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-family: var(--mono) !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
+  display: none !important;
 }
 
 body.scanner-app .scanner-topbar-signout {
