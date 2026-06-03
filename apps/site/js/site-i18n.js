@@ -60,21 +60,21 @@
       'common.exportCsv': 'export csv',
       'common.currentPlan': 'Current Plan',
       'common.manageBilling': 'Manage Billing',
-      'app.dashboard': 'dashboard',
-      'app.projects': 'projects',
-      'app.activity': 'activity',
+      'app.dashboard': 'Dashboard',
+      'app.projects': 'Dashboard',
+      'app.activity': 'Activity Logs',
       'app.alerts': 'alerts',
-      'app.keys': 'keys',
-      'app.settings': 'settings',
-      'app.plans': 'plans',
-      'app.repos': 'repos',
+      'app.keys': 'Protected Keys',
+      'app.settings': 'Security Controls',
+      'app.plans': 'Plans & Billing',
+      'app.repos': 'Repository Scanner',
       'app.help': 'help',
       'app.signOut': 'sign out',
       'app.planLoading': 'plan loading',
       'app.allCalls': 'all calls',
-      'app.overview': 'overview',
-      'app.vault': 'vault',
-      'app.scanner': 'scanner',
+      'app.overview': 'Monitor',
+      'app.vault': 'Manage',
+      'app.scanner': 'Scan',
       'home.title': 'VaultProof | API key security built for the age of AI agents.',
       'home.heroEyebrow': 'A safer home for your API keys',
       'home.heroTitle': 'Stop shipping secrets<br>in plain text.',
@@ -866,7 +866,7 @@
       else if (href === '/app/login') {
         if (link.classList.contains('nav-cta') || text.indexOf('get started') !== -1 || text.indexOf('start') === 0) link.textContent = t('nav.getStarted');
         else if (link.classList.contains('nav-sign-in') || text.indexOf('sign in') !== -1 || text.indexOf('login') !== -1) link.textContent = t('nav.signIn');
-      } else if (path === '/app' || path === '/app/') link.textContent = t('app.projects');
+      } else if (path === '/app' || path === '/app/') link.textContent = t('app.dashboard');
       else if (path === '/app/activity') link.textContent = t('app.activity');
       else if (path === '/app/alerts') link.textContent = t('app.alerts');
       else if (path === '/app/keys') link.textContent = t('app.keys');
@@ -1093,6 +1093,7 @@
 
   function setSidebarLabels() {
     Array.prototype.forEach.call(document.querySelectorAll('.sidebar-head'), function (node) {
+      if (node.closest('[data-i18n-lock]')) return;
       var text = (node.textContent || '').trim().toLowerCase();
       if (text === 'overview') node.textContent = t('app.overview');
       else if (text === 'vault') node.textContent = t('app.vault');

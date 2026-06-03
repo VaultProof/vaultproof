@@ -17,7 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
   <script src="/js/app-settings-2.js" defer></script>
   <link rel="stylesheet" href="/css/site-theme.css">
-  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260603b">
+  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260603c">
   <link rel="stylesheet" href="/css/app-settings-theme.css?v=20260603b" data-app-shell-stylesheet>
 </head>
 <body>
@@ -27,7 +27,7 @@
     <button id="menuBtn" class="topbar-menu" type="button" aria-label="Open navigation" aria-hidden="true" tabindex="-1" hidden></button>
     <a href="/app/" class="topbar-logo">
       <span class="topbar-logo-mark">
-        <img class="topbar-logo-img" src="/og-image2.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <img class="topbar-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
         <span class="topbar-logo-fallback">VP</span>
       </span>
       <span class="topbar-logo-name">VaultProof</span>
@@ -47,28 +47,28 @@
   <div id="sidebarOverlay" class="sidebar-overlay hidden"></div>
 
   <div class="layout">
-    <aside id="sidebar" class="sidebar enterprise-app-sidebar" aria-label="Dashboard navigation">
+    <aside id="sidebar" class="sidebar enterprise-app-sidebar" aria-label="VaultProof app navigation" data-i18n-lock>
       <a href="/app/" class="sidebar-logo" aria-label="VaultProof dashboard">
         <span class="sidebar-logo-mark">
-          <img class="sidebar-logo-img" src="/og-image2.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+          <img class="sidebar-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
           <span class="sidebar-logo-fallback">VP</span>
         </span>
         <span class="sidebar-logo-text">VaultProof</span>
       </a>
       <div class="sidebar-group">
-        <div class="sidebar-head">Overview</div>
-        <a href="/app/" class="sidebar-item" title="Dashboard Overview" data-tooltip="Dashboard Overview"><span class="sidebar-icon sidebar-icon-dashboard" aria-hidden="true"></span><span class="sidebar-label">Dashboard Overview</span></a>
-        <a href="/app/activity" class="sidebar-item" title="Runtime Activity" data-tooltip="Runtime Activity"><span class="sidebar-icon sidebar-icon-activity" aria-hidden="true"></span><span class="sidebar-label">Runtime Activity</span></a>
+        <div class="sidebar-head">Monitor</div>
+        <a href="/app/" class="sidebar-item" title="Dashboard" data-tooltip="Dashboard"><span class="sidebar-icon sidebar-icon-dashboard" aria-hidden="true"></span><span class="sidebar-label">Dashboard</span></a>
+        <a href="/app/activity" class="sidebar-item" title="Activity Logs" data-tooltip="Activity Logs"><span class="sidebar-icon sidebar-icon-activity" aria-hidden="true"></span><span class="sidebar-label">Activity Logs</span></a>
         <a href="/app/alerts" class="sidebar-item" title="Security Alerts" data-tooltip="Security Alerts"><span class="sidebar-icon sidebar-icon-alerts" aria-hidden="true"></span><span class="sidebar-label">Security Alerts <span class="sidebar-alert-count" id="sidebarAlertsCount">0</span></span></a>
       </div>
       <div class="sidebar-group">
-        <div class="sidebar-head">Vault</div>
-        <a href="/app/keys" class="sidebar-item" title="API Key Vault" data-tooltip="API Key Vault"><span class="sidebar-icon sidebar-icon-key" aria-hidden="true"></span><span class="sidebar-label">API Key Vault</span></a>
-        <a href="/app/settings" class="sidebar-item active" title="Security Settings" data-tooltip="Security Settings"><span class="sidebar-icon sidebar-icon-settings" aria-hidden="true"></span><span class="sidebar-label">Security Settings</span></a>
-        <a href="/app/plans" class="sidebar-item" title="Billing Plans" data-tooltip="Billing Plans"><span class="sidebar-icon sidebar-icon-plans" aria-hidden="true"></span><span class="sidebar-label">Billing Plans</span></a>
+        <div class="sidebar-head">Manage</div>
+        <a href="/app/keys" class="sidebar-item" title="Protected Keys" data-tooltip="Protected Keys"><span class="sidebar-icon sidebar-icon-key" aria-hidden="true"></span><span class="sidebar-label">Protected Keys</span></a>
+        <a href="/app/settings" class="sidebar-item active" title="Security Controls" data-tooltip="Security Controls"><span class="sidebar-icon sidebar-icon-settings" aria-hidden="true"></span><span class="sidebar-label">Security Controls</span></a>
+        <a href="/app/plans" class="sidebar-item" title="Plans &amp; Billing" data-tooltip="Plans &amp; Billing"><span class="sidebar-icon sidebar-icon-plans" aria-hidden="true"></span><span class="sidebar-label">Plans &amp; Billing</span></a>
       </div>
       <div class="sidebar-group">
-        <div class="sidebar-head">Scanner</div>
+        <div class="sidebar-head">Scan</div>
         <a href="/app/scanner" class="sidebar-item" title="Repository Scanner" data-tooltip="Repository Scanner"><span class="sidebar-icon sidebar-icon-scanner" aria-hidden="true"></span><span class="sidebar-label">Repository Scanner</span></a>
       </div>
       <div class="sidebar-group">
