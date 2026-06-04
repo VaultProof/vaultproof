@@ -1,0 +1,19 @@
+{
+  "name": "vaultproof-init",
+  "version": "0.1.2",
+  "generatedAt": "2026-06-04T01:24:26.888Z",
+  "install": "curl -fsSL https://vaultproof.dev/install | sh",
+  "run": "vaultproof-init",
+  "files": [
+    {
+      "path": "vaultproof-init.mjs",
+      "bytes": 248427,
+      "sha256": "dc78331d362c5a0ef5318477dcc4351465387c930303af970d53fd8f9c6d692c"
+    },
+    {
+      "path": "providers.json",
+      "bytes": 117524,
+      "sha256": "9abbb3e0dd02a5883765e83a4ce93d37006339c7095dfcb6c85dc06747744e1e"
+    }
+  ]
+}

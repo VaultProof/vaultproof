@@ -15,11 +15,11 @@ The scanner runs multiple detection phases to find exposed secrets:
 
 The scanner detects API keys for 89 providers, including major AI, cloud, payment, DevOps, observability, email, database, translation, and SaaS platforms.
 
-For unsupported or internal HTTP APIs, `npx @vaultproof/init custom` can select a key from `.env` and ask for the upstream URL and auth header instead of relying on a catalog signature.
+For unsupported or internal HTTP APIs, `vaultproof-init custom` can select a key from `.env` and ask for the upstream URL and auth header instead of relying on a catalog signature.
 
-For non-proxy runtime secrets, `npx @vaultproof/init secrets add` detects common names such as `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `SESSION_SECRET`, `ENCRYPTION_KEY`, and `WEBHOOK_SECRET`, then rewrites them to `vaultproof://` placeholders for `npx @vaultproof/init run -- <command>`.
+For non-proxy runtime secrets, `vaultproof-init secrets add` detects common names such as `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `SESSION_SECRET`, `ENCRYPTION_KEY`, and `WEBHOOK_SECRET`, then rewrites them to `vaultproof://` placeholders for `vaultproof-init run -- <command>`.
 
-For network automation repos, `npx @vaultproof/init netops` scans Ansible inventories, `group_vars`, `host_vars`, `.env`, `terraform.tfvars`, and `*.auto.tfvars`. It rewrites Ansible secrets to `lookup('env', ...)`, comments Terraform secret assignments so `TF_VAR_...` can be injected, and runs automation with `npx @vaultproof/init netops run -- <command>`.
+For network automation repos, `vaultproof-init netops` scans Ansible inventories, `group_vars`, `host_vars`, `.env`, `terraform.tfvars`, and `*.auto.tfvars`. It rewrites Ansible secrets to `lookup('env', ...)`, comments Terraform secret assignments so `TF_VAR_...` can be injected, and runs automation with `vaultproof-init netops run -- <command>`.
 
 ## Key Verification
 

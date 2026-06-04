@@ -195,15 +195,15 @@ The provider catalog currently includes 250 signatures. These common providers w
 
 ## Custom/Internal APIs
 
-`npx @vaultproof/init custom` can protect unsupported or internal HTTP APIs when the API uses a single static key in a request header. Add a plaintext key such as `INTERNAL_API_KEY=...` to `.env`, then follow the prompts for the upstream base URL, header name, and header template.
+`vaultproof-init custom` can protect unsupported or internal HTTP APIs when the API uses a single static key in a request header. Add a plaintext key such as `INTERNAL_API_KEY=...` to `.env`, then follow the prompts for the upstream base URL, header name, and header template.
 
 The upstream must be reachable through a public HTTPS fully-qualified domain name. VaultProof intentionally blocks `localhost`, private IP literals, `.internal`, `.local`, Cloudflare internal hostnames, embedded credentials, and custom ports before it uploads the key.
 
 ## Vault-only Runtime Secrets
 
-`npx @vaultproof/init secrets add` protects `.env` values that are not outbound HTTP API keys, including `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `SESSION_SECRET`, `ENCRYPTION_KEY`, OAuth client secrets, and webhook signing secrets.
+`vaultproof-init secrets add` protects `.env` values that are not outbound HTTP API keys, including `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `SESSION_SECRET`, `ENCRYPTION_KEY`, OAuth client secrets, and webhook signing secrets.
 
-These values are stored as split shares and rewritten to `vaultproof://NAME` placeholders. Use `npx @vaultproof/init run -- <command>` to inject plaintext into the child process environment when the app starts.
+These values are stored as split shares and rewritten to `vaultproof://NAME` placeholders. Use `vaultproof-init run -- <command>` to inject plaintext into the child process environment when the app starts.
 
 ## What Won't Work
 
@@ -216,7 +216,7 @@ These values are stored as split shares and rewritten to `vaultproof://NAME` pla
 - **HubSpot (OAuth apps)** — OAuth tokens expire, need refresh flow
 
 ### Webhook signing secrets as proxy keys
-- **Stripe webhook secrets** (`whsec_`) — these verify incoming webhooks, not outgoing API calls. They do not use the proxy, but can be stored with `npx @vaultproof/init secrets add`.
+- **Stripe webhook secrets** (`whsec_`) — these verify incoming webhooks, not outgoing API calls. They do not use the proxy, but can be stored with `vaultproof-init secrets add`.
 - **GitHub webhook secrets** — same, used for signature verification on incoming payloads. Store as vault-only secrets, not proxy keys.
 - **Twilio auth tokens for webhooks** — signature verification, not request auth.
 
@@ -255,8 +255,8 @@ These values are stored as split shares and rewritten to `vaultproof://NAME` pla
 | Hugging Face | Bearer token |
 | ElevenLabs | xi-api-key header |
 | Stability AI | Bearer token |
-| Any REST API with static Bearer/API-key auth | Works through `npx @vaultproof/init custom` if the upstream is public HTTPS |
+| Any REST API with static Bearer/API-key auth | Works through `vaultproof-init custom` if the upstream is public HTTPS |
 
 ## Adding New Providers
 
-Any HTTP API that authenticates via a single static key in a header can be added locally with `npx @vaultproof/init custom`. Open an issue or PR if you want the provider added to the shared catalog.
+Any HTTP API that authenticates via a single static key in a header can be added locally with `vaultproof-init custom`. Open an issue or PR if you want the provider added to the shared catalog.

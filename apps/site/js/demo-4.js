@@ -4,7 +4,7 @@
     { target: '#stats-cards', text: 'These cards show your real-time usage \u2014 total keys stored, active providers, API calls today, and error rate.', position: 'bottom' },
     { target: '#keys-table', text: 'This is where your API keys live. Each key is split before storage \u2014 the full key is only assembled briefly during API calls. You can add, rotate, or revoke keys here.', position: 'bottom' },
     { target: '#keys-header', text: 'To store a key, click \u2018Add Key\u2019, choose your provider (OpenAI, Anthropic, etc.), and paste your key. It\u2019s split instantly in your browser.', position: 'bottom' },
-    { target: '#sdk-card', text: 'Run npx @vaultproof/init once in your repo. VaultProof creates a project ID and rewrites your app to call provider-compatible proxy URLs.', position: 'bottom' },
+    { target: '#sdk-card', text: 'Run vaultproof-init once in your repo. VaultProof creates a project ID and rewrites your app to call provider-compatible proxy URLs.', position: 'bottom' },
     { target: '#sdk-card', text: 'Your app now uses the same project ID in place of raw provider secrets. Keep real keys out of .env and route calls through VaultProof.', position: 'top' },
     { target: '#activity-feed', text: 'Every API call, key rotation, and access event shows up here in real time. Full audit trail for your keys.', position: 'left' },
     { target: '#nav-api-keys', text: 'Manage all your stored keys from the API Keys page.', position: 'right' },

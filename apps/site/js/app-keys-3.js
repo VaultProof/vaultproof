@@ -293,7 +293,7 @@
         }
       } catch (err) {
         if (loading) loading.remove();
-        container.innerHTML = '<div class="load-error"><div class="load-error-title">Unable to load projects</div><button type="button" data-action="retry-load-projects" class="btn btn-outline">retry</button></div>';
+        container.innerHTML = '<div class="load-error"><div class="load-error-title">Unable to load VaultProof tokens</div><button type="button" data-action="retry-load-projects" class="btn btn-outline">retry</button></div>';
       }
     }
 
@@ -335,8 +335,8 @@
         if (isExpanded) {
           if (keys.length === 0) {
             keysHtml = '<div class="keys-empty">' +
-              '<p class="text-sm text-gray-500">No keys in this project yet.</p>' +
-              '<p class="text-xs text-gray-600 mt-2">Run <code class="text-indigo-400 font-mono">npx @vaultproof/init</code> to scan and protect all keys at once, or</p>' +
+              '<p class="text-sm text-gray-500">No keys attached to this token yet.</p>' +
+              '<p class="text-xs text-gray-600 mt-2">Install the CLI from <code class="text-indigo-400 font-mono">vaultproof.dev/install</code>, then run <code class="text-indigo-400 font-mono">vaultproof-init</code>, or</p>' +
               '<button type="button" data-action="open-add-key-modal" data-project-id="' + escapeHtml(projId) + '" class="keys-add-empty">Add a key manually</button>' +
             '</div>';
           } else {
@@ -382,7 +382,7 @@
                   (name ? '<h3 class="keys-project-title">' + escapeHtml(name) + '</h3>' : '') +
                   '<div class="keys-project-id-row">' +
                     '<code class="keys-project-code">' + escapeHtml(vpProjId) + '</code>' +
-                    '<button type="button" data-action="copy-text" data-text="' + escapeHtml(vpProjId) + '" class="keys-icon-button" title="Copy project ID">' +
+                    '<button type="button" data-action="copy-text" data-text="' + escapeHtml(vpProjId) + '" class="keys-icon-button" title="Copy VaultProof token">' +
                       '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>' +
                     '</button>' +
                   '</div>' +
@@ -394,7 +394,7 @@
                 '<button type="button" data-action="open-add-key-modal" data-project-id="' + escapeHtml(projId) + '" class="keys-icon-button" title="Add key">' +
                   '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>' +
                 '</button>' +
-                '<button type="button" data-action="confirm-delete-project" data-project-id="' + escapeHtml(projId) + '" data-vp-proj-id="' + escapeHtml(vpProjId) + '" class="keys-icon-button keys-icon-danger" title="Delete project">' +
+                '<button type="button" data-action="confirm-delete-project" data-project-id="' + escapeHtml(projId) + '" data-vp-proj-id="' + escapeHtml(vpProjId) + '" class="keys-icon-button keys-icon-danger" title="Delete token">' +
                   '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>' +
                 '</button>' +
                 '<svg class="w-4 h-4 text-gray-500 transition-transform duration-200 ' + (isExpanded ? 'rotate-180' : '') + '" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>' +
@@ -419,9 +419,9 @@
     // --- Delete project ---
     function confirmDeleteProject(projId, vpProjId) {
       showConfirm(
-        'Delete Project',
-        'Delete project ' + vpProjId + '? All keys in this project will be permanently revoked. Any apps using this project ID will stop working immediately. This cannot be undone.',
-        'Delete Project',
+        'Delete VaultProof Token',
+        'Delete VaultProof token ' + vpProjId + '? All keys attached to this token will be permanently revoked. Any apps using this token will stop working immediately. This cannot be undone.',
+        'Delete Token',
         function() { deleteProject(projId); }
       );
     }
@@ -432,16 +432,16 @@
         if (!res) return;
         if (!res.ok) {
           var data = await res.json().catch(function() { return {}; });
-          showToast(data.error || 'Failed to delete project', 'error');
+          showToast(data.error || 'Failed to delete token', 'error');
           return;
         }
-        showToast('Project deleted', 'success');
+        showToast('VaultProof token deleted', 'success');
         expandedProjectId = null;
         delete projectKeysMap[projId];
         loadProjects();
         loadStats();
       } catch (err) {
-        showToast('Failed to delete project: ' + err.message, 'error');
+        showToast('Failed to delete token: ' + err.message, 'error');
       }
     }
 
@@ -450,7 +450,7 @@
       var providerName = providerDisplayNames[(provider || '').toLowerCase()] || provider || 'this';
       showConfirm(
         'Delete Key',
-        'Delete the ' + providerName + ' key? The encrypted shares will be permanently destroyed. You will need to run npx @vaultproof/init again to re-add this key. This cannot be undone.',
+        'Delete the ' + providerName + ' key? The encrypted shares will be permanently destroyed. You will need to run vaultproof-init again to re-add this key. This cannot be undone.',
         'Delete Key',
         function() { deleteKey(projId, keyId); }
       );
@@ -506,7 +506,7 @@
       keyId = /^[a-f0-9-]+$/i.test(keyId) ? keyId : '';
 
       if (!projId || !keyId) {
-        msg.textContent = 'Invalid project or key ID';
+        msg.textContent = 'Invalid token or key ID';
         msg.className = 'text-sm text-amber-400';
         msg.classList.remove('hidden');
         return;
@@ -862,7 +862,7 @@
     document.getElementById('createProjectForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       var btn = document.getElementById('createProjectBtn');
-      btn.disabled = true; btn.textContent = 'Creating...';
+      btn.disabled = true; btn.textContent = 'creating...';
       try {
         var name = document.getElementById('newProjectName').value.trim();
         var res = await apiFetch(API + '/projects', {
@@ -870,11 +870,11 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: name || undefined })
         });
-        if (!res) { btn.disabled = false; btn.textContent = 'Create Project'; return; }
+        if (!res) { btn.disabled = false; btn.textContent = 'create token'; return; }
         if (!res.ok) throw new Error((await res.json().catch(function() { return {}; })).error || 'Failed');
         var data = await res.json();
         closeCreateProjectModal();
-        showToast('Project ' + data.vp_proj_id + ' created', 'success');
+        showToast('VaultProof token ' + data.vp_proj_id + ' created', 'success');
         loadProjects();
         loadStats();
       } catch(err) {
@@ -882,7 +882,7 @@
         document.getElementById('createProjectMsg').className = 'text-sm text-red-400';
         document.getElementById('createProjectMsg').classList.remove('hidden');
       } finally {
-        btn.disabled = false; btn.textContent = 'Create Project';
+        btn.disabled = false; btn.textContent = 'create token';
       }
     });
 

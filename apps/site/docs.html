@@ -641,9 +641,10 @@
                     <span class="text-indigo-400 text-xl mt-0.5">&#9889;</span>
                     <div>
                         <h3 class="text-white font-bold text-base mb-1">New: one command to protect every key</h3>
-                        <p class="text-gray-400 text-sm leading-relaxed mb-3">The fastest way to get started is now:</p>
-                        <pre class="bg-black/40 rounded px-4 py-2 text-sm font-mono text-indigo-300 mb-3 inline-block">npx @vaultproof/init</pre>
-                        <p class="text-gray-500 text-xs leading-relaxed">This scans your <code class="text-gray-400">.env</code>, Shamir-splits each key locally, and rewrites your environment with one <code class="text-gray-400">vp-proj-</code> project ID. Zero code changes.</p>
+                        <p class="text-gray-400 text-sm leading-relaxed mb-3">Install the VaultProof CLI from our site, then run it in your app:</p>
+                        <pre class="bg-black/40 rounded px-4 py-2 text-sm font-mono text-indigo-300 mb-3 inline-block">curl -fsSL https://vaultproof.dev/install | sh</pre>
+                        <pre class="bg-black/40 rounded px-4 py-2 text-sm font-mono text-indigo-300 mb-3 inline-block">vaultproof-init</pre>
+                        <p class="text-gray-500 text-xs leading-relaxed">This scans your <code class="text-gray-400">.env</code>, Shamir-splits each key locally, and rewrites your environment with one <code class="text-gray-400">vp-proj-</code> VaultProof token. Zero code changes.</p>
                     </div>
                 </div>
             </div>
@@ -690,7 +691,7 @@
             <!-- ============================================================ -->
             <section id="quick-start" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">Quick Start</h2>
-                <p class="text-gray-500 mb-8">Three ways to use VaultProof. The Proxy URL is the fastest -- run <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init</code> and every SDK works.</p>
+                <p class="text-gray-500 mb-8">Three ways to use VaultProof. The Proxy URL is the fastest -- install the VaultProof CLI from <code class="font-mono text-xs text-vp-accent">vaultproof.dev/install</code>, run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>, and every SDK works.</p>
 
                 <!-- Proxy URL vs SDK vs CLI vs Dashboard -->
                 <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-8">
@@ -704,10 +705,10 @@
                                 <td>No install -- just change one line</td>
                             </tr>
                             <tr>
-                                <td><code class="font-mono text-xs text-vp-accent">npx @vaultproof/init</code></td>
+                                <td><code class="font-mono text-xs text-vp-accent">vaultproof-init</code></td>
                                 <td>One command that scans your .env, splits every key, and rewrites your environment</td>
                                 <td>Any project with a .env file containing API keys</td>
-                                <td>No install -- just run with npx</td>
+                                <td><code class="font-mono text-xs text-vp-accent">curl -fsSL https://vaultproof.dev/install | sh</code></td>
                             </tr>
                             <tr>
                                 <td><a href="/app" class="text-vp-accent hover:underline">Dashboard</a></td>
@@ -733,8 +734,8 @@
 
                     <p class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Setup (once)</p>
                     <ol class="list-decimal list-inside space-y-1.5 text-sm text-gray-400 mb-6">
-                        <li>Run <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init</code> -- it scans your .env, splits each key, and rewrites your environment</li>
-                        <li>Your .env now has a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID and per-provider <code class="font-mono text-xs text-vp-accent">*_BASE_URL</code> entries</li>
+                        <li>Install once with <code class="font-mono text-xs text-vp-accent">curl -fsSL https://vaultproof.dev/install | sh</code>, then run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code> -- it scans your .env, splits each key, and rewrites your environment</li>
+                        <li>Your .env now has a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token and per-provider <code class="font-mono text-xs text-vp-accent">*_BASE_URL</code> entries</li>
                         <li>Done -- your existing code works, key is protected</li>
                     </ol>
 
@@ -743,7 +744,7 @@
 <pre class="text-gray-300"><span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">'openai'</span>
 
 <span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">OpenAI</span>({
-  apiKey: process.env.<span class="typ">VAULTPROOF_PROJECT_ID</span>,  <span class="cmt">// vp-proj- project ID</span>
+  apiKey: process.env.<span class="typ">VAULTPROOF_PROJECT_ID</span>,  <span class="cmt">// vp-proj- VaultProof token</span>
   baseURL: <span class="str">'https://init.vaultproof.dev/p/openai/v1'</span>
 })
 
@@ -801,31 +802,34 @@ client = openai.<span class="fn">OpenAI</span>(
                         <span class="bg-cyan-500/15 text-cyan-400 text-xs font-bold px-2.5 py-1 rounded">FOR ANY SDK</span>
                         <h3 class="text-lg font-semibold text-white">Init CLI -- one command, every SDK works</h3>
                     </div>
-                    <p class="text-gray-500 text-sm mb-4">Run <code class="font-mono text-xs text-vp-cyan">npx @vaultproof/init</code> in any project. It scans your .env, splits each key, and adds per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries for supported header-based providers. Your OpenAI-compatible and API-key SDKs can then route through VaultProof with their normal environment variables.</p>
+                    <p class="text-gray-500 text-sm mb-4">Install the VaultProof CLI once, then run <code class="font-mono text-xs text-vp-cyan">vaultproof-init</code> in any project. It scans your .env, splits each key, and adds per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries for supported header-based providers. Your OpenAI-compatible and API-key SDKs can then route through VaultProof with their normal environment variables.</p>
 
                     <div class="code-block">
                         <div class="code-header">bash</div>
-<pre class="text-gray-300"><span class="cmt"># Protect every key in your .env at once</span>
-npx @vaultproof/init
+<pre class="text-gray-300"><span class="cmt"># Install the CLI once</span>
+curl -fsSL https://vaultproof.dev/install | sh
+
+<span class="cmt"># Protect every key in your .env at once</span>
+vaultproof-init
 
 <span class="cmt"># Protect a custom/internal API key from .env</span>
-npx @vaultproof/init custom
+vaultproof-init custom
 
 <span class="cmt"># Protect vault-only runtime secrets from .env</span>
-npx @vaultproof/init secrets add
+vaultproof-init secrets add
 
 <span class="cmt"># Run with vault-only secrets injected into the child process</span>
-npx @vaultproof/init run -- npm run dev
+vaultproof-init run -- npm run dev
 
 <span class="cmt"># Protect Ansible/Terraform network automation secrets</span>
-npx @vaultproof/init netops
-npx @vaultproof/init netops run -- ansible-playbook site.yml
+vaultproof-init netops
+vaultproof-init netops run -- ansible-playbook site.yml
 
 <span class="cmt"># Preview what will happen without making changes</span>
-npx @vaultproof/init --dry-run
+vaultproof-init --dry-run
 
 <span class="cmt"># Check if you have any legacy vp_live_ references to clean up</span>
-npx @vaultproof/init --check-legacy</pre>
+vaultproof-init --check-legacy</pre>
                     </div>
                 </div>
 
@@ -835,10 +839,10 @@ npx @vaultproof/init --check-legacy</pre>
                         <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">NO SDK NEEDED</span>
                         <h3 class="text-lg font-semibold text-white">Your existing SDKs work unchanged</h3>
                     </div>
-                    <p class="text-gray-500 text-sm mb-4">After running <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init</code>, your .env contains per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries that point at the VaultProof proxy. Most SDKs (OpenAI, Anthropic, Stripe, etc.) read their base URL from the environment, so your code works without any changes.</p>
+                    <p class="text-gray-500 text-sm mb-4">After running <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>, your .env contains per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries that point at the VaultProof proxy. Most SDKs (OpenAI, Anthropic, Stripe, etc.) read their base URL from the environment, so your code works without any changes.</p>
 
                     <div class="code-block mb-4">
-                        <div class="code-header">.env (after running npx @vaultproof/init)</div>
+                        <div class="code-header">.env (after running vaultproof-init)</div>
 <pre class="text-gray-300"><span class="cmt"># Original keys have been split and stored securely</span>
 <span class="typ">VAULTPROOF_PROJECT_ID</span>=<span class="str">vp-proj-a8Kj3mNp9xRt2wQz</span>
 
@@ -874,26 +878,26 @@ npx @vaultproof/init --check-legacy</pre>
                     <div class="code-block">
                         <div class="code-header">terminal</div>
 <pre class="text-gray-300"><span class="cmt"># Scan .env, split every key, rewrite environment</span>
-$ npx @vaultproof/init
+$ vaultproof-init
 
 <span class="cmt"># Add an unsupported or internal API key from .env</span>
-$ npx @vaultproof/init custom
+$ vaultproof-init custom
 
 <span class="cmt"># Store database URLs, JWT secrets, and webhook secrets</span>
-$ npx @vaultproof/init secrets add
+$ vaultproof-init secrets add
 
 <span class="cmt"># Start a process with vault-only secrets injected</span>
-$ npx @vaultproof/init run -- npm run dev
+$ vaultproof-init run -- npm run dev
 
 <span class="cmt"># Protect and run network automation secrets</span>
-$ npx @vaultproof/init netops
-$ npx @vaultproof/init netops run -- ansible-playbook site.yml
+$ vaultproof-init netops
+$ vaultproof-init netops run -- ansible-playbook site.yml
 
 <span class="cmt"># Preview what will happen without making changes</span>
-$ npx @vaultproof/init --dry-run
+$ vaultproof-init --dry-run
 
 <span class="cmt"># Check for legacy vp_live_ references in your project</span>
-$ npx @vaultproof/init --check-legacy</pre>
+$ vaultproof-init --check-legacy</pre>
                     </div>
                 </div>
 
@@ -903,12 +907,12 @@ $ npx @vaultproof/init --check-legacy</pre>
                         <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">FOR YOUR BROWSER</span>
                         <h3 class="text-lg font-semibold text-white">Dashboard -- visual web interface</h3>
                     </div>
-                    <p class="text-gray-500 text-sm mb-4">Use the dashboard to view your projects, monitor proxy usage, and manage settings.</p>
+                    <p class="text-gray-500 text-sm mb-4">Use the dashboard to view your VaultProof tokens, monitor proxy usage, and manage settings.</p>
                     <div class="bg-vp-surface border border-vp-border rounded-md p-5">
                         <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
                             <li>Go to <a href="/app/login" class="text-vp-accent hover:underline">vaultproof.dev/app</a> and create an account or log in</li>
-                            <li>Run <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init</code> in your project to create a project and protect your keys</li>
-                            <li>Your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID and protected keys appear in the dashboard</li>
+                            <li>Install the CLI with <code class="font-mono text-xs text-vp-accent">curl -fsSL https://vaultproof.dev/install | sh</code>, then run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code> in your app to create a VaultProof token and protect your keys</li>
+                            <li>Your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> token and protected keys appear in the dashboard</li>
                             <li>Monitor proxy call logs, per-provider usage, and rate limit status</li>
                         </ol>
                     </div>
@@ -919,7 +923,7 @@ $ npx @vaultproof/init --check-legacy</pre>
                         <span class="bg-emerald-500/15 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded">PRODUCTION SETUPS</span>
                         <h3 class="text-lg font-semibold text-white">CI/CD + Kubernetes</h3>
                     </div>
-                    <p class="text-gray-500 text-sm mb-4">VaultProof works well in pipelines and clusters because the runtime only needs a public <code class="font-mono text-xs text-vp-accent">vp-proj-</code> identifier plus per-provider proxy URLs.</p>
+                    <p class="text-gray-500 text-sm mb-4">VaultProof works well in pipelines and clusters because the runtime only needs a public <code class="font-mono text-xs text-vp-accent">vp-proj-</code> token plus per-provider proxy URLs.</p>
 
                     <div class="code-block mb-4">
                         <div class="code-header">Required runtime env vars</div>
@@ -961,7 +965,7 @@ $ npx @vaultproof/init --check-legacy</pre>
                 <!-- 3.1 Key Storage Flow -->
                 <div id="key-storage-flow" class="mb-14">
                     <h3 class="text-xl font-semibold text-white mb-6">3.1 Key Storage Flow</h3>
-                    <p class="text-gray-400 text-sm mb-6">When you run <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init</code>, here is exactly what happens for each key found in your <code class="font-mono text-xs">.env</code>:</p>
+                    <p class="text-gray-400 text-sm mb-6">When you run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>, here is exactly what happens for each key found in your <code class="font-mono text-xs">.env</code>:</p>
 
                     <div class="space-y-0">
                         <div class="flow-step" data-step="1">
@@ -982,11 +986,11 @@ $ npx @vaultproof/init --check-legacy</pre>
                         </div>
                         <div class="flow-step" data-step="5">
                             <div class="text-white font-medium text-sm mb-1">Your .env is rewritten</div>
-                            <p class="text-gray-500 text-sm">The original key values in your <code class="font-mono text-xs">.env</code> are replaced with your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID, and per-provider <code class="font-mono text-xs">*_BASE_URL</code> lines are added pointing at the VaultProof proxy. A timestamped backup of your original <code class="font-mono text-xs">.env</code> is created first.</p>
+                            <p class="text-gray-500 text-sm">The original key values in your <code class="font-mono text-xs">.env</code> are replaced with your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token, and per-provider <code class="font-mono text-xs">*_BASE_URL</code> lines are added pointing at the VaultProof proxy. A timestamped backup of your original <code class="font-mono text-xs">.env</code> is created first.</p>
                         </div>
                         <div class="flow-step" data-step="6">
-                            <div class="text-white font-medium text-sm mb-1">One project ID for everything</div>
-                            <p class="text-gray-500 text-sm">You receive a single <code class="font-mono text-xs text-vp-accent">vp-proj-</code> identifier. This is <strong class="text-gray-300">not a secret</strong> — it is safe to commit, share, and put in CI variables. It tells the proxy which stored shares to reconstruct for each provider.</p>
+                            <div class="text-white font-medium text-sm mb-1">One VaultProof token for everything</div>
+                            <p class="text-gray-500 text-sm">You receive a single <code class="font-mono text-xs text-vp-accent">vp-proj-</code> token. This is <strong class="text-gray-300">not a secret</strong> — it is safe to commit, share, and put in CI variables. It tells the proxy which stored shares to reconstruct for each provider.</p>
                         </div>
                     </div>
 
@@ -1003,11 +1007,11 @@ $ npx @vaultproof/init --check-legacy</pre>
                     <div class="space-y-0">
                         <div class="flow-step" data-step="1">
                             <div class="text-white font-medium text-sm mb-1">Your SDK sends a request to the proxy</div>
-                            <p class="text-gray-500 text-sm">Your OpenAI/Anthropic/Stripe SDK reads the <code class="font-mono text-xs">*_BASE_URL</code> from the environment and sends its request to <code class="font-mono text-xs">init.vaultproof.dev/p/&lt;provider&gt;/...</code> instead of the provider directly. Your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID is in the <code class="font-mono text-xs">Authorization: Bearer</code> header.</p>
+                            <p class="text-gray-500 text-sm">Your OpenAI/Anthropic/Stripe SDK reads the <code class="font-mono text-xs">*_BASE_URL</code> from the environment and sends its request to <code class="font-mono text-xs">init.vaultproof.dev/p/&lt;provider&gt;/...</code> instead of the provider directly. Your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token is in the <code class="font-mono text-xs">Authorization: Bearer</code> header.</p>
                         </div>
                         <div class="flow-step" data-step="2">
-                            <div class="text-white font-medium text-sm mb-1">Project authenticated, rate limit checked</div>
-                            <p class="text-gray-500 text-sm">The worker validates the project ID and checks rate limits via a strongly-consistent Durable Object counter. Invalid or rate-limited requests are rejected before any database work.</p>
+                            <div class="text-white font-medium text-sm mb-1">Token authenticated, rate limit checked</div>
+                            <p class="text-gray-500 text-sm">The worker validates the VaultProof token and checks rate limits via a strongly-consistent Durable Object counter. Invalid or rate-limited requests are rejected before any database work.</p>
                         </div>
                         <div class="flow-step" data-step="3">
                             <div class="text-white font-medium text-sm mb-1">Shares fetched and decrypted</div>
@@ -1058,8 +1062,8 @@ $ npx @vaultproof/init --check-legacy</pre>
                                     <td><span class="text-amber-400 font-semibold">No</span></td>
                                 </tr>
                                 <tr>
-                                    <td>Project ID leaked</td>
-                                    <td class="text-gray-400">The <code class="font-mono text-xs">vp-proj-</code> identifier is public by design. An attacker can make proxy calls against your rate limit (60/min) but cannot retrieve the shares or the reconstructed key. The proxy returns the provider's response, not the key.</td>
+                                    <td>VaultProof token leaked</td>
+                                    <td class="text-gray-400">The <code class="font-mono text-xs">vp-proj-</code> token is public by design. An attacker can make proxy calls against your rate limit (60/min) but cannot retrieve the shares or the reconstructed key. The proxy returns the provider's response, not the key.</td>
                                     <td><span class="text-amber-400 font-semibold">No</span></td>
                                 </tr>
                                 <tr>
@@ -1130,18 +1134,19 @@ $ npx @vaultproof/init --check-legacy</pre>
             <!-- ============================================================ -->
             <section id="packages" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">Packages</h2>
-                <p class="text-gray-500 mb-8">VaultProof ships 2 npm packages. Most developers only need <code class="font-mono text-xs text-vp-accent">@vaultproof/init</code>.</p>
+                <p class="text-gray-500 mb-8">VaultProof ships a website-hosted CLI and a small internal split-key library. Most developers only need <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>.</p>
 
                 <div class="space-y-4 mb-8">
                     <div class="endpoint-card">
                         <div class="flex items-baseline gap-3 mb-2">
-                            <code class="font-mono text-sm text-vp-accent font-semibold">@vaultproof/init</code>
-                            <span class="text-xs text-gray-600">The only package most developers need</span>
+                            <code class="font-mono text-sm text-vp-accent font-semibold">vaultproof-init</code>
+                            <span class="text-xs text-gray-600">The only CLI most developers need</span>
                         </div>
-                        <p class="text-gray-400 text-sm mb-3">One command that scans your <code class="font-mono text-xs">.env</code>, splits every API key locally using split-key encryption, uploads encrypted shares, and rewrites your environment with a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID and per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries. No SDK import needed -- your existing SDKs read the new base URL from the environment and route through VaultProof automatically.</p>
+                        <p class="text-gray-400 text-sm mb-3">One command that scans your <code class="font-mono text-xs">.env</code>, splits every API key locally using split-key encryption, uploads encrypted shares, and rewrites your environment with a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token and per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries. No SDK import needed -- your existing SDKs read the new base URL from the environment and route through VaultProof automatically.</p>
                         <div class="code-block">
-                            <div class="code-header">run</div>
-<pre class="text-gray-300">npx @vaultproof/init</pre>
+                            <div class="code-header">install and run</div>
+<pre class="text-gray-300">curl -fsSL https://vaultproof.dev/install | sh
+vaultproof-init</pre>
                         </div>
                     </div>
 
@@ -1150,12 +1155,12 @@ $ npx @vaultproof/init --check-legacy</pre>
                             <code class="font-mono text-sm text-vp-accent font-semibold">@vaultproof/shamir</code>
                             <span class="text-xs text-gray-600">Internal -- rarely needed directly</span>
                         </div>
-                        <p class="text-gray-400 text-sm">The split-key encryption engine. Bundled inside <code class="font-mono text-xs">@vaultproof/init</code>. Only install this directly if you want raw key splitting without VaultProof infrastructure.</p>
+                        <p class="text-gray-400 text-sm">The split-key encryption engine. Bundled inside <code class="font-mono text-xs">vaultproof-init</code>. Only install this directly if you want raw key splitting without VaultProof infrastructure.</p>
                     </div>
                 </div>
 
                 <div class="callout-info">
-                    <p class="text-sm text-indigo-300"><strong>No SDK import needed.</strong> After running <code class="font-mono text-xs">npx @vaultproof/init</code>, your existing OpenAI, Anthropic, Stripe, and other SDKs work unchanged. They read the <code class="font-mono text-xs">*_BASE_URL</code> from your environment and route through VaultProof automatically.</p>
+                    <p class="text-sm text-indigo-300"><strong>No SDK import needed.</strong> After running <code class="font-mono text-xs">vaultproof-init</code>, your existing OpenAI, Anthropic, Stripe, and other SDKs work unchanged. They read the <code class="font-mono text-xs">*_BASE_URL</code> from your environment and route through VaultProof automatically.</p>
                 </div>
             </section>
 
@@ -1298,15 +1303,15 @@ $ npx @vaultproof/init --check-legacy</pre>
                             </tbody>
                         </table>
                     </div>
-                    <p class="text-gray-500 text-sm mt-3">Providers with account-specific upstreams, like Weaviate and Grafana, are supported by init when their service URL is present in your .env. For unsupported or internal HTTP APIs, run <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init custom</code>.</p>
+                    <p class="text-gray-500 text-sm mt-3">Providers with account-specific upstreams, like Weaviate and Grafana, are supported by init when their service URL is present in your .env. For unsupported or internal HTTP APIs, run <code class="font-mono text-xs text-vp-accent">vaultproof-init custom</code>.</p>
                 </div>
 
                 <!-- How Authentication Works -->
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">How Authentication Works</h3>
                     <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
-                        <li>Send your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID in <code class="font-mono text-xs">Authorization: Bearer</code> or in the provider API-key header your SDK already uses</li>
-                        <li>VaultProof identifies your project and finds the stored key for that provider</li>
+                        <li>Send your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token in <code class="font-mono text-xs">Authorization: Bearer</code> or in the provider API-key header your SDK already uses</li>
+                        <li>VaultProof identifies your token and finds the stored key for that provider</li>
                         <li>The key is reconstructed from encrypted shares briefly in memory, used to call the upstream API, then zeroed</li>
                         <li>The response (including SSE streaming) is forwarded back to you transparently</li>
                     </ol>
@@ -1364,15 +1369,15 @@ res = client.chat.completions.<span class="fn">create</span>(
             <!-- ============================================================ -->
             <section id="sdk-reference" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">Integration Reference</h2>
-                <p class="text-gray-500 mb-8">No SDK import needed. After running <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init</code>, your existing SDKs route through VaultProof automatically via environment variables.</p>
+                <p class="text-gray-500 mb-8">No SDK import needed. After running <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>, your existing SDKs route through VaultProof automatically via environment variables.</p>
 
                 <!-- How it works -->
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">How It Works</h3>
                     <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-4">
                         <ol class="list-decimal list-inside space-y-3 text-sm text-gray-400">
-                            <li><strong class="text-white">Run <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init</code></strong> -- scans your .env, splits each key, rewrites the file</li>
-                            <li><strong class="text-white">Your .env now contains</strong> a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID and per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries</li>
+                            <li><strong class="text-white">Install and run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code></strong> -- installs from <code class="font-mono text-xs text-vp-accent">vaultproof.dev/install</code>, scans your .env, splits each key, and rewrites the file</li>
+                            <li><strong class="text-white">Your .env now contains</strong> a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token and per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries</li>
                             <li><strong class="text-white">Your SDKs read the environment</strong> -- OpenAI, Anthropic, Stripe, and others all support <code class="font-mono text-xs">*_BASE_URL</code> env vars</li>
                             <li><strong class="text-white">API calls route through VaultProof</strong> -- the proxy authenticates via <code class="font-mono text-xs">Authorization: Bearer vp-proj-...</code> or the provider API-key header, reconstructs your key briefly in memory, calls the provider, then zeros the key</li>
                         </ol>
@@ -1682,7 +1687,7 @@ res = client.chat.completions.<span class="fn">create</span>(
                             </tbody>
                         </table>
                     </div>
-                    <p class="text-gray-500 text-sm mt-3">Providers with account-specific upstreams, like Azure OpenAI, Jira, Zendesk, Freshdesk, Qdrant, Meilisearch, Typesense, Elasticsearch, Weaviate, and Grafana, are supported by init when their service URL is present in your .env. For unsupported or internal HTTP APIs, run <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init custom</code>.</p>
+                    <p class="text-gray-500 text-sm mt-3">Providers with account-specific upstreams, like Azure OpenAI, Jira, Zendesk, Freshdesk, Qdrant, Meilisearch, Typesense, Elasticsearch, Weaviate, and Grafana, are supported by init when their service URL is present in your .env. For unsupported or internal HTTP APIs, run <code class="font-mono text-xs text-vp-accent">vaultproof-init custom</code>.</p>
                 </div>
 
                 <!-- Which Keys to Store -->
@@ -1749,7 +1754,7 @@ res = client.chat.completions.<span class="fn">create</span>(
             <section id="connect-widget" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">Connect Widget</h2>
                 <div class="callout-warn">
-                    <p class="text-sm text-amber-200"><strong class="text-amber-300">Deprecated.</strong> The <code class="font-mono text-xs">@vaultproof/connect</code> React widget is no longer needed. The new system uses <code class="font-mono text-xs">npx @vaultproof/init</code> to protect keys at the environment level -- no widget required. Existing integrations will continue to work but new projects should use the init flow instead.</p>
+                    <p class="text-sm text-amber-200"><strong class="text-amber-300">Deprecated.</strong> The <code class="font-mono text-xs">@vaultproof/connect</code> React widget is no longer needed. The new system uses <code class="font-mono text-xs">vaultproof-init</code> to protect keys at the environment level -- no widget required. Existing integrations will continue to work but new projects should use the init flow instead.</p>
                 </div>
             </section>
 
@@ -1759,7 +1764,7 @@ res = client.chat.completions.<span class="fn">create</span>(
             <!-- ============================================================ -->
             <section id="cli-reference" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">CLI Reference</h2>
-                <p class="text-gray-500 mb-8">One command to protect every API key in your project. No global install needed -- run with <code class="font-mono text-xs text-vp-accent">npx</code>.</p>
+                <p class="text-gray-500 mb-8">One command to protect every API key in your project. Install the CLI from <code class="font-mono text-xs text-vp-accent">vaultproof.dev/install</code>, then run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>.</p>
 
                 <!-- Commands -->
                 <div class="mb-8">
@@ -1768,13 +1773,14 @@ res = client.chat.completions.<span class="fn">create</span>(
 
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">npx @vaultproof/init</code>
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof-init</code>
                                 <span class="text-[0.625rem] font-bold text-emerald-400 ml-1">PRIMARY</span>
                             </div>
-                            <p class="text-gray-500 text-sm mb-3">Scans your <code class="font-mono text-xs text-vp-accent">.env</code> (and <code class="font-mono text-xs">.env.local</code>, <code class="font-mono text-xs">.env.production</code>, <code class="font-mono text-xs">.env.development</code>), identifies API keys by prefix and length against a growing provider catalog, splits each key locally using split-key encryption, uploads encrypted shares, and rewrites your environment with a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID and per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries. A timestamped backup of your original <code class="font-mono text-xs">.env</code> is created first.</p>
+                            <p class="text-gray-500 text-sm mb-3">Scans your <code class="font-mono text-xs text-vp-accent">.env</code> (and <code class="font-mono text-xs">.env.local</code>, <code class="font-mono text-xs">.env.production</code>, <code class="font-mono text-xs">.env.development</code>), identifies API keys by prefix and length against a growing provider catalog, splits each key locally using split-key encryption, uploads encrypted shares, and rewrites your environment with a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token and per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries. A timestamped backup of your original <code class="font-mono text-xs">.env</code> is created first.</p>
                             <div class="code-block">
                                 <div class="code-header">terminal</div>
-<pre class="text-gray-300">$ npx @vaultproof/init
+<pre class="text-gray-300">$ curl -fsSL https://vaultproof.dev/install | sh
+$ vaultproof-init
 
 <span class="str">Scanning .env...</span>
   Found 3 API keys: openai, anthropic, stripe
@@ -1789,12 +1795,12 @@ res = client.chat.completions.<span class="fn">create</span>(
 
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">npx @vaultproof/init custom</code>
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof-init custom</code>
                             </div>
-                            <p class="text-gray-500 text-sm mb-3">Protect an unsupported or internal HTTP API key already present in your <code class="font-mono text-xs">.env</code>. The CLI prompts for the provider slug, upstream base URL, auth header name, and header template, then rewrites the selected key to use your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID.</p>
+                            <p class="text-gray-500 text-sm mb-3">Protect an unsupported or internal HTTP API key already present in your <code class="font-mono text-xs">.env</code>. The CLI prompts for the provider slug, upstream base URL, auth header name, and header template, then rewrites the selected key to use your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token.</p>
                             <div class="code-block">
                                 <div class="code-header">terminal</div>
-<pre class="text-gray-300">$ npx @vaultproof/init custom
+<pre class="text-gray-300">$ vaultproof-init custom
 
 <span class="str">Possible custom/internal keys:</span>
   1. INTERNAL_API_KEY from .env
@@ -1810,29 +1816,29 @@ res = client.chat.completions.<span class="fn">create</span>(
 
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">npx @vaultproof/init secrets add</code>
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof-init secrets add</code>
                             </div>
                             <p class="text-gray-500 text-sm mb-3">Protect runtime secrets that are not outbound HTTP API keys, including database URLs, Redis URLs, JWT/session secrets, encryption keys, OAuth client secrets, and webhook signing secrets. The CLI stores split shares and rewrites plaintext values to <code class="font-mono text-xs">vaultproof://</code> placeholders.</p>
                             <div class="code-block">
                                 <div class="code-header">terminal</div>
-<pre class="text-gray-300">$ npx @vaultproof/init secrets add
+<pre class="text-gray-300">$ vaultproof-init secrets add
 
 <span class="str">Possible vault-only secrets:</span>
   1. DATABASE_URL from .env
   2. JWT_SECRET from .env
 
-<span class="str">Done.</span> Use npx @vaultproof/init run -- npm run dev</pre>
+<span class="str">Done.</span> Use vaultproof-init run -- npm run dev</pre>
                             </div>
                         </div>
 
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">npx @vaultproof/init run -- &lt;command&gt;</code>
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof-init run -- &lt;command&gt;</code>
                             </div>
                             <p class="text-gray-500 text-sm mb-3">Fetch vault-only secrets with your authenticated VaultProof session and inject them into a child process environment without writing plaintext back to <code class="font-mono text-xs">.env</code>.</p>
                             <div class="code-block">
                                 <div class="code-header">terminal</div>
-<pre class="text-gray-300">$ npx @vaultproof/init run -- npm run dev
+<pre class="text-gray-300">$ vaultproof-init run -- npm run dev
 
 <span class="str">Injecting 2 vault-only secrets for vp-proj-a8Kj3mNp9xRt2wQz.</span></pre>
                             </div>
@@ -1840,24 +1846,24 @@ res = client.chat.completions.<span class="fn">create</span>(
 
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">npx @vaultproof/init netops</code>
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof-init netops</code>
                             </div>
                             <p class="text-gray-500 text-sm mb-3">Protect network automation secrets in Ansible inventories, <code class="font-mono text-xs">group_vars</code>, <code class="font-mono text-xs">host_vars</code>, <code class="font-mono text-xs">.env</code>, <code class="font-mono text-xs">terraform.tfvars</code>, and <code class="font-mono text-xs">*.auto.tfvars</code>. Ansible values are rewritten to <code class="font-mono text-xs">lookup('env', ...)</code>; Terraform secrets are supplied through <code class="font-mono text-xs">TF_VAR_...</code>.</p>
                             <div class="code-block">
                                 <div class="code-header">terminal</div>
-<pre class="text-gray-300">$ npx @vaultproof/init netops
-$ npx @vaultproof/init netops run -- ansible-playbook site.yml</pre>
+<pre class="text-gray-300">$ vaultproof-init netops
+$ vaultproof-init netops run -- ansible-playbook site.yml</pre>
                             </div>
                         </div>
 
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">npx @vaultproof/init --dry-run</code>
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof-init --dry-run</code>
                             </div>
                             <p class="text-gray-500 text-sm mb-3">Preview what <code class="font-mono text-xs text-vp-accent">init</code> will do without making any changes. Shows which keys would be split and what your <code class="font-mono text-xs">.env</code> would look like after.</p>
                             <div class="code-block">
                                 <div class="code-header">terminal</div>
-<pre class="text-gray-300">$ npx @vaultproof/init --dry-run
+<pre class="text-gray-300">$ vaultproof-init --dry-run
 
 <span class="str">Dry run -- no changes will be made</span>
   Would split: OPENAI_API_KEY (openai)
@@ -1870,12 +1876,12 @@ $ npx @vaultproof/init netops run -- ansible-playbook site.yml</pre>
 
                         <div class="endpoint-card">
                             <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">npx @vaultproof/init --check-legacy</code>
+                                <code class="font-mono text-sm text-white font-semibold">vaultproof-init --check-legacy</code>
                             </div>
                             <p class="text-gray-500 text-sm mb-3">Scan your project for any remaining references to the old <code class="font-mono text-xs">vp_live_</code> / <code class="font-mono text-xs">vp_test_</code> system. Reports files and line numbers so you can clean them up.</p>
                             <div class="code-block">
                                 <div class="code-header">terminal</div>
-<pre class="text-gray-300">$ npx @vaultproof/init --check-legacy
+<pre class="text-gray-300">$ vaultproof-init --check-legacy
 
 <span class="str">Checking for legacy references...</span>
   No legacy references found. You're all set.</pre>
@@ -1887,18 +1893,18 @@ $ npx @vaultproof/init netops run -- ansible-playbook site.yml</pre>
                 <!-- Environment Variables -->
                 <div class="mb-8">
                     <h3 class="text-lg font-semibold text-white mb-4">Environment Variables</h3>
-                    <p class="text-gray-500 text-sm mb-4">After running <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init</code>, your <code class="font-mono text-xs">.env</code> contains:</p>
+                    <p class="text-gray-500 text-sm mb-4">After running <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>, your <code class="font-mono text-xs">.env</code> contains:</p>
                     <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
                         <table class="doc-table">
                             <thead><tr><th>Variable</th><th>Description</th></tr></thead>
                             <tbody>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">VAULTPROOF_PROJECT_ID</code></td>
-                                    <td>Your <code class="font-mono text-xs">vp-proj-</code> project ID. Public, safe to commit. Tells the proxy which stored shares to reconstruct.</td>
+                                    <td>Your <code class="font-mono text-xs">vp-proj-</code> VaultProof token. Public, safe to commit. Tells the proxy which stored shares to reconstruct.</td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">OPENAI_API_KEY</code></td>
-                                    <td>Set to your <code class="font-mono text-xs">vp-proj-</code> ID (the OpenAI SDK reads this for auth).</td>
+                                    <td>Set to your <code class="font-mono text-xs">vp-proj-</code> token (the OpenAI SDK reads this for auth).</td>
                                 </tr>
                                 <tr>
                                     <td><code class="font-mono text-xs text-vp-accent">OPENAI_BASE_URL</code></td>
@@ -1911,7 +1917,7 @@ $ npx @vaultproof/init netops run -- ansible-playbook site.yml</pre>
                             </tbody>
                         </table>
                     </div>
-                    <p class="text-gray-500 text-sm mt-3">The same pattern applies for every provider: <code class="font-mono text-xs text-vp-accent">{PROVIDER}_API_KEY</code> is set to the project ID, and <code class="font-mono text-xs text-vp-accent">{PROVIDER}_BASE_URL</code> points at the proxy.</p>
+                    <p class="text-gray-500 text-sm mt-3">The same pattern applies for every provider: <code class="font-mono text-xs text-vp-accent">{PROVIDER}_API_KEY</code> is set to the VaultProof token, and <code class="font-mono text-xs text-vp-accent">{PROVIDER}_BASE_URL</code> points at the proxy.</p>
                 </div>
 
                 <!-- Environment Variable Mapping -->
@@ -1987,7 +1993,7 @@ $ npx @vaultproof/init netops run -- ansible-playbook site.yml</pre>
                         <ul class="space-y-1.5 text-sm text-gray-500">
                             <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Profile</strong> -- email and account details</span></li>
                             <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Password</strong> -- change password (requires current password)</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Projects</strong> -- create, list, and manage <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project IDs</span></li>
+                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">API Keys</strong> -- create, list, and manage <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof tokens</span></li>
                             <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Plan</strong> -- view current tier (Free/Starter/Pro/Enterprise) and usage limits</span></li>
                         </ul>
                     </div>
@@ -2001,7 +2007,7 @@ $ npx @vaultproof/init netops run -- ansible-playbook site.yml</pre>
             <section id="api-reference" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">API Reference</h2>
                 <p class="text-gray-500 mb-4">Base URL: <code class="font-mono text-sm text-vp-accent">https://init.vaultproof.dev</code></p>
-                <p class="text-gray-500 text-sm mb-8">The current worker in this repo exposes project-management routes under <code class="font-mono text-xs">/api/v1/init/projects</code> and provider proxy routes under <code class="font-mono text-xs">/p/:slug/*</code>. Management routes return JSON. Proxy routes forward the upstream provider response body directly.</p>
+                <p class="text-gray-500 text-sm mb-8">The current worker exposes token-management routes under the legacy <code class="font-mono text-xs">/api/v1/init/projects</code> path and provider proxy routes under <code class="font-mono text-xs">/p/:slug/*</code>. Management routes return JSON. Proxy routes forward the upstream provider response body directly.</p>
 
                 <div class="mb-10">
                     <h3 class="text-xl font-semibold text-white mb-5">Health</h3>
@@ -2018,7 +2024,7 @@ $ npx @vaultproof/init netops run -- ansible-playbook site.yml</pre>
                 </div>
 
                 <div class="mb-10">
-                    <h3 class="text-xl font-semibold text-white mb-5">Projects</h3>
+                    <h3 class="text-xl font-semibold text-white mb-5">VaultProof Tokens</h3>
                     <p class="text-gray-500 text-sm mb-4">Authenticated with <code class="font-mono text-xs text-vp-accent">Authorization: Bearer &lt;supabase jwt&gt;</code>.</p>
                     <div class="space-y-4">
                         <div class="endpoint-card">
@@ -2026,7 +2032,7 @@ $ npx @vaultproof/init netops run -- ansible-playbook site.yml</pre>
                                 <span class="method-badge method-post">POST</span>
                                 <code class="font-mono text-sm text-white">/api/v1/init/projects</code>
                             </div>
-                            <p class="text-gray-400 text-sm mb-3">Create a new project and receive a public <code class="font-mono text-xs">vp-proj-...</code> identifier.</p>
+                            <p class="text-gray-400 text-sm mb-3">Create a new VaultProof token and receive a public <code class="font-mono text-xs">vp-proj-...</code> value.</p>
                             <div class="code-block">
 <pre class="text-gray-300"><span class="cmt">// Request</span>
 {
@@ -2050,7 +2056,7 @@ $ npx @vaultproof/init netops run -- ansible-playbook site.yml</pre>
                                 <span class="method-badge method-get">GET</span>
                                 <code class="font-mono text-sm text-white">/api/v1/init/projects</code>
                             </div>
-                            <p class="text-gray-400 text-sm">List all projects for the current user.</p>
+                            <p class="text-gray-400 text-sm">List all VaultProof tokens for the current user.</p>
                         </div>
 
                         <div class="endpoint-card">
@@ -2089,7 +2095,7 @@ $ npx @vaultproof/init netops run -- ansible-playbook site.yml</pre>
                                 <span class="method-badge method-get">GET</span>
                                 <code class="font-mono text-sm text-white">/api/v1/init/projects/stats/overview</code>
                             </div>
-                            <p class="text-gray-400 text-sm">Return summary stats for projects, keys, and providers.</p>
+                            <p class="text-gray-400 text-sm">Return summary stats for VaultProof tokens, keys, and providers.</p>
                         </div>
                     </div>
                 </div>
@@ -2235,18 +2241,19 @@ $ npx @vaultproof/init netops run -- ansible-playbook site.yml</pre>
                 <div class="space-y-6">
                     <div>
                         <h3 class="text-lg font-semibold text-white mb-4">CLI Scanner</h3>
-                        <p class="text-gray-400 text-sm mb-4">Run one of these commands from your project directory:</p>
+                        <p class="text-gray-400 text-sm mb-4">Install the CLI once, then run one of these commands from your project directory:</p>
                         <div class="code-block mb-4">
                             <div class="code-header">commands</div>
-<pre class="text-gray-300">npx @vaultproof/init --dry-run
-npx @vaultproof/init custom
-npx @vaultproof/init secrets add
-npx @vaultproof/init run -- npm run dev
-npx @vaultproof/init netops
-npx @vaultproof/init netops run -- ansible-playbook site.yml
-npx @vaultproof/init --yes
-npx @vaultproof/init --check-legacy
-npx @vaultproof/init doctor</pre>
+<pre class="text-gray-300">curl -fsSL https://vaultproof.dev/install | sh
+vaultproof-init --dry-run
+vaultproof-init custom
+vaultproof-init secrets add
+vaultproof-init run -- npm run dev
+vaultproof-init netops
+vaultproof-init netops run -- ansible-playbook site.yml
+vaultproof-init --yes
+vaultproof-init --check-legacy
+vaultproof-init doctor</pre>
                         </div>
                         <ul class="text-gray-400 text-sm space-y-2 mb-4">
                             <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> <code class="font-mono text-xs text-vp-accent">.env</code>, <code class="font-mono text-xs">.env.local</code>, <code class="font-mono text-xs">.env.production</code>, and <code class="font-mono text-xs">.env.development</code></li>
@@ -2310,8 +2317,8 @@ npx @vaultproof/init doctor</pre>
                     </div>
 
                     <div class="endpoint-card">
-                        <h4 class="text-white font-semibold mb-2">"What if I lose my project ID?"</h4>
-                        <p class="text-gray-400 text-sm">Project IDs (<code class="font-mono text-xs text-vp-accent">vp-proj-</code>) are not secret -- they are safe to commit and share. You can find your project ID in the dashboard at any time. If you need a new one, run <code class="font-mono text-xs text-vp-accent">npx @vaultproof/init</code> again. Your stored keys are tied to your account, not to a specific project ID.</p>
+                        <h4 class="text-white font-semibold mb-2">"What if I lose my VaultProof token?"</h4>
+                        <p class="text-gray-400 text-sm">VaultProof tokens (<code class="font-mono text-xs text-vp-accent">vp-proj-</code>) are not secret -- they are safe to commit and share. You can find your token in the dashboard at any time. If you need a new one, run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code> again. Your stored keys are tied to your account, not to a specific token.</p>
                     </div>
 
                     <div class="endpoint-card">
@@ -2321,7 +2328,7 @@ npx @vaultproof/init doctor</pre>
 
                     <div class="endpoint-card">
                         <h4 class="text-white font-semibold mb-2">"Is this open source?"</h4>
-                        <p class="text-gray-400 text-sm">Parts of VaultProof are published in this repository and as npm packages, including the init CLI, worker, dashboard, and Shamir package. Check the repo and package metadata for the current licensing and availability of each component.</p>
+                        <p class="text-gray-400 text-sm">Parts of VaultProof are published in this repository, including the website-hosted init CLI, worker, dashboard, and Shamir package. Check the repo metadata for the current licensing and availability of each component.</p>
                     </div>
 
                     <div class="endpoint-card">
@@ -2346,7 +2353,7 @@ npx @vaultproof/init doctor</pre>
 
                     <div class="endpoint-card">
                         <h4 class="text-white font-semibold mb-2">"Can I use VaultProof in production?"</h4>
-                        <p class="text-gray-400 text-sm">Yes. VaultProof runs on a global edge network (330+ cities worldwide) with multi-region database replication. Use your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> project ID in both production and development -- the proxy handles routing to the correct stored keys for each provider.</p>
+                        <p class="text-gray-400 text-sm">Yes. VaultProof runs on a global edge network (330+ cities worldwide) with multi-region database replication. Use your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> token in both production and development -- the proxy handles routing to the correct stored keys for each provider.</p>
                     </div>
                 </div>
             </section>

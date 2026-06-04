@@ -1,0 +1,64 @@
+#!/bin/sh
+set -eu
+
+BASE_URL="${VAULTPROOF_INSTALL_BASE_URL:-https://vaultproof.dev/downloads}"
+INSTALL_DIR="${VAULTPROOF_INSTALL_DIR:-$HOME/.vaultproof/bin}"
+BIN_PATH="$INSTALL_DIR/vaultproof-init"
+PROVIDERS_PATH="$INSTALL_DIR/providers.json"
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "VaultProof init requires Node.js 18 or newer." >&2
+  echo "Install Node.js, then rerun: curl -fsSL https://vaultproof.dev/install | sh" >&2
+  exit 1
+fi
+
+if ! node -e "const v=Number(process.versions.node.split('.')[0]); process.exit(v >= 18 ? 0 : 1)" >/dev/null 2>&1; then
+  echo "VaultProof init requires Node.js 18 or newer." >&2
+  echo "Current Node version: $(node -v)" >&2
+  exit 1
+fi
+
+download() {
+  url="$1"
+  dest="$2"
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$url" -o "$dest"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -qO "$dest" "$url"
+  else
+    echo "Install curl or wget, then rerun the VaultProof installer." >&2
+    exit 1
+  fi
+}
+
+mkdir -p "$INSTALL_DIR"
+tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t vaultproof)"
+trap 'rm -rf "$tmp_dir"' EXIT INT TERM
+
+download "$BASE_URL/vaultproof-init.mjs" "$tmp_dir/vaultproof-init"
+download "$BASE_URL/providers.json" "$tmp_dir/providers.json"
+
+chmod 755 "$tmp_dir/vaultproof-init"
+mv "$tmp_dir/vaultproof-init" "$BIN_PATH"
+mv "$tmp_dir/providers.json" "$PROVIDERS_PATH"
+
+echo "VaultProof init installed:"
+echo "  $BIN_PATH"
+echo
+
+case ":$PATH:" in
+  *":$INSTALL_DIR:"*)
+    echo "Run:"
+    echo "  vaultproof-init"
+    ;;
+  *)
+    echo "Add VaultProof to your PATH:"
+    echo "  export PATH=\"$INSTALL_DIR:\$PATH\""
+    echo
+    echo "Then run:"
+    echo "  vaultproof-init"
+    echo
+    echo "Or run it directly now:"
+    echo "  $BIN_PATH"
+    ;;
+esac

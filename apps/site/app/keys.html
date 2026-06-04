@@ -17,7 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
   <script src="/js/app-keys-2.js" defer></script>
   <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260603e">
-  <link rel="stylesheet" href="/css/app-keys-theme.css?v=20260603d" data-app-shell-stylesheet>
+  <link rel="stylesheet" href="/css/app-keys-theme.css?v=20260603e" data-app-shell-stylesheet>
 </head>
 <body>
   <div class="page">
@@ -102,15 +102,15 @@
                   <h2 class="page-title">API Keys</h2>
                   <span class="page-meta">/ split shares - proxy routes</span>
                 </div>
-                <p class="page-desc">Create projects, split provider keys in-browser, rotate encrypted shares, and copy project IDs for your SDK configuration.</p>
+                <p class="page-desc">Create VaultProof tokens, split provider keys in-browser, rotate encrypted shares, and copy token values for your SDK configuration.</p>
               </div>
         </section>
 
         <section id="statsRow" class="kpi-grid">
               <div class="kpi-cell anim-card" style="animation-delay:0ms">
-                <div class="kpi-label">projects</div>
+                <div class="kpi-label">tokens</div>
                 <div class="kpi-value" id="statProjects">--</div>
-                <div class="kpi-sub">vault workspaces</div>
+                <div class="kpi-sub">VaultProof routes</div>
               </div>
               <div class="kpi-cell anim-card" style="animation-delay:80ms">
                 <div class="kpi-label">protected keys</div>
@@ -126,34 +126,38 @@
 
         <section id="initTip" class="tip">
               <span class="tip-glyph">&gt;</span>
-              <p>Quick start: run <code>npx @vaultproof/init</code> in your project to scan and protect all keys at once.</p>
+              <p>Quick start: install with <code>curl -fsSL https://vaultproof.dev/install | sh</code>, then run <code>vaultproof-init</code> in your app.</p>
               <button type="button" data-action="dismiss-init-tip" class="tip-close" aria-label="Dismiss">&times;</button>
         </section>
 
         <section>
               <div class="project-section-head">
                 <div>
-                  <h2 class="project-section-title">Projects</h2>
-                  <p class="project-section-sub" id="projectSubtitle">expand a project to inspect, rotate, or delete protected keys</p>
+                  <h2 class="project-section-title">VaultProof Tokens</h2>
+                  <p class="project-section-sub" id="projectSubtitle">expand a token to inspect, rotate, or delete protected keys</p>
                 </div>
-                <button type="button" data-action="open-create-project-modal" class="btn btn-outline">create manually</button>
+                <button type="button" data-action="open-create-project-modal" class="btn btn-outline">create token</button>
               </div>
         </section>
 
         <section id="projectsContainer">
               <div id="projectsLoading">
-                loading projects...
+                loading VaultProof tokens...
               </div>
         </section>
 
         <section id="emptyState" class="empty-state hidden">
-              <h3 class="empty-state-title">No projects yet</h3>
-              <p class="empty-state-copy">Run the init command in your project directory to create one and protect your API keys.</p>
+              <h3 class="empty-state-title">No VaultProof tokens yet</h3>
+              <p class="empty-state-copy">Install the VaultProof CLI, then run it in your app directory to create a token and protect your API keys.</p>
               <div class="empty-state-command-row">
-                <code class="code-pill">npx @vaultproof/init</code>
-                <button type="button" data-action="copy-text" data-text="npx @vaultproof/init" class="btn btn-outline">copy</button>
+                <code class="code-pill">curl -fsSL https://vaultproof.dev/install | sh</code>
+                <button type="button" data-action="copy-text" data-text="curl -fsSL https://vaultproof.dev/install | sh" class="btn btn-outline">copy install</button>
               </div>
-              <p class="empty-state-alt">or <button type="button" data-action="open-create-project-modal" class="empty-state-link">create a project manually</button></p>
+              <div class="empty-state-command-row">
+                <code class="code-pill">vaultproof-init</code>
+                <button type="button" data-action="copy-text" data-text="vaultproof-init" class="btn btn-outline">copy run</button>
+              </div>
+              <p class="empty-state-alt">or <button type="button" data-action="open-create-project-modal" class="empty-state-link">create a token manually</button></p>
         </section>
       </main>
     </div>
@@ -162,20 +166,20 @@
   <div id="createProjectModal" class="modal-shell hidden">
     <div class="modal-card">
       <div class="modal-head">
-        <h3 class="modal-title">New Project</h3>
+        <h3 class="modal-title">New VaultProof Token</h3>
         <button type="button" data-action="close-create-project-modal" class="modal-close" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-copy">Create a project to organize and protect your API keys. You can also run <code class="code-pill">npx @vaultproof/init</code> to do this automatically.</p>
+        <p class="modal-copy">Create a VaultProof token to route protected provider keys through your app. You can also install the CLI from <code class="code-pill">vaultproof.dev/install</code> and run <code class="code-pill">vaultproof-init</code> to do this automatically.</p>
         <form id="createProjectForm" class="form-stack">
           <div>
-            <label class="field-label">project name <span class="field-hint">(optional)</span></label>
+            <label class="field-label">token label <span class="field-hint">(optional)</span></label>
             <input type="text" id="newProjectName" placeholder="My App" class="form-control" />
           </div>
           <div id="createProjectMsg" class="form-msg hidden"></div>
           <div class="modal-actions">
             <button type="button" data-action="close-create-project-modal" class="btn btn-outline">cancel</button>
-            <button type="submit" id="createProjectBtn" class="btn btn-primary">create project</button>
+            <button type="submit" id="createProjectBtn" class="btn btn-primary">create token</button>
           </div>
         </form>
       </div>
@@ -370,7 +374,7 @@
         <button type="button" data-action="close-rotate-modal" class="modal-close" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-copy">Paste the new API key value. Your project ID stays the same, so your app configuration does not need to change.</p>
+        <p class="modal-copy">Paste the new API key value. Your VaultProof token stays the same, so your app configuration does not need to change.</p>
         <form id="rotateForm" class="form-stack">
           <input type="hidden" id="rotateProjectId" />
           <input type="hidden" id="rotateKeyId" />
@@ -407,7 +411,7 @@
   </div>
 
   <script src="/js/app-session.js?v=20260603b" defer></script>
-  <script src="/js/app-keys-3.js?v=20260603b" defer data-app-shell-page-script></script>
+  <script src="/js/app-keys-3.js?v=20260603e" defer data-app-shell-page-script></script>
   <script src="/js/analytics.js" defer></script>
 </body>
 </html>

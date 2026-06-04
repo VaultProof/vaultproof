@@ -143,7 +143,7 @@ async function runDoctor(): Promise<void> {
   // Check 2: Auth validity
   const jwt = getJwt();
   await check('Auth validity', async () => {
-    if (!jwt) return { ok: false, detail: 'not logged in — run npx @vaultproof/init first' };
+    if (!jwt) return { ok: false, detail: 'not logged in — run vaultproof-init first' };
     const res = await fetch(`${apiUrl}/api/v1/init/projects`, {
       headers: { Authorization: `Bearer ${jwt}` },
     });
@@ -228,7 +228,7 @@ async function main(): Promise<void> {
 
   if (cmd !== 'init') {
     console.error(chalk.red(`Unknown command: ${cmd}`));
-    console.error(chalk.dim('Usage: npx @vaultproof/init [--yes] [--dry-run] [--check-legacy]'));
+    console.error(chalk.dim('Usage: vaultproof-init [--yes] [--dry-run] [--check-legacy]'));
     process.exit(1);
   }
 ```
@@ -248,8 +248,8 @@ async function main(): Promise<void> {
 
   if (cmd !== 'init') {
     console.error(chalk.red(`Unknown command: ${cmd}`));
-    console.error(chalk.dim('Usage: npx @vaultproof/init [--yes] [--dry-run] [--check-legacy]'));
-    console.error(chalk.dim('       npx @vaultproof/init doctor'));
+    console.error(chalk.dim('Usage: vaultproof-init [--yes] [--dry-run] [--check-legacy]'));
+    console.error(chalk.dim('       vaultproof-init doctor'));
     process.exit(1);
   }
 ```
@@ -288,7 +288,7 @@ const dist = readFileSync(distPath, 'utf-8');
 
 ok('doctor command present in dist', dist.includes("cmd === 'doctor'"));
 ok('runDoctor function present in dist', dist.includes('runDoctor'));
-ok('doctor in usage string', dist.includes("npx @vaultproof/init doctor"));
+ok('doctor in usage string', dist.includes("vaultproof-init doctor"));
 ```
 
 Note: `ok()` is already defined at the top of `publish.test.ts`. You're adding these lines at the end of the file before `process.exit(failed > 0 ? 1 : 0)`.

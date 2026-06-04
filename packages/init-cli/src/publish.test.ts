@@ -2,9 +2,9 @@
 /**
  * Publish-time invariants.
  *
- * Verifies that the package is structured correctly for `npm publish`.
- * Running this before publishing catches issues that otherwise only
- * surface when a user tries to `npx @vaultproof/init`.
+ * Verifies that the package is structured correctly for distribution.
+ * Running this before shipping catches issues that otherwise only
+ * surface when a user tries to run `vaultproof-init`.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -71,8 +71,8 @@ console.log('── required files ──');
   ok('providers.json exists', fs.existsSync(path.join(PKG_ROOT, 'providers.json')));
 
   const readme = fs.readFileSync(path.join(PKG_ROOT, 'README.md'), 'utf-8');
-  ok('README mentions @vaultproof/init', readme.includes('@vaultproof/init'));
-  ok('README has usage example', readme.includes('npx @vaultproof/init'));
+  ok('README mentions vaultproof-init', readme.includes('vaultproof-init'));
+  ok('README has usage example', readme.includes('vaultproof-init'));
   ok('README has MIT license line', readme.includes('MIT'));
   ok('README under 20 KB', readme.length < 20_000, `${readme.length} bytes`);
 
@@ -138,7 +138,7 @@ const __doctorDir = dirPath(fURL(import.meta.url));
 const distSrc = readFS(joinPath(__doctorDir, '..', 'dist', 'index.js'), 'utf-8');
 ok('doctor command branch present', distSrc.includes("cmd === 'doctor'"));
 ok('runDoctor function present', distSrc.includes('runDoctor'));
-ok('doctor in usage string', distSrc.includes("npx @vaultproof/init doctor"));
+ok('doctor in usage string', distSrc.includes("vaultproof-init doctor"));
 ok('legacy migration command branch present', distSrc.includes("cmd === 'migrate-from-legacy'"));
 ok('short -y flag supported', distSrc.includes("flags.has('-y')"));
 

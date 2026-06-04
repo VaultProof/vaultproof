@@ -434,6 +434,10 @@ html body .modal-shell select.form-control option {
   gap: 8px !important;
 }
 
+.empty-state-command-row + .empty-state-command-row {
+  margin-top: 8px !important;
+}
+
 .empty-state-alt {
   margin: 14px 0 0 !important;
 }

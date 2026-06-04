@@ -81,7 +81,7 @@ function loadBundled(): ProviderCatalog {
   }
   throw new Error(
     'Could not load providers.json from remote or bundled fallback. ' +
-      'Check your network or reinstall @vaultproof/init.',
+      'Check your network or reinstall VaultProof init.',
   );
 }
 

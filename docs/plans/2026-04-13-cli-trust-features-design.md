@@ -62,7 +62,7 @@ Give developers a standalone, re-runnable command that verifies the full proxy c
 
 ### Invocation
 ```bash
-npx @vaultproof/init doctor
+vaultproof-init doctor
 ```
 
 ### Checks (run in sequence)
