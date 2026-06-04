@@ -29,13 +29,6 @@ body.scanner-app {
   display: none !important;
 }
 
-
-#menuBtn,
-#sidebarOverlay,
-.scanner-menu-btn {
-  display: none !important;
-}
-
 body.scanner-app #mainWrapper {
   width: 100% !important;
   min-height: calc(100vh - (var(--vp-shell-inset, 12px) * 2)) !important;
@@ -71,20 +64,6 @@ body.scanner-app .scanner-topbar {
   -webkit-backdrop-filter: blur(12px);
 }
 
-body.scanner-app .scanner-topbar-logo {
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  color: var(--vp-dashboard-text-color) !important;
-  font-family: var(--mono) !important;
-  font-size: 12px !important;
-  font-weight: var(--vp-sidebar-text-weight) !important;
-  white-space: nowrap !important;
-}
-
-body.scanner-app .scanner-topbar-copy,
-body.scanner-app .scanner-topbar-crumb,
-body.scanner-app .scanner-topbar-sep,
 body.scanner-app .scanner-topbar-email {
   color: var(--vp-dashboard-muted-color) !important;
   font-family: var(--mono) !important;
@@ -396,11 +375,6 @@ body.scanner-app .h-16 {
     height: auto !important;
     min-height: var(--vp-topbar-height, 64px) !important;
     padding: 12px 16px !important;
-  }
-
-  body.scanner-app .scanner-topbar-sep:nth-of-type(2),
-  body.scanner-app .scanner-topbar-crumb {
-    display: none !important;
   }
 
   body.scanner-app .scanner-topbar-session {

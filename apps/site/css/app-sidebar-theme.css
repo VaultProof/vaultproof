@@ -188,73 +188,43 @@ body.scanner-app header {
   overflow: hidden;
 }
 
-.topbar-logo,
-.scanner-topbar-logo {
+.topbar-breadcrumb {
   display: flex !important;
   align-items: center !important;
+  min-width: 0 !important;
   gap: 8px !important;
-  color: var(--text) !important;
-  text-decoration: none !important;
-}
-
-.topbar-logo-name,
-.scanner-topbar-logo,
-.scanner-topbar-logo .topbar-logo-name {
-  color: var(--text) !important;
-  font-family: var(--mono) !important;
-  font-size: 12px !important;
+  color: var(--vp-dashboard-text-color) !important;
+  font-family: var(--body) !important;
+  font-size: 13px !important;
   font-weight: var(--vp-sidebar-text-weight) !important;
-  letter-spacing: 0.32em !important;
-  text-transform: uppercase !important;
+  line-height: 1.2 !important;
 }
 
-.topbar-logo::before,
-.scanner-topbar-logo::before {
-  content: none !important;
+.topbar-root {
+  min-width: 0 !important;
+  color: var(--text) !important;
+  font-weight: var(--vp-sidebar-text-weight) !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
 }
 
-.topbar-logo-mark {
-  width: 30px !important;
-  height: 30px !important;
-  display: grid !important;
-  place-items: center !important;
-  overflow: hidden !important;
-  border: 1px solid rgba(0, 229, 255, 0.58) !important;
-  border-radius: 10px !important;
-  background:
-    radial-gradient(circle at 50% 45%, rgba(0, 229, 255, 0.16), transparent 62%),
-    rgba(0, 229, 255, 0.06) !important;
-  box-shadow: 0 0 22px rgba(0, 229, 255, 0.16) !important;
+a.topbar-root:hover {
+  color: var(--accent) !important;
 }
 
-.topbar-logo-img {
-  width: 100% !important;
-  height: 100% !important;
-  display: block !important;
-  object-fit: cover !important;
-  transform: scale(1.42);
-  transform-origin: center;
-}
-
-.topbar-logo-fallback {
-  display: none;
-  color: var(--accent);
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-}
-
-.topbar-sep,
-.scanner-topbar-sep {
+.topbar-sep {
   color: rgba(0, 229, 255, 0.42) !important;
   margin: 0 4px !important;
 }
 
-.topbar-crumb,
-.scanner-topbar-crumb,
-.scanner-topbar-copy {
+.topbar-crumb {
   color: var(--vp-dashboard-muted-color) !important;
+  font-size: 13px !important;
   font-weight: var(--vp-sidebar-text-weight) !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
 .topbar-session,
@@ -272,9 +242,7 @@ body.scanner-app header {
 }
 
 .topbar-signout,
-.scanner-topbar-signout,
-.logout-btn,
-#logoutBtn.logout-btn {
+.scanner-topbar-signout {
   border: 1px solid rgba(148, 163, 184, 0.16) !important;
   background: rgba(255, 255, 255, 0.045) !important;
   color: var(--text-muted) !important;
@@ -282,9 +250,7 @@ body.scanner-app header {
 }
 
 .topbar-signout:hover,
-.scanner-topbar-signout:hover,
-.logout-btn:hover,
-#logoutBtn.logout-btn:hover {
+.scanner-topbar-signout:hover {
   border-color: rgba(0, 229, 255, 0.34) !important;
   background: rgba(0, 229, 255, 0.10) !important;
   color: var(--text) !important;
@@ -633,40 +599,8 @@ body.scanner-app #sidebar:focus-within .sidebar-label {
   line-height: 1.25 !important;
 }
 
-.usage-box {
-  margin-top: 24px !important;
-  padding: 14px !important;
-  border: 1px solid rgba(148, 163, 184, 0.14) !important;
-  border-radius: 14px !important;
-  background: rgba(255, 255, 255, 0.045) !important;
-  opacity: 1;
-  transform: none;
-}
-
-.sidebar:hover .usage-box,
-.sidebar:focus-within .usage-box,
-body.scanner-app #sidebar:hover .usage-box,
-body.scanner-app #sidebar:focus-within .usage-box {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.usage-label,
-.usage-reset,
 .scanner-meta {
   color: var(--vp-sidebar-text-color) !important;
-}
-
-.usage-row {
-  color: var(--text) !important;
-}
-
-.usage-bar-track {
-  background: rgba(148, 163, 184, 0.16) !important;
-}
-
-.usage-bar-fill {
-  background: linear-gradient(90deg, var(--vp-cyan), var(--vp-green)) !important;
 }
 
 .sidebar-bottom {
@@ -1026,9 +960,7 @@ textarea:focus,
 .session-expired,
 .modal-shell,
 #prModal,
-#revokeGuideModal,
-#sidebarOverlay,
-.sidebar-overlay {
+#revokeGuideModal {
   background: rgba(2, 6, 12, 0.72) !important;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -1109,7 +1041,7 @@ textarea:focus,
 
   .sidebar-head,
   .sidebar-label,
-  .usage-box {
+  .sidebar-update-card {
     opacity: 1 !important;
     transform: none !important;
   }
@@ -1132,9 +1064,7 @@ textarea:focus,
   }
 
   .topbar .topbar-sep:nth-of-type(2),
-  .topbar-crumb,
-  .scanner-topbar-sep:nth-of-type(2),
-  .scanner-topbar-crumb {
+  .topbar-crumb {
     display: none !important;
   }
 
@@ -1172,14 +1102,10 @@ html body .page .sidebar-item,
 html body .page .sidebar-nav-item,
 html body .page .sidebar-label,
 html body .page .sidebar-alert-count,
-html body .page .usage-label,
-html body .page .usage-reset,
-html body .page .usage-row,
 html body .page .logout-text,
 html body.scanner-app .sidebar-head,
 html body.scanner-app .sidebar-nav-item,
-html body.scanner-app .sidebar-label,
-html body.scanner-app .sidebar-user-info {
+html body.scanner-app .sidebar-label {
   color: var(--vp-sidebar-text-color) !important;
   font-size: var(--vp-sidebar-text-size) !important;
   font-weight: var(--vp-sidebar-text-weight) !important;

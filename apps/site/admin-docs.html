@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/docs-1.js" defer></script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>VaultProof Admin Support Guide</title>
+  <meta name="description" content="Admin-only customer support guide for VaultProof onboarding and troubleshooting.">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/docs-theme.css?v=20260604d">
+</head>
+<body class="docs-document">
+  <a class="skip-link" href="#triage">Skip to admin docs</a>
+
+  <nav class="site-nav" aria-label="VaultProof admin support navigation">
+    <a class="brand" href="/admin">
+      <span class="brand-mark">
+        <img class="brand-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <span class="brand-logo-fallback">VP</span>
+      </span>
+      <span>VaultProof</span>
+    </a>
+    <div class="nav-links" aria-label="Primary">
+      <a class="nav-link" href="/docs">User docs</a>
+      <a class="nav-link active" href="/admin-docs" aria-current="page">Admin support</a>
+      <a class="nav-link" href="/admin">Admin login</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-primary" href="https://admin.vaultproof.dev/app/login?internal_admin=true">Open admin</a>
+    </div>
+  </nav>
+
+  <main class="docs-page">
+    <section class="docs-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Admin-only guide</p>
+        <h1>Customer support playbook for VaultProof admins.</h1>
+        <p class="hero-lede">Use this page when helping customers onboard, diagnose failed setup, check dashboard state, and collect safe troubleshooting details without asking for raw provider keys.</p>
+      </div>
+      <div class="hero-panel">
+        <div class="panel-kicker">Support rules</div>
+        <ol class="mini-steps">
+          <li><span class="step-badge">1</span><span class="step-copy">Never ask customers to send raw provider keys.</span></li>
+          <li><span class="step-badge">2</span><span class="step-copy">Collect timestamps, provider names, env variable names, and request IDs.</span></li>
+          <li><span class="step-badge">3</span><span class="step-copy">Use Activity Logs before assuming provider failure.</span></li>
+          <li><span class="step-badge">4</span><span class="step-copy">Escalate with redacted output and account identifiers only.</span></li>
+        </ol>
+      </div>
+    </section>
+
+    <div class="docs-layout">
+      <aside class="docs-sidebar" aria-label="Admin support sections">
+        <a href="#triage">Triage</a>
+        <a href="#onboarding-issues">Onboarding issues</a>
+        <a href="#dashboard-checks">Dashboard checks</a>
+        <a href="#provider-issues">Provider issues</a>
+        <a href="#scanner-issues">Scanner issues</a>
+        <a href="#escalation">Escalation</a>
+      </aside>
+
+      <article class="docs-main">
+        <section class="docs-section" id="triage">
+          <div class="section-heading">
+            <p class="eyebrow">Triage</p>
+            <h2>Start with safe facts.</h2>
+            <p>Before troubleshooting, gather enough context to find the account and the request path without exposing secrets.</p>
+          </div>
+
+          <div class="card-grid two">
+            <div class="doc-card">
+              <h3>Ask for</h3>
+              <ul class="check-list">
+                <li>Customer email or workspace name.</li>
+                <li>Provider name and env variable name.</li>
+                <li>Hosting provider and environment.</li>
+                <li>Approximate timestamp and timezone.</li>
+                <li>Request ID from Activity Logs if available.</li>
+              </ul>
+            </div>
+            <div class="doc-card">
+              <h3>Do not ask for</h3>
+              <ul class="check-list">
+                <li>Raw OpenAI, Stripe, Anthropic, GitHub, or other provider keys.</li>
+                <li>Full unredacted env files.</li>
+                <li>Production secrets exported from hosting providers.</li>
+                <li>Personal access tokens for GitHub or cloud accounts.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="docs-section" id="onboarding-issues">
+          <div class="section-heading">
+            <p class="eyebrow">Onboarding</p>
+            <h2>When setup does not finish.</h2>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Symptom</th>
+                  <th>Likely cause</th>
+                  <th>Admin action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>CLI says no keys found</td>
+                  <td>The key is outside scanned env files, uses an unknown shape, or is a custom internal API.</td>
+                  <td>Ask for env variable names only. Have the customer run <code>vaultproof-init custom</code> for custom APIs.</td>
+                </tr>
+                <tr>
+                  <td>Browser login did not complete</td>
+                  <td>Callback blocked, session expired, or customer used a different browser profile.</td>
+                  <td>Have them sign in to the app first, then rerun <code>vaultproof-init</code>. Check account exists in admin.</td>
+                </tr>
+                <tr>
+                  <td>Local app still uses old key</td>
+                  <td>The process was not restarted or a different env file is loaded.</td>
+                  <td>Ask which env file the framework reads. Have the customer restart and confirm generated values are loaded.</td>
+                </tr>
+                <tr>
+                  <td>Production fails but local works</td>
+                  <td>Hosting secrets were not updated, deployment is stale, or a raw key remains in production.</td>
+                  <td>Have the customer compare variable names in hosting secrets with the generated VaultProof block.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout info">
+            <strong>Helpful commands:</strong>
+            <span>For advanced diagnosis, ask the customer to run <code>vaultproof-init doctor</code> or <code>vaultproof-init --dry-run</code> and send redacted output.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="dashboard-checks">
+          <div class="section-heading">
+            <p class="eyebrow">Admin page</p>
+            <h2>What to verify in the admin console.</h2>
+          </div>
+
+          <div class="card-grid two">
+            <div class="doc-card">
+              <h3>Account and token state</h3>
+              <p>Confirm the user account exists, the workspace is active, and the VaultProof token has protected keys attached. If a token was deleted, the customer must rerun init or create a new token.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Activity and alerts</h3>
+              <p>Look for the timestamped request. If there is no request, the app is not reaching VaultProof. If there is a request with a provider error, troubleshoot provider config or limits.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Plan limits</h3>
+              <p>Check protected key count, monthly calls, retention, and plan status. Rate limits or exhausted plan capacity can look like provider failures to the customer.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Scanner state</h3>
+              <p>Confirm GitHub connection status, repository access, scan status, and any unresolved findings before advising customers to rotate or migrate keys.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="docs-section" id="provider-issues">
+          <div class="section-heading">
+            <p class="eyebrow">Providers</p>
+            <h2>Separate VaultProof routing from upstream provider failure.</h2>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Meaning</th>
+                  <th>Next step</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>No VaultProof log</td>
+                  <td>The customer app did not call VaultProof.</td>
+                  <td>Check env loading, deployment, base URL, and whether the customer restarted the app.</td>
+                </tr>
+                <tr>
+                  <td>401 or 403 from provider</td>
+                  <td>The upstream provider rejected the reconstructed key or account permissions.</td>
+                  <td>Have customer rotate the provider key and update the protected key in VaultProof.</td>
+                </tr>
+                <tr>
+                  <td>429</td>
+                  <td>Rate limit from VaultProof plan or upstream provider.</td>
+                  <td>Check plan usage, provider quota, and burst behavior in Activity Logs.</td>
+                </tr>
+                <tr>
+                  <td>5xx</td>
+                  <td>Provider or VaultProof upstream issue.</td>
+                  <td>Collect request ID, timestamps, provider, route, and account. Escalate if repeated.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="docs-section" id="scanner-issues">
+          <div class="section-heading">
+            <p class="eyebrow">Scanner</p>
+            <h2>Helping customers with repository scans.</h2>
+          </div>
+
+          <div class="card-grid two">
+            <div class="doc-card">
+              <h3>Repo is missing</h3>
+              <p>Ask the customer to confirm GitHub installation permissions and whether the repo belongs to the selected organization. Do not request a GitHub token.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Finding looks wrong</h3>
+              <p>Review provider, file path, line number, and masked value. If it is a false positive, the customer can ignore it. If it is real, guide rotation first.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Migration PR failed</h3>
+              <p>Check branch protection, repository write permissions, and whether the GitHub app can create branches and pull requests.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Customer already rotated</h3>
+              <p>Have them mark the finding resolved after confirming the old key is revoked at the provider and no new calls use it.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="docs-section" id="escalation">
+          <div class="section-heading">
+            <p class="eyebrow">Escalation</p>
+            <h2>What to include when handing off.</h2>
+          </div>
+
+          <div class="doc-card">
+            <ul class="check-list">
+              <li>Customer account email and workspace identifier.</li>
+              <li>VaultProof token ID or masked token prefix.</li>
+              <li>Provider, route, endpoint, request ID, and timestamps.</li>
+              <li>Plan state and relevant usage numbers.</li>
+              <li>Redacted CLI output from <code>vaultproof-init doctor</code> or <code>--dry-run</code>.</li>
+              <li>Whether the issue reproduces locally, in production, or both.</li>
+            </ul>
+          </div>
+
+          <div class="callout warning">
+            <strong>Secret handling:</strong>
+            <span>If a customer accidentally sends a raw provider key, tell them to rotate it immediately at the provider and replace the protected key in VaultProof.</span>
+          </div>
+        </section>
+      </article>
+    </div>
+  </main>
+</body>
+</html>

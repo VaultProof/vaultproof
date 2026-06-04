@@ -14,24 +14,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <script src="/js/app-plans-2.js" defer></script>
-  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260604b">
-  <link rel="stylesheet" href="/css/app-plans-theme.css?v=20260603c">
+  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260604d">
+  <link rel="stylesheet" href="/css/app-plans-theme.css?v=20260604b" data-app-shell-stylesheet>
 </head>
 <body>
   <div class="page">
 
-    <div class="topbar">
-      <a href="/app/" class="topbar-logo">
-        <span class="topbar-logo-mark">
-          <img class="topbar-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
-          <span class="topbar-logo-fallback">VP</span>
-        </span>
-        <span class="topbar-logo-name">VaultProof</span>
-      </a>
-      <span class="topbar-sep">/</span>
-      <span>Dashboard</span>
-      <span class="topbar-sep">/</span>
-      <span class="topbar-crumb">Plans</span>
+    <div class="topbar" data-app-shell-topbar>
+      <nav class="topbar-breadcrumb" aria-label="App location">
+        <a href="/app/" class="topbar-root">Dashboard</a>
+        <span class="topbar-sep">/</span>
+        <span class="topbar-crumb">Plans</span>
+      </nav>
 
       <div class="topbar-session">
         <span class="topbar-email" id="user-email">loading...</span>

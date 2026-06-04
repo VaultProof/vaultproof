@@ -81,13 +81,10 @@
 
   </style>
   <!-- No Supabase SDK needed — scanner uses localStorage token only -->
-  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260604b">
-  <link rel="stylesheet" href="/css/app-scanner-theme.css?v=20260603b">
+  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260604d">
+  <link rel="stylesheet" href="/css/app-scanner-theme.css?v=20260604b">
 </head>
 <body class="scanner-app text-gray-100 min-h-screen flex">
-
-  <!-- Sidebar Overlay (mobile) -->
-  <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden"></div>
 
   <!-- Left Sidebar -->
   <aside id="sidebar" class="sidebar enterprise-app-sidebar" aria-label="VaultProof app navigation" data-i18n-lock>
@@ -123,17 +120,6 @@
         <span class="sidebar-update-text">Private beta rollout notes</span>
       </span>
     </a>
-
-    <div class="sidebar-compat-hooks" hidden>
-      <div class="usage-box">
-        <div class="usage-label">plan loading</div>
-        <div class="usage-row"><span>all calls</span><span>—</span></div>
-        <div class="usage-bar-track"><div class="usage-bar-fill"></div></div>
-        <div class="usage-reset">scanner usage refreshes after each run</div>
-      </div>
-      <div class="sidebar-user-info text-xs text-gray-500 truncate mb-2" id="sidebarEmail"></div>
-      <button id="logoutBtn" type="button" class="logout-btn">sign out</button>
-    </div>
   </aside>
 
   <!-- Bulk Action Bar -->
@@ -174,18 +160,11 @@
 
     <!-- Top Navbar -->
     <header class="scanner-topbar sticky top-0 z-30 bg-surface/80 backdrop-blur-xl border-b border-border h-16 flex items-center px-4 lg:px-8 gap-4">
-      <button id="menuBtn" type="button" class="scanner-menu-btn" aria-label="Open navigation" aria-hidden="true" tabindex="-1" hidden></button>
-      <a href="/app/" class="scanner-topbar-logo">
-        <span class="topbar-logo-mark">
-          <img class="topbar-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
-          <span class="topbar-logo-fallback">VP</span>
-        </span>
-        <span class="topbar-logo-name">VaultProof</span>
-      </a>
-      <span class="scanner-topbar-sep">/</span>
-      <span class="scanner-topbar-copy">Dashboard</span>
-      <span class="scanner-topbar-sep">/</span>
-      <span class="scanner-topbar-crumb">Scanner</span>
+      <nav class="topbar-breadcrumb" aria-label="App location">
+        <a href="/app/" class="topbar-root">Dashboard</a>
+        <span class="topbar-sep">/</span>
+        <span class="topbar-crumb">Scanner</span>
+      </nav>
       <div class="scanner-topbar-session">
         <span class="scanner-topbar-email" id="user-email">loading...</span>
         <button type="button" class="scanner-topbar-signout" id="signOutBtn">sign out</button>

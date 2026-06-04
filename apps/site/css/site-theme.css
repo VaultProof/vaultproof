@@ -264,7 +264,6 @@ body > nav.fixed button:hover,
   flex-wrap: wrap;
 }
 
-.page .topbar-logo,
 .page .topbar-session,
 .page .page-heading,
 .page .org-switcher {
@@ -614,7 +613,6 @@ aside[id="sidebar"] {
 [dir="rtl"] .topbar,
 [dir="rtl"] .page-header,
 [dir="rtl"] .filter-bar,
-[dir="rtl"] .usage-row,
 [dir="rtl"] .sidebar-item,
 [dir="rtl"] .sidebar-nav-item,
 [dir="rtl"] .topbar-session,
@@ -640,9 +638,7 @@ aside[id="sidebar"] {
   margin-left: 20px !important;
 }
 
-[dir="rtl"] .topbar-email,
-[dir="rtl"] .sidebar-user-info,
-[dir="rtl"] .logout-btn {
+[dir="rtl"] .topbar-email {
   text-align: right !important;
 }
 

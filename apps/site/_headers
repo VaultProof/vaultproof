@@ -35,5 +35,11 @@
 /vp-admin
   X-Robots-Tag: noindex, nofollow, noarchive
 
+/admin-docs
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/admin-docs.html
+  X-Robots-Tag: noindex, nofollow, noarchive
+
 /pitchdeck
   X-Robots-Tag: noindex, nofollow, noarchive

@@ -1,2371 +1,388 @@
-<!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<!doctype html>
+<html lang="en">
 <head>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script src="/js/docs-1.js" defer></script>
-
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Developer Documentation | VaultProof</title>
-    <meta name="description" content="Complete developer documentation for VaultProof — protect every API key in your .env with one command. Setup guides, API reference, security architecture.">
-    <meta property="og:title" content="Developer Documentation | VaultProof">
-    <meta property="og:description" content="Complete developer documentation for VaultProof — one command to protect every API key. Setup guides, API reference, security architecture.">
-    <meta property="og:url" content="https://vaultproof.dev/docs">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-    <link rel="canonical" href="https://vaultproof.dev/docs">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="https://vaultproof.dev/og-image2.png">
-    <meta name="twitter:image" content="https://vaultproof.dev/og-image2.png">
-
-    <script src="/js/docs-2.js"></script>
-    <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
-    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
-
-    <style>
-        * { font-family: 'Inter', system-ui, sans-serif; }
-        ::selection { background: #6366f1; color: #fff; }
-        body { background: #0a0a0f; }
-
-        .mobile-menu { display: none; }
-        .mobile-menu.open { display: flex; }
-        .nav-group { position: relative; }
-        .nav-group-btn {
-            display: inline-flex; align-items: center; gap: 4px;
-            font-size: 0.875rem; color: #9ca3af; background: none;
-            border: none; cursor: pointer; padding: 4px 2px;
-            transition: color 0.15s; font-family: inherit; user-select: none;
-        }
-        .nav-group-btn:hover, .nav-group.open .nav-group-btn { color: #fff; }
-        .nav-group-btn svg { transition: transform 0.2s; flex-shrink: 0; }
-        .nav-group.open .nav-group-btn svg { transform: rotate(180deg); }
-        .nav-dropdown {
-            position: absolute; top: calc(100% + 10px); left: 50%;
-            transform: translateX(-50%) translateY(-4px);
-            background: rgba(13,13,20,0.96);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(99,102,241,0.15);
-            border-radius: 14px; padding: 6px; min-width: 176px;
-            opacity: 0; visibility: hidden; pointer-events: none;
-            transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
-            box-shadow: 0 0 0 1px rgba(99,102,241,0.06), 0 8px 32px rgba(0,0,0,0.6), 0 0 24px rgba(99,102,241,0.08);
-            z-index: 100;
-        }
-        .nav-group.open .nav-dropdown {
-            opacity: 1; visibility: visible; pointer-events: auto;
-            transform: translateX(-50%) translateY(0);
-        }
-        .nav-dropdown a {
-            display: flex; align-items: center;
-            padding: 8px 12px; border-radius: 9px; font-size: 0.8125rem;
-            color: #9ca3af; text-decoration: none;
-            transition: color 0.12s, background 0.12s;
-            white-space: nowrap; font-weight: 450;
-        }
-        .nav-dropdown a:hover { color: #fff; background: rgba(99,102,241,0.08); }
-        .btn-nav-scanner {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 0.35rem 1rem; border-radius: 9999px;
-            font-size: 0.8125rem; font-weight: 500; cursor: pointer;
-            border: 1px solid rgba(6,182,212,0.35);
-            color: #22d3ee; background: rgba(6,182,212,0.06);
-            transition: background 0.2s, border-color 0.2s, color 0.2s;
-            text-decoration: none; white-space: nowrap;
-        }
-        .btn-nav-scanner:hover {
-            background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.55); color: #67e8f9;
-        }
-
-        /* Sidebar */
-        .sidebar { scrollbar-width: thin; scrollbar-color: #1e1e2e transparent; }
-        .sidebar::-webkit-scrollbar { width: 4px; }
-        .sidebar::-webkit-scrollbar-track { background: transparent; }
-        .sidebar::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
-
-        /* Nav active state */
-        .nav-link { transition: all 0.15s ease; border-left: 2px solid transparent; }
-        .nav-link:hover { color: #e2e8f0; border-left-color: #333; }
-        .nav-link.active { color: #6366f1; border-left-color: #6366f1; background: rgba(99,102,241,0.05); }
-
-        /* Code blocks */
-        .code-block {
-            background: #0d0d14;
-            border: 1px solid #1e1e2e;
-            border-radius: 12px;
-            overflow-x: auto;
-            font-family: 'JetBrains Mono', monospace;
-        }
-        .code-block pre { padding: 1.25rem; font-size: 0.8125rem; line-height: 1.7; }
-        .code-header {
-            background: #111118;
-            border-bottom: 1px solid #1e1e2e;
-            padding: 0.5rem 1rem;
-            font-size: 0.75rem;
-            color: #64748b;
-            font-family: 'JetBrains Mono', monospace;
-            border-radius: 12px 12px 0 0;
-        }
-        .code-header + pre { border-radius: 0 0 12px 12px; }
-
-        /* Syntax highlighting */
-        .kw { color: #c084fc; }
-        .str { color: #34d399; }
-        .cmt { color: #475569; }
-        .fn { color: #fbbf24; }
-        .num { color: #f472b6; }
-        .typ { color: #60a5fa; }
-
-        /* Tables */
-        .doc-table { width: 100%; font-size: 0.875rem; }
-        .doc-table th { text-align: left; padding: 0.75rem 1rem; color: #94a3b8; border-bottom: 1px solid #1e1e2e; font-weight: 500; }
-        .doc-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #1e1e2e; color: #cbd5e1; }
-        .doc-table tr:last-child td { border-bottom: none; }
-
-        /* Endpoint cards */
-        .endpoint-card { background: #111118; border: 1px solid #1e1e2e; border-radius: 12px; padding: 1.5rem; }
-        .method-badge { font-size: 0.6875rem; font-weight: 700; padding: 0.25rem 0.5rem; border-radius: 4px; font-family: 'JetBrains Mono', monospace; }
-        .method-get { background: rgba(59,130,246,0.15); color: #60a5fa; }
-        .method-post { background: rgba(34,197,94,0.15); color: #4ade80; }
-        .method-delete { background: rgba(239,68,68,0.15); color: #f87171; }
-        .method-put { background: rgba(251,191,36,0.15); color: #fbbf24; }
-
-        /* Flow diagrams */
-        .flow-step {
-            position: relative;
-            padding-left: 2.5rem;
-            padding-bottom: 1.5rem;
-        }
-        .flow-step::before {
-            content: attr(data-step);
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 1.75rem;
-            height: 1.75rem;
-            background: rgba(99,102,241,0.15);
-            color: #6366f1;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        .flow-step::after {
-            content: '';
-            position: absolute;
-            left: 0.8125rem;
-            top: 1.75rem;
-            bottom: 0;
-            width: 1px;
-            background: #1e1e2e;
-        }
-        .flow-step:last-child::after { display: none; }
-        .flow-step:last-child { padding-bottom: 0; }
-
-        /* Callout boxes */
-        .callout-info { background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; padding: 1rem 1.25rem; }
-        .callout-warn { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2); border-radius: 12px; padding: 1rem 1.25rem; }
-        .callout-danger { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2); border-radius: 12px; padding: 1rem 1.25rem; }
-
-        /* Smooth scroll offset for sticky header */
-        section[id] { scroll-margin-top: 2rem; }
-
-        /* Breach scenario table */
-        .breach-table td:first-child { color: #f87171; font-weight: 500; }
-        .breach-table td:nth-child(2) { color: #4ade80; }
-    .btn-creative {
-    display: inline-block;
-    padding: 0.375rem 1.25rem;
-    background: #111;
-    color: white;
-    border: 1px solid rgba(255,255,255,0.1);
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 9999px;
-    transition: background 0.3s, color 0.3s;
-}
-.btn-creative:hover {
-    color: #000;
-    background: #fff;
-}
-
-        :root {
-            --accent: #d97706;
-            --bg: #fafaf7;
-            --bg-mid: #f3f3ee;
-            --bg-card: #fff;
-            --rule: 1px solid #e7e5de;
-            --rule-strong: 1px solid #d8d5cc;
-            --text: #171717;
-            --text-mid: #3f3f37;
-            --text-muted: #525252;
-            --text-faint: #8a8a82;
-            --danger: #b91c1c;
-            --success: #16a34a;
-            --font-display: "Inter Tight", "Inter", system-ui, sans-serif;
-            --font-body: "Inter", system-ui, sans-serif;
-            --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
-        }
-
-        *, *::before, *::after { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        html, body {
-            min-height: 100%;
-            background: #e8e6e0 !important;
-            color: var(--text);
-            font-family: var(--font-body);
-            font-size: 15px;
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
-        }
-        body { min-height: 100vh; }
-        a { color: inherit; text-decoration: none; }
-        button { font: inherit; cursor: pointer; }
-
-        .page {
-            max-width: 1280px;
-            min-height: 100vh;
-            margin: 0 auto;
-            background: var(--bg);
-            border-left: var(--rule);
-            border-right: var(--rule);
-        }
-
-        .site-nav {
-            display: flex;
-            align-items: center;
-            padding: 14px 40px;
-            border-bottom: var(--rule);
-            font-family: var(--font-mono);
-            font-size: 12px;
-            background: var(--bg);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .nav-logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 0;
-        }
-        .nav-logo-name { font-weight: 600; letter-spacing: 0.5px; }
-        .nav-logo-version { color: var(--text-faint); margin-left: 6px; }
-        .nav-spacer { flex: 1; }
-        .nav-links { display: flex; gap: 24px; color: var(--text-muted); }
-        .nav-links a:hover,
-        .nav-sign-in:hover { color: var(--text); }
-        .nav-sign-in { color: var(--text-faint); margin-left: 24px; margin-right: 12px; }
-        .nav-cta {
-            padding: 6px 12px;
-            background: var(--text);
-            color: var(--bg);
-            border-radius: 3px;
-            font-size: 12px;
-        }
-        .nav-cta:hover { background: #333; color: var(--bg); }
-        .mobile-toggle,
-        .mobile-menu { display: none; }
-
-        .mobile-menu.open {
-            display: grid;
-            gap: 10px;
-            padding: 16px 40px;
-            border-bottom: var(--rule);
-            background: var(--bg-mid);
-            font-family: var(--font-mono);
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-        .mobile-menu a:hover { color: var(--text); }
-
-        .docs-layout {
-            display: grid;
-            grid-template-columns: 260px minmax(0, 1fr);
-            align-items: start;
-        }
-        .docs-layout .sidebar {
-            position: sticky !important;
-            top: 51px !important;
-            left: auto !important;
-            width: 260px !important;
-            height: calc(100vh - 51px) !important;
-            overflow-y: auto;
-            display: block !important;
-            border-right: var(--rule) !important;
-            background: var(--bg-mid);
-            padding: 28px 18px !important;
-            scrollbar-color: #d8d5cc transparent;
-        }
-        .docs-layout main {
-            margin-left: 0 !important;
-            max-width: none !important;
-            width: 100%;
-            padding: 48px 56px 0 !important;
-        }
-        .docs-layout main > section {
-            max-width: 820px;
-            margin-left: auto;
-            margin-right: auto;
-            margin-bottom: 64px !important;
-        }
-        .docs-layout main > footer {
-            max-width: 820px;
-            margin: 0 auto;
-        }
-
-        #sidebar-nav { font-family: var(--font-mono); }
-        #sidebar-nav > div {
-            color: var(--text-faint) !important;
-            letter-spacing: 0.8px;
-        }
-        .nav-link,
-        #sidebar-nav > a {
-            color: var(--text-muted) !important;
-            border-left: 2px solid transparent;
-            border-radius: 0 !important;
-            transition: color 0.15s, border-color 0.15s, background 0.15s;
-        }
-        .nav-link:hover,
-        #sidebar-nav > a:hover {
-            color: var(--text) !important;
-            border-left-color: #d8d5cc;
-            background: rgba(255,255,255,0.42);
-        }
-        .nav-link.active {
-            color: var(--accent) !important;
-            border-left-color: var(--accent);
-            background: rgba(217, 119, 6, 0.07);
-        }
-
-        h1, h2, h3, h4,
-        .text-white,
-        .text-gray-100,
-        .text-gray-200,
-        .text-gray-300 {
-            color: var(--text) !important;
-        }
-        h1, h2, h3 {
-            font-family: var(--font-display);
-            letter-spacing: -0.5px;
-        }
-        h1 {
-            font-size: 44px !important;
-            line-height: 1.08 !important;
-            font-weight: 600 !important;
-        }
-        h2 {
-            font-size: 30px !important;
-            line-height: 1.15 !important;
-            font-weight: 600 !important;
-        }
-        h3 {
-            font-weight: 600 !important;
-        }
-        .text-gray-400,
-        .text-gray-500 {
-            color: var(--text-muted) !important;
-        }
-        .text-gray-600,
-        .text-gray-700,
-        .text-slate-400,
-        .text-slate-500 {
-            color: var(--text-faint) !important;
-        }
-        .text-vp-accent,
-        .text-vp-cyan,
-        .text-amber-200,
-        .text-indigo-300,
-        .text-indigo-400,
-        .text-cyan-400,
-        .text-emerald-400,
-        .text-amber-300,
-        .text-amber-400 {
-            color: var(--accent) !important;
-        }
-        .text-red-400,
-        .text-red-300 { color: var(--danger) !important; }
-        .text-emerald-300,
-        .text-green-400 { color: var(--success) !important; }
-        .callout-warn .text-amber-200 {
-            color: #78350f !important;
-        }
-        .callout-warn .text-amber-300 {
-            color: #92400e !important;
-        }
-
-        .bg-vp-surface,
-        .bg-vp-surface\/80,
-        .bg-vp-surface\/95,
-        .bg-indigo-950\/50,
-        .bg-indigo-500\/5,
-        .bg-cyan-500\/5,
-        .bg-black\/40 {
-            background: var(--bg-card) !important;
-        }
-        .bg-vp-accent\/\[0\.04\],
-        .bg-vp-accent\/15,
-        .bg-emerald-500\/15,
-        .bg-cyan-500\/15,
-        .bg-indigo-500\/15,
-        .bg-amber-500\/15,
-        .bg-red-500\/15 {
-            background: rgba(217, 119, 6, 0.08) !important;
-        }
-        .border-vp-border,
-        .border-vp-border\/60,
-        .border-indigo-500\/30,
-        .border-indigo-500\/20,
-        .border-cyan-500\/20,
-        .border-amber-500\/20,
-        .border-red-500\/20 {
-            border-color: #e7e5de !important;
-        }
-
-        .rounded,
-        .rounded-md,
-        .rounded-lg,
-        .rounded-xl,
-        .rounded-2xl,
-        .rounded-full,
-        .rounded-r {
-            border-radius: 4px !important;
-        }
-
-        .callout-info,
-        .callout-warn,
-        .callout-danger,
-        .endpoint-card,
-        .code-block,
-        .docs-layout main section > div.bg-vp-surface {
-            background: var(--bg-card) !important;
-            border: var(--rule) !important;
-            border-radius: 4px !important;
-            box-shadow: 0 12px 34px rgba(23, 23, 23, 0.05);
-        }
-        .callout-info,
-        .callout-warn,
-        .callout-danger {
-            background: var(--bg-mid) !important;
-            padding: 16px 18px !important;
-        }
-
-        .code-block {
-            background: #171717 !important;
-            border-color: #2d2d2d !important;
-            overflow-x: auto;
-        }
-        .code-header {
-            background: #222 !important;
-            border-bottom: 1px solid #333 !important;
-            border-radius: 4px 4px 0 0 !important;
-            color: #b7b7af !important;
-            font-family: var(--font-mono);
-        }
-        .code-block pre,
-        .code-block .text-gray-300 {
-            color: #f3f3ee !important;
-            font-family: var(--font-mono);
-        }
-        .kw { color: #f59e0b !important; }
-        .str { color: #86efac !important; }
-        .cmt { color: #a3a39a !important; }
-        .fn { color: #fde68a !important; }
-        .num { color: #fdba74 !important; }
-        .typ { color: #fbbf24 !important; }
-
-        .doc-table {
-            width: 100%;
-            font-size: 13px;
-        }
-        .doc-table th {
-            color: var(--text-faint) !important;
-            border-bottom: var(--rule) !important;
-            font-family: var(--font-mono);
-            font-size: 11px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            font-weight: 500;
-        }
-        .doc-table td {
-            color: var(--text-muted) !important;
-            border-bottom: var(--rule) !important;
-        }
-        .doc-table tr:last-child td { border-bottom: none !important; }
-
-        code {
-            font-family: var(--font-mono);
-            color: var(--accent) !important;
-        }
-        .method-badge {
-            border-radius: 3px !important;
-            font-family: var(--font-mono);
-            background: rgba(217, 119, 6, 0.08) !important;
-            color: var(--accent) !important;
-            border: 1px solid rgba(217, 119, 6, 0.22);
-        }
-        .flow-step::before {
-            background: rgba(217, 119, 6, 0.09) !important;
-            color: var(--accent) !important;
-            border-radius: 4px !important;
-            font-family: var(--font-mono);
-        }
-        .flow-step::after { background: #e7e5de !important; }
-
-        section[id] { scroll-margin-top: 76px; }
-
-        footer {
-            border-top: var(--rule) !important;
-            color: var(--text-faint);
-            font-family: var(--font-mono);
-        }
-        footer a:hover { color: var(--accent) !important; }
-
-        ::selection { background: rgba(217, 119, 6, 0.18); color: var(--text); }
-
-        @media (max-width: 1024px) {
-            .docs-layout { grid-template-columns: 1fr; }
-            .docs-layout .sidebar { display: none !important; }
-            .docs-layout main { padding: 36px 28px 0 !important; }
-        }
-
-        @media (max-width: 768px) {
-            .page { border-left: none; border-right: none; }
-            .site-nav { padding: 12px 16px; }
-            .nav-links,
-            .nav-sign-in,
-            .nav-logo-version { display: none; }
-            .mobile-toggle {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 34px;
-                height: 34px;
-                border: var(--rule);
-                border-radius: 3px;
-                background: var(--bg);
-                color: var(--text-muted);
-            }
-            .mobile-menu.open { padding: 16px; }
-            .docs-layout main { padding: 32px 20px 0 !important; }
-            h1 { font-size: 34px !important; }
-            h2 { font-size: 26px !important; }
-            .doc-table { min-width: 620px; }
-            .docs-layout main .overflow-hidden { overflow-x: auto; }
-        }
-    </style>
-  <link rel="stylesheet" href="/css/site-theme.css">
-  <link rel="stylesheet" href="/css/docs-theme.css?v=20260604b">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/docs-1.js" defer></script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VaultProof User Guide</title>
+  <meta name="description" content="User guide for setting up VaultProof, onboarding your app, connecting providers, and using the dashboard.">
+  <meta property="og:title" content="VaultProof User Guide">
+  <meta property="og:description" content="Set up VaultProof, connect your app, protect provider keys, and use the dashboard.">
+  <meta property="og:url" content="https://vaultproof.dev/docs">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://vaultproof.dev/og-image2.png">
+  <meta name="twitter:image" content="https://vaultproof.dev/og-image2.png">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="canonical" href="https://vaultproof.dev/docs">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/docs-theme.css?v=20260604d">
 </head>
-<body>
+<body class="docs-document">
+  <a class="skip-link" href="#quick-start">Skip to docs</a>
 
-    <div class="page">
-    <nav class="site-nav" aria-label="Main navigation" data-i18n-lock>
-        <a class="brand" href="/" aria-label="VaultProof home">
-            <span class="brand-mark">
-                <img class="brand-logo-img" src="/og-image2.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
-                <span class="brand-logo-fallback">VP</span>
-            </span>
-            <span>VaultProof</span>
-        </a>
-
-        <div class="nav-links" aria-label="Primary navigation">
-            <div class="nav-item has-menu">
-                <button class="nav-menu-trigger" type="button" aria-haspopup="true">
-                    Products
-                    <span class="nav-chevron" aria-hidden="true"></span>
-                </button>
-                <div class="nav-menu" role="menu">
-                    <a href="/#product" role="menuitem">Overview<span>Compare split-key proxying with traditional secret stores.</span></a>
-                    <a href="/docs#sdk-reference" role="menuitem" data-i18n-lock>SDK<span>Provider-compatible calls without raw keys in apps.</span></a>
-                    <a href="/docs#cli-reference" role="menuitem" data-i18n-lock>CLI scanner<span>Find, split, and rewrite exposed API keys.</span></a>
-                    <a href="/scan" role="menuitem">Hosted scanner<span>Check repositories before secrets reach production.</span></a>
-                </div>
-            </div>
-            <div class="nav-item has-menu">
-                <button class="nav-menu-trigger" type="button" aria-haspopup="true">
-                    Use cases
-                    <span class="nav-chevron" aria-hidden="true"></span>
-                </button>
-                <div class="nav-menu" role="menu">
-                    <a href="/#how-it-works" role="menuitem">AI agents<span>Give agents proxy URLs instead of provider secrets.</span></a>
-                    <a href="/cicd-kubernetes" role="menuitem">CI/CD<span>Remove raw third-party keys from pipelines and deploy logs.</span></a>
-                    <a href="/enterprise-demo" role="menuitem">Enterprise<span>Governance, audit trails, and dedicated runtime options.</span></a>
-                </div>
-            </div>
-            <a class="nav-link active" href="/docs" aria-current="page">Docs</a>
-            <a class="nav-link" href="/#pricing">Pricing</a>
-        </div>
-
-        <div class="nav-actions">
-            <a class="btn btn-plain nav-dashboard" href="/app" style="display:none">Dashboard</a>
-            <a class="btn btn-plain" href="/app/login">Login</a>
-            <a class="btn btn-dark" href="/app/login">Get started</a>
-        </div>
-
-        <button id="mobileToggle" type="button" class="btn mobile-toggle" aria-label="Toggle menu" aria-expanded="false">menu</button>
-    </nav>
-
-    <div id="mobileMenu" class="mobile-menu" aria-label="Mobile navigation" data-i18n-lock>
-        <a href="/#product">Products</a>
-        <a href="/#how-it-works">Use cases</a>
-        <a href="/docs" aria-current="page">Docs</a>
-        <a href="/docs#sdk-reference" data-i18n-lock>SDK</a>
-        <a href="/docs#cli-reference" data-i18n-lock>CLI</a>
-        <a href="/scan">Scanner</a>
-        <a href="/cicd-kubernetes">CI/CD</a>
-        <a href="/enterprise-demo">Enterprise</a>
-        <a href="/#pricing">Pricing</a>
-        <a href="/security">Security</a>
-        <a href="/status">Status</a>
-        <a href="/app" class="nav-dashboard" style="display:none">Dashboard</a>
-        <a href="/app/login">Login</a>
-        <a href="/app/login">Get started</a>
+  <nav class="site-nav" aria-label="VaultProof navigation">
+    <a class="brand" href="/">
+      <span class="brand-mark">
+        <img class="brand-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <span class="brand-logo-fallback">VP</span>
+      </span>
+      <span>VaultProof</span>
+    </a>
+    <div class="nav-links" aria-label="Primary">
+      <a class="nav-link active" href="/docs" aria-current="page">Docs</a>
+      <a class="nav-link" href="/scan">Scanner</a>
+      <a class="nav-link" href="/security">Security</a>
+      <a class="nav-link" href="/blog/">Blog</a>
     </div>
+    <div class="nav-actions">
+      <a class="nav-secondary" href="/app/login">Sign in</a>
+      <a class="nav-primary" href="/app/login">Open app</a>
+    </div>
+  </nav>
+
+  <main class="docs-page">
+    <section class="docs-hero" id="start">
+      <div class="hero-copy">
+        <p class="eyebrow">User guide</p>
+        <h1>Protect your app's provider keys without rewriting your app.</h1>
+        <p class="hero-lede">VaultProof gives your app a VaultProof token and provider-compatible routes. The hosted init tool finds keys, protects them, and updates your environment so normal SDK calls route through VaultProof.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#quick-start">Start setup</a>
+          <a class="button secondary" href="#providers">Check providers</a>
+        </div>
+      </div>
+      <div class="hero-panel" aria-label="Setup summary">
+        <div class="panel-kicker">Setup path</div>
+        <ol class="mini-steps">
+          <li><span class="step-badge">1</span><span class="step-copy">Create or sign in to your VaultProof account.</span></li>
+          <li><span class="step-badge">2</span><span class="step-copy">Run the hosted installer in your app folder.</span></li>
+          <li><span class="step-badge">3</span><span class="step-copy">Let <code>vaultproof-init</code> protect keys and update env values.</span></li>
+          <li><span class="step-badge">4</span><span class="step-copy">Restart, test one provider call, then deploy the new env values.</span></li>
+        </ol>
+      </div>
+    </section>
 
     <div class="docs-layout">
-
-        <!-- Sidebar -->
-        <aside class="sidebar hidden lg:block fixed top-20 left-0 w-[260px] h-[calc(100vh-5rem)] overflow-y-auto border-r border-vp-border py-8 px-5" style="left: max(0px, calc((100vw - 1400px) / 2));">
-            <nav class="space-y-1" id="sidebar-nav">
-                <a href="#overview" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Overview</a>
-                <a href="#quick-start" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Quick Start</a>
-                <a href="#cicd-kubernetes" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">CI/CD + Kubernetes</a>
-
-                <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">Architecture</div>
-                <a href="#how-it-works" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">How It Works</a>
-                <a href="#key-storage-flow" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Key Storage Flow</a>
-                <a href="#proxy-call-flow" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Proxy Call Flow</a>
-                <a href="#breach-scenarios" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Breach Scenarios</a>
-                <a href="#shamir" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Split-Key Encryption</a>
-                <a href="#zk-proofs" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Cryptographic Proofs</a>
-
-                <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">Packages</div>
-                <a href="#packages" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Package Overview</a>
-                <a href="#proxy-url-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r font-medium text-emerald-400/80">Proxy URL Reference</a>
-                <a href="#sdk-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Integration Reference</a>
-                <a href="#connect-widget" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Connect Widget <span class="text-[0.6rem] text-gray-600">(deprecated)</span></a>
-                <a href="#cli-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">CLI Reference</a>
-                <a href="#scanner" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r font-medium text-emerald-400/80">Scanner</a>
-                <a href="#dashboard" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Dashboard</a>
-                <a href="#api-reference" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">API Reference</a>
-
-                <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">More</div>
-                <a href="#security-architecture" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Security Architecture</a>
-                <a href="#faq" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">FAQ</a>
-                <a href="/terms" class="block text-sm text-gray-500 py-1.5 px-3 rounded-r hover:text-white transition">Terms of Service</a>
-                <a href="/privacy" class="block text-sm text-gray-500 py-1.5 px-3 rounded-r hover:text-white transition">Privacy Policy</a>
-            </nav>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="flex-1 lg:ml-[260px] px-6 md:px-12 py-10 max-w-4xl">
-
-            <!-- ============================================================ -->
-            <!-- SECTION 1: OVERVIEW -->
-            <!-- ============================================================ -->
-            <section id="overview" class="mb-10">
-                <h1 class="text-4xl font-extrabold text-white mb-3 tracking-tight">VaultProof Documentation</h1>
-                <p class="text-lg text-gray-400 mb-0 leading-relaxed max-w-2xl">Protect provider API keys with a website-hosted CLI, a VaultProof token, and provider-compatible proxy URLs.</p>
-            </section>
-
-
-            <!-- ============================================================ -->
-            <!-- SECTION 2: QUICK START -->
-            <!-- ============================================================ -->
-            <section id="quick-start" class="mb-16">
-                <h2 class="text-3xl font-bold text-white mb-2">Quick Start</h2>
-                <p class="text-gray-500 mb-8">Install once, run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>, then route SDK calls through the generated base URLs.</p>
-
-                <!-- Proxy URL vs SDK vs CLI vs Dashboard -->
-                <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-8">
-                    <table class="doc-table">
-                        <thead><tr><th>Tool</th><th>Purpose</th><th>Setup</th></tr></thead>
-                        <tbody>
-                            <tr class="bg-vp-accent/[0.04]">
-                                <td><code class="font-mono text-xs text-vp-accent">Proxy URL</code> <span class="text-[0.625rem] font-bold text-emerald-400 ml-1">RECOMMENDED</span></td>
-                                <td>Route SDK calls through VaultProof</td>
-                                <td>Use the generated <code class="font-mono text-xs text-vp-accent">*_BASE_URL</code></td>
-                            </tr>
-                            <tr>
-                                <td><code class="font-mono text-xs text-vp-accent">vaultproof-init</code></td>
-                                <td>Protect keys from your <code class="font-mono text-xs text-vp-accent">.env</code></td>
-                                <td><code class="font-mono text-xs text-vp-accent">curl -fsSL https://vaultproof.dev/install | sh</code></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Path A: Proxy URL (RECOMMENDED) -->
-                <div class="mb-8">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="bg-emerald-500/15 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded">RECOMMENDED</span>
-                        <h3 class="text-lg font-semibold text-white">Proxy URL -- 1-line change</h3>
-                    </div>
-                    <p class="text-gray-500 text-sm mb-4">Keep your existing SDK and change the base URL.</p>
-
-                    <p class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Setup (once)</p>
-                    <ol class="list-decimal list-inside space-y-1.5 text-sm text-gray-400 mb-6">
-                        <li>Install with <code class="font-mono text-xs text-vp-accent">curl -fsSL https://vaultproof.dev/install | sh</code>, then run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code></li>
-                        <li>Your .env now has a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token and per-provider <code class="font-mono text-xs text-vp-accent">*_BASE_URL</code> entries</li>
-                        <li>Done -- your existing code works, key is protected</li>
-                    </ol>
-
-                    <div class="code-block mb-4">
-                        <div class="code-header">OpenAI (Node.js)</div>
-<pre class="text-gray-300"><span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">'openai'</span>
-
-<span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">OpenAI</span>({
-  apiKey: process.env.<span class="typ">VAULTPROOF_PROJECT_ID</span>,  <span class="cmt">// vp-proj- VaultProof token</span>
-  baseURL: <span class="str">'https://init.vaultproof.dev/p/openai/v1'</span>
-})
-
-<span class="cmt">// Use normally -- all SDK features work (streaming, retries, types)</span>
-<span class="kw">const</span> res = <span class="kw">await</span> client.chat.completions.<span class="fn">create</span>({
-  model: <span class="str">'gpt-4'</span>,
-  messages: [{ role: <span class="str">'user'</span>, content: <span class="str">'Hello'</span> }]
-})</pre>
-                    </div>
-
-                    <div class="code-block mb-4">
-                        <div class="code-header">Anthropic (Node.js)</div>
-<pre class="text-gray-300"><span class="kw">import</span> Anthropic <span class="kw">from</span> <span class="str">'@anthropic-ai/sdk'</span>
-
-<span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">Anthropic</span>({
-  apiKey: process.env.<span class="typ">VAULTPROOF_PROJECT_ID</span>,
-  baseURL: <span class="str">'https://init.vaultproof.dev/p/anthropic'</span>
-})</pre>
-                    </div>
-
-                    <div class="code-block mb-4">
-                        <div class="code-header">Python</div>
-<pre class="text-gray-300"><span class="kw">import</span> openai
-
-client = openai.<span class="fn">OpenAI</span>(
-    api_key=<span class="str">"vp-proj-..."</span>,
-    base_url=<span class="str">"https://init.vaultproof.dev/p/openai/v1"</span>
-)</pre>
-                    </div>
-
-                    <div class="code-block mb-4">
-                        <div class="code-header">Groq (Node.js)</div>
-<pre class="text-gray-300"><span class="kw">import</span> Groq <span class="kw">from</span> <span class="str">'groq-sdk'</span>
-
-<span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">Groq</span>({
-  apiKey: process.env.<span class="typ">VAULTPROOF_PROJECT_ID</span>,
-  baseURL: <span class="str">'https://init.vaultproof.dev/p/groq/openai/v1'</span>
-})</pre>
-                    </div>
-
-                    <div class="code-block">
-                        <div class="code-header">DeepSeek (Node.js)</div>
-<pre class="text-gray-300"><span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">'openai'</span>
-
-<span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">OpenAI</span>({
-  apiKey: process.env.<span class="typ">VAULTPROOF_PROJECT_ID</span>,
-  baseURL: <span class="str">'https://init.vaultproof.dev/p/deepseek/v1'</span>
-})</pre>
-                    </div>
-                </div>
-
-                <!-- Path B: Init CLI -->
-                <div class="mb-8">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="bg-cyan-500/15 text-cyan-400 text-xs font-bold px-2.5 py-1 rounded">FOR ANY SDK</span>
-                        <h3 class="text-lg font-semibold text-white">Init CLI -- one command, every SDK works</h3>
-                    </div>
-                    <p class="text-gray-500 text-sm mb-4">Install the VaultProof CLI once, then run <code class="font-mono text-xs text-vp-cyan">vaultproof-init</code> in any project. It scans your .env, splits each key, and adds per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries for supported header-based providers. Your OpenAI-compatible and API-key SDKs can then route through VaultProof with their normal environment variables.</p>
-
-                    <div class="code-block">
-                        <div class="code-header">bash</div>
-<pre class="text-gray-300"><span class="cmt"># Install the CLI once</span>
-curl -fsSL https://vaultproof.dev/install | sh
-
-<span class="cmt"># Protect every key in your .env at once</span>
-vaultproof-init
-
-<span class="cmt"># Protect a custom/internal API key from .env</span>
-vaultproof-init custom
-
-<span class="cmt"># Protect vault-only runtime secrets from .env</span>
-vaultproof-init secrets add
-
-<span class="cmt"># Run with vault-only secrets injected into the child process</span>
-vaultproof-init run -- npm run dev
-
-<span class="cmt"># Protect Ansible/Terraform network automation secrets</span>
-vaultproof-init netops
-vaultproof-init netops run -- ansible-playbook site.yml
-
-<span class="cmt"># Preview what will happen without making changes</span>
-vaultproof-init --dry-run
-
-<span class="cmt"># Check if you have any legacy vp_live_ references to clean up</span>
-vaultproof-init --check-legacy</pre>
-                    </div>
-                    <p class="text-gray-500 text-xs mt-3">The hosted installer downloads the VaultProof manifest first and verifies the SHA-256 hash of the CLI and provider catalog before installing them.</p>
-                </div>
-
-                <!-- Path C: No SDK needed -->
-                <div class="mb-8">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">NO SDK NEEDED</span>
-                        <h3 class="text-lg font-semibold text-white">Your existing SDKs work unchanged</h3>
-                    </div>
-                    <p class="text-gray-500 text-sm mb-4">After running <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>, your .env contains per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries that point at the VaultProof proxy. Most SDKs (OpenAI, Anthropic, Stripe, etc.) read their base URL from the environment, so your code works without any changes.</p>
-
-                    <div class="code-block mb-4">
-                        <div class="code-header">.env (after running vaultproof-init)</div>
-<pre class="text-gray-300"><span class="cmt"># Original keys have been split and stored securely</span>
-<span class="typ">VAULTPROOF_PROJECT_ID</span>=<span class="str">vp-proj-a8Kj3mNp9xRt2wQz</span>
-
-<span class="cmt"># Per-provider proxy URLs (SDKs read these automatically)</span>
-<span class="typ">OPENAI_BASE_URL</span>=<span class="str">https://init.vaultproof.dev/p/openai/v1</span>
-<span class="typ">OPENAI_API_KEY</span>=<span class="str">vp-proj-a8Kj3mNp9xRt2wQz</span>
-<span class="typ">ANTHROPIC_BASE_URL</span>=<span class="str">https://init.vaultproof.dev/p/anthropic</span>
-<span class="typ">ANTHROPIC_API_KEY</span>=<span class="str">vp-proj-a8Kj3mNp9xRt2wQz</span></pre>
-                    </div>
-
-                    <div class="code-block">
-                        <div class="code-header">app.js (no changes needed -- your code stays the same)</div>
-<pre class="text-gray-300"><span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">'openai'</span>
-
-<span class="cmt">// The SDK reads OPENAI_BASE_URL and OPENAI_API_KEY from env</span>
-<span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">OpenAI</span>()
-
-<span class="kw">const</span> res = <span class="kw">await</span> client.chat.completions.<span class="fn">create</span>({
-  model: <span class="str">'gpt-4'</span>,
-  messages: [{ role: <span class="str">'user'</span>, content: <span class="str">'Hello!'</span> }]
-})</pre>
-                    </div>
-                </div>
-
-                <!-- Path D: CLI -->
-                <div class="mb-8">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">FOR YOUR TERMINAL</span>
-                        <h3 class="text-lg font-semibold text-white">CLI -- run from the command line</h3>
-                    </div>
-                    <p class="text-gray-500 text-sm mb-4">The CLI has a few focused commands. Run it from any project directory.</p>
-
-                    <div class="code-block">
-                        <div class="code-header">terminal</div>
-<pre class="text-gray-300"><span class="cmt"># Scan .env, split every key, rewrite environment</span>
-$ vaultproof-init
-
-<span class="cmt"># Add an unsupported or internal API key from .env</span>
-$ vaultproof-init custom
-
-<span class="cmt"># Store database URLs, JWT secrets, and webhook secrets</span>
-$ vaultproof-init secrets add
-
-<span class="cmt"># Start a process with vault-only secrets injected</span>
-$ vaultproof-init run -- npm run dev
-
-<span class="cmt"># Protect and run network automation secrets</span>
-$ vaultproof-init netops
-$ vaultproof-init netops run -- ansible-playbook site.yml
-
-<span class="cmt"># Preview what will happen without making changes</span>
-$ vaultproof-init --dry-run
-
-<span class="cmt"># Check for legacy vp_live_ references in your project</span>
-$ vaultproof-init --check-legacy</pre>
-                    </div>
-                </div>
-
-                <!-- Path E: Dashboard -->
-                <div>
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="bg-vp-accent/15 text-vp-accent text-xs font-bold px-2.5 py-1 rounded">FOR YOUR BROWSER</span>
-                        <h3 class="text-lg font-semibold text-white">Dashboard -- visual web interface</h3>
-                    </div>
-                    <p class="text-gray-500 text-sm mb-4">Use the dashboard to view your VaultProof tokens, monitor proxy usage, and manage settings.</p>
-                    <div class="bg-vp-surface border border-vp-border rounded-md p-5">
-                        <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
-                            <li>Go to <a href="/app/login" class="text-vp-accent hover:underline">vaultproof.dev/app</a> and create an account or log in</li>
-                            <li>Install the CLI with <code class="font-mono text-xs text-vp-accent">curl -fsSL https://vaultproof.dev/install | sh</code>, then run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code> in your app to create a VaultProof token and protect your keys</li>
-                            <li>Your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> token and protected keys appear in the dashboard</li>
-                            <li>Monitor proxy call logs, per-provider usage, and rate limit status</li>
-                        </ol>
-                    </div>
-                </div>
-
-                <div id="cicd-kubernetes" class="mt-10">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="bg-emerald-500/15 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded">PRODUCTION SETUPS</span>
-                        <h3 class="text-lg font-semibold text-white">CI/CD + Kubernetes</h3>
-                    </div>
-                    <p class="text-gray-500 text-sm mb-4">VaultProof works well in pipelines and clusters because the runtime only needs a public <code class="font-mono text-xs text-vp-accent">vp-proj-</code> token plus per-provider proxy URLs.</p>
-
-                    <div class="code-block mb-4">
-                        <div class="code-header">Required runtime env vars</div>
-<pre class="text-gray-300"><span class="typ">VAULTPROOF_PROJECT_ID</span>=<span class="str">vp-proj-...</span>
-<span class="typ">OPENAI_API_KEY</span>=<span class="str">vp-proj-...</span>
-<span class="typ">OPENAI_BASE_URL</span>=<span class="str">https://init.vaultproof.dev/p/openai/v1</span></pre>
-                    </div>
-
-                    <div class="code-block mb-4">
-                        <div class="code-header">GitHub Actions</div>
-<pre class="text-gray-300"><span class="kw">env</span>:
-  <span class="typ">VAULTPROOF_PROJECT_ID</span>: <span class="str">${{ secrets.VAULTPROOF_PROJECT_ID }}</span>
-  <span class="typ">OPENAI_API_KEY</span>: <span class="str">${{ secrets.VAULTPROOF_PROJECT_ID }}</span>
-  <span class="typ">OPENAI_BASE_URL</span>: <span class="str">https://init.vaultproof.dev/p/openai/v1</span></pre>
-                    </div>
-
-                    <div class="code-block mb-4">
-                        <div class="code-header">Kubernetes</div>
-<pre class="text-gray-300">kubectl create secret generic app-env \
-  --from-literal=VAULTPROOF_PROJECT_ID=vp-proj-... \
-  --from-literal=OPENAI_API_KEY=vp-proj-... \
-  --from-literal=OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1</pre>
-                    </div>
-
-                    <div class="callout-info">
-                        <p class="text-sm text-indigo-300"><strong>Server-side callers:</strong> if your jobs/pods do not send browser <code class="font-mono text-xs">Origin</code> headers, do not enable strict origin enforcement for that project.</p>
-                    </div>
-                </div>
-            </section>
-
-
-            <!-- ============================================================ -->
-            <!-- SECTION 3: HOW IT WORKS -->
-            <!-- ============================================================ -->
-            <section id="how-it-works" class="mb-16">
-                <h2 class="text-3xl font-bold text-white mb-2">How It Works</h2>
-                <p class="text-gray-500 mb-10">A deep dive into the cryptographic pipeline that protects your keys.</p>
-
-                <!-- 3.1 Key Storage Flow -->
-                <div id="key-storage-flow" class="mb-14">
-                    <h3 class="text-xl font-semibold text-white mb-6">3.1 Key Storage Flow</h3>
-                    <p class="text-gray-400 text-sm mb-6">When you run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>, here is exactly what happens for each key found in your <code class="font-mono text-xs">.env</code>:</p>
-
-                    <div class="space-y-0">
-                        <div class="flow-step" data-step="1">
-                            <div class="text-white font-medium text-sm mb-1">The CLI scans your .env</div>
-                            <p class="text-gray-500 text-sm">The CLI reads <code class="font-mono text-xs">.env</code>, <code class="font-mono text-xs">.env.local</code>, <code class="font-mono text-xs">.env.production</code>, and <code class="font-mono text-xs">.env.development</code>. It identifies API keys by shape (prefix and length) against a growing provider catalog.</p>
-                        </div>
-                        <div class="flow-step" data-step="2">
-                            <div class="text-white font-medium text-sm mb-1">Shamir Secret Sharing splits the key locally</div>
-                            <p class="text-gray-500 text-sm">Each key is split into exactly 2 shares using Shamir's Secret Sharing over GF(256). Each share alone is mathematically useless — knowing one share reveals zero information about the original key. The splitting happens in your terminal; the plaintext key is never transmitted.</p>
-                        </div>
-                        <div class="flow-step" data-step="3">
-                            <div class="text-white font-medium text-sm mb-1">Share 1 is encrypted and uploaded</div>
-                            <p class="text-gray-500 text-sm">Share 1 is sent to the VaultProof worker over HTTPS. The worker encrypts it with <strong class="text-gray-300">AES-256-GCM</strong> using a key derived from the server-side master key via HKDF-SHA256. A unique salt and IV are generated per encryption. The encrypted ciphertext is stored in Supabase.</p>
-                        </div>
-                        <div class="flow-step" data-step="4">
-                            <div class="text-white font-medium text-sm mb-1">Share 2 is uploaded separately</div>
-                            <p class="text-gray-500 text-sm">Share 2 is stored as a separate base64 blob in Supabase. Either share alone reveals nothing about the key — this is a mathematical guarantee of the Shamir scheme, not a software assumption.</p>
-                        </div>
-                        <div class="flow-step" data-step="5">
-                            <div class="text-white font-medium text-sm mb-1">Your .env is rewritten</div>
-                            <p class="text-gray-500 text-sm">The original key values in your <code class="font-mono text-xs">.env</code> are replaced with your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token, and per-provider <code class="font-mono text-xs">*_BASE_URL</code> lines are added pointing at the VaultProof proxy. A timestamped backup of your original <code class="font-mono text-xs">.env</code> is created first.</p>
-                        </div>
-                        <div class="flow-step" data-step="6">
-                            <div class="text-white font-medium text-sm mb-1">One VaultProof token for everything</div>
-                            <p class="text-gray-500 text-sm">You receive a single <code class="font-mono text-xs text-vp-accent">vp-proj-</code> token. This is <strong class="text-gray-300">not a secret</strong> — it is safe to commit, share, and put in CI variables. It tells the proxy which stored shares to reconstruct for each provider.</p>
-                        </div>
-                    </div>
-
-                    <div class="callout-info mt-6">
-                        <p class="text-sm text-indigo-300"><strong>Key point:</strong> The plaintext API key never leaves your machine. The VaultProof server receives only Shamir shares, which are mathematically useless individually. The server encrypts Share 1 with its own master key; Share 2 is stored separately. Reconstruction requires both.</p>
-                    </div>
-                </div>
-
-                <!-- 3.2 Proxy Call Flow -->
-                <div id="proxy-call-flow" class="mb-14">
-                    <h3 class="text-xl font-semibold text-white mb-6">3.2 Proxy Call Flow</h3>
-                    <p class="text-gray-400 text-sm mb-6">When your SDK makes an API call through the VaultProof proxy (via the <code class="font-mono text-xs">*_BASE_URL</code> in your <code class="font-mono text-xs">.env</code>), the key is temporarily reconstructed:</p>
-
-                    <div class="space-y-0">
-                        <div class="flow-step" data-step="1">
-                            <div class="text-white font-medium text-sm mb-1">Your SDK sends a request to the proxy</div>
-                            <p class="text-gray-500 text-sm">Your OpenAI/Anthropic/Stripe SDK reads the <code class="font-mono text-xs">*_BASE_URL</code> from the environment and sends its request to <code class="font-mono text-xs">init.vaultproof.dev/p/&lt;provider&gt;/...</code> instead of the provider directly. Your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token is in the <code class="font-mono text-xs">Authorization: Bearer</code> header.</p>
-                        </div>
-                        <div class="flow-step" data-step="2">
-                            <div class="text-white font-medium text-sm mb-1">Token authenticated, rate limit checked</div>
-                            <p class="text-gray-500 text-sm">The worker validates the VaultProof token and checks rate limits via a strongly-consistent Durable Object counter. Invalid or rate-limited requests are rejected before any database work.</p>
-                        </div>
-                        <div class="flow-step" data-step="3">
-                            <div class="text-white font-medium text-sm mb-1">Shares fetched and decrypted</div>
-                            <p class="text-gray-500 text-sm">The worker fetches both encrypted shares from Supabase in a single query. Share 1 is decrypted with AES-256-GCM using the server-side master key. Share 2 is read as-is. Warm requests hit an in-memory cache (30s TTL) and skip the database round trip.</p>
-                        </div>
-                        <div class="flow-step" data-step="4">
-                            <div class="text-white font-medium text-sm mb-1">Key reconstructed via Shamir combine</div>
-                            <p class="text-gray-500 text-sm">The two shares are combined using Lagrange interpolation over GF(256). The original API key now exists in worker memory. This takes less than 0.1ms.</p>
-                        </div>
-                        <div class="flow-step" data-step="5">
-                            <div class="text-white font-medium text-sm mb-1">API call made to the real provider</div>
-                            <p class="text-gray-500 text-sm">The worker forwards your request to the real provider (OpenAI, Anthropic, Stripe, etc.) with the reconstructed key in the appropriate auth header. Streaming (SSE) is supported.</p>
-                        </div>
-                        <div class="flow-step" data-step="6">
-                            <div class="text-white font-medium text-sm mb-1">Key zeroed from memory</div>
-                            <p class="text-gray-500 text-sm">Immediately after the outbound request is issued, the reconstructed key buffer is overwritten with zeros. The key existed in RAM for the duration of one <code class="font-mono text-xs">fetch()</code> call — typically under 1ms. It never touches disk, logs, or persistent storage.</p>
-                        </div>
-                        <div class="flow-step" data-step="7">
-                            <div class="text-white font-medium text-sm mb-1">Response forwarded to you</div>
-                            <p class="text-gray-500 text-sm">The provider's response is passed through to your application with an explicit allowlist of safe response headers. Upstream headers like <code class="font-mono text-xs">Set-Cookie</code> are stripped to prevent cross-domain attacks.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3.3 Breach Scenarios -->
-                <div id="breach-scenarios" class="mb-14">
-                    <h3 class="text-xl font-semibold text-white mb-6">3.3 What Happens in a Breach</h3>
-                    <p class="text-gray-400 text-sm mb-6">VaultProof is designed so that compromising any single component does not expose your API keys:</p>
-
-                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
-                        <table class="doc-table breach-table">
-                            <thead>
-                                <tr>
-                                    <th>Scenario</th>
-                                    <th>What Attacker Gets</th>
-                                    <th>Can They Reconstruct Keys?</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Database breached</td>
-                                    <td class="text-gray-400">Encrypted Share 1 (AES-256-GCM ciphertext) + Share 2 (raw Shamir share). Without the server-side master key, Share 1 is indistinguishable from random data. Share 2 alone reveals nothing about the key.</td>
-                                    <td><span class="text-amber-400 font-semibold">No</span></td>
-                                </tr>
-                                <tr>
-                                    <td>Server master key leaked</td>
-                                    <td class="text-gray-400">Can decrypt Share 1. But without Share 2 (which lives in a separate database row), a single share reveals nothing. Shamir's scheme is information-theoretically secure: one share of a 2-of-2 split is pure noise.</td>
-                                    <td><span class="text-amber-400 font-semibold">No</span></td>
-                                </tr>
-                                <tr>
-                                    <td>VaultProof token leaked</td>
-                                    <td class="text-gray-400">The <code class="font-mono text-xs">vp-proj-</code> token is public by design. An attacker can make proxy calls against your rate limit (60/min) but cannot retrieve the shares or the reconstructed key. The proxy returns the provider's response, not the key.</td>
-                                    <td><span class="text-amber-400 font-semibold">No</span></td>
-                                </tr>
-                                <tr>
-                                    <td>Database + server master key</td>
-                                    <td class="text-gray-400">Decrypted Share 1 + Share 2. Both shares available.</td>
-                                    <td><span class="text-amber-400 font-semibold">Yes</span> — requires both</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="callout-danger mt-6">
-                        <p class="text-sm text-amber-300"><strong>Two independent secrets</strong> must both be compromised simultaneously to reconstruct any API key: (1) the database contents (both Share 1 and Share 2) and (2) the server-side <code class="font-mono text-xs">encryption key</code> (needed to decrypt Share 1). These are stored in different systems with different access controls.</p>
-                    </div>
-                </div>
-
-                <!-- 3.4 Split-Key Encryption -->
-                <div id="shamir" class="mb-14">
-                    <h3 class="text-xl font-semibold text-white mb-6">3.4 Split-Key Encryption Explained</h3>
-
-                    <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
-                        <h4 class="text-white font-medium mb-3">The simple version</h4>
-                        <p class="text-gray-400 text-sm leading-relaxed">
-                            Think of it like tearing a photo in half. Each half looks like random noise -- you cannot tell what the photo is from either piece alone. Only when you put both halves together do you see the picture. VaultProof tears your API key into two pieces of cryptographic noise. Each piece is then locked in a separate safe with a separate key. To see the photo again, you need to open both safes.
-                        </p>
-                    </div>
-
-                    <div class="bg-vp-surface border border-vp-border rounded-md p-6">
-                        <h4 class="text-white font-medium mb-3">The technical version</h4>
-                        <p class="text-gray-400 text-sm leading-relaxed mb-4">
-                            VaultProof uses a cryptographic secret sharing scheme to split each API key into two shares. Each share is independently indistinguishable from random data -- possessing only one share gives an attacker zero information about the original key.
-                        </p>
-                        <p class="text-gray-400 text-sm leading-relaxed">
-                            Reconstruction requires both shares. Without both, every possible value of the original key is equally likely. The splitting and reconstruction algorithms are implemented in the open-source <code class="font-mono text-xs text-vp-accent">@vaultproof/shamir</code> package, which you can audit independently.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- 3.5 Cryptographic Proofs -->
-                <div id="zk-proofs">
-                    <h3 class="text-xl font-semibold text-white mb-6">3.5 Cryptographic Proofs</h3>
-                    <p class="text-gray-400 text-sm mb-6">For authorization, VaultProof uses cryptographic proofs that verify three things without revealing any sensitive data:</p>
-
-                    <div class="grid md:grid-cols-3 gap-4 mb-6">
-                        <div class="bg-vp-surface border border-vp-border rounded-md p-5">
-                            <div class="text-vp-accent font-semibold text-sm mb-2">1. Ownership</div>
-                            <p class="text-gray-500 text-xs leading-relaxed">You own the key slot you are requesting access to. The proof verifies your vault commitment hash matches without revealing the key material.</p>
-                        </div>
-                        <div class="bg-vp-surface border border-vp-border rounded-md p-5">
-                            <div class="text-vp-accent font-semibold text-sm mb-2">2. Authorization</div>
-                            <p class="text-gray-500 text-xs leading-relaxed">The requesting application has been granted access to this key slot. The proof checks the app grant without exposing the grant chain.</p>
-                        </div>
-                        <div class="bg-vp-surface border border-vp-border rounded-md p-5">
-                            <div class="text-vp-accent font-semibold text-sm mb-2">3. Freshness</div>
-                            <p class="text-gray-500 text-xs leading-relaxed">The request is fresh and not replayed. Each proof includes a unique nullifier that is stored server-side. If the same nullifier appears twice, the request is rejected.</p>
-                        </div>
-                    </div>
-
-                    <div class="callout-info">
-                        <p class="text-sm text-indigo-300"><strong>Note:</strong> When using the SDK, ZK proof generation is handled automatically. The SDK generates proofs client-side before each proxy call.</p>
-                    </div>
-                </div>
-            </section>
-
-
-            <!-- ============================================================ -->
-            <!-- PACKAGES OVERVIEW -->
-            <!-- ============================================================ -->
-            <section id="packages" class="mb-16">
-                <h2 class="text-3xl font-bold text-white mb-2">Packages</h2>
-                <p class="text-gray-500 mb-8">VaultProof ships a website-hosted CLI and a small internal split-key library. Most developers only need <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>.</p>
-
-                <div class="space-y-4 mb-8">
-                    <div class="endpoint-card">
-                        <div class="flex items-baseline gap-3 mb-2">
-                            <code class="font-mono text-sm text-vp-accent font-semibold">vaultproof-init</code>
-                            <span class="text-xs text-gray-600">The only CLI most developers need</span>
-                        </div>
-                        <p class="text-gray-400 text-sm mb-3">One command that scans your <code class="font-mono text-xs">.env</code>, splits every API key locally using split-key encryption, uploads encrypted shares, and rewrites your environment with a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token and per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries. No SDK import needed -- your existing SDKs read the new base URL from the environment and route through VaultProof automatically.</p>
-                        <div class="code-block">
-                            <div class="code-header">install and run</div>
-<pre class="text-gray-300">curl -fsSL https://vaultproof.dev/install | sh
-vaultproof-init</pre>
-                        </div>
-                        <p class="text-gray-500 text-xs mt-3">The installer verifies the CLI and provider catalog against the hosted SHA-256 manifest before placing files in <code class="font-mono text-xs">~/.vaultproof/bin</code>.</p>
-                    </div>
-
-                    <div class="endpoint-card">
-                        <div class="flex items-baseline gap-3 mb-2">
-                            <code class="font-mono text-sm text-vp-accent font-semibold">@vaultproof/shamir</code>
-                            <span class="text-xs text-gray-600">Internal -- rarely needed directly</span>
-                        </div>
-                        <p class="text-gray-400 text-sm">The split-key encryption engine. Bundled inside <code class="font-mono text-xs">vaultproof-init</code>. Only install this directly if you want raw key splitting without VaultProof infrastructure.</p>
-                    </div>
-                </div>
-
-                <div class="callout-info">
-                    <p class="text-sm text-indigo-300"><strong>No SDK import needed.</strong> After running <code class="font-mono text-xs">vaultproof-init</code>, your existing OpenAI, Anthropic, Stripe, and other SDKs work unchanged. They read the <code class="font-mono text-xs">*_BASE_URL</code> from your environment and route through VaultProof automatically.</p>
-                </div>
-            </section>
-
-
-            <!-- ============================================================ -->
-            <!-- SECTION 3.5: PROXY URL REFERENCE -->
-            <!-- ============================================================ -->
-            <section id="proxy-url-reference" class="mb-16">
-                <h2 class="text-3xl font-bold text-white mb-2">Proxy URL Reference</h2>
-                <p class="text-gray-500 mb-8">The recommended way to use VaultProof. Route any AI SDK through VaultProof by changing one URL.</p>
-
-                <!-- URL Pattern -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-white mb-4">URL Pattern</h3>
-                    <div class="code-block mb-4">
-                        <div class="code-header">pattern</div>
-<pre class="text-gray-300">https://init.vaultproof.dev/p/<span class="typ">{provider}</span>/<span class="typ">{path}</span></pre>
-                    </div>
-                    <p class="text-gray-400 text-sm">Replace <code class="font-mono text-xs text-vp-accent">{provider}</code> with the provider name and <code class="font-mono text-xs text-vp-accent">{path}</code> with the original API path. VaultProof forwards the request exactly (method, body, headers, query string).</p>
-                </div>
-
-                <!-- Supported Providers -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-white mb-4">Supported Providers</h3>
-                    <p class="text-gray-500 text-sm mb-4">The init catalog currently includes 250 provider signatures. Common proxy-ready examples:</p>
-                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
-                        <table class="doc-table">
-                            <thead><tr><th>Provider</th><th>Proxy Base URL</th><th>Upstream</th></tr></thead>
-                            <tbody>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">openai</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/openai/v1</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.openai.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">anthropic</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/anthropic</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.anthropic.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">google</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/google</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://generativelanguage.googleapis.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">minimax</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/minimax/v1</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.minimax.io</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">voyage</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/voyage/v1</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.voyageai.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">jina</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/jina</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.jina.ai</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">ai21</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/ai21/studio/v1</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.ai21.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">assemblyai</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/assemblyai</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.assemblyai.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">together</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/together/v1</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.together.xyz</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">mistral</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/mistral/v1</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.mistral.ai</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">cohere</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/cohere</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.cohere.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">groq</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/groq/openai/v1</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.groq.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">perplexity</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/perplexity</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.perplexity.ai</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">fireworks</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/fireworks/inference/v1</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.fireworks.ai</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">deepseek</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/deepseek/v1</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.deepseek.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">deepl</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/deepl</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api-free.deepl.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">deepl-pro</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/deepl-pro</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.deepl.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">replicate</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/replicate</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.replicate.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">gitlab</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/gitlab/api/v4</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://gitlab.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">launchdarkly</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/launchdarkly/api/v2</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://app.launchdarkly.com</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">snyk</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/snyk/rest</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.snyk.io</code></td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">honeycomb</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/honeycomb</code></td>
-                                    <td><code class="font-mono text-xs text-gray-500">https://api.honeycomb.io</code></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <p class="text-gray-500 text-sm mt-3">Providers with account-specific upstreams, like Weaviate and Grafana, are supported by init when their service URL is present in your .env. For unsupported or internal HTTP APIs, run <code class="font-mono text-xs text-vp-accent">vaultproof-init custom</code>.</p>
-                </div>
-
-                <!-- How Authentication Works -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-white mb-4">How Authentication Works</h3>
-                    <ol class="list-decimal list-inside space-y-2 text-sm text-gray-400">
-                        <li>Send your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token in <code class="font-mono text-xs">Authorization: Bearer</code> or in the provider API-key header your SDK already uses</li>
-                        <li>VaultProof identifies your token and finds the stored key for that provider</li>
-                        <li>The key is reconstructed from encrypted shares briefly in memory, used to call the upstream API, then zeroed</li>
-                        <li>The response (including SSE streaming) is forwarded back to you transparently</li>
-                    </ol>
-                </div>
-
-                <div class="callout-info mb-8">
-                    <p class="text-sm text-indigo-300"><strong>SSE streaming works transparently.</strong> The proxy forwards chunked responses as they arrive. Your SDK's streaming helpers, retry logic, and type safety all work exactly as they would against the real API.</p>
-                </div>
-
-                <!-- Examples -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-white mb-4">Examples</h3>
-
-                    <div class="code-block mb-4">
-                        <div class="code-header">curl</div>
-<pre class="text-gray-300">curl https://init.vaultproof.dev/p/openai/v1/models \
-  -H <span class="str">"Authorization: Bearer vp-proj-..."</span></pre>
-                    </div>
-
-                    <div class="code-block mb-4">
-                        <div class="code-header">Node.js (OpenAI SDK)</div>
-<pre class="text-gray-300"><span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">'openai'</span>
-
-<span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">OpenAI</span>({
-  apiKey: process.env.<span class="typ">VAULTPROOF_PROJECT_ID</span>,
-  baseURL: <span class="str">'https://init.vaultproof.dev/p/openai/v1'</span>
-})
-
-<span class="kw">const</span> res = <span class="kw">await</span> client.chat.completions.<span class="fn">create</span>({
-  model: <span class="str">'gpt-4'</span>,
-  messages: [{ role: <span class="str">'user'</span>, content: <span class="str">'Hello'</span> }]
-})</pre>
-                    </div>
-
-                    <div class="code-block">
-                        <div class="code-header">Python (openai library)</div>
-<pre class="text-gray-300"><span class="kw">import</span> openai
-
-client = openai.<span class="fn">OpenAI</span>(
-    api_key=<span class="str">"vp-proj-..."</span>,
-    base_url=<span class="str">"https://init.vaultproof.dev/p/openai/v1"</span>
-)
-
-res = client.chat.completions.<span class="fn">create</span>(
-    model=<span class="str">"gpt-4"</span>,
-    messages=[{<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: <span class="str">"Hello"</span>}]
-)</pre>
-                    </div>
-                </div>
-            </section>
-
-
-            <!-- ============================================================ -->
-            <!-- SECTION 4: SDK REFERENCE -->
-            <!-- ============================================================ -->
-            <section id="sdk-reference" class="mb-16">
-                <h2 class="text-3xl font-bold text-white mb-2">Integration Reference</h2>
-                <p class="text-gray-500 mb-8">No SDK import needed. After running <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>, your existing SDKs route through VaultProof automatically via environment variables.</p>
-
-                <!-- How it works -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-white mb-4">How It Works</h3>
-                    <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-4">
-                        <ol class="list-decimal list-inside space-y-3 text-sm text-gray-400">
-                            <li><strong class="text-white">Install and run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code></strong> -- installs from <code class="font-mono text-xs text-vp-accent">vaultproof.dev/install</code>, scans your .env, splits each key, and rewrites the file</li>
-                            <li><strong class="text-white">Your .env now contains</strong> a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token and per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries</li>
-                            <li><strong class="text-white">Your SDKs read the environment</strong> -- OpenAI, Anthropic, Stripe, and others all support <code class="font-mono text-xs">*_BASE_URL</code> env vars</li>
-                            <li><strong class="text-white">API calls route through VaultProof</strong> -- the proxy authenticates via <code class="font-mono text-xs">Authorization: Bearer vp-proj-...</code> or the provider API-key header, reconstructs your key briefly in memory, calls the provider, then zeros the key</li>
-                        </ol>
-                    </div>
-                    <div class="code-block mb-4">
-                        <div class="code-header">.env (after init)</div>
-<pre class="text-gray-300"><span class="typ">VAULTPROOF_PROJECT_ID</span>=<span class="str">vp-proj-a8Kj3mNp9xRt2wQz</span>
-<span class="typ">OPENAI_API_KEY</span>=<span class="str">vp-proj-a8Kj3mNp9xRt2wQz</span>
-<span class="typ">OPENAI_BASE_URL</span>=<span class="str">https://init.vaultproof.dev/p/openai/v1</span>
-<span class="typ">ANTHROPIC_API_KEY</span>=<span class="str">vp-proj-a8Kj3mNp9xRt2wQz</span>
-<span class="typ">ANTHROPIC_BASE_URL</span>=<span class="str">https://init.vaultproof.dev/p/anthropic</span></pre>
-                    </div>
-                </div>
-
-                <!-- Per-key limits -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-white mb-4">Per-Key Limits</h3>
-                    <div class="endpoint-card">
-                        <h4 class="text-white font-mono text-sm font-semibold mb-3">PUT /sdk/keys/:keyId/limits</h4>
-                        <p class="text-gray-400 text-sm mb-4">Update per-key call limits. Set daily and monthly caps to control API usage. When a limit is reached, calls are either blocked (HTTP 429) or allowed with an alert email, depending on the <code class="font-mono text-xs text-vp-accent">blockOnLimit</code> setting.</p>
-                        <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-4">
-                            <table class="doc-table">
-                                <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-                                <tbody>
-                                    <tr>
-                                        <td><code class="font-mono text-xs text-vp-accent">dailyLimit</code></td>
-                                        <td><code class="font-mono text-xs">number | null</code></td>
-                                        <td>No</td>
-                                        <td>Max calls per day. Set to <code class="font-mono text-xs">null</code> to remove the limit.</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code class="font-mono text-xs text-vp-accent">monthlyLimit</code></td>
-                                        <td><code class="font-mono text-xs">number | null</code></td>
-                                        <td>No</td>
-                                        <td>Max calls per month. Set to <code class="font-mono text-xs">null</code> to remove the limit.</td>
-                                    </tr>
-                                    <tr>
-                                        <td><code class="font-mono text-xs text-vp-accent">blockOnLimit</code></td>
-                                        <td><code class="font-mono text-xs">boolean</code></td>
-                                        <td>No</td>
-                                        <td>If <code class="font-mono text-xs">true</code>, calls return 429 when limit is hit. If <code class="font-mono text-xs">false</code>, calls continue but an alert email is sent.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <p class="text-gray-500 text-xs mb-2">Returns:</p>
-                        <div class="code-block">
-<pre class="text-gray-300">{ status: <span class="str">"updated"</span>, dailyLimit: <span class="num">500</span>, monthlyLimit: <span class="num">10000</span>, blockOnLimit: <span class="kw">true</span> }</pre>
-                        </div>
-                        <div class="mt-4 bg-amber-500/5 border border-amber-500/20 rounded-md p-4">
-                            <p class="text-amber-400 text-xs font-medium mb-1">Rate limit response (HTTP 429)</p>
-                            <div class="code-block mt-2">
-<pre class="text-gray-300">{ error: <span class="str">"Daily call limit reached"</span>, limit: <span class="num">500</span>, used: <span class="num">500</span>, resets: <span class="str">"midnight UTC"</span> }</pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Supported Providers -->
-                <div>
-                    <h3 class="text-lg font-semibold text-white mb-4">Supported Providers</h3>
-                    <p class="text-gray-500 text-sm mb-4">The catalog includes 250 signatures. This table shows common proxy-ready providers and their auth style.</p>
-                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
-                        <table class="doc-table">
-                            <thead><tr><th>Provider</th><th>Value</th><th>Base URL</th><th>Auth Header</th></tr></thead>
-                            <tbody>
-                                <tr>
-                                    <td class="text-white font-medium">OpenAI</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'openai'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.openai.com</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Azure OpenAI</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'azure-openai'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">AZURE_OPENAI_ENDPOINT</code></td>
-                                    <td><code class="font-mono text-xs">api-key</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Anthropic</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'anthropic'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.anthropic.com</code></td>
-                                    <td><code class="font-mono text-xs">x-api-key + anthropic-version</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Google AI</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'google'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">generativelanguage.googleapis.com</code></td>
-                                    <td><code class="font-mono text-xs">x-goog-api-key</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">MiniMax</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'minimax'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.minimax.io</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Voyage AI</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'voyage'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.voyageai.com</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Jina AI</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'jina'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.jina.ai</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">AI21</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'ai21'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.ai21.com</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">AssemblyAI</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'assemblyai'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.assemblyai.com</code></td>
-                                    <td><code class="font-mono text-xs">Authorization</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Together.ai</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'together'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.together.xyz</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Mistral</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'mistral'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.mistral.ai</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Cohere</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'cohere'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.cohere.com</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Groq</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'groq'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.groq.com</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Perplexity</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'perplexity'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.perplexity.ai</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Fireworks</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'fireworks'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.fireworks.ai</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">DeepSeek</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'deepseek'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.deepseek.com</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">DeepL API Free</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'deepl'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api-free.deepl.com</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: DeepL-Auth-Key</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">DeepL API Pro</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'deepl-pro'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.deepl.com</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: DeepL-Auth-Key</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">DigitalOcean</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'digitalocean'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.digitalocean.com</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Netlify / Render / Heroku</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'netlify'</code>, <code class="font-mono text-xs text-vp-accent">'render'</code>, <code class="font-mono text-xs text-vp-accent">'heroku'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">platform APIs</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Fastly</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'fastly'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.fastly.com</code></td>
-                                    <td><code class="font-mono text-xs">Fastly-Key</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">HCP Terraform / Pulumi</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'terraform-cloud'</code>, <code class="font-mono text-xs text-vp-accent">'pulumi'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">IaC APIs</code></td>
-                                    <td><code class="font-mono text-xs">Bearer / token</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Jira / Zendesk / Freshdesk</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'jira'</code>, <code class="font-mono text-xs text-vp-accent">'zendesk'</code>, <code class="font-mono text-xs text-vp-accent">'freshdesk'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">account-specific URL</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Basic</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Twilio / Chargebee</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'twilio'</code>, <code class="font-mono text-xs text-vp-accent">'chargebee'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.twilio.com / site URL</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Basic</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Adyen</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'adyen'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">ADYEN_API_URL</code></td>
-                                    <td><code class="font-mono text-xs">X-API-Key</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">npm Registry</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'npm-registry'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">registry.npmjs.org</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Qdrant / Meilisearch / Typesense / Elasticsearch</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'qdrant'</code>, <code class="font-mono text-xs text-vp-accent">'meilisearch'</code>, <code class="font-mono text-xs text-vp-accent">'typesense'</code>, <code class="font-mono text-xs text-vp-accent">'elasticsearch'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">account-specific URL</code></td>
-                                    <td><code class="font-mono text-xs">API key header / Bearer / ApiKey</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Railway / Fly.io</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'railway'</code>, <code class="font-mono text-xs text-vp-accent">'fly'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">platform APIs</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">CircleCI / Buildkite / Semgrep / SonarQube Cloud</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'circleci'</code>, <code class="font-mono text-xs text-vp-accent">'buildkite'</code>, <code class="font-mono text-xs text-vp-accent">'semgrep'</code>, <code class="font-mono text-xs text-vp-accent">'sonarcloud'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">CI and code security APIs</code></td>
-                                    <td><code class="font-mono text-xs">Bearer / service token header</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Better Stack / LogSnag / Raygun / Doppler</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'betterstack'</code>, <code class="font-mono text-xs text-vp-accent">'logsnag'</code>, <code class="font-mono text-xs text-vp-accent">'raygun'</code>, <code class="font-mono text-xs text-vp-accent">'doppler'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">observability and secret ops APIs</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Segment / Plausible / Webflow</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'segment'</code>, <code class="font-mono text-xs text-vp-accent">'plausible'</code>, <code class="font-mono text-xs text-vp-accent">'webflow'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">analytics and CMS APIs</code></td>
-                                    <td><code class="font-mono text-xs">Basic / Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Svix / Knock / Browserbase</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'svix'</code>, <code class="font-mono text-xs text-vp-accent">'knock'</code>, <code class="font-mono text-xs text-vp-accent">'browserbase'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">workflow and agent APIs</code></td>
-                                    <td><code class="font-mono text-xs">Bearer / X-BB-API-Key</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Hume AI / RunPod</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'hume'</code>, <code class="font-mono text-xs text-vp-accent">'runpod'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">model and GPU APIs</code></td>
-                                    <td><code class="font-mono text-xs">X-Hume-Api-Key / Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Paystack / Lemon Squeezy</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'paystack'</code>, <code class="font-mono text-xs text-vp-accent">'lemonsqueezy'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">payment APIs</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Okta / Stytch</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'okta'</code>, <code class="font-mono text-xs text-vp-accent">'stytch'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">identity APIs</code></td>
-                                    <td><code class="font-mono text-xs">SSWS / Basic</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Replicate</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'replicate'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.replicate.com</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: Bearer</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">GitLab</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'gitlab'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">gitlab.com</code></td>
-                                    <td><code class="font-mono text-xs">PRIVATE-TOKEN</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">LaunchDarkly</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'launchdarkly'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">app.launchdarkly.com</code></td>
-                                    <td><code class="font-mono text-xs">Authorization</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Snyk</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'snyk'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.snyk.io</code></td>
-                                    <td><code class="font-mono text-xs">Authorization: token</code></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Honeycomb</td>
-                                    <td><code class="font-mono text-xs text-vp-accent">'honeycomb'</code></td>
-                                    <td class="text-gray-500"><code class="font-mono text-xs">api.honeycomb.io</code></td>
-                                    <td><code class="font-mono text-xs">X-Honeycomb-Team</code></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <p class="text-gray-500 text-sm mt-3">Providers with account-specific upstreams, like Azure OpenAI, Jira, Zendesk, Freshdesk, Qdrant, Meilisearch, Typesense, Elasticsearch, Weaviate, and Grafana, are supported by init when their service URL is present in your .env. For unsupported or internal HTTP APIs, run <code class="font-mono text-xs text-vp-accent">vaultproof-init custom</code>.</p>
-                </div>
-
-                <!-- Which Keys to Store -->
-                <div class="mt-10">
-                    <h3 class="text-lg font-semibold text-white mb-4">Which keys to store</h3>
-                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
-                        <table class="doc-table">
-                            <thead><tr><th>Key type</th><th>Store?</th><th>Notes</th></tr></thead>
-                            <tbody>
-                                <tr>
-                                    <td class="text-white font-medium">API secret keys</td>
-                                    <td><span class="text-green-400">Yes</span></td>
-                                    <td class="text-gray-400">OpenAI, Anthropic, Stripe secret key, AWS secret access key, etc.</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">OAuth client secrets</td>
-                                    <td><span class="text-green-400">Yes</span></td>
-                                    <td class="text-gray-400">Google OAuth, GitHub OAuth client secrets. Use the proxy at runtime.</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Service account JSON</td>
-                                    <td><span class="text-green-400">Yes</span></td>
-                                    <td class="text-gray-400">GCP service accounts, Firebase admin keys. Store the entire JSON string.</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Database passwords</td>
-                                    <td><span class="text-green-400">Yes</span></td>
-                                    <td class="text-gray-400">SMTP passwords, Redis auth tokens, database credentials.</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">PEM / SSH private keys</td>
-                                    <td><span class="text-green-400">Yes</span></td>
-                                    <td class="text-gray-400">Multi-line keys work. The splitting algorithm handles newlines and special characters.</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Publishable / public keys</td>
-                                    <td><span class="text-amber-400">No</span></td>
-                                    <td class="text-gray-400">Stripe publishable key, Supabase anon key, Firebase API key. These are public by design.</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-white font-medium">Short-lived OAuth tokens</td>
-                                    <td><span class="text-amber-400">No</span></td>
-                                    <td class="text-gray-400">User access tokens, JWTs, STS temporary credentials. These expire too quickly.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- IP Restrictions Note -->
-                <div class="mt-6 bg-amber-500/5 border border-amber-500/20 rounded-md p-5">
-                    <p class="text-amber-400 text-sm font-medium mb-2">Keys with IP restrictions</p>
-                    <p class="text-gray-400 text-sm mb-2">Some providers let you restrict API keys to specific IP addresses. How this interacts with VaultProof depends on which method you use:</p>
-                    <ul class="text-gray-400 text-sm space-y-1 ml-4 list-disc">
-                        <li><strong class="text-white">Proxy URL</strong> &mdash; The API call is routed through VaultProof's server. Remove the IP restriction on your provider key and rely on VaultProof's per-key rate limits and budget caps instead.</li>
-                    </ul>
-                </div>
-            </section>
-
-
-            <!-- ============================================================ -->
-            <!-- CONNECT WIDGET -->
-            <!-- ============================================================ -->
-            <section id="connect-widget" class="mb-16">
-                <h2 class="text-3xl font-bold text-white mb-2">Connect Widget</h2>
-                <div class="callout-warn">
-                    <p class="text-sm text-amber-200"><strong class="text-amber-300">Deprecated.</strong> The <code class="font-mono text-xs">@vaultproof/connect</code> React widget is no longer needed. The new system uses <code class="font-mono text-xs">vaultproof-init</code> to protect keys at the environment level -- no widget required. Existing integrations will continue to work but new projects should use the init flow instead.</p>
-                </div>
-            </section>
-
-
-            <!-- ============================================================ -->
-            <!-- SECTION 5: CLI REFERENCE -->
-            <!-- ============================================================ -->
-            <section id="cli-reference" class="mb-16">
-                <h2 class="text-3xl font-bold text-white mb-2">CLI Reference</h2>
-                <p class="text-gray-500 mb-8">One command to protect every API key in your project. Install the CLI from <code class="font-mono text-xs text-vp-accent">vaultproof.dev/install</code>, then run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>.</p>
-
-                <!-- Commands -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-white mb-4">Commands</h3>
-                    <div class="space-y-4">
-
-                        <div class="endpoint-card">
-                            <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">vaultproof-init</code>
-                                <span class="text-[0.625rem] font-bold text-emerald-400 ml-1">PRIMARY</span>
-                            </div>
-                            <p class="text-gray-500 text-sm mb-3">Scans your <code class="font-mono text-xs text-vp-accent">.env</code> (and <code class="font-mono text-xs">.env.local</code>, <code class="font-mono text-xs">.env.production</code>, <code class="font-mono text-xs">.env.development</code>), identifies API keys by prefix and length against a growing provider catalog, splits each key locally using split-key encryption, uploads encrypted shares, and rewrites your environment with a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token and per-provider <code class="font-mono text-xs">*_BASE_URL</code> entries. A timestamped backup of your original <code class="font-mono text-xs">.env</code> is created first.</p>
-                            <div class="code-block">
-                                <div class="code-header">terminal</div>
-<pre class="text-gray-300">$ curl -fsSL https://vaultproof.dev/install | sh
-$ vaultproof-init
-
-<span class="str">Scanning .env...</span>
-  Found 3 API keys: openai, anthropic, stripe
-  Splitting keys locally...
-  Uploading encrypted shares...
-  Rewriting .env...
-
-<span class="str">Done.</span> Your .env now uses vp-proj-a8Kj3mNp9x
-  Backup saved: .env.backup.1712345678</pre>
-                            </div>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">vaultproof-init custom</code>
-                            </div>
-                            <p class="text-gray-500 text-sm mb-3">Protect an unsupported or internal HTTP API key already present in your <code class="font-mono text-xs">.env</code>. The CLI prompts for the provider slug, upstream base URL, auth header name, and header template, then rewrites the selected key to use your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token.</p>
-                            <div class="code-block">
-                                <div class="code-header">terminal</div>
-<pre class="text-gray-300">$ vaultproof-init custom
-
-<span class="str">Possible custom/internal keys:</span>
-  1. INTERNAL_API_KEY from .env
-
-  Provider slug: internal
-  Upstream base URL: https://api.example.com
-  Auth header: Authorization
-  Header template: Bearer {key}
-
-<span class="str">Done.</span> INTERNAL_API_KEY now routes through https://init.vaultproof.dev/p/internal</pre>
-                            </div>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">vaultproof-init secrets add</code>
-                            </div>
-                            <p class="text-gray-500 text-sm mb-3">Protect runtime secrets that are not outbound HTTP API keys, including database URLs, Redis URLs, JWT/session secrets, encryption keys, OAuth client secrets, and webhook signing secrets. The CLI stores split shares and rewrites plaintext values to <code class="font-mono text-xs">vaultproof://</code> placeholders.</p>
-                            <div class="code-block">
-                                <div class="code-header">terminal</div>
-<pre class="text-gray-300">$ vaultproof-init secrets add
-
-<span class="str">Possible vault-only secrets:</span>
-  1. DATABASE_URL from .env
-  2. JWT_SECRET from .env
-
-<span class="str">Done.</span> Use vaultproof-init run -- npm run dev</pre>
-                            </div>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">vaultproof-init run -- &lt;command&gt;</code>
-                            </div>
-                            <p class="text-gray-500 text-sm mb-3">Fetch vault-only secrets with your authenticated VaultProof session and inject them into a child process environment without writing plaintext back to <code class="font-mono text-xs">.env</code>.</p>
-                            <div class="code-block">
-                                <div class="code-header">terminal</div>
-<pre class="text-gray-300">$ vaultproof-init run -- npm run dev
-
-<span class="str">Injecting 2 vault-only secrets for vp-proj-a8Kj3mNp9xRt2wQz.</span></pre>
-                            </div>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">vaultproof-init netops</code>
-                            </div>
-                            <p class="text-gray-500 text-sm mb-3">Protect network automation secrets in Ansible inventories, <code class="font-mono text-xs">group_vars</code>, <code class="font-mono text-xs">host_vars</code>, <code class="font-mono text-xs">.env</code>, <code class="font-mono text-xs">terraform.tfvars</code>, and <code class="font-mono text-xs">*.auto.tfvars</code>. Ansible values are rewritten to <code class="font-mono text-xs">lookup('env', ...)</code>; Terraform secrets are supplied through <code class="font-mono text-xs">TF_VAR_...</code>.</p>
-                            <div class="code-block">
-                                <div class="code-header">terminal</div>
-<pre class="text-gray-300">$ vaultproof-init netops
-$ vaultproof-init netops run -- ansible-playbook site.yml</pre>
-                            </div>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">vaultproof-init --dry-run</code>
-                            </div>
-                            <p class="text-gray-500 text-sm mb-3">Preview what <code class="font-mono text-xs text-vp-accent">init</code> will do without making any changes. Shows which keys would be split and what your <code class="font-mono text-xs">.env</code> would look like after.</p>
-                            <div class="code-block">
-                                <div class="code-header">terminal</div>
-<pre class="text-gray-300">$ vaultproof-init --dry-run
-
-<span class="str">Dry run -- no changes will be made</span>
-  Would split: OPENAI_API_KEY (openai)
-  Would split: ANTHROPIC_API_KEY (anthropic)
-  Would split: STRIPE_SECRET_KEY (stripe)
-  Would add: OPENAI_BASE_URL, ANTHROPIC_BASE_URL, STRIPE_BASE_URL
-  Would set: VAULTPROOF_PROJECT_ID=vp-proj-...</pre>
-                            </div>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-baseline gap-3 mb-2">
-                                <code class="font-mono text-sm text-white font-semibold">vaultproof-init --check-legacy</code>
-                            </div>
-                            <p class="text-gray-500 text-sm mb-3">Scan your project for any remaining references to the old <code class="font-mono text-xs">vp_live_</code> / <code class="font-mono text-xs">vp_test_</code> system. Reports files and line numbers so you can clean them up.</p>
-                            <div class="code-block">
-                                <div class="code-header">terminal</div>
-<pre class="text-gray-300">$ vaultproof-init --check-legacy
-
-<span class="str">Checking for legacy references...</span>
-  No legacy references found. You're all set.</pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Environment Variables -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-white mb-4">Environment Variables</h3>
-                    <p class="text-gray-500 text-sm mb-4">After running <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>, your <code class="font-mono text-xs">.env</code> contains:</p>
-                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
-                        <table class="doc-table">
-                            <thead><tr><th>Variable</th><th>Description</th></tr></thead>
-                            <tbody>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">VAULTPROOF_PROJECT_ID</code></td>
-                                    <td>Your <code class="font-mono text-xs">vp-proj-</code> VaultProof token. Public, safe to commit. Tells the proxy which stored shares to reconstruct.</td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">OPENAI_API_KEY</code></td>
-                                    <td>Set to your <code class="font-mono text-xs">vp-proj-</code> token (the OpenAI SDK reads this for auth).</td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">OPENAI_BASE_URL</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/openai/v1</code> -- routes SDK calls through the proxy.</td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-vp-accent">ANTHROPIC_BASE_URL</code></td>
-                                    <td><code class="font-mono text-xs">https://init.vaultproof.dev/p/anthropic</code> -- same pattern for each provider.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <p class="text-gray-500 text-sm mt-3">The same pattern applies for every provider: <code class="font-mono text-xs text-vp-accent">{PROVIDER}_API_KEY</code> is set to the VaultProof token, and <code class="font-mono text-xs text-vp-accent">{PROVIDER}_BASE_URL</code> points at the proxy.</p>
-                </div>
-
-                <!-- Environment Variable Mapping -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-white mb-4">Detected Providers</h3>
-                    <p class="text-gray-500 text-sm mb-4">The init command automatically detects these env vars and splits the keys they contain:</p>
-                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
-                        <table class="doc-table">
-                            <thead><tr><th>Provider</th><th>Env Variable</th></tr></thead>
-                            <tbody>
-                                <tr><td><code class="font-mono text-xs text-vp-accent">openai</code></td><td><code class="font-mono text-xs text-gray-300">OPENAI_API_KEY</code></td></tr>
-                                <tr><td><code class="font-mono text-xs text-vp-accent">anthropic</code></td><td><code class="font-mono text-xs text-gray-300">ANTHROPIC_API_KEY</code></td></tr>
-                                <tr><td><code class="font-mono text-xs text-vp-accent">stripe</code></td><td><code class="font-mono text-xs text-gray-300">STRIPE_SECRET_KEY</code></td></tr>
-                                <tr><td><code class="font-mono text-xs text-vp-accent">aws</code></td><td><code class="font-mono text-xs text-gray-300">AWS_SECRET_ACCESS_KEY</code></td></tr>
-                                <tr><td><code class="font-mono text-xs text-vp-accent">google</code></td><td><code class="font-mono text-xs text-gray-300">GOOGLE_API_KEY</code></td></tr>
-                                <tr><td><code class="font-mono text-xs text-vp-accent">groq</code></td><td><code class="font-mono text-xs text-gray-300">GROQ_API_KEY</code></td></tr>
-                                <tr><td><code class="font-mono text-xs text-vp-accent">mistral</code></td><td><code class="font-mono text-xs text-gray-300">MISTRAL_API_KEY</code></td></tr>
-                                <tr><td><code class="font-mono text-xs text-vp-accent">twilio</code></td><td><code class="font-mono text-xs text-gray-300">TWILIO_AUTH_TOKEN</code></td></tr>
-                                <tr><td><code class="font-mono text-xs text-vp-accent">sendgrid</code></td><td><code class="font-mono text-xs text-gray-300">SENDGRID_API_KEY</code></td></tr>
-                                <tr><td><code class="font-mono text-xs text-vp-accent">github</code></td><td><code class="font-mono text-xs text-gray-300">GITHUB_TOKEN</code></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-
-            <!-- ============================================================ -->
-            <!-- SECTION 6: DASHBOARD -->
-            <!-- ============================================================ -->
-            <section id="dashboard" class="mb-16">
-                <h2 class="text-3xl font-bold text-white mb-2">Dashboard</h2>
-                <p class="text-gray-500 mb-8">Web interface for managing keys, viewing logs, and monitoring usage at <a href="/app/login" class="text-vp-accent hover:underline">vaultproof.dev/app</a>.</p>
-
-                <div class="space-y-6">
-                    <div class="endpoint-card">
-                        <h3 class="text-white font-semibold mb-3">Overview Page</h3>
-                        <p class="text-gray-400 text-sm mb-3">Your home screen after login. At a glance you see:</p>
-                        <ul class="space-y-1.5 text-sm text-gray-500">
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Total keys stored</strong> -- active key count across all providers</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">API calls this month</strong> -- total proxied requests with trend indicator</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Usage chart</strong> -- daily call volume for the past 30 days</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Key health</strong> -- per-key error rates and last-used timestamps</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Recent activity</strong> -- last 10 proxy calls with status</span></li>
-                        </ul>
-                    </div>
-
-                    <div class="endpoint-card">
-                        <h3 class="text-white font-semibold mb-3">Keys Page</h3>
-                        <p class="text-gray-400 text-sm mb-3">Full key management interface:</p>
-                        <ul class="space-y-1.5 text-sm text-gray-500">
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Add Key</strong> -- paste a key, select provider, add a label. Key splitting happens in-browser.</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Test Key</strong> -- one-click test that makes a lightweight proxy call to verify the key works.</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Rotate</strong> -- replace the stored shares with a new API key without changing the key slot ID.</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Revoke</strong> -- permanently destroy both shares. Irreversible.</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Code snippets</strong> -- copy-paste SDK and cURL examples for each key.</span></li>
-                        </ul>
-                    </div>
-
-                    <div class="endpoint-card">
-                        <h3 class="text-white font-semibold mb-3">Logs Page</h3>
-                        <p class="text-gray-400 text-sm mb-3">Complete audit trail of every proxied API call:</p>
-                        <ul class="space-y-1.5 text-sm text-gray-500">
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Search</strong> -- filter by key, provider, status code, date range</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Details</strong> -- timestamp, endpoint, method, status, latency (ms)</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Export CSV</strong> -- download logs for external analysis or compliance</span></li>
-                        </ul>
-                    </div>
-
-                    <div class="endpoint-card">
-                        <h3 class="text-white font-semibold mb-3">Settings Page</h3>
-                        <p class="text-gray-400 text-sm mb-3">Account and security configuration:</p>
-                        <ul class="space-y-1.5 text-sm text-gray-500">
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Profile</strong> -- email and account details</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Password</strong> -- change password (requires current password)</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">API Keys</strong> -- create, list, and manage <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof tokens</span></li>
-                            <li class="flex items-start gap-2"><span class="text-vp-accent mt-0.5">&#8226;</span> <span><strong class="text-gray-300">Plan</strong> -- view current tier (Free/Starter/Pro/Enterprise) and usage limits</span></li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-
-
-            <!-- ============================================================ -->
-            <!-- SECTION 7: API REFERENCE -->
-            <!-- ============================================================ -->
-            <section id="api-reference" class="mb-16">
-                <h2 class="text-3xl font-bold text-white mb-2">API Reference</h2>
-                <p class="text-gray-500 mb-4">Base URL: <code class="font-mono text-sm text-vp-accent">https://init.vaultproof.dev</code></p>
-                <p class="text-gray-500 text-sm mb-8">The current worker exposes token-management routes under the legacy <code class="font-mono text-xs">/api/v1/init/projects</code> path and provider proxy routes under <code class="font-mono text-xs">/p/:slug/*</code>. Management routes return JSON. Proxy routes forward the upstream provider response body directly.</p>
-
-                <div class="mb-10">
-                    <h3 class="text-xl font-semibold text-white mb-5">Health</h3>
-                    <div class="endpoint-card">
-                        <div class="flex items-center gap-3 mb-3">
-                            <span class="method-badge method-get">GET</span>
-                            <code class="font-mono text-sm text-white">/health</code>
-                        </div>
-                        <p class="text-gray-400 text-sm mb-3">Simple worker health check.</p>
-                        <div class="code-block">
-<pre class="text-gray-300">{ <span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"service"</span>: <span class="str">"vaultproof-init"</span> }</pre>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-10">
-                    <h3 class="text-xl font-semibold text-white mb-5">VaultProof Tokens</h3>
-                    <p class="text-gray-500 text-sm mb-4">Authenticated with <code class="font-mono text-xs text-vp-accent">Authorization: Bearer &lt;supabase jwt&gt;</code>.</p>
-                    <div class="space-y-4">
-                        <div class="endpoint-card">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="method-badge method-post">POST</span>
-                                <code class="font-mono text-sm text-white">/api/v1/init/projects</code>
-                            </div>
-                            <p class="text-gray-400 text-sm mb-3">Create a new VaultProof token and receive a public <code class="font-mono text-xs">vp-proj-...</code> value.</p>
-                            <div class="code-block">
-<pre class="text-gray-300"><span class="cmt">// Request</span>
-{
-  <span class="str">"name"</span>: <span class="str">"Production"</span>,
-  <span class="str">"allowed_origins"</span>: <span class="str">"https://app.example.com,https://staging.example.com"</span>,
-  <span class="str">"strict_origin"</span>: <span class="kw">true</span>
-}
-
-<span class="cmt">// Response (201)</span>
-{
-  <span class="str">"id"</span>: <span class="str">"uuid"</span>,
-  <span class="str">"vp_proj_id"</span>: <span class="str">"vp-proj-abc123..."</span>,
-  <span class="str">"name"</span>: <span class="str">"Production"</span>,
-  <span class="str">"created_at"</span>: <span class="str">"2026-04-14T..."</span>
-}</pre>
-                            </div>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="method-badge method-get">GET</span>
-                                <code class="font-mono text-sm text-white">/api/v1/init/projects</code>
-                            </div>
-                            <p class="text-gray-400 text-sm">List all VaultProof tokens for the current user.</p>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="method-badge method-get">GET</span>
-                                <code class="font-mono text-sm text-white">/api/v1/init/projects/:id</code>
-                            </div>
-                            <p class="text-gray-400 text-sm">Fetch one project by row ID.</p>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="method-badge method-put">PUT</span>
-                                <code class="font-mono text-sm text-white">/api/v1/init/projects/:id</code>
-                            </div>
-                            <p class="text-gray-400 text-sm mb-3">Update project metadata and origin-lock settings.</p>
-                            <div class="code-block">
-<pre class="text-gray-300">{
-  <span class="str">"name"</span>: <span class="str">"Production"</span>,
-  <span class="str">"allowed_origins"</span>: <span class="str">"https://app.example.com"</span>,
-  <span class="str">"strict_origin"</span>: <span class="kw">true</span>
-}</pre>
-                            </div>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="method-badge method-delete">DELETE</span>
-                                <code class="font-mono text-sm text-white">/api/v1/init/projects/:id</code>
-                            </div>
-                            <p class="text-gray-400 text-sm">Soft-revoke a project and all keys under it.</p>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="method-badge method-get">GET</span>
-                                <code class="font-mono text-sm text-white">/api/v1/init/projects/stats/overview</code>
-                            </div>
-                            <p class="text-gray-400 text-sm">Return summary stats for VaultProof tokens, keys, and providers.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-10">
-                    <h3 class="text-xl font-semibold text-white mb-5">Project Keys</h3>
-                    <p class="text-gray-500 text-sm mb-4">Keys are uploaded as Shamir shares. Share 1 is encrypted by the worker; Share 2 is stored separately.</p>
-                    <div class="space-y-4">
-                        <div class="endpoint-card">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="method-badge method-post">POST</span>
-                                <code class="font-mono text-sm text-white">/api/v1/init/projects/:id/keys</code>
-                            </div>
-                            <p class="text-gray-400 text-sm mb-3">Store or update a provider key under a project.</p>
-                            <div class="code-block">
-<pre class="text-gray-300">{
-  <span class="str">"provider"</span>: <span class="str">"openai"</span>,
-  <span class="str">"slug"</span>: <span class="str">"openai"</span>,
-  <span class="str">"share1"</span>: <span class="str">"base64..."</span>,
-  <span class="str">"share2"</span>: <span class="str">"base64..."</span>,
-  <span class="str">"env_var"</span>: <span class="str">"OPENAI_API_KEY"</span>,
-  <span class="str">"upstream_base_url"</span>: <span class="str">"https://api.openai.com"</span>,
-  <span class="str">"auth_header_name"</span>: <span class="str">"Authorization"</span>,
-  <span class="str">"auth_header_template"</span>: <span class="str">"Bearer {key}"</span>,
-  <span class="str">"extra_headers"</span>: { <span class="str">"OpenAI-Beta"</span>: <span class="str">"assistants=v2"</span> }
-}</pre>
-                            </div>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="method-badge method-get">GET</span>
-                                <code class="font-mono text-sm text-white">/api/v1/init/projects/:id/keys</code>
-                            </div>
-                            <p class="text-gray-400 text-sm">List active keys under a project.</p>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="method-badge method-delete">DELETE</span>
-                                <code class="font-mono text-sm text-white">/api/v1/init/projects/:id/keys/:keyId</code>
-                            </div>
-                            <p class="text-gray-400 text-sm">Revoke a specific stored key.</p>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="method-badge method-put">PUT</span>
-                                <code class="font-mono text-sm text-white">/api/v1/init/projects/:id/keys/:keyId/rotate</code>
-                            </div>
-                            <p class="text-gray-400 text-sm mb-3">Rotate an existing key with a new pair of shares.</p>
-                            <div class="code-block">
-<pre class="text-gray-300">{
-  <span class="str">"share1"</span>: <span class="str">"base64..."</span>,
-  <span class="str">"share2"</span>: <span class="str">"base64..."</span>
-}</pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-10">
-                    <h3 class="text-xl font-semibold text-white mb-5">Proxy</h3>
-                    <p class="text-gray-500 text-sm mb-4">Authenticated with <code class="font-mono text-xs text-vp-accent">Authorization: Bearer vp-proj-...</code> or a supported provider API-key header. Responses are forwarded from the provider, not wrapped by VaultProof.</p>
-                    <div class="space-y-4">
-                        <div class="endpoint-card">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="method-badge method-post">ANY</span>
-                                <code class="font-mono text-sm text-white">/p/:slug/*</code>
-                            </div>
-                            <p class="text-gray-400 text-sm mb-3">Universal provider proxy. The worker looks up the stored upstream config for <code class="font-mono text-xs">:slug</code>, reconstructs the real key in memory, injects auth headers, and forwards the request upstream.</p>
-                            <div class="code-block">
-<pre class="text-gray-300">curl https://init.vaultproof.dev/p/openai/v1/chat/completions \
-  -H <span class="str">"Authorization: Bearer vp-proj-..."</span> \
-  -H <span class="str">"Content-Type: application/json"</span> \
-  -d <span class="str">'{"model":"gpt-4.1-mini","messages":[{"role":"user","content":"Hello"}]}'</span></pre>
-                            </div>
-                        </div>
-
-                        <div class="endpoint-card">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="method-badge method-post">ANY</span>
-                                <code class="font-mono text-sm text-white">/v1/*</code>
-                            </div>
-                            <p class="text-gray-400 text-sm">Stripe compatibility path. Requests to <code class="font-mono text-xs">/v1/*</code> are proxied through the stored <code class="font-mono text-xs">stripe</code> key configuration.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <h3 class="text-xl font-semibold text-white mb-5">Common Error Codes</h3>
-                    <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden">
-                        <table class="doc-table">
-                            <thead><tr><th>Code</th><th>Meaning</th><th>Common Cause</th></tr></thead>
-                            <tbody>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-amber-400">400</code></td>
-                                    <td>Bad Request</td>
-                                    <td class="text-gray-500">Invalid upstream config, missing required fields, or malformed JSON</td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-amber-400">401</code></td>
-                                    <td>Unauthorized</td>
-                                    <td class="text-gray-500">Missing or invalid Supabase JWT, or invalid <code class="font-mono text-xs">vp-proj-...</code> token</td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-amber-400">403</code></td>
-                                    <td>Forbidden</td>
-                                    <td class="text-gray-500">Origin lock rejected the request</td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-amber-400">404</code></td>
-                                    <td>Not Found</td>
-                                    <td class="text-gray-500">Missing project, key, or route</td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-amber-400">429</code></td>
-                                    <td>Rate Limited</td>
-                                    <td class="text-gray-500">Per-project, per-user, or per-IP limits were exceeded</td>
-                                </tr>
-                                <tr>
-                                    <td><code class="font-mono text-xs text-amber-400">500</code></td>
-                                    <td>Internal Error</td>
-                                    <td class="text-gray-500">Share reconstruction failed or the upstream provider returned an unexpected failure</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-
-            <!-- ============================================================ -->
-            <!-- SECTION: SCANNER -->
-            <!-- ============================================================ -->
-            <section id="scanner" class="mb-16">
-                <h2 class="text-3xl font-bold text-white mb-2">Scanner</h2>
-                <p class="text-gray-500 mb-4">The init CLI includes a local env-file scanner as part of the migration flow.</p>
-                <div class="bg-cyan-500/5 border border-cyan-500/20 rounded-md px-4 py-3 mb-8">
-                    <p class="text-gray-400 text-xs"><span class="text-cyan-400 font-medium">Privacy:</span> The init scanner runs locally on your machine. It reads env files, detects supported provider keys or selected custom keys, and only uploads encrypted Shamir shares after you confirm.</p>
-                </div>
-
-                <div class="space-y-6">
-                    <div>
-                        <h3 class="text-lg font-semibold text-white mb-4">CLI Scanner</h3>
-                        <p class="text-gray-400 text-sm mb-4">Install the CLI once, then run one of these commands from your project directory:</p>
-                        <div class="code-block mb-4">
-                            <div class="code-header">commands</div>
-<pre class="text-gray-300">curl -fsSL https://vaultproof.dev/install | sh
-vaultproof-init --dry-run
-vaultproof-init custom
-vaultproof-init secrets add
-vaultproof-init run -- npm run dev
-vaultproof-init netops
-vaultproof-init netops run -- ansible-playbook site.yml
-vaultproof-init --yes
-vaultproof-init --check-legacy
-vaultproof-init doctor</pre>
-                        </div>
-                        <ul class="text-gray-400 text-sm space-y-2 mb-4">
-                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> <code class="font-mono text-xs text-vp-accent">.env</code>, <code class="font-mono text-xs">.env.local</code>, <code class="font-mono text-xs">.env.production</code>, and <code class="font-mono text-xs">.env.development</code></li>
-                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Provider-specific key patterns from the bundled provider catalog</li>
-                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Custom/internal HTTP API keys when you run <code class="font-mono text-xs">custom</code></li>
-                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Vault-only runtime secrets like database URLs, JWT secrets, and webhook secrets when you run <code class="font-mono text-xs">secrets add</code></li>
-                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Ansible and Terraform network automation secrets when you run <code class="font-mono text-xs">netops</code></li>
-                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Legacy <code class="font-mono text-xs">vp_live_</code> references when you run <code class="font-mono text-xs">--check-legacy</code></li>
-                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Worker, auth, and proxy reachability when you run <code class="font-mono text-xs">doctor</code></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Detection</h3>
-                        <p class="text-gray-400 text-sm mb-4">The current init catalog covers providers such as:</p>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm text-gray-400 mb-4">
-                            <span>OpenAI, Anthropic, Groq</span>
-                            <span>Stripe, Resend, SendGrid</span>
-                            <span>OpenRouter, DeepSeek, xAI, DeepL</span>
-                            <span>Azure OpenAI, Twilio, Adyen</span>
-                            <span>Netlify, Render, Heroku</span>
-                            <span>Jira, Zendesk, Freshdesk</span>
-                            <span>GitHub, Notion, Linear</span>
-                            <span>Qdrant, Turso, Meilisearch</span>
-                            <span>Railway, Fly.io, CircleCI</span>
-                            <span>Better Stack, Doppler, Segment</span>
-                            <span>Provider-specific env var hints</span>
-                        </div>
-                        <p class="text-gray-500 text-sm">Detection is driven by the provider catalog, not a broad source-code crawl. The init flow is intentionally focused on env-file migration and rewrite.</p>
-                    </div>
-
-                    <div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Current Scope</h3>
-                        <p class="text-gray-400 text-sm mb-4">The init CLI currently focuses on env-file migration. It does <strong class="text-white">not</strong> scan your full source tree, CI configs, or git history in this repo. The goal is to replace plaintext secrets in the files your app actually loads at runtime.</p>
-                    </div>
-
-                    <div>
-                        <h3 class="text-lg font-semibold text-white mb-4">Dashboard Scanner</h3>
-                        <p class="text-gray-400 text-sm mb-4">A separate hosted scanner is available in the dashboard at <a href="https://vaultproof.dev/app/scanner" class="text-vp-accent hover:underline">vaultproof.dev/app/scanner</a> for remote repository workflows.</p>
-                        <ul class="text-gray-400 text-sm space-y-2">
-                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Repo-level scanning workflows live separately from the init CLI</li>
-                            <li class="flex items-start gap-2"><span class="text-emerald-400 mt-0.5">&#10003;</span> Use the local init scanner when your priority is rewriting plaintext env secrets quickly</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-
-
-            <!-- ============================================================ -->
-            <!-- SECTION 9: FAQ -->
-
-            <!-- ============================================================ -->
-            <section id="faq" class="mb-16">
-                <h2 class="text-3xl font-bold text-white mb-2">Frequently Asked Questions</h2>
-                <p class="text-gray-500 mb-8">Common questions from developers evaluating VaultProof.</p>
-
-                <div class="space-y-4">
-                    <div class="endpoint-card">
-                        <h4 class="text-white font-semibold mb-2">"Can VaultProof see my API keys?"</h4>
-                        <p class="text-gray-400 text-sm">No -- and this is by design, not by policy. Your API key is split into two shares before it is stored. Share 1 is encrypted with a server-side key. Share 2 is stored separately. Neither share alone contains any information about the original key. The full key is only assembled briefly in memory during a proxy call, then immediately wiped. There is no "admin mode" that can view stored keys.</p>
-                    </div>
-
-                    <div class="endpoint-card">
-                        <h4 class="text-white font-semibold mb-2">"What if I lose my VaultProof token?"</h4>
-                        <p class="text-gray-400 text-sm">VaultProof tokens (<code class="font-mono text-xs text-vp-accent">vp-proj-</code>) are not secret -- they are safe to commit and share. You can find your token in the dashboard at any time. If you need a new one, run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code> again. Your stored keys are tied to your account, not to a specific token.</p>
-                    </div>
-
-                    <div class="endpoint-card">
-                        <h4 class="text-white font-semibold mb-2">"What if VaultProof goes down?"</h4>
-                        <p class="text-gray-400 text-sm">If the VaultProof server is unavailable, proxied API calls will fail because the key cannot be reconstructed. However, your API keys at the provider (OpenAI, Anthropic, etc.) are completely unaffected. VaultProof does not modify, rotate, or delete your provider keys. You can always use your original API keys directly if needed. We recommend keeping a backup of critical keys in a secure location for disaster recovery.</p>
-                    </div>
-
-                    <div class="endpoint-card">
-                        <h4 class="text-white font-semibold mb-2">"Is this open source?"</h4>
-                        <p class="text-gray-400 text-sm">Parts of VaultProof are published in this repository, including the website-hosted init CLI, worker, dashboard, and Shamir package. Check the repo metadata for the current licensing and availability of each component.</p>
-                    </div>
-
-                    <div class="endpoint-card">
-                        <h4 class="text-white font-semibold mb-2">"What providers are supported?"</h4>
-                        <p class="text-gray-400 text-sm">The current init catalog includes 250 provider signatures, including OpenAI, Azure OpenAI, Anthropic, Google/Gemini, DeepL, MiniMax, Voyage AI, Jina AI, AI21, AssemblyAI, Hume AI, RunPod, Browserbase, Stripe, Chargebee, Adyen, Twilio, Telnyx, Vonage, MessageBird, Plivo, Paystack, Lemon Squeezy, Groq, xAI, OpenRouter, DeepSeek, Mistral, Together, Fireworks, Resend, SendGrid, Linear, Notion, Figma, Asana, ClickUp, monday.com, Todoist, Coda, Shortcut, GitHub, GitLab, Bitbucket, Jira, Zendesk, Freshdesk, ActiveCampaign, Klaviyo, Iterable, Braze, OneSignal, Novu, Netlify, Render, Heroku, Railway, Fly.io, DigitalOcean, Linode, Vultr, Hetzner, Scaleway, Fastly, HCP Terraform, Pulumi, npm Registry, CircleCI, Buildkite, Semgrep, SonarQube Cloud, Qdrant, Turso, Meilisearch, Typesense, Elasticsearch, Directus, Strapi, Hygraph, DatoCMS, Contentstack, Storyblok, Better Stack, Grafana, Honeycomb, Raygun, LogSnag, Snyk, Doppler, HashiCorp Vault, 1Password Connect, Opsgenie, Statuspage, LaunchDarkly, Split.io, Flagsmith, Segment, Plausible, Webflow, Svix, Knock, Brave Search, Apify, fal.ai, Serper, Make, n8n, Axiom, InfluxDB, Rollbar, BugSnag, Codecov, BrowserStack, Auth0, FusionAuth, Aiven, CockroachDB Cloud, DataStax Astra, Redis Cloud, ClickHouse Cloud, Razorpay, Mollie, GoCardless, Mercado Pago, Wise, Shippo, EasyPost, ShipEngine, Front, Help Scout, Calendly, Typeform, Productboard, Dropbox, Box, Pinata, DeepInfra, Baseten, Cartesia, Unstructured, Luma AI, Portkey, Scale AI, Braintrust, Eden AI, VirusTotal, IPinfo, Apollo, Buttondown, Close, Greenhouse Harvest, Xendit, Midtrans, Coinbase Commerce, Lokalise, Crowdin, Sendbird, Mux, bunny.net, Prerender.io, ImageKit, SambaNova, NVIDIA NIM, FriendliAI, Hyperbolic, Vapi, Retell AI, Rev AI, Speechmatics, Gladia, Soniox, Resemble AI, Infobip, Mailchimp Marketing, Fauna, Zilliz Cloud, Pipedream, Attio, Recurly, Phrase Strings, Transifex, RevenueCat, Qovery, Northflank, Koyeb, Deno Deploy, Supabase, Neon, and more. For proxying, each stored key carries its own validated upstream URL and auth-header template, so the worker can support provider-specific routing without hardcoding every API path.</p>
-                    </div>
-
-                    <div class="endpoint-card">
-                        <h4 class="text-white font-semibold mb-2">"How is this different from 1Password or HashiCorp Vault?"</h4>
-                        <p class="text-gray-400 text-sm">1Password and HashiCorp Vault store secrets and give them back to you in plaintext when you need them. Your application then uses the key directly, meaning it exists in your app's memory, potentially in logs, and definitely in network traffic. VaultProof never gives you the key back. Instead, it makes the API call for you using the reconstructed key, which only exists briefly in VaultProof's memory during the call. Your application never touches the raw key after initial storage.</p>
-                    </div>
-
-                    <div class="endpoint-card">
-                        <h4 class="text-white font-semibold mb-2">"What about HIPAA / SOC 2?"</h4>
-                        <p class="text-gray-400 text-sm">Compliance certifications (SOC 2, HIPAA) are planned but not yet obtained. The current architecture (encryption at rest, TLS in transit, audit logging, access controls) is designed with compliance in mind. Contact us at <span class="text-vp-accent">team@vaultproof.dev</span> for compliance inquiries.</p>
-                    </div>
-
-                    <div class="endpoint-card">
-                        <h4 class="text-white font-semibold mb-2">"Does VaultProof add latency to my API calls?"</h4>
-                        <p class="text-gray-400 text-sm">Yes, but it is minimal. The overhead is the time to decrypt both shares and reconstruct the key (a few milliseconds) plus one additional network hop (edge to backend). For most LLM API calls, which take 500ms-5s to complete, VaultProof adds less than 50ms of overhead -- typically under 2% of the total request time.</p>
-                    </div>
-
-                    <div class="endpoint-card">
-                        <h4 class="text-white font-semibold mb-2">"Can I use VaultProof in production?"</h4>
-                        <p class="text-gray-400 text-sm">Yes. VaultProof runs on a global edge network (330+ cities worldwide) with multi-region database replication. Use your <code class="font-mono text-xs text-vp-accent">vp-proj-</code> token in both production and development -- the proxy handles routing to the correct stored keys for each provider.</p>
-                    </div>
-                </div>
-            </section>
-
-
-            <!-- Footer -->
-            <footer class="border-t border-vp-border pt-8 pb-12 text-center">
-                <p class="text-sm text-gray-600 mb-4">
-                    <a href="/" class="text-gray-400 hover:text-white transition">VaultProof</a> by <a href="/" class="text-gray-400 hover:text-white transition">Rial Labs</a>
-                </p>
-                <div class="flex items-center justify-center gap-6 flex-wrap">
-                    <a href="/terms" class="text-sm text-gray-500 hover:text-white transition-colors">Terms</a>
-                    <a href="/privacy" class="text-sm text-gray-500 hover:text-white transition-colors">Privacy</a>
-                    <a href="/security" class="text-sm text-gray-500 hover:text-white transition-colors">Security</a>
-                    <a href="/abuse" class="text-sm text-gray-500 hover:text-white transition-colors">Abuse</a>
-                </div>
-            </footer>
-
-        </main>
+      <aside class="docs-sidebar" aria-label="Documentation sections">
+        <a href="#quick-start">Quick start</a>
+        <a href="#onboarding">Onboarding</a>
+        <a href="#connect-site">Connect your site</a>
+        <a href="#dashboard">Using the dashboard</a>
+        <a href="#providers">Providers</a>
+        <a href="#operations">Daily operations</a>
+        <a href="#troubleshooting">Troubleshooting</a>
+        <a href="#faq">FAQ</a>
+      </aside>
+
+      <article class="docs-main">
+        <section class="docs-section" id="quick-start">
+          <div class="section-heading">
+            <p class="eyebrow">Quick start</p>
+            <h2>Install once, run init, restart your app.</h2>
+            <p>For common providers, you should not need to edit application code. The init tool reads your environment files, protects detected keys, and writes the VaultProof values your SDKs need.</p>
+          </div>
+
+          <div class="code-card">
+            <div class="code-title">In your app folder</div>
+            <pre><code>curl -fsSL https://vaultproof.dev/install | sh
+vaultproof-init</code></pre>
+          </div>
+
+          <div class="callout success">
+            <strong>What changes?</strong>
+            <span>Your raw provider keys are replaced with a VaultProof token, and supported providers get generated base URL values such as <code>OPENAI_BASE_URL</code>. The CLI handles the setup and tells you what changed.</span>
+          </div>
+
+          <div class="card-grid three">
+            <div class="doc-card">
+              <h3>Works from your project root</h3>
+              <p>Run the command where your app keeps env files like <code>.env</code>, <code>.env.local</code>, <code>.env.production</code>, or <code>.env.development</code>.</p>
+            </div>
+            <div class="doc-card">
+              <h3>No raw key in the app</h3>
+              <p>Your app uses the VaultProof token in place of the original key. The real provider credential is reconstructed only inside VaultProof when a call is routed.</p>
+            </div>
+            <div class="doc-card">
+              <h3>One test before deploy</h3>
+              <p>Restart your local app and trigger one provider request. Check Activity Logs for the call before pushing the same env values to production.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="docs-section" id="onboarding">
+          <div class="section-heading">
+            <p class="eyebrow">Onboarding</p>
+            <h2>Get your first app into VaultProof.</h2>
+            <p>Use this checklist when setting up a project for the first time.</p>
+          </div>
+
+          <ol class="step-list">
+            <li>
+              <span class="step-number">1</span>
+              <div>
+                <h3>Create or sign in</h3>
+                <p>Open the VaultProof app, sign in, and keep the dashboard open while you run setup. The CLI may open the browser so it can connect the app to your account.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-number">2</span>
+              <div>
+                <h3>Run the hosted installer</h3>
+                <p>The installer downloads the CLI from <code>vaultproof.dev/downloads</code>, verifies the hosted manifest, and installs a bundled provider catalog for offline fallback.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-number">3</span>
+              <div>
+                <h3>Run <code>vaultproof-init</code></h3>
+                <p>Confirm the providers it finds. The tool protects each key and writes a VaultProof block to your env file. Do not hand-edit the generated values unless support asks you to.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-number">4</span>
+              <div>
+                <h3>Restart and test</h3>
+                <p>Restart your local server so the new env values load. Trigger one real request, then open Activity Logs to confirm the provider, route, status, and latency.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section class="docs-section" id="connect-site">
+          <div class="section-heading">
+            <p class="eyebrow">Connect your site</p>
+            <h2>Move from local setup to production.</h2>
+            <p>After local setup works, copy the generated VaultProof env values into your hosting provider. This is the part most teams need for Vercel, Netlify, Cloudflare Pages, Render, Railway, Fly.io, or a custom server.</p>
+          </div>
+
+          <div class="split-grid">
+            <div class="doc-card">
+              <h3>Local env file</h3>
+              <p>Your env file should now include a generated VaultProof block. Keep the generated values together so future reruns stay easy to review.</p>
+              <div class="code-card compact">
+                <pre><code># Generated by vaultproof-init
+VAULTPROOF_PROJECT_ID=vp-proj-...
+OPENAI_API_KEY=vp-proj-...
+OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1</code></pre>
+              </div>
+            </div>
+            <div class="doc-card">
+              <h3>Production env values</h3>
+              <p>In your hosting dashboard, replace the raw provider secret with the generated VaultProof token and add any generated <code>*_BASE_URL</code> values. Then redeploy.</p>
+              <ul class="check-list">
+                <li>Use the same env variable names your app already reads.</li>
+                <li>Remove the old raw provider key from production secrets.</li>
+                <li>Redeploy or restart so the new values load.</li>
+                <li>Check Activity Logs after the first production call.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout info">
+            <strong>The init tool owns code setup.</strong>
+            <span>For supported providers, do not manually rewrite SDK code. If VaultProof cannot automatically route a provider, the CLI prints the exact follow-up it needs.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="dashboard">
+          <div class="section-heading">
+            <p class="eyebrow">Dashboard</p>
+            <h2>What each page is for.</h2>
+            <p>The app is organized around monitoring, managing protected keys, and reviewing security events.</p>
+          </div>
+
+          <div class="card-grid two">
+            <div class="doc-card">
+              <h3>Dashboard</h3>
+              <p>See proxy calls, success rate, latency, and active routes. Use this page first after onboarding to confirm traffic is flowing through VaultProof.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Protected Keys</h3>
+              <p>Review VaultProof tokens and the provider keys attached to them. Use this page to add keys manually, rotate a protected key, or delete a token you no longer use.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Activity Logs</h3>
+              <p>Filter requests by project, provider, status, endpoint, and time. This is the fastest way to answer, "Did my app call the provider through VaultProof?"</p>
+            </div>
+            <div class="doc-card">
+              <h3>Security Alerts</h3>
+              <p>Review suspicious usage, provider failures, limits, and incidents that may need action. Alerts should be handled before they become production issues.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Repository Scanner</h3>
+              <p>Connect GitHub to find accidentally committed keys and migration opportunities. Scanner findings help you rotate, replace, or ignore detected secrets.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Settings and Plans</h3>
+              <p>Manage account access, guardrails, billing, and usage limits. If you hit a plan limit, upgrade before production traffic starts failing.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="docs-section" id="providers">
+          <div class="section-heading">
+            <p class="eyebrow">Providers</p>
+            <h2>Provider catalog: 250 signatures.</h2>
+            <p>The live provider catalog is version 9 and was last updated on 2026-05-21. <code>vaultproof-init</code> downloads <code>/providers.json</code> on each run and uses it to detect keys, choose env names, and configure provider routes.</p>
+          </div>
+
+          <div class="provider-meta">
+            <div><strong>250</strong><span>provider signatures</span></div>
+            <div><strong>v9</strong><span>catalog version</span></div>
+            <div><strong>2026-05-21</strong><span>last catalog update</span></div>
+            <a class="button secondary" href="/providers.json">View full catalog</a>
+          </div>
+
+          <div class="provider-grid">
+            <div class="provider-group">
+              <h3>AI and model APIs</h3>
+              <p>OpenAI, Azure OpenAI, Anthropic, Groq, xAI, OpenRouter, DeepSeek, Mistral, Together AI, Fireworks AI, Cohere, Replicate, Hugging Face, Perplexity, Cerebras, ElevenLabs, Pinecone, Stability AI.</p>
+            </div>
+            <div class="provider-group">
+              <h3>Payments and commerce</h3>
+              <p>Stripe, Paystack, Lemon Squeezy, Mollie, GoCardless, Mercado Pago, Wise, Square, and related API-key based services.</p>
+            </div>
+            <div class="provider-group">
+              <h3>Email and messaging</h3>
+              <p>Resend, SendGrid, Brevo, Mailgun, Postmark, SparkPost, MailerSend, Mailjet, Mailtrap, Loops, Courier, Customer.io.</p>
+            </div>
+            <div class="provider-group">
+              <h3>DevOps and infrastructure</h3>
+              <p>GitHub, GitLab, CircleCI, Buildkite, Semgrep, SonarQube Cloud, Snyk, Codecov, LaunchDarkly, HCP Terraform, Pulumi, npm Registry, Doppler, DigitalOcean, Netlify, Render, Railway, Fly.io, Supabase, PlanetScale, Neon.</p>
+            </div>
+            <div class="provider-group">
+              <h3>Observability</h3>
+              <p>Sentry, New Relic, Datadog, Honeycomb, Better Stack, LogSnag, Raygun, Rollbar, BugSnag, Axiom.</p>
+            </div>
+            <div class="provider-group">
+              <h3>Product and workflow</h3>
+              <p>Linear, Notion, Figma, Asana, ClickUp, monday.com, Todoist, Coda, Shortcut, Webflow, and more.</p>
+            </div>
+          </div>
+
+          <div class="callout warning">
+            <strong>If your provider is not detected:</strong>
+            <span>Run <code>vaultproof-init custom</code> and follow the prompts. The CLI can protect custom or internal API keys when you provide the public HTTPS upstream and auth header format.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="operations">
+          <div class="section-heading">
+            <p class="eyebrow">Daily operations</p>
+            <h2>How to work with VaultProof after setup.</h2>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Task</th>
+                  <th>Where to go</th>
+                  <th>What to do</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Confirm traffic</td>
+                  <td>Dashboard or Activity Logs</td>
+                  <td>Look for the provider, endpoint, status, and latency after your app makes a request.</td>
+                </tr>
+                <tr>
+                  <td>Add another provider</td>
+                  <td>Run <code>vaultproof-init</code> again</td>
+                  <td>Add the provider key to your env file, rerun init, restart, and test.</td>
+                </tr>
+                <tr>
+                  <td>Rotate a key</td>
+                  <td>Protected Keys</td>
+                  <td>Paste the rotated provider key into the existing token so your app can keep the same VaultProof value.</td>
+                </tr>
+                <tr>
+                  <td>Deploy to production</td>
+                  <td>Your hosting provider</td>
+                  <td>Copy generated VaultProof env values to production secrets and redeploy.</td>
+                </tr>
+                <tr>
+                  <td>Investigate errors</td>
+                  <td>Security Alerts and Activity Logs</td>
+                  <td>Check status codes, provider failures, limits, and whether the request reached VaultProof.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="docs-section" id="troubleshooting">
+          <div class="section-heading">
+            <p class="eyebrow">Troubleshooting</p>
+            <h2>Common user fixes.</h2>
+            <p>These are safe checks for the app owner. If you are supporting customers from the admin console, use the separate admin support guide.</p>
+          </div>
+
+          <div class="card-grid two">
+            <div class="doc-card">
+              <h3>The app still calls the provider directly</h3>
+              <p>Restart your app and confirm the generated <code>*_BASE_URL</code> values are loaded in the same environment your process uses.</p>
+            </div>
+            <div class="doc-card">
+              <h3>The provider call returns unauthorized</h3>
+              <p>Check that the protected key exists on the Protected Keys page. If you rotated the upstream provider key, update it in VaultProof too.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Init did not find a key</h3>
+              <p>Confirm the key is in one of the scanned env files and uses a provider shape in the catalog. For internal services, run <code>vaultproof-init custom</code>.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Production works locally but not after deploy</h3>
+              <p>Compare local env values with hosting secrets. Production usually fails when an old raw key, missing base URL, or stale deployment is still active.</p>
+            </div>
+          </div>
+
+          <div class="callout info">
+            <strong>Need more help?</strong>
+            <span>Send support the provider name, env variable names, hosting provider, approximate timestamp, and request ID from Activity Logs. Do not send raw provider keys.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="faq">
+          <div class="section-heading">
+            <p class="eyebrow">FAQ</p>
+            <h2>Short answers.</h2>
+          </div>
+
+          <div class="faq-list">
+            <details>
+              <summary>Is the VaultProof token a raw provider key?</summary>
+              <p>No. The VaultProof token routes traffic to the protected key stored in VaultProof. It does not reveal the original provider credential.</p>
+            </details>
+            <details>
+              <summary>Do I need a VaultProof SDK?</summary>
+              <p>No for the normal setup path. The init tool configures supported providers so existing SDKs can keep working through generated environment values.</p>
+            </details>
+            <details>
+              <summary>Can I commit the generated env block?</summary>
+              <p>The VaultProof token is designed to be less sensitive than the raw provider key, but follow your team's policy for env files. Never commit the original raw provider key.</p>
+            </details>
+            <details>
+              <summary>What if I use an internal API?</summary>
+              <p>Run <code>vaultproof-init custom</code>. The CLI will ask for the upstream HTTPS URL and the header format used by that service.</p>
+            </details>
+          </div>
+        </section>
+      </article>
     </div>
-    </div>
+  </main>
 
-    <!-- Sidebar active state tracking -->
-    <script src="/js/docs-3.js" defer></script>
-
-    
-
-<script src="/js/analytics.js" defer></script>
-<script src="/js/docs-4.js" defer></script>
-<script src="/js/docs-5.js" defer></script>
+  <footer class="docs-footer">
+    <span>VaultProof user docs</span>
+    <a href="/security">Security</a>
+    <a href="/app/login">Open app</a>
+  </footer>
 </body>
 </html>
