@@ -78,7 +78,7 @@ async function seedDemoProject(token) {
   const createProjectResponse = await initApi('/projects', token, {
     method: 'POST',
     body: JSON.stringify({
-      name: 'GCP Enterprise Execute Demo',
+      name: 'GCP Enterprise Execute Test',
       strict_origin: false,
     }),
   });
@@ -93,7 +93,7 @@ async function seedDemoProject(token) {
     return false;
   }
 
-  const shares = splitString('sk-vaultproof-enterprise-demo-invalid-key', 2, 2);
+  const shares = splitString('sk-vaultproof-enterprise-test-invalid-key', 2, 2);
   const uploadKeyResponse = await initApi(`/projects/${createProjectResponse.body.id}/keys`, token, {
     method: 'POST',
     body: JSON.stringify({
@@ -138,8 +138,8 @@ if (!projectsResponse.ok && projectsResponse.body?.error === 'Organization not f
   const orgResponse = await api('/orgs', token, {
     method: 'POST',
     body: JSON.stringify({
-      name: 'VaultProof Enterprise Demo',
-      slug: `vaultproof-enterprise-demo-${suffix}`,
+      name: 'VaultProof Enterprise Test',
+      slug: `vaultproof-enterprise-test-${suffix}`,
     }),
   });
   console.log(JSON.stringify({

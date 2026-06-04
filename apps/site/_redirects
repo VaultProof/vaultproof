@@ -1,3 +1,5 @@
+/enterprise-demo / 301
+/enterprise-demo/ / 301
 /app/control https://enterprise.vaultproof.dev/app/control 302
 /app/control.html https://enterprise.vaultproof.dev/app/control 302
 /app/members https://enterprise.vaultproof.dev/app/members 302

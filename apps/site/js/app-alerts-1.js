@@ -363,7 +363,6 @@
       'Reference links',
       '- Docs: /docs',
       '- Security: /security',
-      '- Enterprise pilot: /enterprise-demo',
     ].join('\n');
   }
   function buildDispatchRunsCsv() {

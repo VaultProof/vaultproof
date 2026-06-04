@@ -8,7 +8,6 @@
   <url><loc>https://vaultproof.dev/blog/secure-openai-api-key</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://vaultproof.dev/blog/vibe-coding-leaking-secrets</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://vaultproof.dev/blog/vaultproof-vs-doppler-vault</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
-  <url><loc>https://vaultproof.dev/blog/mcp-config-secrets-leak</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://vaultproof.dev/blog/trivy-supply-chain-attack</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://vaultproof.dev/cicd-kubernetes</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
   <url>

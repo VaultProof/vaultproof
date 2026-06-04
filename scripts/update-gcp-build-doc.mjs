@@ -552,7 +552,7 @@ Project and Provider Slots pages now classify each active slot as \`live sealed\
 
 ## Feature: Enterprise Provider Preset Catalog
 
-Status: \`built for enterprise demo\`
+Status: \`built for enterprise rollout\`
 
 \`https://${edgeDomain}/app/keys\` now supports an expanded provider preset catalog for the auth patterns the secure executor already supports: generic bearer, generic custom-header, generic preformatted Basic, provider-specific bearer/header templates, account-specific upstream hosts, and non-secret fixed extra headers. Presets include common AI, email, developer, observability, payments, search, infrastructure, database/vector, identity, cloud management, CI/CD, registry, secrets-management, analytics, and SaaS APIs. Recent additions include Azure Management, GCP Resource Manager, Microsoft Graph, Google Workspace, Fastly, Tailscale, Fly, Railway, Terraform Cloud, Pulumi, Bitbucket, CircleCI, Buildkite, Docker Hub, Quay, npm Registry, Better Stack, LogSnag, Raygun, Semgrep, SonarCloud, Elasticsearch, Elastic Cloud, Meilisearch, Typesense, Kubernetes, HashiCorp Vault, 1Password Connect, Doppler, Infisical, Segment, Plausible, Hume, RunPod, Webflow, Salesforce, Zoho CRM, Zoom, Facebook Graph, LinkedIn, and WordPress. Datadog remains metadata/manual-inventory only until multi-secret provider slots are built because it needs both an API key and an application key.
 
@@ -560,7 +560,7 @@ Provider-slot creation still creates demo-placeholder material in the browser fl
 
 ## Feature: API Inventory Management
 
-Status: \`built for enterprise demo\`
+Status: \`built for enterprise rollout\`
 
 \`https://${edgeDomain}/app/inventory\` gives customer security and platform teams a metadata-only system of record for protected API surfaces: project, provider slot, manual API key metadata, owner, environment, business service, risk level, data sensitivity, caller-lock posture, policy status, last-seen traffic, denial/error posture, review status, and evidence/export links.
 
@@ -570,7 +570,7 @@ Inventory records must never store raw provider keys, bearer tokens, OAuth clien
 
 ## Feature: Policy Drift And Exceptions
 
-Status: \`built for enterprise demo\`
+Status: \`built for enterprise rollout\`
 
 \`https://${edgeDomain}/app/policy\` gives customer security, platform, and app teams a policy drift board tied to API inventory. It shows customer-safe control-gap rows for missing provider slots, weak or absent caller-lock policy, demo-placeholder material on a paid path, missing owners, stale or no recent traffic, review overdue, and blocked inventory rows.
 
@@ -580,7 +580,7 @@ Exception records must never store raw provider keys, bearer tokens, OAuth clien
 
 ## Feature: Integration Rollout Manager
 
-Status: \`built for enterprise demo\`
+Status: \`built for enterprise rollout\`
 
 \`https://${edgeDomain}/app/rollout\` helps a customer move one workload from direct provider calls into VaultProof by showing rollout state, integration mode, app and gateway owners, target date, support window, canary percentage, test status, rollback path, blockers, snippets, and evidence links.
 
@@ -590,7 +590,7 @@ Rollout records must never store raw provider keys, bearer tokens, OAuth client 
 
 ## Feature: Scanner Exposure Intake
 
-Status: \`built for enterprise demo\`
+Status: \`built for enterprise rollout\`
 
 \`https://${edgeDomain}/app/scanner\` gives customer security and platform teams a metadata-only place to record repository exposure findings before paid traffic. It captures repository/ref, finding class, secret family, severity, status, owner, provider-slot hint, redacted evidence reference, and remediation note without uploading repositories or secret values.
 
@@ -600,7 +600,7 @@ Scanner records must never store raw secret values, repository credentials, sour
 
 ## Feature: Release Evidence Center
 
-Status: \`built for enterprise demo\`
+Status: \`built for enterprise rollout\`
 
 \`https://${edgeDomain}/app/release\` gives customer security, platform, and procurement teams a customer-safe change proof trail. It records release label, build/image tag, change summary, approver, verifier, verification status, rollout state, rollback owner/path, and evidence notes.
 
@@ -610,7 +610,7 @@ Release records must never store raw provider keys, encrypted provider shares, S
 
 ## Feature: Paid-Pilot Tester Readiness
 
-Status: \`built for enterprise demo\`
+Status: \`built for enterprise rollout\`
 
 \`https://${edgeDomain}/app/testers\` gives operators a customer-safe board for tomorrow's paid-user testers. It records tester name/email, team, role, scenario, login/scenario status, VaultProof owner, guided session window, facilitator, customer owner, success criteria, customer action, blocker note, and customer-safe feedback.
 
@@ -620,7 +620,7 @@ Tester records must never store passwords, browser session tokens, Supabase serv
 
 ## Feature: Paid-User Entitlements
 
-Status: \`built for enterprise demo\`
+Status: \`built for enterprise rollout\`
 
 \`https://${edgeDomain}/app/entitlements\` gives paid-pilot customers a customer-safe contract, capacity, commercial handoff, and amendment/renewal view. It records package, contract status, monthly call allowance, provider-slot allowance, seat allowance, support tier, incident-response add-on status, runtime type, renewal/review date, billing owner, success owner, retention label, invoice status, PO status, procurement owner, payment terms, expansion review date, amendment/change records, and customer-safe notes.
 
@@ -630,7 +630,7 @@ Entitlement records and capacity briefs must never store card numbers, bank data
 
 ## Feature: Paid-Customer Onboarding
 
-Status: \`built for enterprise demo\`
+Status: \`built for enterprise rollout\`
 
 \`https://${adminDomain}/app/onboarding\` gives staff operators a customer-safe activation board after entitlements are accepted. It records customer kickoff owner, enterprise admin login handoff, first workload owner, support handoff, capacity/renewal review, key posture acceptance or rotation scheduling, customer testing window, and role-specific tasks for security, platform, app owner, billing, and support contacts.
 

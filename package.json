@@ -40,7 +40,6 @@
     "harden:enterprise-ssh": "bash infra/azure/enterprise-secure-runtime/harden-ssh-bootstrap.sh",
     "package:enterprise-handoff": "node scripts/build-enterprise-handoff-package.mjs",
     "validate:enterprise-evidence": "node scripts/validate-enterprise-production-evidence.mjs",
-    "seed:enterprise-demo-account": "node scripts/create-enterprise-demo-account.mjs",
     "seal:enterprise-provider-slot": "node scripts/enterprise-seal-provider-slot.mjs",
     "mint:enterprise-runtime-token": "node scripts/enterprise-mint-runtime-token.mjs",
     "dev": "turbo run dev",
