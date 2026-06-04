@@ -446,8 +446,9 @@ body.scanner-app #sidebar:focus-within {
   margin-bottom: 18px !important;
 }
 
-.sidebar-group:first-of-type {
-  margin-top: 12px !important;
+.sidebar.enterprise-app-sidebar > .sidebar-group:first-child,
+body.scanner-app #sidebar.enterprise-app-sidebar > .sidebar-group:first-child {
+  padding-top: 14px !important;
 }
 
 .sidebar-head {

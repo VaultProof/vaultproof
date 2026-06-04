@@ -193,6 +193,11 @@
       });
     }
 
+    async function readApiError(res, fallback) {
+      var data = await res.json().catch(function() { return {}; });
+      return data.error || data.detail || data.message || fallback;
+    }
+
     // --- Provider badges ---
     const providerColors = {
       openai:      { badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', dot: 'bg-emerald-400' },
@@ -871,12 +876,15 @@
           body: JSON.stringify({ name: name || undefined })
         });
         if (!res) { btn.disabled = false; btn.textContent = 'create token'; return; }
-        if (!res.ok) throw new Error((await res.json().catch(function() { return {}; })).error || 'Failed');
+        if (!res.ok) throw new Error(await readApiError(res, 'Failed to create token'));
         var data = await res.json();
+        var createdProjectId = data.id || '';
         closeCreateProjectModal();
         showToast('VaultProof token ' + data.vp_proj_id + ' created', 'success');
-        loadProjects();
+        expandedProjectId = createdProjectId || expandedProjectId;
+        await loadProjects();
         loadStats();
+        if (createdProjectId) openAddKeyModal(createdProjectId);
       } catch(err) {
         document.getElementById('createProjectMsg').textContent = err.message;
         document.getElementById('createProjectMsg').className = 'text-sm text-red-400';
@@ -893,14 +901,20 @@
       document.getElementById('addKeyEnvVar').value = '';
       document.getElementById('addKeyValue').value = '';
       document.getElementById('addKeyMsg').classList.add('hidden');
+      document.getElementById('addKeyDetected').classList.add('hidden');
+      document.getElementById('addKeyDetectedLabel').textContent = '';
       document.getElementById('addKeyModal').classList.remove('hidden');
       document.getElementById('addKeyModal').classList.add('flex');
+      document.getElementById('addKeyValue').focus();
     }
 
     function closeAddKeyModal() {
       document.getElementById('addKeyModal').classList.add('hidden');
       document.getElementById('addKeyModal').classList.remove('flex');
-      document.getElementById('addKeyValue').value = '';
+      document.getElementById('addKeyForm').reset();
+      document.getElementById('addKeyDetected').classList.add('hidden');
+      document.getElementById('addKeyDetectedLabel').textContent = '';
+      document.getElementById('addKeyMsg').classList.add('hidden');
     }
 
     document.getElementById('addKeyForm').addEventListener('submit', async function(e) {
@@ -910,15 +924,20 @@
       var keyValue = '';
       var share1 = '';
       var share2 = '';
+      var uploaded = false;
       try {
         var projectId = document.getElementById('addKeyProjectId').value;
         var provider = document.getElementById('addKeyProvider').value;
         var envVar = document.getElementById('addKeyEnvVar').value.trim();
         keyValue = document.getElementById('addKeyValue').value;
+        if (!projectId) throw new Error('Choose a VaultProof token before adding a key');
         if (!provider) throw new Error('Select a provider');
         if (!keyValue) throw new Error('Paste an API key');
         var config = PROVIDER_CONFIG[provider];
         if (!config) throw new Error('Unknown provider');
+        if (!window.crypto || !crypto.getRandomValues) {
+          throw new Error('Secure browser crypto is unavailable. Reload the page over HTTPS and try again.');
+        }
         // Shamir split
         var shares = shamirSplit(new TextEncoder().encode(keyValue), 2, 2);
         share1 = shamirSerialize(shares[0]);
@@ -940,9 +959,11 @@
           body: JSON.stringify(body)
         });
         if (!res) { btn.disabled = false; btn.textContent = 'Split & Protect'; return; }
-        if (!res.ok) throw new Error((await res.json().catch(function() { return {}; })).error || 'Failed');
+        if (!res.ok) throw new Error(await readApiError(res, 'Failed to protect key'));
+        uploaded = true;
         closeAddKeyModal();
         showToast((envVar || provider) + ' protected via Shamir splitting', 'success');
+        expandedProjectId = projectId;
         loadProjectKeys(projectId);
         loadStats();
       } catch(err) {
@@ -953,7 +974,7 @@
         keyValue = '';
         share1 = '';
         share2 = '';
-        document.getElementById('addKeyValue').value = '';
+        if (uploaded) document.getElementById('addKeyValue').value = '';
         btn.disabled = false; btn.textContent = 'Split & Protect';
       }
     });

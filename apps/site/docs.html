@@ -564,7 +564,7 @@
         }
     </style>
   <link rel="stylesheet" href="/css/site-theme.css">
-  <link rel="stylesheet" href="/css/docs-theme.css?v=20260604a">
+  <link rel="stylesheet" href="/css/docs-theme.css?v=20260604b">
 </head>
 <body>
 
@@ -670,54 +670,12 @@
         <!-- Main Content -->
         <main class="flex-1 lg:ml-[260px] px-6 md:px-12 py-10 max-w-4xl">
 
-            <!-- NEW SYSTEM BANNER -->
-            <div class="bg-indigo-950/50 border border-indigo-500/30 rounded-lg p-5 mb-10">
-                <div class="flex items-start gap-3">
-                    <span class="text-indigo-400 text-xl mt-0.5">&#9889;</span>
-                    <div>
-                        <h3 class="text-white font-bold text-base mb-1">New: one command to protect every key</h3>
-                        <p class="text-gray-400 text-sm leading-relaxed mb-3">Install the VaultProof CLI from our site, then run it in your app:</p>
-                        <pre class="bg-black/40 rounded px-4 py-2 text-sm font-mono text-indigo-300 mb-3 inline-block">curl -fsSL https://vaultproof.dev/install | sh</pre>
-                        <pre class="bg-black/40 rounded px-4 py-2 text-sm font-mono text-indigo-300 mb-3 inline-block">vaultproof-init</pre>
-                        <p class="text-gray-500 text-xs leading-relaxed">This scans your <code class="text-gray-400">.env</code>, Shamir-splits each key locally, and rewrites your environment with one <code class="text-gray-400">vp-proj-</code> VaultProof token. Zero code changes.</p>
-                    </div>
-                </div>
-            </div>
-
             <!-- ============================================================ -->
             <!-- SECTION 1: OVERVIEW -->
             <!-- ============================================================ -->
-            <section id="overview" class="mb-16">
+            <section id="overview" class="mb-10">
                 <h1 class="text-4xl font-extrabold text-white mb-3 tracking-tight">VaultProof Documentation</h1>
-                <p class="text-lg text-gray-400 mb-8 leading-relaxed max-w-2xl">Everything you need to store, protect, and proxy your API keys and secrets with split-key security.</p>
-
-                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-8">
-                    <h2 class="text-xl font-bold text-white mb-3">What is VaultProof?</h2>
-                    <p class="text-gray-400 leading-relaxed mb-4">
-                        VaultProof is a security layer for API keys and secrets. It splits your keys, encrypts the shares separately, and reassembles them only briefly in memory during a proxied API call. Your raw API key is never stored whole at rest on any server.
-                    </p>
-                    <p class="text-gray-400 leading-relaxed mb-4">
-                        It is built for developers who work with third-party API keys -- OpenAI, Anthropic, Google AI, Together.ai, and more. If you have ever committed a key to GitHub, emailed a key to a teammate, or stored a key in plaintext in a .env file on a server, VaultProof solves that problem.
-                    </p>
-                    <div class="callout-warn mt-5">
-                        <p class="text-sm text-amber-200"><strong class="text-amber-300">The problem is real:</strong> In 2024, GitHub detected 39 million leaked secrets in public repositories. API keys are the number one attack vector for credential theft. One leaked OpenAI key can cost you thousands of dollars in minutes.</p>
-                    </div>
-                </div>
-
-                <div class="grid md:grid-cols-3 gap-4">
-                    <div class="bg-vp-surface border border-vp-border rounded-md p-5">
-                        <div class="text-vp-accent font-semibold mb-2">Store</div>
-                        <p class="text-sm text-gray-500">Split and encrypt API keys with split-key encryption. No one -- including us -- can see the full key.</p>
-                    </div>
-                    <div class="bg-vp-surface border border-vp-border rounded-md p-5">
-                        <div class="text-vp-accent font-semibold mb-2">Proxy</div>
-                        <p class="text-sm text-gray-500">Make API calls through VaultProof. The key is reconstructed briefly in memory, then destroyed.</p>
-                    </div>
-                    <div class="bg-vp-surface border border-vp-border rounded-md p-5">
-                        <div class="text-vp-accent font-semibold mb-2">Audit</div>
-                        <p class="text-sm text-gray-500">Every proxied call is logged with timestamp, endpoint, status code, and latency. Full audit trail.</p>
-                    </div>
-                </div>
+                <p class="text-lg text-gray-400 mb-0 leading-relaxed max-w-2xl">Protect provider API keys with a website-hosted CLI, a VaultProof token, and provider-compatible proxy URLs.</p>
             </section>
 
 
@@ -726,37 +684,25 @@
             <!-- ============================================================ -->
             <section id="quick-start" class="mb-16">
                 <h2 class="text-3xl font-bold text-white mb-2">Quick Start</h2>
-                <p class="text-gray-500 mb-8">Three ways to use VaultProof. The Proxy URL is the fastest -- install the VaultProof CLI from <code class="font-mono text-xs text-vp-accent">vaultproof.dev/install</code>, run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>, and every SDK works.</p>
+                <p class="text-gray-500 mb-8">Install once, run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code>, then route SDK calls through the generated base URLs.</p>
 
                 <!-- Proxy URL vs SDK vs CLI vs Dashboard -->
                 <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-8">
                     <table class="doc-table">
-                        <thead><tr><th>Tool</th><th>What it is</th><th>Use when</th><th>Install</th></tr></thead>
+                        <thead><tr><th>Tool</th><th>Purpose</th><th>Setup</th></tr></thead>
                         <tbody>
                             <tr class="bg-vp-accent/[0.04]">
                                 <td><code class="font-mono text-xs text-vp-accent">Proxy URL</code> <span class="text-[0.625rem] font-bold text-emerald-400 ml-1">RECOMMENDED</span></td>
-                                <td>Change your base URL to route through VaultProof</td>
-                                <td>Any app using OpenAI, Anthropic, Google, or any AI SDK</td>
-                                <td>No install -- just change one line</td>
+                                <td>Route SDK calls through VaultProof</td>
+                                <td>Use the generated <code class="font-mono text-xs text-vp-accent">*_BASE_URL</code></td>
                             </tr>
                             <tr>
                                 <td><code class="font-mono text-xs text-vp-accent">vaultproof-init</code></td>
-                                <td>One command that scans your .env, splits every key, and rewrites your environment</td>
-                                <td>Any project with a .env file containing API keys</td>
+                                <td>Protect keys from your <code class="font-mono text-xs text-vp-accent">.env</code></td>
                                 <td><code class="font-mono text-xs text-vp-accent">curl -fsSL https://vaultproof.dev/install | sh</code></td>
-                            </tr>
-                            <tr>
-                                <td><a href="/app" class="text-vp-accent hover:underline">Dashboard</a></td>
-                                <td>Web UI at vaultproof.dev/app</td>
-                                <td>Visual key management, usage monitoring, team settings</td>
-                                <td>No install -- just open in browser</td>
                             </tr>
                         </tbody>
                     </table>
-                </div>
-
-                <div class="callout-warn mb-8">
-                    <p class="text-sm text-amber-200"><strong class="text-amber-300">All three tools do the same thing under the hood:</strong> split your key, encrypt both shares with different keys, and proxy API calls so the full key is only assembled briefly in memory. The difference is the interface.</p>
                 </div>
 
                 <!-- Path A: Proxy URL (RECOMMENDED) -->
@@ -765,11 +711,11 @@
                         <span class="bg-emerald-500/15 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded">RECOMMENDED</span>
                         <h3 class="text-lg font-semibold text-white">Proxy URL -- 1-line change</h3>
                     </div>
-                    <p class="text-gray-500 text-sm mb-4">The fastest way to use VaultProof. Keep your existing SDK, just change the base URL. All SDK features work -- streaming, retries, types, everything.</p>
+                    <p class="text-gray-500 text-sm mb-4">Keep your existing SDK and change the base URL.</p>
 
                     <p class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Setup (once)</p>
                     <ol class="list-decimal list-inside space-y-1.5 text-sm text-gray-400 mb-6">
-                        <li>Install once with <code class="font-mono text-xs text-vp-accent">curl -fsSL https://vaultproof.dev/install | sh</code>, then run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code> -- it scans your .env, splits each key, and rewrites your environment</li>
+                        <li>Install with <code class="font-mono text-xs text-vp-accent">curl -fsSL https://vaultproof.dev/install | sh</code>, then run <code class="font-mono text-xs text-vp-accent">vaultproof-init</code></li>
                         <li>Your .env now has a <code class="font-mono text-xs text-vp-accent">vp-proj-</code> VaultProof token and per-provider <code class="font-mono text-xs text-vp-accent">*_BASE_URL</code> entries</li>
                         <li>Done -- your existing code works, key is protected</li>
                     </ol>
