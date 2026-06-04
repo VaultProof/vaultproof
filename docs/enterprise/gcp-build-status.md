@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-06-03T09:39:49.121Z
+Last updated: 2026-06-04T23:44:21.256Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -39,11 +39,11 @@ Status: `partially verified live on 2026-05-22; strict session proof still block
 
 For the final demo go/no-go run, use `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env loaded. That strict mode generates a temporary magic-link session for `ken@vaultproof.dev`, which also proves the Supabase Auth redirect allowlist accepts `https://enterprise.vaultproof.dev/app/login`, then calls `/api/v1/enterprise/orgs`, `/orgs/current`, and `/projects/bootstrap` with the generated browser session. To verify a specific external provider redirect, add `LOGIN_QA_OAUTH_PROVIDER=google` after the provider is configured.
 
-Latest live check on 2026-06-03:
+Latest live check on 2026-06-04:
 
 - `npm run qa:enterprise-live-app` passed against `https://enterprise.vaultproof.dev`: `production_ready: true`, `security_profile: google-confidential-production`, 26 app paths, 7 staff-only paths, and the discovered enterprise links checked.
-- `npm run verify:gcp-enterprise-edge` passed after deploying build `60168ba8`. The verifier confirmed edge IP `34.102.179.105`, active managed TLS for `enterprise.vaultproof.dev`, healthy backend `vaultproof-enterprise-runtime-1:3001`, `/health`, and `/readiness`.
-- `npm run verify:gcp-enterprise-cloud-armor` passed after deploying build `60168ba8`. The verifier confirmed `vaultproof-enterprise-armor` is attached to `vaultproof-enterprise-backend`, `/health` returns `200`, and the `/.env` scanner probe returns `403`.
+- `npm run verify:gcp-enterprise-edge` passed after deploying build `e7a4b634`. The verifier confirmed edge IP `34.102.179.105`, active managed TLS for `enterprise.vaultproof.dev`, healthy backend `vaultproof-enterprise-runtime-1:3001`, `/health`, and `/readiness`.
+- `npm run verify:gcp-enterprise-cloud-armor` passed after deploying build `e7a4b634`. The verifier confirmed `vaultproof-enterprise-armor` is attached to `vaultproof-enterprise-backend`, `/health` returns `200`, and the `/.env` scanner probe returns `403`.
 - `RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch` returned `status: ok` with no blockers. Strict Supabase session proof is still skipped until `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SERVICE_KEY` is loaded in the local shell.
 
 ## Cloud Armor Edge Guardrail
@@ -54,7 +54,7 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `60168ba8` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `e7a4b634` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
 - Customer-facing enterprise pages live under `https://enterprise.vaultproof.dev`; staff-only operator pages live under `https://admin.vaultproof.dev`.
 - `https://admin.vaultproof.dev/app/launch` is the staff-only go/no-go launch board. `https://enterprise.vaultproof.dev/app/launch` is intentionally removed from the customer enterprise host and should return 404.
@@ -172,7 +172,7 @@ Project and Provider Slots pages now classify each active slot as `live sealed`,
 
 ## Feature: Enterprise Provider Preset Catalog
 
-Status: `built for enterprise demo`
+Status: `built for enterprise rollout`
 
 `https://enterprise.vaultproof.dev/app/keys` now supports an expanded provider preset catalog for the auth patterns the secure executor already supports: generic bearer, generic custom-header, generic preformatted Basic, provider-specific bearer/header templates, account-specific upstream hosts, and non-secret fixed extra headers. Presets include common AI, email, developer, observability, payments, search, infrastructure, database/vector, identity, cloud management, CI/CD, registry, secrets-management, analytics, and SaaS APIs. Recent additions include Azure Management, GCP Resource Manager, Microsoft Graph, Google Workspace, Fastly, Tailscale, Fly, Railway, Terraform Cloud, Pulumi, Bitbucket, CircleCI, Buildkite, Docker Hub, Quay, npm Registry, Better Stack, LogSnag, Raygun, Semgrep, SonarCloud, Elasticsearch, Elastic Cloud, Meilisearch, Typesense, Kubernetes, HashiCorp Vault, 1Password Connect, Doppler, Infisical, Segment, Plausible, Hume, RunPod, Webflow, Salesforce, Zoho CRM, Zoom, Facebook Graph, LinkedIn, and WordPress. Datadog remains metadata/manual-inventory only until multi-secret provider slots are built because it needs both an API key and an application key.
 
@@ -180,7 +180,7 @@ Provider-slot creation still creates demo-placeholder material in the browser fl
 
 ## Feature: API Inventory Management
 
-Status: `built for enterprise demo`
+Status: `built for enterprise rollout`
 
 `https://enterprise.vaultproof.dev/app/inventory` gives customer security and platform teams a metadata-only system of record for protected API surfaces: project, provider slot, manual API key metadata, owner, environment, business service, risk level, data sensitivity, caller-lock posture, policy status, last-seen traffic, denial/error posture, review status, and evidence/export links.
 
@@ -190,7 +190,7 @@ Inventory records must never store raw provider keys, bearer tokens, OAuth clien
 
 ## Feature: Policy Drift And Exceptions
 
-Status: `built for enterprise demo`
+Status: `built for enterprise rollout`
 
 `https://enterprise.vaultproof.dev/app/policy` gives customer security, platform, and app teams a policy drift board tied to API inventory. It shows customer-safe control-gap rows for missing provider slots, weak or absent caller-lock policy, demo-placeholder material on a paid path, missing owners, stale or no recent traffic, review overdue, and blocked inventory rows.
 
@@ -200,7 +200,7 @@ Exception records must never store raw provider keys, bearer tokens, OAuth clien
 
 ## Feature: Integration Rollout Manager
 
-Status: `built for enterprise demo`
+Status: `built for enterprise rollout`
 
 `https://enterprise.vaultproof.dev/app/rollout` helps a customer move one workload from direct provider calls into VaultProof by showing rollout state, integration mode, app and gateway owners, target date, support window, canary percentage, test status, rollback path, blockers, snippets, and evidence links.
 
@@ -210,7 +210,7 @@ Rollout records must never store raw provider keys, bearer tokens, OAuth client 
 
 ## Feature: Scanner Exposure Intake
 
-Status: `built for enterprise demo`
+Status: `built for enterprise rollout`
 
 `https://enterprise.vaultproof.dev/app/scanner` gives customer security and platform teams a metadata-only place to record repository exposure findings before paid traffic. It captures repository/ref, finding class, secret family, severity, status, owner, provider-slot hint, redacted evidence reference, and remediation note without uploading repositories or secret values.
 
@@ -220,7 +220,7 @@ Scanner records must never store raw secret values, repository credentials, sour
 
 ## Feature: Release Evidence Center
 
-Status: `built for enterprise demo`
+Status: `built for enterprise rollout`
 
 `https://enterprise.vaultproof.dev/app/release` gives customer security, platform, and procurement teams a customer-safe change proof trail. It records release label, build/image tag, change summary, approver, verifier, verification status, rollout state, rollback owner/path, and evidence notes.
 
@@ -230,7 +230,7 @@ Release records must never store raw provider keys, encrypted provider shares, S
 
 ## Feature: Paid-Pilot Tester Readiness
 
-Status: `built for enterprise demo`
+Status: `built for enterprise rollout`
 
 `https://enterprise.vaultproof.dev/app/testers` gives operators a customer-safe board for tomorrow's paid-user testers. It records tester name/email, team, role, scenario, login/scenario status, VaultProof owner, guided session window, facilitator, customer owner, success criteria, customer action, blocker note, and customer-safe feedback.
 
@@ -240,7 +240,7 @@ Tester records must never store passwords, browser session tokens, Supabase serv
 
 ## Feature: Paid-User Entitlements
 
-Status: `built for enterprise demo`
+Status: `built for enterprise rollout`
 
 `https://enterprise.vaultproof.dev/app/entitlements` gives paid-pilot customers a customer-safe contract, capacity, commercial handoff, and amendment/renewal view. It records package, contract status, monthly call allowance, provider-slot allowance, seat allowance, support tier, incident-response add-on status, runtime type, renewal/review date, billing owner, success owner, retention label, invoice status, PO status, procurement owner, payment terms, expansion review date, amendment/change records, and customer-safe notes.
 
@@ -250,7 +250,7 @@ Entitlement records and capacity briefs must never store card numbers, bank data
 
 ## Feature: Paid-Customer Onboarding
 
-Status: `built for enterprise demo`
+Status: `built for enterprise rollout`
 
 `https://admin.vaultproof.dev/app/onboarding` gives staff operators a customer-safe activation board after entitlements are accepted. It records customer kickoff owner, enterprise admin login handoff, first workload owner, support handoff, capacity/renewal review, key posture acceptance or rotation scheduling, customer testing window, and role-specific tasks for security, platform, app owner, billing, and support contacts.
 
@@ -299,14 +299,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `60168ba8`
+- Build tag: `e7a4b634`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:60168ba8`
-- Control plane digest: `sha256:16de7b7544324988f0c6591abc5dd9308412098aa9b673717ae75a230f824c96`
-- Control plane built at: `2026-06-03T09:39:11.914406952Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:60168ba8`
-- Executor digest: `sha256:1249c69d06b39ff734a828e582a92dc74c5b1edb048f56833eca6bc976c92839`
-- Executor built at: `2026-06-03T09:39:24.418609108Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:e7a4b634`
+- Control plane digest: `sha256:219a9633bfb5389d15f4c5f3bb35b4c596a192557fcd9652a180447e9511c003`
+- Control plane built at: `2026-06-04T23:43:42.956748669Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:e7a4b634`
+- Executor digest: `sha256:475659fd9ed6427a6ae3a757f17054f61abf3e578601dd37f265d565b24c50fe`
+- Executor built at: `2026-06-04T23:43:54.606624286Z`
 
 ## Project
 
