@@ -1608,12 +1608,15 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         el.style.display = message ? 'block' : 'none';
         el.textContent = message || '';
       }
+      function adminHeaders(extraHeaders) {
+        var headers = Object.assign({ 'Content-Type': 'application/json' }, extraHeaders || {});
+        if (token) headers.Authorization = 'Bearer ' + token;
+        return headers;
+      }
       async function fetchOverview() {
         var response = await fetch('/api/v1/internal-admin/overview', {
-          headers: {
-            Authorization: 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          }
+          credentials: 'same-origin',
+          headers: adminHeaders()
         });
         var payload = await response.json().catch(function() { return null; });
         if (!response.ok) throw new Error((payload && payload.error) || 'Internal admin overview failed.');
@@ -1765,10 +1768,8 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
       }
       async function fetchOrgDetail(orgId) {
         var response = await fetch('/api/v1/internal-admin/orgs/' + encodeURIComponent(orgId), {
-          headers: {
-            Authorization: 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          }
+          credentials: 'same-origin',
+          headers: adminHeaders()
         });
         var payload = await response.json().catch(function() { return null; });
         if (!response.ok) throw new Error((payload && payload.error) || 'Internal admin org detail failed.');
@@ -1799,11 +1800,8 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         if (!secret) throw new Error('Approval secret is required for admin writes.');
         var response = await fetch(path, {
           method: 'POST',
-          headers: {
-            Authorization: 'Bearer ' + token,
-            'Content-Type': 'application/json',
-            'x-vaultproof-internal-admin-approval': secret
-          },
+          credentials: 'same-origin',
+          headers: adminHeaders({ 'x-vaultproof-internal-admin-approval': secret }),
           body: body ? JSON.stringify(body) : '{}'
         });
         var payload = await response.json().catch(function() { return null; });
@@ -1813,10 +1811,8 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
       async function postAdminCheck(path, body) {
         var response = await fetch(path, {
           method: 'POST',
-          headers: {
-            Authorization: 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          },
+          credentials: 'same-origin',
+          headers: adminHeaders(),
           body: body ? JSON.stringify(body) : '{}'
         });
         var payload = await response.json().catch(function() { return null; });
@@ -2157,10 +2153,6 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         }).join('') : '<div class="empty">No internal admin audit events yet. Apply the audit migration to persist this stream.</div>';
       }
       async function load() {
-        if (!token) {
-          notice('No employee session found.');
-          return;
-        }
         notice('');
         try {
           render(await fetchOverview());

@@ -4575,6 +4575,8 @@ async function assertInternalAdminConsole() {
     '/app/pilot',
     '/app/pilot-success',
     '/api/v1/internal-admin/overview',
+    "credentials: 'same-origin'",
+    'function adminHeaders',
   ]) {
     if (!pageHtml.includes(required)) {
       throw new Error(`Expected internal admin page to include ${required}`);
@@ -4590,6 +4592,8 @@ async function assertInternalAdminConsole() {
     'Manage enterprise customers.',
     'employee sign in',
     'Employee sign in',
+    "notice('No employee session found.')",
+    "Authorization: 'Bearer ' + token",
   ]) {
     if (pageHtml.includes(forbidden)) {
       throw new Error(`Internal admin page should not include removed copy: ${forbidden}`);
@@ -4760,6 +4764,19 @@ async function assertInternalAdminConsole() {
   );
   if (unauthenticatedHeadResponse.status !== 401) {
     throw new Error(`Expected internal admin API HEAD check to require auth, got ${unauthenticatedHeadResponse.status}`);
+  }
+
+  const cookieOverviewResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/overview', {
+      headers: {
+        cookie: sessionCookie.split(';')[0],
+      },
+    }),
+    env,
+  );
+  const cookieOverview = await cookieOverviewResponse.json();
+  if (cookieOverviewResponse.status !== 200 || cookieOverview.summary?.active_business_count !== 1) {
+    throw new Error(`Expected internal admin API to accept the HttpOnly employee session cookie, got ${cookieOverviewResponse.status}: ${JSON.stringify(cookieOverview)}`);
   }
 
   const deniedResponse = await handleEnterpriseControlPlaneRequest(

@@ -208,6 +208,8 @@ Control plane:
 SUPABASE_URL='https://...supabase.co' \
 SUPABASE_SERVICE_ROLE_KEY='...' \
 VAULTPROOF_INTERNAL_ADMIN_DOMAINS='vaultproof.dev' \
+VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED='true' \
+VAULTPROOF_INTERNAL_ADMIN_APPROVAL_SECRET='strong-random-admin-write-code' \
 ENTERPRISE_MIXPANEL_TOKEN='optional-project-token' \
 ENTERPRISE_EXECUTOR_SIGNING_KEY_ID='enterprise-gcp-v1' \
 ENTERPRISE_EXECUTOR_SIGNING_SECRET='...' \
@@ -215,6 +217,8 @@ bash infra/gcp/enterprise-secure-runtime/render-control-plane-env.sh > enterpris
 ```
 
 `ENTERPRISE_MIXPANEL_TOKEN` enables enterprise page analytics across the customer and staff HTML surfaces. `ENTERPRISE_MIXPANEL_AUTOCAPTURE` and `ENTERPRISE_MIXPANEL_RECORD_SESSIONS_PERCENT` default to off/0 for enterprise privacy unless explicitly set.
+
+Set `VAULTPROOF_INTERNAL_ADMIN_ACTIONS_ENABLED=false` to keep the internal admin console read-only. When it is `true`, `VAULTPROOF_INTERNAL_ADMIN_APPROVAL_SECRET` must be set and the same value must be entered in the admin page approval field before write actions such as business creation, SSO/KMS updates, invites, support notes, status updates, and proxy policy changes.
 
 Review the files, then add them as Secret Manager versions:
 
