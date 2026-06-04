@@ -5009,6 +5009,37 @@ async function assertInternalAdminConsole() {
     throw new Error(`Expected customer org audit event for internal business create, got ${JSON.stringify(auditEvents)}`);
   }
 
+  organizationSsoSettingsSchemaReady = false;
+  const businessCreateMissingSsoResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        name: 'Pilot Missing SSO',
+        slug: 'pilot-missing-sso',
+        owner_email: 'pilot-missing-sso@example.com',
+        company_domain: 'missing-sso.example.com',
+        sso_provider: 'okta',
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const businessCreateMissingSsoPayload = await businessCreateMissingSsoResponse.json();
+  organizationSsoSettingsSchemaReady = true;
+  if (businessCreateMissingSsoResponse.status !== 201
+    || businessCreateMissingSsoPayload.business?.sso_schema_ready !== false
+    || !String(businessCreateMissingSsoPayload.business?.migration_required || '').includes('organization_sso_settings')) {
+    throw new Error(`Expected business create to tolerate missing SSO schema, got ${businessCreateMissingSsoResponse.status}: ${JSON.stringify(businessCreateMissingSsoPayload)}`);
+  }
+
   const disabledSsoResponse = await handleEnterpriseControlPlaneRequest(
     buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/sso-settings', {
       method: 'POST',

@@ -2687,6 +2687,8 @@ async function handleCreateInternalAdminBusiness(
   }
 
   let sso: Record<string, unknown> | null = null;
+  let ssoSchemaReady = true;
+  let ssoSeedWarning: string | null = null;
   if (companyDomain) {
     const ssoResult = await supabase
       .from('organization_sso_settings')
@@ -2702,9 +2704,15 @@ async function handleCreateInternalAdminBusiness(
       .select('organization_id, company_domain, sso_provider, login_mode, status, created_at, updated_at')
       .single();
     if (ssoResult.error) {
-      return Response.json({ error: `Internal admin SSO seed failed: ${ssoResult.error.message}` }, { status: 400 });
+      if (isMissingOrganizationSsoSettingsTable(ssoResult.error)) {
+        ssoSchemaReady = false;
+        ssoSeedWarning = 'SSO metadata was not seeded because supabase/migrations/20260419010000_organization_sso_settings.sql is not applied yet.';
+      } else {
+        return Response.json({ error: `Internal admin SSO seed failed: ${ssoResult.error.message}` }, { status: 400 });
+      }
+    } else {
+      sso = ssoResult.data as Record<string, unknown>;
     }
-    sso = ssoResult.data as Record<string, unknown>;
   }
 
   await writeGovernanceAuditEvent(env, {
@@ -2744,6 +2752,9 @@ async function handleCreateInternalAdminBusiness(
       ...organization,
       owner_email: ownerEmail,
       sso,
+      sso_schema_ready: ssoSchemaReady,
+      migration_required: ssoSchemaReady ? null : 'Apply supabase/migrations/20260419010000_organization_sso_settings.sql',
+      warning: ssoSeedWarning,
       business_login_links: enterpriseBusinessLoginLinks(env, organization.id, companyDomain || null),
     },
     owner: {
@@ -2754,6 +2765,7 @@ async function handleCreateInternalAdminBusiness(
     guardrails: [
       'Business creation requires the internal admin action gate and approval secret.',
       'The owner receives a Supabase invite email when the account did not already exist.',
+      'If the SSO metadata table is missing, business creation still succeeds and SSO can be seeded after the migration is applied.',
       'The browser response includes business login URLs, not service-role keys, OAuth secrets, SAML secrets, or invite tokens.',
     ],
   }, {
