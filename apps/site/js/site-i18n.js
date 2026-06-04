@@ -65,7 +65,7 @@
       'app.activity': 'Activity Logs',
       'app.alerts': 'alerts',
       'app.keys': 'Protected Keys',
-      'app.settings': 'Security Controls',
+      'app.settings': 'Settings',
       'app.plans': 'Plans & Billing',
       'app.repos': 'Repository Scanner',
       'app.help': 'help',
