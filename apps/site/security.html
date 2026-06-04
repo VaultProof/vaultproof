@@ -1,588 +1,380 @@
-<!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<!doctype html>
+<html lang="en">
 <head>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script src="/js/security-1.js" defer></script>
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security | VaultProof</title>
-    <meta name="description" content="VaultProof security architecture — how key splitting, proxy assembly, and cryptographic proofs protect your API keys.">
-    <meta property="og:title" content="Security | VaultProof">
-    <meta property="og:description" content="Technical architecture document: how VaultProof splits, stores, and proxies your API keys.">
-    <meta property="og:url" content="https://vaultproof.dev/security">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-    <link rel="canonical" href="https://vaultproof.dev/security">
-    <meta name="twitter:image" content="https://vaultproof.dev/ogimage.png">
-
-    <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
-    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-    <script src="/js/security-2.js" defer></script>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        * { font-family: 'Inter', system-ui, sans-serif; }
-        ::selection { background: #6366f1; color: #fff; }
-        body { background: #0a0a0f; }
-
-        .mobile-menu { display: none; }
-        .mobile-menu.open { display: flex; }
-
-        /* Sidebar */
-        .sidebar { scrollbar-width: thin; scrollbar-color: #1e1e2e transparent; }
-        .sidebar::-webkit-scrollbar { width: 4px; }
-        .sidebar::-webkit-scrollbar-track { background: transparent; }
-        .sidebar::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
-
-        /* Nav active state */
-        .nav-link { transition: all 0.15s ease; border-left: 2px solid transparent; }
-        .nav-link:hover { color: #e2e8f0; border-left-color: #333; }
-        .nav-link.active { color: #6366f1; border-left-color: #6366f1; background: rgba(99,102,241,0.05); }
-
-        /* Callout boxes */
-        .callout-info { background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; padding: 1rem 1.25rem; }
-        .callout-warn { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2); border-radius: 12px; padding: 1rem 1.25rem; }
-        .callout-success { background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 1rem 1.25rem; }
-        .callout-danger { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2); border-radius: 12px; padding: 1rem 1.25rem; }
-
-        /* Flow steps */
-        .flow-step {
-            position: relative;
-            padding-left: 2.5rem;
-            padding-bottom: 1.5rem;
-        }
-        .flow-step::before {
-            content: attr(data-step);
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 1.75rem;
-            height: 1.75rem;
-            background: rgba(99,102,241,0.15);
-            color: #6366f1;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        .flow-step::after {
-            content: '';
-            position: absolute;
-            left: 0.8125rem;
-            top: 1.75rem;
-            bottom: 0;
-            width: 1px;
-            background: #1e1e2e;
-        }
-        .flow-step:last-child::after { display: none; }
-        .flow-step:last-child { padding-bottom: 0; }
-
-        /* Tables */
-        .doc-table { width: 100%; font-size: 0.875rem; }
-        .doc-table th { text-align: left; padding: 0.75rem 1rem; color: #94a3b8; border-bottom: 1px solid #1e1e2e; font-weight: 500; }
-        .doc-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #1e1e2e; color: #cbd5e1; }
-        .doc-table tr:last-child td { border-bottom: none; }
-
-        section[id] { scroll-margin-top: 2rem; }
-
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0a0a0f; }
-        ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #2e2e3e; }
-    .btn-creative {
-    display: inline-block;
-    padding: 0.375rem 1.25rem;
-    background: #111;
-    color: white;
-    border: 1px solid rgba(255,255,255,0.1);
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 9999px;
-    transition: background 0.3s, color 0.3s;
-}
-.btn-creative:hover {
-    color: #000;
-    background: #fff;
-}
-    </style>
-  <link rel="stylesheet" href="/css/site-theme.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/security-1.js" defer></script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Security | VaultProof</title>
+  <meta name="description" content="How VaultProof protects provider API keys, routes calls safely, logs security events, and helps teams operate with fewer exposed secrets.">
+  <meta property="og:title" content="Security | VaultProof">
+  <meta property="og:description" content="VaultProof security model, controls, logging, limits, and responsible disclosure.">
+  <meta property="og:url" content="https://vaultproof.dev/security">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://vaultproof.dev/og-image2.png">
+  <meta name="twitter:image" content="https://vaultproof.dev/og-image2.png">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="canonical" href="https://vaultproof.dev/security">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/docs-theme.css?v=20260604g">
 </head>
-<body class="text-gray-300 min-h-screen">
+<body class="docs-document">
+  <a class="skip-link" href="#overview">Skip to security overview</a>
 
-        <nav class="nav">
-      <a href="/" class="nav-logo">
-        <span class="nav-logo-name">VaultProof</span>
-        <span class="nav-logo-version">v0.4.2</span>
-      </a>
-      <div class="nav-spacer"></div>
-      <div class="nav-links">
-        <a href="/scan">scanner</a>
-        <a href="/docs">docs</a>
-        <a href="/blog">insights</a>
-        <a href="/#pricing">pricing</a>
+  <nav class="site-nav" aria-label="VaultProof navigation">
+    <a class="brand" href="/">
+      <span class="brand-mark">
+        <img class="brand-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <span class="brand-logo-fallback">VP</span>
+      </span>
+      <span>VaultProof</span>
+    </a>
+    <div class="nav-links" aria-label="Primary">
+      <a class="nav-link" href="/docs">Docs</a>
+      <a class="nav-link" href="/scan">Scanner</a>
+      <a class="nav-link active" href="/security" aria-current="page">Security</a>
+      <a class="nav-link" href="/blog/">Blog</a>
+    </div>
+    <div class="nav-actions">
+      <a class="nav-secondary" href="/app/login">Sign in</a>
+      <a class="nav-primary" href="/app/login">Open app</a>
+    </div>
+  </nav>
+
+  <main class="docs-page">
+    <section class="docs-hero" id="overview">
+      <div class="hero-copy">
+        <p class="eyebrow">Security</p>
+        <h1>Protect provider keys without trusting every app surface with them.</h1>
+        <p class="hero-lede">VaultProof keeps raw provider keys out of source code, hosted env files, CI logs, and AI coding context. Your app uses VaultProof-routed credentials while the real provider key is protected, monitored, and easier to rotate.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="/docs">Setup guide</a>
+          <a class="button secondary" href="mailto:security@vaultproof.dev">Report issue</a>
+        </div>
       </div>
-      <a href="/app/login" class="nav-sign-in">sign in</a>
-      <a href="/app/login" class="nav-cta">get started</a>
-      <button id="mobileToggle" type="button" class="mobile-toggle">menu</button>
-    </nav>
+      <div class="hero-panel" aria-label="Security summary">
+        <div class="panel-kicker">Security posture</div>
+        <ol class="mini-steps">
+          <li><span class="step-badge">1</span><span class="step-copy">Remove raw provider keys from app configuration.</span></li>
+          <li><span class="step-badge">2</span><span class="step-copy">Route provider calls through VaultProof-compatible base URLs.</span></li>
+          <li><span class="step-badge">3</span><span class="step-copy">Track usage, errors, budgets, and suspicious activity.</span></li>
+          <li><span class="step-badge">4</span><span class="step-copy">Rotate or revoke exposed provider keys with clearer evidence.</span></li>
+        </ol>
+      </div>
+    </section>
 
-    <div id="mobileMenu" class="mobile-menu">
-      <a href="/scan">scanner</a>
-      <a href="/docs">docs</a>
-      <a href="/blog">insights</a>
-      <a href="/#pricing">pricing</a>
-      <a href="/app/login">sign in</a>
+    <div class="docs-layout">
+      <aside class="docs-sidebar" id="sidebar-nav" aria-label="Security sections">
+        <a href="#model">Trust model</a>
+        <a href="#setup">Secure setup</a>
+        <a href="#lifecycle">Key lifecycle</a>
+        <a href="#controls">Controls</a>
+        <a href="#logging">Logging</a>
+        <a href="#limits">Limits</a>
+        <a href="#infrastructure">Infrastructure</a>
+        <a href="#disclosure">Disclosure</a>
+      </aside>
+
+      <article class="docs-main">
+        <section class="docs-section" id="model">
+          <div class="section-heading">
+            <p class="eyebrow">Trust model</p>
+            <h2>VaultProof reduces where complete provider keys can live.</h2>
+            <p>The main security goal is simple: a leaked app repository, browser build, CI log, prompt transcript, or hosted environment should not expose the original provider credential.</p>
+          </div>
+
+          <div class="card-grid three">
+            <div class="doc-card">
+              <h3>App receives a VaultProof token</h3>
+              <p>Your application uses VaultProof-managed values instead of storing the raw OpenAI, Anthropic, Stripe, or other provider key directly.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Provider route stays compatible</h3>
+              <p>For supported providers, the init tool writes base URL values so normal SDK calls can route through VaultProof without a custom integration.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Operations stay observable</h3>
+              <p>Activity, alerts, usage, and error views help teams see whether protected keys are being used as expected.</p>
+            </div>
+          </div>
+
+          <div class="callout warning">
+            <strong>Plain-language boundary</strong>
+            <span>VaultProof is not a replacement for rotating leaked provider keys, securing customer devices, or configuring provider-side controls. It reduces plaintext key exposure and gives teams a safer operating layer around runtime provider access.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="setup">
+          <div class="section-heading">
+            <p class="eyebrow">Secure setup</p>
+            <h2>The hosted init handles the setup details.</h2>
+            <p>Users should not need to manually wire provider SDK code for common providers. The installer fetches the hosted init bundle and provider catalog, verifies the manifest, then the init command handles detection and environment updates.</p>
+          </div>
+
+          <ol class="step-list">
+            <li>
+              <span class="step-number">1</span>
+              <div>
+                <h3>Install the hosted init</h3>
+                <p>Run the installer from your app folder. The installer downloads the CLI bundle and a provider catalog fallback from <code>/downloads</code> and checks the manifest before installing.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-number">2</span>
+              <div>
+                <h3>Run <code>vaultproof-init</code></h3>
+                <p>The init scans common env files, detects supported provider keys, protects them, and writes VaultProof values back into the app environment.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-number">3</span>
+              <div>
+                <h3>Deploy the generated values</h3>
+                <p>Copy the generated VaultProof token and base URL values to your hosting provider, then restart and test one provider call before wider rollout.</p>
+              </div>
+            </li>
+          </ol>
+
+          <div class="callout info">
+            <strong>Provider catalog</strong>
+            <span>The live catalog at <code>/providers.json</code> is version 9 with 250 provider signatures, updated on 2026-05-21. The init downloads this catalog on each run and falls back to the installed copy if needed.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="lifecycle">
+          <div class="section-heading">
+            <p class="eyebrow">Key lifecycle</p>
+            <h2>Know where key material exists during normal use.</h2>
+            <p>VaultProof is designed around reducing persistent plaintext exposure. It still needs to authenticate to the provider when your application sends a real provider request.</p>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Stage</th>
+                  <th>What happens</th>
+                  <th>Security intent</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Before setup</td>
+                  <td>The raw provider key may exist in local env files, hosting settings, previous commits, or copied snippets.</td>
+                  <td>Find the key and move it behind VaultProof.</td>
+                </tr>
+                <tr>
+                  <td>After init</td>
+                  <td>The app keeps VaultProof-managed values instead of the original provider credential.</td>
+                  <td>Reduce exposure in source code, AI tools, hosting config, and logs.</td>
+                </tr>
+                <tr>
+                  <td>During a request</td>
+                  <td>VaultProof routes the request and authenticates to the upstream provider on behalf of your app.</td>
+                  <td>Use provider credentials only for the request path that needs them.</td>
+                </tr>
+                <tr>
+                  <td>After a request</td>
+                  <td>VaultProof records request metadata such as provider, route, status, timestamp, and latency.</td>
+                  <td>Support incident review without storing raw provider keys or request bodies.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout warning">
+            <strong>Important runtime reality</strong>
+            <span>When a provider request is made, the upstream provider receives the credential required to authenticate that request. VaultProof does not change how provider authentication works; it changes where the credential is stored and how access is routed and observed.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="controls">
+          <div class="section-heading">
+            <p class="eyebrow">Controls</p>
+            <h2>Security controls should be usable by operators.</h2>
+            <p>The dashboard is designed to help teams understand key usage and take action when something looks wrong.</p>
+          </div>
+
+          <div class="card-grid two">
+            <div class="doc-card">
+              <h3>Activity review</h3>
+              <p>Monitor request stream, busy endpoints, errors, latency, provider status, and usage trends from the dashboard.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Alerts and budgets</h3>
+              <p>Use alerts and plan limits to catch unusual volume, failed calls, or traffic that needs investigation before it becomes spend or abuse.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Origin and environment discipline</h3>
+              <p>Keep VaultProof values scoped to the app environments that need them and remove raw provider keys from old hosting settings.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Scanner follow-up</h3>
+              <p>Use scanner findings to identify exposed keys, then rotate affected provider credentials and move the app through VaultProof.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="docs-section" id="logging">
+          <div class="section-heading">
+            <p class="eyebrow">Logging</p>
+            <h2>Logs should help incident review without becoming another secret store.</h2>
+            <p>VaultProof records operational metadata that helps you understand usage and failures. It should not become a place where raw provider secrets or request payloads are copied.</p>
+          </div>
+
+          <div class="split-grid">
+            <div class="doc-card">
+              <h3>Recorded</h3>
+              <ul class="check-list">
+                <li>Provider and route metadata.</li>
+                <li>Status code, timestamp, and latency.</li>
+                <li>Usage counters and alert state.</li>
+                <li>Scanner and dashboard actions.</li>
+              </ul>
+            </div>
+            <div class="doc-card">
+              <h3>Not for logs</h3>
+              <ul class="check-list warning">
+                <li>Raw provider API keys.</li>
+                <li>Request and response bodies.</li>
+                <li>Provider secrets copied into tickets.</li>
+                <li>Unredacted customer credentials.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout info">
+            <strong>Support rule</strong>
+            <span>When troubleshooting, send timestamps, provider names, route names, status codes, and request IDs. Do not send raw provider keys.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="limits">
+          <div class="section-heading">
+            <p class="eyebrow">Limits</p>
+            <h2>Clear limitations make the system safer to use.</h2>
+            <p>No security product removes the need for good provider hygiene. VaultProof is strongest when paired with rotation, provider-side restrictions, team access controls, and deployment discipline.</p>
+          </div>
+
+          <div class="card-grid two">
+            <div class="doc-card">
+              <h3>Protects against</h3>
+              <ul class="check-list">
+                <li>Raw keys committed to source code.</li>
+                <li>Keys copied into AI coding context.</li>
+                <li>Plaintext keys sitting in hosted env settings.</li>
+                <li>Limited incident visibility after a leak.</li>
+              </ul>
+            </div>
+            <div class="doc-card">
+              <h3>Does not replace</h3>
+              <ul class="check-list warning">
+                <li>Rotating provider keys after exposure.</li>
+                <li>Securing developer laptops and CI systems.</li>
+                <li>Provider-side allowlists and spend controls.</li>
+                <li>Reviewing app code that sends sensitive payloads.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout warning">
+            <strong>If VaultProof or your app is breached</strong>
+            <span>Treat provider credentials as sensitive and rotate affected keys. VaultProof is built to reduce what a single surface can expose, but rotation is still the right response when there is credible exposure.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="infrastructure">
+          <div class="section-heading">
+            <p class="eyebrow">Infrastructure</p>
+            <h2>Built on managed infrastructure with defense in depth.</h2>
+            <p>VaultProof uses established infrastructure layers for edge routing, authentication, storage, and billing, with TLS in transit and encryption at rest from the underlying platforms.</p>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Layer</th>
+                  <th>Purpose</th>
+                  <th>Security responsibility</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Website and installer</td>
+                  <td>Hosts docs, installer, init bundle, manifest, and provider catalog.</td>
+                  <td>Serve from HTTPS, use cache-aware deployment, and verify install artifacts through the manifest.</td>
+                </tr>
+                <tr>
+                  <td>Runtime proxy</td>
+                  <td>Routes app requests to supported providers.</td>
+                  <td>Authenticate requests, apply controls, avoid logging secrets, and expose usage metadata.</td>
+                </tr>
+                <tr>
+                  <td>Database and auth</td>
+                  <td>Stores account, project, configuration, and activity data.</td>
+                  <td>Restrict access, encrypt at rest, and separate tenant data by account/workspace boundaries.</td>
+                </tr>
+                <tr>
+                  <td>Billing provider</td>
+                  <td>Handles subscriptions and payment flow.</td>
+                  <td>Keep card data out of VaultProof systems.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="docs-section" id="disclosure">
+          <div class="section-heading">
+            <p class="eyebrow">Responsible disclosure</p>
+            <h2>Report security issues directly.</h2>
+            <p>If you find a vulnerability, disclosure mistake, exposed secret, install integrity issue, or dashboard access bug, contact us before public disclosure so we can protect customers quickly.</p>
+          </div>
+
+          <div class="card-grid two">
+            <div class="doc-card">
+              <h3>Send</h3>
+              <ul class="check-list">
+                <li>Steps to reproduce.</li>
+                <li>Affected URL, route, or component.</li>
+                <li>Potential impact and suggested severity.</li>
+                <li>Redacted screenshots or logs when useful.</li>
+              </ul>
+            </div>
+            <div class="doc-card">
+              <h3>Do not send</h3>
+              <ul class="check-list warning">
+                <li>Raw provider API keys.</li>
+                <li>Customer personal data.</li>
+                <li>Unredacted access tokens.</li>
+                <li>Payloads from unrelated third-party systems.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout success">
+            <strong>Security contact</strong>
+            <span>Email <a href="mailto:security@vaultproof.dev">security@vaultproof.dev</a>. We aim to acknowledge valid security reports within 48 hours.</span>
+          </div>
+        </section>
+      </article>
     </div>
+  </main>
 
-    <div class="flex max-w-[1400px] mx-auto pt-20">
+  <footer class="docs-footer">
+    <a href="/">VaultProof</a>
+    <a href="/terms">Terms</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/security">Security</a>
+    <a href="/abuse">Abuse</a>
+  </footer>
 
-        <!-- Sidebar -->
-        <aside class="sidebar hidden lg:block fixed top-20 left-0 w-[260px] h-[calc(100vh-5rem)] overflow-y-auto border-r border-vp-border py-8 px-5" style="left: max(0px, calc((100vw - 1400px) / 2));">
-            <nav class="space-y-1" id="sidebar-nav">
-                <a href="#overview" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Overview</a>
-
-                <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">How It Works</div>
-                <a href="#key-storage" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Key Storage</a>
-                <a href="#proxy" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Proxy Architecture</a>
-                <a href="#authorization" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Authorization</a>
-
-                <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">Threat Model</div>
-                <a href="#what-we-protect" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">What We Protect Against</a>
-                <a href="#what-we-dont" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">What We Don't Protect Against</a>
-                <a href="#breach-scenario" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Breach Scenario</a>
-
-                <div class="pt-4 pb-1 px-3 text-[0.6875rem] font-semibold text-gray-600 uppercase tracking-wider">Infrastructure & Trust</div>
-                <a href="#infrastructure" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Infrastructure</a>
-                <a href="#logging" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Logging & Monitoring</a>
-                <a href="#open-source" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r pl-6">Open Source</a>
-                <a href="#disclosure" class="nav-link block text-sm text-gray-500 py-1.5 px-3 rounded-r">Responsible Disclosure</a>
-            </nav>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="flex-1 lg:ml-[260px] px-6 md:px-12 py-10 max-w-4xl">
-
-            <!-- Overview -->
-            <section id="overview" class="mb-20">
-                <h1 class="text-4xl font-extrabold text-white mb-3 tracking-tight" style="font-family:'Space Grotesk',sans-serif">Security Architecture</h1>
-                <p class="text-lg text-gray-400 mb-8 leading-relaxed max-w-2xl">A technical overview of how VaultProof stores, proxies, and protects your API keys. This page is an architecture document, not marketing copy.</p>
-
-                <div class="callout-info mb-8">
-                    <p class="text-sm text-indigo-200 font-semibold mb-1">The short version</p>
-                    <p class="text-sm text-gray-300 leading-relaxed">Your API key is split into two shares on your device before it leaves your browser or CLI. Share 1 is encrypted with authenticated encryption and stored on our servers. Share 2 is encrypted with your developer key and stays on your device. Neither share alone reveals the original key. When you make a proxied API call, both shares are temporarily assembled in server memory, used, then wiped. The key is never logged, never written to disk, and never stored whole at rest.</p>
-                </div>
-            </section>
-
-            <!-- Key Storage -->
-            <section id="key-storage" class="mb-20">
-                <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Key Storage</h2>
-                <p class="text-gray-500 mb-8">How your API keys are split and stored.</p>
-
-                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
-                    <p class="text-gray-400 leading-relaxed mb-4">VaultProof splits every API key into two encrypted shares. Both shares are required to reconstruct the original key. This splitting happens entirely on your device (in the browser or CLI) before any data is sent to our servers.</p>
-
-                    <div class="flow-step" data-step="1">
-                        <p class="text-sm font-semibold text-white mb-1">You paste your API key</p>
-                        <p class="text-sm text-gray-500">The key exists in your browser or CLI. Nothing has left your device.</p>
-                    </div>
-                    <div class="flow-step" data-step="2">
-                        <p class="text-sm font-semibold text-white mb-1">The key is split into two shares on your device</p>
-                        <p class="text-sm text-gray-500">A secret sharing algorithm produces two shares. Neither share contains enough information to derive the original key. This runs client-side before any network request.</p>
-                    </div>
-                    <div class="flow-step" data-step="3">
-                        <p class="text-sm font-semibold text-white mb-1">Share 1 is encrypted and sent to VaultProof</p>
-                        <p class="text-sm text-gray-500">This encrypted share is stored in our database. It is all we receive and all we hold.</p>
-                    </div>
-                    <div class="flow-step" data-step="4">
-                        <p class="text-sm font-semibold text-white mb-1">Share 2 is encrypted with your developer key and stays on your device</p>
-                        <p class="text-sm text-gray-500">This share is stored in your local configuration. It is never transmitted to our servers.</p>
-                    </div>
-                </div>
-
-                <div class="callout-info">
-                    <p class="text-sm text-indigo-200 font-medium mb-1">What this means in practice</p>
-                    <p class="text-sm text-gray-400 leading-relaxed">Our database holds encrypted fragments, not keys. If an attacker gains full access to our database, they get one encrypted share per key. Without the corresponding second share from your device, that data is not usable.</p>
-                </div>
-            </section>
-
-            <!-- Proxy Architecture -->
-            <section id="proxy" class="mb-20">
-                <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Proxy Architecture</h2>
-                <p class="text-gray-500 mb-8">How API calls are proxied and what happens to your key during a request.</p>
-
-                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
-                    <div class="flow-step" data-step="1">
-                        <p class="text-sm font-semibold text-white mb-1">Your device sends Share 2 and an authorization proof</p>
-                        <p class="text-sm text-gray-500">Your SDK or CLI transmits its share along with a cryptographic proof that you are authorized to access Share 1.</p>
-                    </div>
-                    <div class="flow-step" data-step="2">
-                        <p class="text-sm font-semibold text-white mb-1">Both shares are assembled in server memory</p>
-                        <p class="text-sm text-gray-500">The server decrypts Share 1, combines it with Share 2, and reconstructs your full API key in memory. This assembly takes approximately 100 milliseconds.</p>
-                    </div>
-                    <div class="flow-step" data-step="3">
-                        <p class="text-sm font-semibold text-white mb-1">The API call is forwarded to the provider</p>
-                        <p class="text-sm text-gray-500">VaultProof makes the API call to the provider (OpenAI, Anthropic, Supabase, etc.) using the reconstructed key. The provider receives and processes the full key, as it would with any direct API call.</p>
-                    </div>
-                    <div class="flow-step" data-step="4">
-                        <p class="text-sm font-semibold text-white mb-1">The key is wiped from memory</p>
-                        <p class="text-sm text-gray-500">After the response is returned, the reconstructed key is zeroed from memory. It is never written to disk, never logged, and never persisted. The complete key existed in server memory for the duration of that single request.</p>
-                    </div>
-                </div>
-
-                <div class="callout-warn">
-                    <p class="text-sm text-amber-200 font-medium mb-1">Important caveat</p>
-                    <p class="text-sm text-gray-400 leading-relaxed">During proxy requests, your full API key does exist briefly in VaultProof's server memory. It also reaches the API provider (e.g., OpenAI) as part of the forwarded request. The security design ensures the key is not stored at rest, not logged, and not persisted -- but it is assembled in memory for the duration of each proxied call.</p>
-                </div>
-            </section>
-
-            <!-- Authorization -->
-            <section id="authorization" class="mb-20">
-                <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Authorization</h2>
-                <p class="text-gray-500 mb-8">How VaultProof verifies you are authorized without exposing your credentials.</p>
-
-                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
-                    <p class="text-gray-400 leading-relaxed mb-4">To access Share 1, your device sends a <strong class="text-white">cryptographic proof</strong> — a statement that proves you are authorized without revealing the secret behind it. The server can verify the proof is valid without learning your credentials.</p>
-                    <p class="text-gray-400 leading-relaxed">Each proof is single-use. If someone intercepts an authorization request, they cannot replay it. There is no long-lived credential on the wire to steal.</p>
-                </div>
-
-                <div class="callout-info">
-                    <p class="text-sm text-indigo-200 font-medium mb-1">Origin locking</p>
-                    <p class="text-sm text-gray-400 leading-relaxed">You can lock your <code class="font-mono text-xs text-vp-accent">vp_live_</code> developer key to specific domains. The proxy will reject requests originating from unlocked domains. Browsers enforce the Origin header, so a stolen key cannot be used from a different site. This can be combined with IP allowlisting and provider-side restrictions.</p>
-                </div>
-            </section>
-
-            <!-- What We Protect Against -->
-            <section id="what-we-protect" class="mb-20">
-                <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">What We Protect Against</h2>
-                <p class="text-gray-500 mb-8">The specific risks this architecture is designed to address.</p>
-
-                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
-                    <div class="space-y-4">
-                        <div class="flex items-start gap-3">
-                            <span class="text-green-400 mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Keys leaking in source code.</strong> Your API keys are never in your codebase. You use a VaultProof developer key (<code class="font-mono text-xs text-vp-accent">vp_live_</code>) instead. If your code is pushed to a public repo, no API keys are exposed.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-green-400 mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Keys in .env files, CI logs, or git history.</strong> Since your actual API keys are split and proxied, they don't appear in environment variables, build logs, or commit history.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-green-400 mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Keys leaking through AI tool context.</strong> If an AI coding assistant reads your project files, it sees a <code class="font-mono text-xs text-vp-accent">vp_live_</code> key, not your OpenAI or Anthropic key.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-green-400 mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">VaultProof's database being breached.</strong> An attacker who compromises our database gets one encrypted share per key. Without the second share from your device, the data is not usable to reconstruct any key.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- What We Don't Protect Against -->
-            <section id="what-we-dont" class="mb-20">
-                <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">What We Don't Protect Against</h2>
-                <p class="text-gray-500 mb-8">Honest limitations of this architecture.</p>
-
-                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
-                    <div class="space-y-4">
-                        <div class="flex items-start gap-3">
-                            <span class="text-amber-400 mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Someone with both shares.</strong> If an attacker obtains both shares (e.g., by compromising your device and our servers simultaneously), they can reconstruct your key. The split-key design raises the bar significantly, but it is not unbreakable if both sides are compromised.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-amber-400 mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">The API provider seeing your key.</strong> When VaultProof proxies a request to OpenAI, Anthropic, or any other provider, the provider receives your full API key as part of the HTTP request. This is how API authentication works. VaultProof does not change that.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-amber-400 mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Compromised client devices.</strong> If your device is compromised (malware, physical access), an attacker could extract Share 2 and your developer key. The security model assumes your client device is trusted.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-amber-400 mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">In-memory attacks during proxy assembly.</strong> During the brief window when both shares are assembled in memory, a sophisticated memory-level attack on our server could theoretically extract the key. We mitigate this with per-request memory isolation, but we do not claim this is impossible.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="callout-info">
-                    <p class="text-sm text-indigo-200 font-medium mb-1">Our approach to honesty</p>
-                    <p class="text-sm text-gray-400 leading-relaxed">No security system is perfect. We think being explicit about what we do and don't protect against is more valuable than vague claims. If you find a gap we haven't listed, please tell us at <a href="mailto:security@vaultproof.dev" class="text-vp-accent hover:underline">security@vaultproof.dev</a>.</p>
-                </div>
-            </section>
-
-            <!-- Breach Scenario -->
-            <section id="breach-scenario" class="mb-20">
-                <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Breach Scenario</h2>
-                <p class="text-gray-500 mb-8">What a full compromise of VaultProof's infrastructure would yield.</p>
-
-                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
-                    <p class="text-sm text-gray-500 uppercase tracking-wider font-semibold mb-4">An attacker with full database and server access would obtain:</p>
-                    <div class="space-y-3 mb-6">
-                        <div class="flex items-start gap-3">
-                            <span class="text-amber-400 mt-0.5">&#x2717;</span>
-                            <p class="text-sm text-gray-400">One encrypted share per stored key (not usable alone)</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-amber-400 mt-0.5">&#x2717;</span>
-                            <p class="text-sm text-gray-400">Request metadata (timestamps, providers, usage counts)</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-amber-400 mt-0.5">&#x2717;</span>
-                            <p class="text-sm text-gray-400">User account information (email, billing)</p>
-                        </div>
-                    </div>
-                    <p class="text-sm text-gray-500 uppercase tracking-wider font-semibold mb-4">They would NOT obtain:</p>
-                    <div class="space-y-3">
-                        <div class="flex items-start gap-3">
-                            <span class="text-green-400 mt-0.5">&#x2713;</span>
-                            <p class="text-sm text-gray-300">Any complete API key (requires the second share from your device)</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-green-400 mt-0.5">&#x2713;</span>
-                            <p class="text-sm text-gray-300">Any plaintext key material</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="callout-warn">
-                    <p class="text-sm text-amber-200 leading-relaxed">If VaultProof were breached, we recommend rotating your API keys as a precaution. A database breach alone does not expose complete keys, but defense in depth means acting as though it might.</p>
-                </div>
-            </section>
-
-            <!-- Infrastructure -->
-            <section id="infrastructure" class="mb-20">
-                <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Infrastructure</h2>
-                <p class="text-gray-500 mb-8">The services VaultProof runs on.</p>
-
-                <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-6">
-                    <table class="doc-table">
-                        <thead>
-                            <tr>
-                                <th>Service</th>
-                                <th>Role</th>
-                                <th>Details</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="text-white font-medium">Edge Network</td>
-                                <td class="text-gray-400">Edge compute and proxy</td>
-                                <td class="text-gray-500">Runs the proxy logic at the edge with per-request memory isolation. DDoS protection included.</td>
-                            </tr>
-                            <tr>
-                                <td class="text-white font-medium">Database</td>
-                                <td class="text-gray-400">Storage and auth</td>
-                                <td class="text-gray-500">Stores encrypted shares, user accounts, and usage data. Row-level security enforced. All data encrypted at rest.</td>
-                            </tr>
-                            <tr>
-                                <td class="text-white font-medium">Stripe</td>
-                                <td class="text-gray-400">Payment processing</td>
-                                <td class="text-gray-500">Handles billing and subscriptions. VaultProof never stores credit card numbers. PCI DSS compliant.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="callout-info">
-                    <p class="text-sm text-gray-400 leading-relaxed">All data is encrypted in transit (TLS 1.3) and at rest. We use no custom infrastructure for compute or storage -- we build on established, audited platforms.</p>
-                </div>
-            </section>
-
-            <!-- Logging & Monitoring -->
-            <section id="logging" class="mb-20">
-                <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Logging & Monitoring</h2>
-                <p class="text-gray-500 mb-8">What we record, what we don't, and how we alert you.</p>
-
-                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
-                    <h3 class="text-lg font-semibold text-white mb-4">What we log</h3>
-                    <div class="space-y-3 mb-6">
-                        <div class="flex items-start gap-3">
-                            <span class="text-vp-accent mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Every proxied API call:</strong> which developer key was used, which provider endpoint was hit, the HTTP status code returned, request latency in milliseconds, and a timestamp.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-vp-accent mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Scanner actions:</strong> GitHub connect and disconnect events, scans started and completed, findings ignored by the user.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-vp-accent mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Administrative actions:</strong> tier changes, user bans, key revocations. All logged with timestamps and the identity of the actor.</p>
-                        </div>
-                    </div>
-
-                    <h3 class="text-lg font-semibold text-white mb-4">What we do NOT log</h3>
-                    <div class="space-y-3 mb-6">
-                        <div class="flex items-start gap-3">
-                            <span class="text-green-400 mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Raw API keys.</strong> The reconstructed key exists in memory for the duration of the request and is never written to any log or database.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-green-400 mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Request and response bodies.</strong> We do not inspect, store, or log the content of your API calls. The proxy forwards the body as-is.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-green-400 mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Personally identifiable information beyond email.</strong> We store your email for account management. We do not collect names, addresses, or other PII.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-vp-surface border border-vp-border rounded-md overflow-hidden mb-6">
-                    <h3 class="text-lg font-semibold text-white px-6 pt-6 mb-4">Log retention</h3>
-                    <table class="doc-table">
-                        <thead>
-                            <tr>
-                                <th>Tier</th>
-                                <th>Retention Period</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="text-white font-medium">Free</td>
-                                <td class="text-gray-400">7 days</td>
-                            </tr>
-                            <tr>
-                                <td class="text-white font-medium">Starter</td>
-                                <td class="text-gray-400">30 days</td>
-                            </tr>
-                            <tr>
-                                <td class="text-white font-medium">Pro</td>
-                                <td class="text-gray-400">90 days</td>
-                            </tr>
-                            <tr>
-                                <td class="text-white font-medium">Enterprise</td>
-                                <td class="text-gray-400">Unlimited</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
-                    <h3 class="text-lg font-semibold text-white mb-4">Real-time monitoring & alerts</h3>
-                    <div class="space-y-3">
-                        <div class="flex items-start gap-3">
-                            <span class="text-vp-accent mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Rate limit tracking.</strong> Every proxied call increments a real-time counter. You can see your current usage relative to your monthly limit in the dashboard and via the <code class="font-mono text-xs text-vp-accent">X-VaultProof-Usage-Warning</code> response header.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-vp-accent mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Usage alerts.</strong> When you hit 90% of your monthly call limit, the proxy adds a warning header to responses. At 100%, calls are blocked with a <code class="font-mono text-xs text-vp-accent">429</code> status.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-vp-accent mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Per-key webhook notifications.</strong> You can configure a webhook URL on each developer key. When your usage exceeds a threshold you set, VaultProof POSTs a signed payload to your webhook endpoint. The payload is cryptographically signed using a secret you provide, included in the <code class="font-mono text-xs text-vp-accent">X-VaultProof-Signature</code> header.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-vp-accent mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Email alerts.</strong> You can set an alert email on each developer key. When usage crosses your configured threshold, the event is recorded and an email notification is sent.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="callout-info">
-                    <p class="text-sm text-indigo-200 font-medium mb-1">Threshold alerts fire once per crossing</p>
-                    <p class="text-sm text-gray-400 leading-relaxed">If you set a threshold of 100 calls per hour, you will get one alert when that threshold is crossed, not one per subsequent call. The alert state resets at the start of each hour.</p>
-                </div>
-            </section>
-
-            <!-- Open Source -->
-            <section id="open-source" class="mb-20">
-                <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Open Source</h2>
-                <p class="text-gray-500 mb-8">The client-side code is open source. Read it, audit it, build it yourself.</p>
-
-                <div class="bg-vp-surface border border-vp-border rounded-md p-6 mb-6">
-                    <p class="text-gray-400 leading-relaxed mb-6">The key splitting library, authorization proof logic, SDK, and CLI are all open source. These are the components that run on your device and implement the security-critical operations. You can verify that keys are split client-side and that no key material is sent to our servers in plain text.</p>
-
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div class="bg-vp-bg border border-vp-border rounded-md p-4">
-                            <div class="font-mono text-xs text-vp-accent mb-2">Key splitting library</div>
-                            <p class="text-sm text-gray-500">Splits your key into two shares on your device before storage.</p>
-                        </div>
-                        <div class="bg-vp-bg border border-vp-border rounded-md p-4">
-                            <div class="font-mono text-xs text-vp-accent mb-2">Authorization proofs</div>
-                            <p class="text-sm text-gray-500">Generates cryptographic proofs that authorize key access without revealing credentials.</p>
-                        </div>
-                        <div class="bg-vp-bg border border-vp-border rounded-md p-4">
-                            <div class="font-mono text-xs text-vp-accent mb-2">@vaultproof/sdk</div>
-                            <p class="text-sm text-gray-500">The client SDK. Handles splitting, proxied API calls, and share management.</p>
-                        </div>
-                        <div class="bg-vp-bg border border-vp-border rounded-md p-4">
-                            <div class="font-mono text-xs text-vp-accent mb-2">@vaultproof/cli</div>
-                            <p class="text-sm text-gray-500">The terminal client. Key management, session handling, local configuration.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <a href="https://github.com/VaultProof/vaultproof" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-vp-surface border border-vp-border hover:border-gray-500 text-white text-sm font-medium px-5 py-2.5 rounded-md transition">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-                    View on GitHub
-                </a>
-            </section>
-
-            <!-- Responsible Disclosure -->
-            <section id="disclosure" class="mb-20">
-                <h2 class="text-3xl font-bold text-white mb-2" style="font-family:'Space Grotesk',sans-serif">Responsible Disclosure</h2>
-                <p class="text-gray-500 mb-8">Found a security issue? Here is how to report it.</p>
-
-                <div class="bg-vp-surface border border-vp-border rounded-md p-6">
-                    <div class="space-y-4 mb-6">
-                        <div class="flex items-start gap-3">
-                            <span class="text-vp-accent mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Email:</strong> <a href="mailto:security@vaultproof.dev" class="text-vp-accent hover:underline">security@vaultproof.dev</a></p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-vp-accent mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Response time:</strong> We respond to all reports within 48 hours.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-vp-accent mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Legal safe harbor:</strong> We will not take legal action against good-faith security researchers who follow responsible disclosure practices.</p>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <span class="text-vp-accent mt-0.5 flex-shrink-0">--</span>
-                            <p class="text-sm text-gray-300"><strong class="text-white">Credit:</strong> We will credit researchers who report valid issues, if they want to be credited.</p>
-                        </div>
-                    </div>
-                    <p class="text-sm text-gray-500 mb-6">Please report vulnerabilities directly before public disclosure. Include steps to reproduce, affected components, and potential impact if possible.</p>
-                    <a href="mailto:security@vaultproof.dev" class="inline-flex items-center gap-2 bg-vp-accent hover:bg-indigo-500 text-white text-sm font-medium px-5 py-2.5 rounded-md transition">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
-                        security@vaultproof.dev
-                    </a>
-                </div>
-            </section>
-
-            <!-- Footer -->
-            <footer class="border-t border-vp-border pt-8 pb-12 text-center">
-                <p class="text-sm text-gray-600 mb-4">
-                    <a href="/" class="text-gray-400 hover:text-white transition">VaultProof</a> by <a href="/" class="text-gray-400 hover:text-white transition">Rial Labs</a>
-                </p>
-                <div class="flex items-center justify-center gap-6 flex-wrap">
-                    <a href="/terms" class="text-sm text-gray-500 hover:text-white transition-colors">Terms</a>
-                    <a href="/privacy" class="text-sm text-gray-500 hover:text-white transition-colors">Privacy</a>
-                    <a href="/security" class="text-sm text-gray-500 hover:text-white transition-colors">Security</a>
-                    <a href="/abuse" class="text-sm text-gray-500 hover:text-white transition-colors">Abuse</a>
-                </div>
-            </footer>
-
-        </main>
-    </div>
-
-    <!-- Sidebar active state tracking -->
-    <script src="/js/security-3.js" defer></script>
-
-    
-
-    <script src="/js/analytics.js" defer></script>
-<script src="/js/security-4.js" defer></script>
-<script src="/js/security-5.js" defer></script>
+  <script src="/js/security-3.js" defer></script>
 </body>
 </html>

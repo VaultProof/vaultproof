@@ -3,6 +3,7 @@
 <head>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
   <script src="/js/docs-1.js" defer></script>
+  <script src="/js/docs-nav-1.js" defer></script>
   <link rel="icon" type="image/png" href="/favicon.png">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -21,9 +22,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/docs-theme.css?v=20260604d">
+  <link rel="stylesheet" href="/css/docs-theme.css?v=20260604g">
 </head>
-<body class="docs-document">
+<body class="docs-document docs-nav-compact">
   <a class="skip-link" href="#quick-start">Skip to docs</a>
 
   <nav class="site-nav" aria-label="VaultProof navigation">
@@ -35,16 +36,31 @@
       <span>VaultProof</span>
     </a>
     <div class="nav-links" aria-label="Primary">
+      <a class="nav-link" href="/#product">Products</a>
+      <a class="nav-link" href="/#how-it-works">Use cases</a>
       <a class="nav-link active" href="/docs" aria-current="page">Docs</a>
-      <a class="nav-link" href="/scan">Scanner</a>
-      <a class="nav-link" href="/security">Security</a>
-      <a class="nav-link" href="/blog/">Blog</a>
+      <a class="nav-link" href="/#pricing">Pricing</a>
     </div>
     <div class="nav-actions">
-      <a class="nav-secondary" href="/app/login">Sign in</a>
-      <a class="nav-primary" href="/app/login">Open app</a>
+      <a class="nav-secondary" href="/app/login">Login</a>
+      <a class="nav-primary" href="/app/login">Get started</a>
     </div>
+    <button id="mobileToggle" type="button" class="docs-mobile-toggle" aria-label="Toggle menu" aria-expanded="false">Menu</button>
   </nav>
+
+  <div id="mobileMenu" class="docs-mobile-menu" aria-label="Mobile navigation">
+    <a href="/#product">Products</a>
+    <a href="/#how-it-works">Use cases</a>
+    <a href="/docs" aria-current="page">Docs</a>
+    <a href="/scan">Scanner</a>
+    <a href="/cicd-kubernetes">CI/CD</a>
+    <a href="/security">Security</a>
+    <a href="/status">Status</a>
+    <a href="/blog/">Blog</a>
+    <a href="/#pricing">Pricing</a>
+    <a href="/app/login">Login</a>
+    <a href="/app/login">Get started</a>
+  </div>
 
   <main class="docs-page">
     <section class="docs-hero" id="start">

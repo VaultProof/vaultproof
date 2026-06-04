@@ -415,12 +415,6 @@
             exampleRepoBtn.addEventListener('click', prefillExample);
         }
 
-        // ── Mobile nav toggle ────────────────────────────────────────────────────
-        document.getElementById('mobileToggle').addEventListener('click', function() {
-            const menu = document.getElementById('mobileMenu');
-            menu.classList.toggle('open');
-        });
-
         // ── URL param: ?repo=owner/repo → pre-fill only (no auto-submit) ─────────
         // Auto-submitting allowed scan-bombing and phishing via crafted links.
         (function() {
@@ -435,4 +429,35 @@
                     input.focus();
                 }
             }
+        })();
+
+        // ── Sidebar active section ───────────────────────────────────────────────
+        (function() {
+            const links = document.querySelectorAll('#sidebar-nav a[href^="#"]');
+            if (!links.length) return;
+
+            const sections = [];
+            links.forEach(function(link) {
+                const id = link.getAttribute('href')?.slice(1);
+                if (!id) return;
+
+                const el = document.getElementById(id);
+                if (el) sections.push({ el, link });
+            });
+
+            function activateSidebarLink() {
+                let current = sections[0];
+                sections.forEach(function(section) {
+                    if (section.el.getBoundingClientRect().top <= 120) current = section;
+                });
+
+                links.forEach(function(link) {
+                    link.classList.remove('active');
+                });
+
+                if (current) current.link.classList.add('active');
+            }
+
+            window.addEventListener('scroll', activateSidebarLink, { passive: true });
+            activateSidebarLink();
         })();

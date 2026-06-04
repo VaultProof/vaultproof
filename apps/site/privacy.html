@@ -1,229 +1,341 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script src="/js/privacy-1.js" defer></script>
-
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Policy | VaultProof</title>
-    <meta name="description" content="VaultProof Privacy Policy — how we handle your data with split-key security.">
-    <meta property="og:title" content="Privacy Policy | VaultProof">
-    <meta property="og:description" content="VaultProof Privacy Policy — how we handle your data with split-key security.">
-    <meta property="og:url" content="https://vaultproof.dev/privacy">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-    <link rel="canonical" href="https://vaultproof.dev/privacy">
-    <meta name="twitter:image" content="https://vaultproof.dev/ogimage.png">
-
-    <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
-    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-    <script src="/js/privacy-2.js" defer></script>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        * { font-family: 'Inter', system-ui, sans-serif; }
-        ::selection { background: #6366f1; color: #fff; }
-        body { background: #0a0a0f; }
-
-        .mobile-menu { display: none; }
-        .mobile-menu.open { display: flex; }
-    .btn-creative {
-    display: inline-block;
-    padding: 0.375rem 1.25rem;
-    background: #111;
-    color: white;
-    border: 1px solid rgba(255,255,255,0.1);
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 9999px;
-    transition: background 0.3s, color 0.3s;
-}
-.btn-creative:hover {
-    color: #000;
-    background: #fff;
-}
-    </style>
-  <link rel="stylesheet" href="/css/site-theme.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/privacy-1.js" defer></script>
+  <script src="/js/privacy-3.js" defer></script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy | VaultProof</title>
+  <meta name="description" content="How VaultProof collects, uses, protects, and retains account, provider, usage, billing, support, and analytics data.">
+  <meta property="og:title" content="Privacy Policy | VaultProof">
+  <meta property="og:description" content="How VaultProof handles account, provider, usage, billing, support, and analytics data.">
+  <meta property="og:url" content="https://vaultproof.dev/privacy">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://vaultproof.dev/og-image2.png">
+  <meta name="twitter:image" content="https://vaultproof.dev/og-image2.png">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="canonical" href="https://vaultproof.dev/privacy">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/docs-theme.css?v=20260604g">
 </head>
-<body class="text-gray-300 min-h-screen">
+<body class="docs-document">
+  <a class="skip-link" href="#overview">Skip to privacy policy</a>
 
-        <nav class="nav">
-      <a href="/" class="nav-logo">
-        <span class="nav-logo-name">VaultProof</span>
-        <span class="nav-logo-version">v0.4.2</span>
-      </a>
-      <div class="nav-spacer"></div>
-      <div class="nav-links">
-        <a href="/scan">scanner</a>
-        <a href="/docs">docs</a>
-        <a href="/blog">insights</a>
-        <a href="/#pricing">pricing</a>
-      </div>
-      <a href="/app/login" class="nav-sign-in">sign in</a>
-      <a href="/app/login" class="nav-cta">get started</a>
-      <button id="mobileToggle" type="button" class="mobile-toggle">menu</button>
-    </nav>
-
-    <div id="mobileMenu" class="mobile-menu">
-      <a href="/scan">scanner</a>
-      <a href="/docs">docs</a>
-      <a href="/blog">insights</a>
-      <a href="/#pricing">pricing</a>
-      <a href="/app/login">sign in</a>
+  <nav class="site-nav" aria-label="VaultProof navigation">
+    <a class="brand" href="/">
+      <span class="brand-mark">
+        <img class="brand-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <span class="brand-logo-fallback">VP</span>
+      </span>
+      <span>VaultProof</span>
+    </a>
+    <div class="nav-links" aria-label="Primary">
+      <a class="nav-link" href="/docs">Docs</a>
+      <a class="nav-link" href="/scan">Scanner</a>
+      <a class="nav-link" href="/security">Security</a>
+      <a class="nav-link" href="/blog/">Blog</a>
     </div>
+    <div class="nav-actions">
+      <a class="nav-secondary" href="/app/login">Sign in</a>
+      <a class="nav-primary" href="/app/login">Open app</a>
+    </div>
+  </nav>
 
-    <!-- Content -->
-    <main class="max-w-3xl mx-auto px-6 pt-24 pb-16">
-        <h1 class="text-4xl font-extrabold text-white mb-2 tracking-tight" style="font-family:'Space Grotesk',sans-serif">Privacy Policy</h1>
-        <p class="text-sm text-gray-500 mb-12">Last updated: March 25, 2026</p>
-
-        <div class="space-y-10 text-gray-400 leading-relaxed">
-
-            <!-- 1 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">1. Data We Collect</h2>
-                <ul class="list-disc list-inside space-y-1.5 ml-1">
-                    <li><strong class="text-gray-300">Email address</strong> -- used for authentication and account communication</li>
-                    <li><strong class="text-gray-300">Hashed password</strong> -- bcrypt-hashed, never stored in plaintext</li>
-                    <li><strong class="text-gray-300">Encrypted key shares</strong> -- split shares encrypted with authenticated encryption; your full API key is never stored at rest</li>
-                    <li><strong class="text-gray-300">Usage logs</strong> -- timestamps, endpoint paths, and HTTP status codes for proxy calls</li>
-                    <li><strong class="text-gray-300">Stripe customer ID</strong> -- for processing billing on paid plans</li>
-                </ul>
-            </section>
-
-            <!-- 2 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">2. Data We Do NOT Collect</h2>
-                <ul class="list-disc list-inside space-y-1.5 ml-1">
-                    <li><strong class="text-gray-300">Full API keys</strong> -- keys are split on the client before transmission; the complete key is only assembled briefly during proxied API calls</li>
-                    <li><strong class="text-gray-300">Browsing history</strong> -- we do not track pages you visit outside VaultProof</li>
-                    <li><strong class="text-gray-300">IP addresses</strong> -- IPs are used in-memory for rate limiting only and are not persisted or logged</li>
-                </ul>
-            </section>
-
-            <!-- 3 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">3. How We Use Your Data</h2>
-                <ul class="list-disc list-inside space-y-1.5 ml-1">
-                    <li>Authenticate you and manage your account</li>
-                    <li>Store encrypted key shares so your keys can be reassembled briefly for proxied API calls</li>
-                    <li>Process billing through Stripe</li>
-                    <li>Monitor and improve service reliability and performance</li>
-                </ul>
-            </section>
-
-            <!-- 4 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">4. Third-Party Services</h2>
-                <p class="mb-3">We use the following third-party services to operate VaultProof:</p>
-                <ul class="list-disc list-inside space-y-1.5 ml-1">
-                    <li><strong class="text-gray-300">Stripe</strong> -- payment processing and subscription management</li>
-                    <li><strong class="text-gray-300">Supabase</strong> -- database hosting and authentication infrastructure</li>
-                    <li><strong class="text-gray-300">Cloudflare</strong> -- CDN, DDoS protection, and edge compute</li>
-                    <li><strong class="text-gray-300">Sentry</strong> -- error tracking and performance monitoring (no PII is sent to Sentry)</li>
-                </ul>
-            </section>
-
-            <!-- 5 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">5. Data Retention</h2>
-                <p>While your account is active, all associated data is retained. When you delete your account, all data is permanently destroyed via cascading delete -- this includes encrypted shares, usage logs, billing references, and account metadata. Deletion is irreversible.</p>
-            </section>
-
-            <!-- 6 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">6. Security</h2>
-                <p>We take security seriously. Our architecture includes:</p>
-                <ul class="list-disc list-inside space-y-1.5 ml-1 mt-3">
-                    <li><strong class="text-gray-300">Authenticated encryption</strong> for all stored key shares</li>
-                    <li><strong class="text-gray-300">Split-key encryption</strong> -- keys are split before leaving your device</li>
-                    <li><strong class="text-gray-300">Cryptographic proofs</strong> for key authorization without exposure</li>
-                    <li><strong class="text-gray-300">HMAC-based proxy authentication</strong> to prevent unauthorized API calls</li>
-                </ul>
-            </section>
-
-            <!-- 7 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">7. Your Rights</h2>
-                <p>You have the right to:</p>
-                <ul class="list-disc list-inside space-y-1.5 ml-1 mt-3">
-                    <li><strong class="text-gray-300">Access</strong> your stored data through the Dashboard</li>
-                    <li><strong class="text-gray-300">Export</strong> your data at any time</li>
-                    <li><strong class="text-gray-300">Delete</strong> your account and all associated data</li>
-                    <li><strong class="text-gray-300">Revoke</strong> any stored API key at any time</li>
-                </ul>
-            </section>
-
-            <!-- 8 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">8. GDPR</h2>
-                <p>We process personal data under the lawful basis of legitimate interest (providing the Service you signed up for). Data is stored in the United States via Supabase (AWS infrastructure). If you are located in the EU/EEA, you may request access to, correction of, or deletion of your personal data by contacting us. We will respond to GDPR requests within 30 days.</p>
-            </section>
-
-            <!-- 9 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">9. Cookies and Local Storage</h2>
-                <p>VaultProof does not use tracking cookies. We use <code class="text-gray-300 bg-vp-surface px-1.5 py-0.5 rounded text-sm">localStorage</code> for two purposes only:</p>
-                <ul class="list-disc list-inside space-y-1.5 ml-1 mt-3">
-                    <li>Storing your authentication token (so you stay logged in)</li>
-                    <li>Storing notification read state (so dismissed notices stay dismissed)</li>
-                </ul>
-                <p class="mt-3">No third-party tracking cookies are set.</p>
-            </section>
-
-            <!-- 10 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">10. Children</h2>
-                <p>VaultProof is not intended for use by anyone under the age of 18. We do not knowingly collect personal data from minors. If we learn that we have collected data from a user under 18, we will delete their account and data promptly.</p>
-            </section>
-
-            <!-- 11 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">11. Contact</h2>
-                <p>If you have questions about this Privacy Policy or want to exercise your data rights, contact us at <a href="mailto:hello@vaultproof.dev" class="text-vp-accent hover:underline">hello@vaultproof.dev</a>.</p>
-            </section>
-
+  <main class="docs-page">
+    <section class="docs-hero" id="overview">
+      <div class="hero-copy">
+        <p class="eyebrow">Privacy Policy</p>
+        <h1>Privacy details for using VaultProof.</h1>
+        <p class="hero-lede">This policy explains what VaultProof collects, how we use it, where provider-key data fits into the service, and what choices you have.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="/app/login">Open app</a>
+          <a class="button secondary" href="/terms">Terms of Service</a>
         </div>
-    </main>
+      </div>
+      <div class="hero-panel" aria-label="Privacy summary">
+        <div class="panel-kicker">Last updated</div>
+        <ol class="mini-steps">
+          <li><span class="step-badge">1</span><span class="step-copy">Last updated June 4, 2026.</span></li>
+          <li><span class="step-badge">2</span><span class="step-copy">We use data to run, secure, bill, support, and improve VaultProof.</span></li>
+          <li><span class="step-badge">3</span><span class="step-copy">We do not sell customer data.</span></li>
+          <li><span class="step-badge">4</span><span class="step-copy">Privacy questions go to <code>hello@vaultproof.dev</code>.</span></li>
+        </ol>
+      </div>
+    </section>
 
-    <!-- Footer -->
-    <footer class="border-t border-vp-border">
-        <div class="max-w-5xl mx-auto px-6 py-12">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-                <div class="flex flex-col items-center md:items-start gap-2">
-                    <div class="flex items-center gap-2.5">
-                        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#6366f1" fill-opacity="0.15"/><path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="1.5" fill="none"/><path d="M14 10V15" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/><circle cx="14" cy="17" r="1" fill="#6366f1"/></svg>
-                        <span class="text-sm font-bold text-white">VaultProof</span>
-                        <span class="text-xs text-gray-600">by Rial Labs</span>
-                    </div>
-                    <p class="text-xs text-gray-600">Built for developers who refuse to trust blindly.</p>
-                </div>
-                <div class="flex items-center gap-8">
-                    <a href="/docs" class="text-sm text-gray-500 hover:text-white transition-colors">Documentation</a>
-                    <a href="/guides" class="text-sm text-gray-500 hover:text-white transition-colors">Guides</a>
-                    <a href="/verify" class="text-sm text-gray-500 hover:text-white transition-colors">Verify</a>
-                    <a href="/status" class="text-sm text-gray-500 hover:text-white transition-colors">Status</a>
-                    <a href="/app/login" class="nav-dashboard text-sm text-gray-500 hover:text-white transition-colors" style="display:none">Dashboard</a>
-                    <a href="/terms" class="text-sm text-gray-500 hover:text-white transition-colors">Terms</a>
-                    <a href="/privacy" class="text-sm text-gray-500 hover:text-white transition-colors">Privacy</a>
-                    <a href="/security" class="text-sm text-gray-500 hover:text-white transition-colors">Security</a>
-                    <a href="/abuse" class="text-sm text-gray-500 hover:text-white transition-colors">Abuse</a>
-                </div>
+    <div class="docs-layout">
+      <aside class="docs-sidebar" id="sidebar-nav" aria-label="Privacy sections">
+        <a href="#scope">Scope</a>
+        <a href="#data">Data we collect</a>
+        <a href="#provider-data">Provider data</a>
+        <a href="#use">How we use data</a>
+        <a href="#sharing">Sharing</a>
+        <a href="#retention">Retention</a>
+        <a href="#cookies">Cookies</a>
+        <a href="#security">Security</a>
+        <a href="#choices">Your choices</a>
+        <a href="#international">International</a>
+        <a href="#children">Children</a>
+        <a href="#changes">Changes</a>
+        <a href="#contact">Contact</a>
+      </aside>
+
+      <article class="docs-main">
+        <section class="docs-section" id="scope">
+          <div class="section-heading">
+            <p class="eyebrow">1. Scope</p>
+            <h2>This policy covers VaultProof's website, app, scanner, init, API, and provider routing services.</h2>
+            <p>This Privacy Policy explains how VaultProof Ltd. collects, uses, shares, and protects information when you visit the website, use the dashboard, run hosted init, download VaultProof files, use the scanner, or route provider calls through VaultProof.</p>
+          </div>
+          <p>If you use VaultProof for a company or organization, that organization may control some data in the account. Your use of VaultProof is also governed by the <a href="/terms">Terms of Service</a>.</p>
+        </section>
+
+        <section class="docs-section" id="data">
+          <div class="section-heading">
+            <p class="eyebrow">2. Data We Collect</p>
+            <h2>We collect the data needed to operate and secure the service.</h2>
+            <p>The exact data depends on how you use VaultProof. Most data falls into account, configuration, usage, billing, support, and device categories.</p>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Examples</th>
+                  <th>Purpose</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Account data</td>
+                  <td>Email address, name if provided, authentication metadata, workspace membership, plan state, and account settings.</td>
+                  <td>Login, account management, security, notifications, and support.</td>
+                </tr>
+                <tr>
+                  <td>Configuration data</td>
+                  <td>Project names, provider types, token prefixes, environment labels, allowed routes, budgets, alert settings, and dashboard preferences.</td>
+                  <td>Provide key management, routing, policy controls, alerts, and user workflows.</td>
+                </tr>
+                <tr>
+                  <td>Usage metadata</td>
+                  <td>Provider, route, status code, timestamp, latency, error class, request ID, approximate volume, and operational logs.</td>
+                  <td>Operate the service, debug issues, detect abuse, show activity, and support incident review.</td>
+                </tr>
+                <tr>
+                  <td>Billing data</td>
+                  <td>Plan, subscription status, customer ID, invoices, payment status, and billing contact details handled by our payment processor.</td>
+                  <td>Process subscriptions, taxes, invoices, limits, and billing support.</td>
+                </tr>
+                <tr>
+                  <td>Support data</td>
+                  <td>Messages you send us, screenshots, logs, issue details, abuse reports, and security reports.</td>
+                  <td>Answer questions, investigate reports, fix issues, and improve documentation.</td>
+                </tr>
+                <tr>
+                  <td>Device and site data</td>
+                  <td>IP address, browser type, pages viewed, referrer, approximate location, and diagnostics from website and app analytics.</td>
+                  <td>Security, fraud prevention, performance, analytics, and product improvement.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="docs-section" id="provider-data">
+          <div class="section-heading">
+            <p class="eyebrow">3. Provider Data</p>
+            <h2>Provider-key data is handled for key protection and runtime routing.</h2>
+            <p>VaultProof is built to reduce where raw provider keys live. When you add a supported provider key or run hosted init, VaultProof may process provider key material, VaultProof-generated token values, provider-compatible base URLs, and metadata needed to route requests.</p>
+          </div>
+          <div class="card-grid three">
+            <div class="doc-card">
+              <h3>Setup</h3>
+              <p>The init tool can detect supported keys, protect them, and write VaultProof values and base URLs into your app environment.</p>
             </div>
-        </div>
-    </footer>
+            <div class="doc-card">
+              <h3>Runtime</h3>
+              <p>When your app makes a provider request, VaultProof uses the required upstream credential to authenticate that request with the provider.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Logs</h3>
+              <p>We record operational metadata such as route, status, timestamp, latency, and error information. We do not intentionally log raw provider keys.</p>
+            </div>
+          </div>
+          <div class="callout warning">
+            <strong>Important security boundary</strong>
+            <span>VaultProof reduces plaintext key exposure, but it does not replace provider-side permissions, spend limits, rotation, revocation, monitoring, or your application security.</span>
+          </div>
+        </section>
 
-    
-<script src="/js/analytics.js" defer></script>
-<script src="/js/privacy-3.js" defer></script>
-<script src="/js/privacy-4.js" defer></script>
+        <section class="docs-section" id="use">
+          <div class="section-heading">
+            <p class="eyebrow">4. How We Use Data</p>
+            <h2>We use data to run, secure, support, bill, and improve VaultProof.</h2>
+            <p>We process information only for practical service purposes and legal reasons.</p>
+          </div>
+          <ul class="check-list">
+            <li>Provide the website, dashboard, hosted init, downloads, scanner, API, and provider routing services.</li>
+            <li>Authenticate users, maintain sessions, manage accounts, and enforce workspace permissions.</li>
+            <li>Route supported provider requests and show activity, usage, alerts, errors, and status information.</li>
+            <li>Detect abuse, investigate suspicious usage, protect against fraud, and enforce the Terms.</li>
+            <li>Process billing, invoices, plan limits, taxes, payment status, and related support requests.</li>
+            <li>Send service messages, security notices, product updates, and support replies.</li>
+            <li>Measure site and product usage so we can improve onboarding, documentation, reliability, and performance.</li>
+            <li>Comply with law, legal process, and legitimate requests from users, providers, or authorities.</li>
+          </ul>
+        </section>
+
+        <section class="docs-section" id="sharing">
+          <div class="section-heading">
+            <p class="eyebrow">5. Sharing</p>
+            <h2>We do not sell customer data.</h2>
+            <p>We share information only when needed to provide the service, work with trusted vendors, protect users, comply with law, or complete a business transaction.</p>
+          </div>
+          <div class="card-grid two">
+            <div class="doc-card">
+              <h3>Service providers</h3>
+              <p>We use vendors for hosting, authentication, database infrastructure, payments, analytics, email, monitoring, support, security, and similar operations.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Provider routing</h3>
+              <p>When your app calls an upstream provider through VaultProof, the provider receives the request data needed to process that provider call.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Security and abuse</h3>
+              <p>We may share or preserve information to investigate abuse, prevent harm, enforce our Terms, protect users, or coordinate with providers.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Legal and corporate events</h3>
+              <p>We may disclose information when required by law, legal process, or as part of a merger, financing, acquisition, or sale of assets.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="docs-section" id="retention">
+          <div class="section-heading">
+            <p class="eyebrow">6. Retention</p>
+            <h2>We keep data as long as needed for the service and legitimate operational needs.</h2>
+            <p>Retention depends on the type of data, your plan, legal requirements, security needs, and whether the data is still needed for billing, support, audit, abuse prevention, or incident review.</p>
+          </div>
+          <ul class="check-list">
+            <li>Account and configuration data is generally kept while the account or workspace is active.</li>
+            <li>Usage, activity, and error metadata may be retained to power dashboard history, billing confidence, support, security review, and abuse detection.</li>
+            <li>Billing records may be retained as required for tax, accounting, dispute, and payment compliance.</li>
+            <li>Support, abuse, and security reports may be retained as needed to resolve the issue and protect the service.</li>
+            <li>Backups and logs may remain for a limited period before they are overwritten or deleted through normal retention cycles.</li>
+          </ul>
+          <p>You may request deletion of account data by contacting us or using available dashboard controls. Some information may remain where retention is required by law, security, fraud prevention, billing, dispute handling, or backup integrity.</p>
+        </section>
+
+        <section class="docs-section" id="cookies">
+          <div class="section-heading">
+            <p class="eyebrow">7. Cookies and Analytics</p>
+            <h2>VaultProof uses local storage, cookies, and analytics for service operation and improvement.</h2>
+            <p>We use browser storage and similar technologies to keep users signed in, remember preferences, maintain security state, understand product usage, and improve onboarding and documentation.</p>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tool</th>
+                  <th>Use</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Authentication storage</td>
+                  <td>Stores session information so authenticated users can stay signed in and use the dashboard securely.</td>
+                </tr>
+                <tr>
+                  <td>Local preferences</td>
+                  <td>Stores interface preferences, dismissed notices, and other product state where useful.</td>
+                </tr>
+                <tr>
+                  <td>Analytics</td>
+                  <td>Measures pages, events, onboarding paths, and product usage. The site currently loads Google Analytics and Mixpanel.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>You can control cookies and local storage through your browser settings. Blocking storage may break login, dashboard features, or preference-saving behavior.</p>
+        </section>
+
+        <section class="docs-section" id="security">
+          <div class="section-heading">
+            <p class="eyebrow">8. Security</p>
+            <h2>We use technical and operational controls to protect VaultProof data.</h2>
+            <p>Security measures include access controls, encryption in transit, provider-key handling controls, logging, monitoring, and abuse prevention. No internet service can guarantee perfect security.</p>
+          </div>
+          <div class="callout info">
+            <strong>Security reports</strong>
+            <span>Send vulnerability reports to <a href="mailto:security@vaultproof.dev">security@vaultproof.dev</a>. Send abuse reports involving stolen keys or unauthorized usage to <a href="mailto:abuse@vaultproof.dev">abuse@vaultproof.dev</a>.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="choices">
+          <div class="section-heading">
+            <p class="eyebrow">9. Your Choices</p>
+            <h2>You can access, update, export, or request deletion of data.</h2>
+            <p>Depending on your location and account role, you may have rights to request access, correction, deletion, export, restriction, or objection to certain processing.</p>
+          </div>
+          <ul class="check-list">
+            <li>Update account and workspace settings in the dashboard where available.</li>
+            <li>Rotate, revoke, or remove provider keys through VaultProof and the upstream provider.</li>
+            <li>Export or review available activity and billing information from dashboard workflows where supported.</li>
+            <li>Opt out of non-essential emails by using unsubscribe links or contacting us.</li>
+            <li>Contact us for privacy requests, account deletion, or questions about data we process.</li>
+          </ul>
+        </section>
+
+        <section class="docs-section" id="international">
+          <div class="section-heading">
+            <p class="eyebrow">10. International Transfers</p>
+            <h2>VaultProof may process data in the United States and other countries.</h2>
+            <p>We and our vendors may process information in countries where we or they operate. Those countries may have data protection laws different from the laws where you live. Where required, we use appropriate safeguards for international transfers.</p>
+          </div>
+        </section>
+
+        <section class="docs-section" id="children">
+          <div class="section-heading">
+            <p class="eyebrow">11. Children</p>
+            <h2>VaultProof is not for children.</h2>
+            <p>VaultProof is intended for users who are at least 18 years old, or the age of majority where they live. We do not knowingly collect personal data from children. If you believe a child has provided personal data to VaultProof, contact us.</p>
+          </div>
+        </section>
+
+        <section class="docs-section" id="changes">
+          <div class="section-heading">
+            <p class="eyebrow">12. Changes</p>
+            <h2>We may update this Privacy Policy.</h2>
+            <p>If we make material changes, we will provide reasonable notice by email, dashboard notice, website notice, or another appropriate method. Continued use after the effective date means the updated policy applies.</p>
+          </div>
+        </section>
+
+        <section class="docs-section" id="contact">
+          <div class="section-heading">
+            <p class="eyebrow">13. Contact</p>
+            <h2>Questions about privacy?</h2>
+            <p>Contact us at <a href="mailto:hello@vaultproof.dev">hello@vaultproof.dev</a>. For security issues, use <a href="mailto:security@vaultproof.dev">security@vaultproof.dev</a>. For abuse reports, use <a href="mailto:abuse@vaultproof.dev">abuse@vaultproof.dev</a>.</p>
+          </div>
+        </section>
+      </article>
+    </div>
+  </main>
+
+  <footer class="docs-footer">
+    <a href="/">VaultProof</a>
+    <a href="/docs">Docs</a>
+    <a href="/security">Security</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/terms">Terms</a>
+    <a href="/abuse">Abuse</a>
+  </footer>
 </body>
 </html>

@@ -1,204 +1,248 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script src="/js/terms-1.js" defer></script>
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terms of Service | VaultProof</title>
-    <meta name="description" content="VaultProof Terms of Service — rules and conditions for using our split-key API key infrastructure.">
-    <meta property="og:title" content="Terms of Service | VaultProof">
-    <meta property="og:description" content="VaultProof Terms of Service — rules and conditions for using our split-key API key infrastructure.">
-    <meta property="og:url" content="https://vaultproof.dev/terms">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-    <link rel="canonical" href="https://vaultproof.dev/terms">
-    <meta name="twitter:image" content="https://vaultproof.dev/ogimage.png">
-
-    <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
-    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-    <script src="/js/terms-2.js" defer></script>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        * { font-family: 'Inter', system-ui, sans-serif; }
-        ::selection { background: #6366f1; color: #fff; }
-        body { background: #0a0a0f; }
-
-        .mobile-menu { display: none; }
-        .mobile-menu.open { display: flex; }
-    .btn-creative {
-    display: inline-block;
-    padding: 0.375rem 1.25rem;
-    background: #111;
-    color: white;
-    border: 1px solid rgba(255,255,255,0.1);
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 9999px;
-    transition: background 0.3s, color 0.3s;
-}
-.btn-creative:hover {
-    color: #000;
-    background: #fff;
-}
-    </style>
-  <link rel="stylesheet" href="/css/site-theme.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/terms-1.js" defer></script>
+  <script src="/js/terms-3.js" defer></script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Terms of Service | VaultProof</title>
+  <meta name="description" content="VaultProof Terms of Service for using the website, hosted init, dashboard, API key protection, and provider routing services.">
+  <meta property="og:title" content="Terms of Service | VaultProof">
+  <meta property="og:description" content="Terms for using VaultProof website, dashboard, hosted init, and API key protection services.">
+  <meta property="og:url" content="https://vaultproof.dev/terms">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://vaultproof.dev/og-image2.png">
+  <meta name="twitter:image" content="https://vaultproof.dev/og-image2.png">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="canonical" href="https://vaultproof.dev/terms">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/docs-theme.css?v=20260604g">
 </head>
-<body class="text-gray-300 min-h-screen">
+<body class="docs-document">
+  <a class="skip-link" href="#overview">Skip to terms</a>
 
-        <nav class="nav">
-      <a href="/" class="nav-logo">
-        <span class="nav-logo-name">VaultProof</span>
-        <span class="nav-logo-version">v0.4.2</span>
-      </a>
-      <div class="nav-spacer"></div>
-      <div class="nav-links">
-        <a href="/scan">scanner</a>
-        <a href="/docs">docs</a>
-        <a href="/blog">insights</a>
-        <a href="/#pricing">pricing</a>
-      </div>
-      <a href="/app/login" class="nav-sign-in">sign in</a>
-      <a href="/app/login" class="nav-cta">get started</a>
-      <button id="mobileToggle" type="button" class="mobile-toggle">menu</button>
-    </nav>
-
-    <div id="mobileMenu" class="mobile-menu">
-      <a href="/scan">scanner</a>
-      <a href="/docs">docs</a>
-      <a href="/blog">insights</a>
-      <a href="/#pricing">pricing</a>
-      <a href="/app/login">sign in</a>
+  <nav class="site-nav" aria-label="VaultProof navigation">
+    <a class="brand" href="/">
+      <span class="brand-mark">
+        <img class="brand-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <span class="brand-logo-fallback">VP</span>
+      </span>
+      <span>VaultProof</span>
+    </a>
+    <div class="nav-links" aria-label="Primary">
+      <a class="nav-link" href="/docs">Docs</a>
+      <a class="nav-link" href="/scan">Scanner</a>
+      <a class="nav-link" href="/security">Security</a>
+      <a class="nav-link" href="/blog/">Blog</a>
     </div>
+    <div class="nav-actions">
+      <a class="nav-secondary" href="/app/login">Sign in</a>
+      <a class="nav-primary" href="/app/login">Open app</a>
+    </div>
+  </nav>
 
-    <!-- Content -->
-    <main class="max-w-3xl mx-auto px-6 pt-24 pb-16">
-        <h1 class="text-4xl font-extrabold text-white mb-2 tracking-tight" style="font-family:'Space Grotesk',sans-serif">Terms of Service</h1>
-        <p class="text-sm text-gray-500 mb-12">Last updated: March 25, 2026</p>
-
-        <div class="space-y-10 text-gray-400 leading-relaxed">
-
-            <!-- 1 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">1. Service Description</h2>
-                <p>VaultProof ("the Service") is an API key storage and proxy platform operated by Rial Labs. We split your API keys, encrypt the resulting shares with authenticated encryption, and reassemble them only briefly in memory during a proxied API call. Cryptographic proofs allow you to verify that your key is stored correctly without revealing it. Your raw API key is never stored whole at rest on any server.</p>
-            </section>
-
-            <!-- 2 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">2. Account Terms</h2>
-                <p>To use VaultProof you must create an account with a valid email address and password. You must be at least 18 years of age. You are responsible for maintaining the confidentiality of your credentials and for all activity that occurs under your account. You agree to notify us immediately of any unauthorized access.</p>
-            </section>
-
-            <!-- 3 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">3. Acceptable Use</h2>
-                <p>You agree not to use VaultProof for any illegal activity, to abuse or overload the proxy infrastructure, to attempt to extract other users' data, or to circumvent rate limits or security controls. We reserve the right to suspend or terminate accounts that violate these terms.</p>
-            </section>
-
-            <!-- 4 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">4. API Key Responsibility</h2>
-                <p>You own your API keys. VaultProof splits your API keys before storage. Keys are split client-side before being transmitted to our servers, and are only assembled briefly in memory during proxied API calls. You are solely responsible for creating, rotating, and revoking your keys with the underlying API providers (e.g., OpenAI, Anthropic, Google).</p>
-            </section>
-
-            <!-- 5 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">5. Service Availability</h2>
-                <p>VaultProof is provided on a best-effort basis. We aim for high availability but do not guarantee any specific uptime or SLA unless covered by a separately negotiated agreement. Scheduled maintenance windows will be communicated in advance when possible.</p>
-            </section>
-
-            <!-- 6 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">6. Data Handling</h2>
-                <p>We store encrypted shares of your API keys, never plaintext keys. Shares are encrypted with authenticated encryption and stored in our database. For full details on what data we collect and how we handle it, please see our <a href="/privacy" class="text-vp-accent hover:underline">Privacy Policy</a>.</p>
-            </section>
-
-            <!-- 7 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">7. Payment Terms</h2>
-                <p>Paid plans are billed through Stripe on a monthly or annual cycle. Each plan includes specific limits on the number of stored keys and proxy calls per month. If you exceed your plan's limits, additional usage may be throttled or billed as overage according to your plan's terms. All fees are non-refundable except as required by law.</p>
-            </section>
-
-            <!-- 8 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">8. Termination</h2>
-                <p>Either party may terminate this agreement at any time. You may delete your account from the Dashboard. We may terminate or suspend your access if you violate these terms. Upon termination, all your data (encrypted shares, account information, usage logs) will be permanently deleted upon request via cascading delete.</p>
-            </section>
-
-            <!-- 9 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">9. Limitation of Liability</h2>
-                <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, VAULTPROOF AND RIAL LABS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, DATA, OR GOODWILL, ARISING FROM YOUR USE OF THE SERVICE. OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE TWELVE MONTHS PRECEDING THE CLAIM.</p>
-            </section>
-
-            <!-- 10 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">10. Modifications</h2>
-                <p>We may update these Terms of Service from time to time. When we make material changes, we will notify you via email or a prominent notice on the Service. Your continued use of VaultProof after changes take effect constitutes acceptance of the revised terms.</p>
-            </section>
-
-            <!-- 11 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">11. Prohibited Uses</h2>
-                <p class="mb-3">The following uses of VaultProof are strictly prohibited:</p>
-                <ul class="list-disc list-inside space-y-1.5 ml-1">
-                    <li>You may only store API keys that you own or are authorized to use</li>
-                    <li>Using VaultProof to obscure the origin of stolen, leaked, or unauthorized API keys is prohibited</li>
-                    <li>Creating multiple accounts to circumvent rate limits or tier restrictions is prohibited</li>
-                    <li>Using the proxy to conduct denial-of-service attacks against any service is prohibited</li>
-                    <li>VaultProof reserves the right to cooperate with API providers to investigate and revoke stolen keys</li>
-                    <li>Violation of any of the above results in immediate account termination without refund</li>
-                </ul>
-            </section>
-
-            <!-- 12 -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">12. Contact</h2>
-                <p>If you have questions about these terms, contact us at <a href="mailto:hello@vaultproof.dev" class="text-vp-accent hover:underline">hello@vaultproof.dev</a>.</p>
-            </section>
-
+  <main class="docs-page">
+    <section class="docs-hero" id="overview">
+      <div class="hero-copy">
+        <p class="eyebrow">Terms of Service</p>
+        <h1>Terms for using VaultProof.</h1>
+        <p class="hero-lede">These Terms explain how you may use VaultProof's website, hosted init, dashboard, scanner, API key protection, and provider routing services.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="/app/login">Open app</a>
+          <a class="button secondary" href="/privacy">Privacy policy</a>
         </div>
-    </main>
+      </div>
+      <div class="hero-panel" aria-label="Terms summary">
+        <div class="panel-kicker">Effective date</div>
+        <ol class="mini-steps">
+          <li><span class="step-badge">1</span><span class="step-copy">Last updated June 4, 2026.</span></li>
+          <li><span class="step-badge">2</span><span class="step-copy">Use only keys and accounts you are authorized to use.</span></li>
+          <li><span class="step-badge">3</span><span class="step-copy">Rotate leaked provider keys at the provider.</span></li>
+          <li><span class="step-badge">4</span><span class="step-copy">Contact <code>hello@vaultproof.dev</code> with questions.</span></li>
+        </ol>
+      </div>
+    </section>
 
-    <!-- Footer -->
-    <footer class="border-t border-vp-border">
-        <div class="max-w-5xl mx-auto px-6 py-12">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-                <div class="flex flex-col items-center md:items-start gap-2">
-                    <div class="flex items-center gap-2.5">
-                        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#6366f1" fill-opacity="0.15"/><path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="1.5" fill="none"/><path d="M14 10V15" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/><circle cx="14" cy="17" r="1" fill="#6366f1"/></svg>
-                        <span class="text-sm font-bold text-white">VaultProof</span>
-                        <span class="text-xs text-gray-600">by Rial Labs</span>
-                    </div>
-                    <p class="text-xs text-gray-600">Built for developers who refuse to trust blindly.</p>
-                </div>
-                <div class="flex items-center gap-8">
-                    <a href="/docs" class="text-sm text-gray-500 hover:text-white transition-colors">Documentation</a>
-                    <a href="/guides" class="text-sm text-gray-500 hover:text-white transition-colors">Guides</a>
-                    <a href="/verify" class="text-sm text-gray-500 hover:text-white transition-colors">Verify</a>
-                    <a href="/status" class="text-sm text-gray-500 hover:text-white transition-colors">Status</a>
-                    <a href="/app/login" class="nav-dashboard text-sm text-gray-500 hover:text-white transition-colors" style="display:none">Dashboard</a>
-                    <a href="/terms" class="text-sm text-gray-500 hover:text-white transition-colors">Terms</a>
-                    <a href="/privacy" class="text-sm text-gray-500 hover:text-white transition-colors">Privacy</a>
-                    <a href="/security" class="text-sm text-gray-500 hover:text-white transition-colors">Security</a>
-                    <a href="/abuse" class="text-sm text-gray-500 hover:text-white transition-colors">Abuse</a>
-                </div>
+    <div class="docs-layout">
+      <aside class="docs-sidebar" id="sidebar-nav" aria-label="Terms sections">
+        <a href="#agreement">Agreement</a>
+        <a href="#service">Service</a>
+        <a href="#accounts">Accounts</a>
+        <a href="#customer-data">Customer data</a>
+        <a href="#acceptable-use">Acceptable use</a>
+        <a href="#billing">Billing</a>
+        <a href="#availability">Availability</a>
+        <a href="#termination">Termination</a>
+        <a href="#legal">Legal terms</a>
+        <a href="#contact">Contact</a>
+      </aside>
+
+      <article class="docs-main">
+        <section class="docs-section" id="agreement">
+          <div class="section-heading">
+            <p class="eyebrow">1. Agreement</p>
+            <h2>By using VaultProof, you agree to these Terms.</h2>
+            <p>These Terms of Service are an agreement between you and VaultProof Ltd. They apply when you access or use VaultProof's website, hosted init installer, downloads, scanner, dashboard, API, provider routing, and related services.</p>
+          </div>
+          <p>If you use VaultProof for a company or other organization, you represent that you have authority to bind that organization to these Terms. You must be at least 18 years old, or the age of majority where you live, to use the Service.</p>
+        </section>
+
+        <section class="docs-section" id="service">
+          <div class="section-heading">
+            <p class="eyebrow">2. Service</p>
+            <h2>VaultProof helps reduce raw provider-key exposure.</h2>
+            <p>VaultProof is an API key protection and routing service. It helps users move provider keys out of source code, hosted environment files, CI logs, and AI coding context by using VaultProof-managed values and provider-compatible routes.</p>
+          </div>
+          <div class="card-grid three">
+            <div class="doc-card">
+              <h3>Hosted init</h3>
+              <p>The init tool can detect supported provider keys, protect them, and write VaultProof values and base URLs into your app environment.</p>
             </div>
-        </div>
-    </footer>
+            <div class="doc-card">
+              <h3>Dashboard</h3>
+              <p>The app provides key management, activity, alerts, usage, settings, and billing-related workflows.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Provider routing</h3>
+              <p>VaultProof routes supported provider calls through compatible endpoints and authenticates upstream on your behalf.</p>
+            </div>
+          </div>
+          <div class="callout warning">
+            <strong>Security boundary</strong>
+            <span>VaultProof does not eliminate every key risk. During a provider request, VaultProof must use the credential required to authenticate upstream. You remain responsible for provider-side permissions, rotation, billing controls, and application security.</span>
+          </div>
+        </section>
 
-    
-<script src="/js/analytics.js" defer></script>
-<script src="/js/terms-3.js" defer></script>
-<script src="/js/terms-4.js" defer></script>
+        <section class="docs-section" id="accounts">
+          <div class="section-heading">
+            <p class="eyebrow">3. Accounts</p>
+            <h2>You are responsible for your account and configuration.</h2>
+            <p>You must provide accurate account information and keep your login credentials secure. You are responsible for all activity under your account, including activity by users, teammates, applications, agents, CI jobs, or workloads that use your VaultProof values.</p>
+          </div>
+          <ul class="check-list">
+            <li>Use strong authentication and protect access to your email and dashboard account.</li>
+            <li>Only add provider keys that you own or are authorized to use.</li>
+            <li>Remove raw provider keys from old environments, logs, repos, and hosting settings after setup.</li>
+            <li>Notify us promptly if you believe your account or VaultProof values were accessed without authorization.</li>
+          </ul>
+        </section>
+
+        <section class="docs-section" id="customer-data">
+          <div class="section-heading">
+            <p class="eyebrow">4. Customer Data</p>
+            <h2>You keep ownership of your data and provider accounts.</h2>
+            <p>"Customer Data" means information you submit to VaultProof, including account information, configuration, provider key material, VaultProof-generated values, activity records, and metadata related to your use of the Service.</p>
+          </div>
+          <p>You grant VaultProof a limited right to process Customer Data only as needed to provide, secure, operate, troubleshoot, and improve the Service; comply with law; and enforce these Terms. We handle personal data as described in the <a href="/privacy">Privacy Policy</a>.</p>
+          <div class="callout info">
+            <strong>Provider keys</strong>
+            <span>You are responsible for creating, scoping, rotating, revoking, and monitoring provider keys with the underlying providers such as OpenAI, Anthropic, Stripe, Google, and similar services.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="acceptable-use">
+          <div class="section-heading">
+            <p class="eyebrow">5. Acceptable Use</p>
+            <h2>Do not abuse VaultProof or other services through VaultProof.</h2>
+            <p>You may not use VaultProof for illegal, harmful, abusive, or unauthorized activity.</p>
+          </div>
+          <ul class="check-list warning">
+            <li>Do not store or route keys you stole, found, scraped, bought without authorization, or are not allowed to use.</li>
+            <li>Do not use VaultProof to hide the origin of compromised provider keys or fraudulent provider usage.</li>
+            <li>Do not attack, overload, scan, scrape, reverse engineer, or bypass rate limits or security controls.</li>
+            <li>Do not use the proxy to conduct denial-of-service activity, credential stuffing, spam, malware distribution, fraud, or unlawful surveillance.</li>
+            <li>Do not create multiple accounts or projects to avoid plan limits, abuse controls, or enforcement.</li>
+          </ul>
+          <p>We may suspend, limit, or terminate access if we reasonably believe your use violates these Terms, threatens the Service, creates legal risk, or harms VaultProof, users, providers, or third parties.</p>
+        </section>
+
+        <section class="docs-section" id="billing">
+          <div class="section-heading">
+            <p class="eyebrow">6. Billing</p>
+            <h2>Paid plans are billed through our payment processor.</h2>
+            <p>Some VaultProof features may require a paid plan. Prices, plan limits, and included usage are shown at purchase or in the dashboard. Paid plans may be billed monthly, annually, or on another stated cycle through a third-party payment processor.</p>
+          </div>
+          <p>You authorize us and our payment processor to charge applicable fees, taxes, and allowed usage-based charges. Fees are non-refundable except as required by law or expressly stated in a separate written agreement. If payment fails or usage exceeds allowed limits, we may throttle, limit, downgrade, or suspend access.</p>
+        </section>
+
+        <section class="docs-section" id="availability">
+          <div class="section-heading">
+            <p class="eyebrow">7. Availability</p>
+            <h2>The Service is provided with practical operational care, not a blanket uptime promise.</h2>
+            <p>We work to keep VaultProof available, secure, and reliable. Unless you have a separate written agreement that includes a specific service level, VaultProof is provided without a guaranteed uptime, response-time, support-time, or recovery-time commitment.</p>
+          </div>
+          <p>The Service may be unavailable or degraded because of maintenance, provider outages, internet conditions, security events, third-party dependencies, abuse mitigation, or other events beyond our reasonable control.</p>
+        </section>
+
+        <section class="docs-section" id="termination">
+          <div class="section-heading">
+            <p class="eyebrow">8. Termination</p>
+            <h2>You can stop using VaultProof, and we can suspend unsafe use.</h2>
+            <p>You may stop using the Service at any time. You may delete or request deletion of account data where supported by the dashboard, support process, or applicable law.</p>
+          </div>
+          <p>We may suspend or terminate access if you violate these Terms, create risk for the Service or others, fail to pay fees, or use VaultProof in a way that could expose us, providers, or users to harm or liability. After termination, your right to use the Service ends, but sections that by their nature should continue will continue.</p>
+        </section>
+
+        <section class="docs-section" id="legal">
+          <div class="section-heading">
+            <p class="eyebrow">9. Legal Terms</p>
+            <h2>Standard limits, disclaimers, and changes.</h2>
+            <p>These terms set the legal boundaries for using VaultProof.</p>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Topic</th>
+                  <th>Terms</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Disclaimers</td>
+                  <td>The Service is provided "as is" and "as available" to the maximum extent permitted by law. We disclaim implied warranties including merchantability, fitness for a particular purpose, and non-infringement.</td>
+                </tr>
+                <tr>
+                  <td>Liability limit</td>
+                  <td>To the maximum extent permitted by law, VaultProof Ltd. will not be liable for indirect, incidental, special, consequential, exemplary, or punitive damages, or for lost profits, data, goodwill, or business interruption. Our total liability will not exceed the amount you paid VaultProof in the 12 months before the claim.</td>
+                </tr>
+                <tr>
+                  <td>Indemnity</td>
+                  <td>You agree to defend and indemnify VaultProof Ltd. from claims arising from your Customer Data, provider keys, applications, misuse of the Service, violation of these Terms, or violation of law or third-party rights.</td>
+                </tr>
+                <tr>
+                  <td>Changes</td>
+                  <td>We may update these Terms. If changes are material, we will provide reasonable notice by email, dashboard notice, or website notice. Continued use after the effective date means you accept the updated Terms.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="docs-section" id="contact">
+          <div class="section-heading">
+            <p class="eyebrow">10. Contact</p>
+            <h2>Questions about these Terms?</h2>
+            <p>Contact us at <a href="mailto:hello@vaultproof.dev">hello@vaultproof.dev</a>. For security issues, use <a href="mailto:security@vaultproof.dev">security@vaultproof.dev</a>.</p>
+          </div>
+        </section>
+      </article>
+    </div>
+  </main>
+
+  <footer class="docs-footer">
+    <a href="/">VaultProof</a>
+    <a href="/docs">Docs</a>
+    <a href="/security">Security</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/terms">Terms</a>
+  </footer>
 </body>
 </html>

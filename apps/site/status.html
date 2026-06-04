@@ -1,374 +1,270 @@
-<!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<!doctype html>
+<html lang="en">
 <head>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script src="/js/status-1.js" defer></script>
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Status | VaultProof</title>
-    <meta name="description" content="Real-time health and uptime status of VaultProof services. Monitor the Edge Proxy, Backend API, and global infrastructure.">
-    <meta name="keywords" content="VaultProof status, API status, uptime, service health, VaultProof monitoring">
-    <meta property="og:title" content="System Status — VaultProof">
-    <meta property="og:description" content="Real-time health and uptime status of VaultProof services.">
-    <meta property="og:url" content="https://vaultproof.dev/status">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="https://vaultproof.dev/ogimage.png">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="System Status — VaultProof">
-    <meta name="twitter:description" content="Real-time health and uptime status of VaultProof services.">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-
-    <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
-    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-    <script src="/js/status-2.js" defer></script>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        * { font-family: 'Inter', system-ui, sans-serif; }
-        ::selection { background: #6366f1; color: #fff; }
-        html { scroll-padding-top: 80px; }
-        body { background: #0a0a0f; }
-
-        /* Animated gradient orbs */
-        .orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(120px);
-            pointer-events: none;
-            z-index: 0;
-            will-change: transform;
-        }
-        .orb-1 {
-            width: 600px; height: 600px;
-            background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%);
-            top: -10%; left: -5%;
-            animation: drift1 25s ease-in-out infinite;
-        }
-        .orb-2 {
-            width: 500px; height: 500px;
-            background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
-            top: 40%; right: -10%;
-            animation: drift2 30s ease-in-out infinite;
-        }
-        .orb-3 {
-            width: 450px; height: 450px;
-            background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
-            bottom: 5%; left: 20%;
-            animation: drift3 22s ease-in-out infinite;
-        }
-        @keyframes drift1 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(80px, 60px) scale(1.1); }
-            66% { transform: translate(-40px, 30px) scale(0.95); }
-        }
-        @keyframes drift2 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(-60px, -40px) scale(1.05); }
-            66% { transform: translate(50px, -80px) scale(0.9); }
-        }
-        @keyframes drift3 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(70px, -50px) scale(1.08); }
-            66% { transform: translate(-30px, 40px) scale(0.92); }
-        }
-
-        /* Indigo glow button */
-        .btn-glow {
-            box-shadow: 0 0 20px rgba(99,102,241,0.3), 0 0 60px rgba(99,102,241,0.1);
-            transition: all 0.3s ease;
-        }
-        .btn-glow:hover {
-            box-shadow: 0 0 30px rgba(99,102,241,0.5), 0 0 80px rgba(99,102,241,0.2);
-            transform: translateY(-1px);
-        }
-
-        /* Card hover lift */
-        .card-hover {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-        }
-
-        /* Scroll animations */
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.7s ease, transform 0.7s ease;
-        }
-        .reveal.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .reveal.delay-1 { transition-delay: 0.1s; }
-        .reveal.delay-2 { transition-delay: 0.2s; }
-        .reveal.delay-3 { transition-delay: 0.3s; }
-        .reveal.delay-4 { transition-delay: 0.4s; }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0a0a0f; }
-        ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #2e2e3e; }
-
-        /* Mobile nav */
-        .mobile-menu { display: none; }
-        .mobile-menu.open { display: flex; }
-
-        /* Status dot pulse */
-        @keyframes statusPulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.6); }
-        }
-        .status-pulse {
-            animation: statusPulse 2s ease-in-out infinite;
-        }
-
-        /* Large status indicator pulse */
-        @keyframes heroStatusPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
-            50% { box-shadow: 0 0 0 16px rgba(34,197,94,0); }
-        }
-        .hero-status-pulse {
-            animation: heroStatusPulse 2.5s ease-in-out infinite;
-        }
-        .hero-status-pulse-red {
-            animation: heroStatusPulseRed 2.5s ease-in-out infinite;
-        }
-        @keyframes heroStatusPulseRed {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
-            50% { box-shadow: 0 0 0 16px rgba(239,68,68,0); }
-        }
-
-        /* Map dot pulse */
-        @keyframes mapPulse {
-            0%, 100% { r: 3; opacity: 0.9; }
-            50% { r: 6; opacity: 0.3; }
-        }
-        .map-dot-pulse {
-            animation: mapPulse 3s ease-in-out infinite;
-        }
-        .map-dot-pulse-delay-1 {
-            animation: mapPulse 3s ease-in-out 0.8s infinite;
-        }
-        .map-dot-pulse-delay-2 {
-            animation: mapPulse 3s ease-in-out 1.6s infinite;
-        }
-
-        /* Fade-in on load */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .fade-in-up {
-            animation: fadeInUp 0.6s ease-out forwards;
-            opacity: 0;
-        }
-        .fade-in-up-d1 { animation-delay: 0.1s; }
-        .fade-in-up-d2 { animation-delay: 0.2s; }
-        .fade-in-up-d3 { animation-delay: 0.3s; }
-        .fade-in-up-d4 { animation-delay: 0.4s; }
-        .fade-in-up-d5 { animation-delay: 0.5s; }
-        .fade-in-up-d6 { animation-delay: 0.6s; }
-
-        /* Uptime bar day tooltip */
-        .day-bar {
-            transition: transform 0.15s ease;
-        }
-        .day-bar:hover {
-            transform: scaleY(1.4);
-        }
-    .btn-creative {
-    display: inline-block;
-    padding: 0.375rem 1.25rem;
-    background: #111;
-    color: white;
-    border: 1px solid rgba(255,255,255,0.1);
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 9999px;
-    transition: background 0.3s, color 0.3s;
-}
-.btn-creative:hover {
-    color: #000;
-    background: #fff;
-}
-    </style>
-  <link rel="stylesheet" href="/css/site-theme.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/status-1.js" defer></script>
+  <script src="/js/status-4.js" defer></script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Status | VaultProof</title>
+  <meta name="description" content="Live VaultProof service status for the public site, init and proxy edge, API control plane, and dashboard workflows.">
+  <meta property="og:title" content="Status | VaultProof">
+  <meta property="og:description" content="Current health of VaultProof public services, API routing, and dashboard operations.">
+  <meta property="og:url" content="https://vaultproof.dev/status">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://vaultproof.dev/og-image2.png">
+  <meta name="twitter:image" content="https://vaultproof.dev/og-image2.png">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="canonical" href="https://vaultproof.dev/status">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/docs-theme.css?v=20260604g">
 </head>
-<body class="text-gray-300 min-h-screen relative overflow-x-hidden">
+<body class="docs-document status-document">
+  <a class="skip-link" href="#overview">Skip to status overview</a>
 
-    <!-- Animated background orbs -->
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-
-        <nav class="nav">
-      <a href="/" class="nav-logo">
-        <span class="nav-logo-name">VaultProof</span>
-        <span class="nav-logo-version">v0.4.2</span>
-      </a>
-      <div class="nav-spacer"></div>
-      <div class="nav-links">
-        <a href="/scan">scanner</a>
-        <a href="/docs">docs</a>
-        <a href="/blog">insights</a>
-        <a href="/#pricing">pricing</a>
-      </div>
-      <a href="/app/login" class="nav-sign-in">sign in</a>
-      <a href="/app/login" class="nav-cta">get started</a>
-      <button id="mobileToggle" type="button" class="mobile-toggle">menu</button>
-    </nav>
-
-    <div id="mobileMenu" class="mobile-menu">
-      <a href="/scan">scanner</a>
-      <a href="/docs">docs</a>
-      <a href="/blog">insights</a>
-      <a href="/#pricing">pricing</a>
-      <a href="/app/login">sign in</a>
+  <nav class="site-nav" aria-label="VaultProof navigation">
+    <a class="brand" href="/">
+      <span class="brand-mark">
+        <img class="brand-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <span class="brand-logo-fallback">VP</span>
+      </span>
+      <span>VaultProof</span>
+    </a>
+    <div class="nav-links" aria-label="Primary">
+      <a class="nav-link" href="/docs">Docs</a>
+      <a class="nav-link" href="/scan">Scanner</a>
+      <a class="nav-link" href="/security">Security</a>
+      <a class="nav-link" href="/blog/">Blog</a>
     </div>
+    <div class="nav-actions">
+      <a class="nav-secondary" href="/app/login">Sign in</a>
+      <a class="nav-primary" href="/app/login">Open app</a>
+    </div>
+  </nav>
 
-    <!-- ===================== HEADER SECTION ===================== -->
-    <section class="relative z-10 max-w-4xl mx-auto px-6 pt-16 pb-8 text-center">
-        <div class="fade-in-up">
-            <div class="inline-flex items-center gap-3 mb-6">
-                <div id="heroStatusDot" class="w-4 h-4 rounded-full bg-yellow-400 hero-status-pulse"></div>
-                <span id="heroStatusLabel" class="text-sm font-medium text-yellow-400 tracking-wide uppercase">Checking services...</span>
-            </div>
+  <main class="docs-page status-page">
+    <section class="docs-hero" id="overview">
+      <div class="hero-copy">
+        <p class="eyebrow">Service status</p>
+        <h1>Current health for VaultProof public services.</h1>
+        <p class="hero-lede">This page checks the public site, init and proxy edge, API control plane, and dashboard path. Use it to confirm whether a setup, scanner, or dashboard issue is local to your app or affecting VaultProof services.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="/app/login">Open app</a>
+          <a class="button secondary" href="mailto:support@vaultproof.dev">Contact support</a>
         </div>
-        <h1 class="text-4xl md:text-5xl font-black tracking-tight text-white mb-4 fade-in-up fade-in-up-d1" style="font-family:'Space Grotesk',sans-serif">
-            System Status
-        </h1>
-        <p class="text-lg text-gray-400 mb-2 fade-in-up fade-in-up-d2" style="font-family:'Space Grotesk',sans-serif">
-            Real-time health of VaultProof services
-        </p>
-        <div class="flex items-center justify-center gap-2 text-xs text-gray-600 mt-4 fade-in-up fade-in-up-d3">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-            <span>Auto-refreshes every 30s</span>
-            <span class="text-gray-700 mx-1">|</span>
-            <span>Next check in <span id="countdown" class="text-gray-400 font-mono">30</span>s</span>
+      </div>
+      <div class="hero-panel status-summary-panel" aria-label="Overall status">
+        <div class="panel-kicker">Overall status</div>
+        <div class="status-hero-line">
+          <span id="heroStatusDot" class="status-dot checking" aria-hidden="true"></span>
+          <span id="heroStatusLabel">Checking services...</span>
         </div>
+        <p class="status-refresh">Auto-refresh every 30 seconds. Next check in <span id="countdown">30</span>s.</p>
+        <div class="status-summary-grid">
+          <div>
+            <strong id="operationalCount">0</strong>
+            <span>operational</span>
+          </div>
+          <div>
+            <strong id="degradedCount">0</strong>
+            <span>needs review</span>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- ===================== SERVICE HEALTH CARDS ===================== -->
-    <section class="relative z-10 max-w-4xl mx-auto px-6 pb-10">
-        <div class="grid md:grid-cols-2 gap-4 fade-in-up fade-in-up-d3">
-            <!-- Edge Proxy -->
-            <div id="card-edge" class="bg-vp-surface border border-vp-border rounded-card p-6 card-hover">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="relative">
-                            <div id="dot-edge" class="w-3 h-3 rounded-full bg-yellow-400 status-pulse"></div>
-                        </div>
-                        <div>
-                            <h3 class="text-white font-semibold text-sm">Edge Proxy</h3>
-                        </div>
-                    </div>
-                    <span id="badge-edge" class="text-xs font-medium px-2.5 py-1 rounded-full bg-yellow-400/10 text-yellow-400">Checking</span>
+    <div class="docs-layout">
+      <aside class="docs-sidebar" id="sidebar-nav" aria-label="Status sections">
+        <a href="#services">Services</a>
+        <a href="#history">History</a>
+        <a href="#coverage">Coverage</a>
+        <a href="#incident-response">Incident response</a>
+        <a href="#faq">FAQ</a>
+      </aside>
+
+      <article class="docs-main">
+        <section class="docs-section" id="services">
+          <div class="section-heading">
+            <p class="eyebrow">Live checks</p>
+            <h2>Core surfaces checked from the browser.</h2>
+            <p>These checks are intentionally lightweight. They confirm that public endpoints respond, not that every customer account or provider integration is healthy.</p>
+          </div>
+
+          <div class="status-grid">
+            <div class="status-card" data-service-card="site">
+              <div class="status-card-head">
+                <div>
+                  <h3>Public site</h3>
+                  <p>Homepage, docs, downloads, and static assets.</p>
                 </div>
+                <span id="badge-site" class="status-badge checking">Checking</span>
+              </div>
+              <div class="status-card-meta">
+                <span><span id="dot-site" class="status-dot checking"></span> Website edge</span>
+                <span id="latency-site">-- ms</span>
+              </div>
             </div>
 
-            <!-- Backend API -->
-            <div id="card-backend" class="bg-vp-surface border border-vp-border rounded-card p-6 card-hover">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="relative">
-                            <div id="dot-backend" class="w-3 h-3 rounded-full bg-yellow-400 status-pulse"></div>
-                        </div>
-                        <div>
-                            <h3 class="text-white font-semibold text-sm">Backend API</h3>
-                        </div>
-                    </div>
-                    <span id="badge-backend" class="text-xs font-medium px-2.5 py-1 rounded-full bg-yellow-400/10 text-yellow-400">Checking</span>
+            <div class="status-card" data-service-card="proxy">
+              <div class="status-card-head">
+                <div>
+                  <h3>Init and proxy edge</h3>
+                  <p>Hosted init, provider catalog, and provider-compatible proxy routes.</p>
                 </div>
-            </div>
-        </div>
-    </section>
-
-
-    <!-- ===================== WORLD MAP ===================== -->
-    <section class="relative z-10 max-w-4xl mx-auto px-6 pb-12">
-        <div class="bg-vp-surface border border-vp-border rounded-card p-6 md:p-8 fade-in-up fade-in-up-d5">
-            <h2 class="text-lg font-bold text-white mb-1" style="font-family:'Space Grotesk',sans-serif">Global Edge Network</h2>
-            <p class="text-xs text-gray-500 mb-6">330+ edge locations worldwide</p>
-
-            <div class="relative w-full overflow-hidden rounded-lg" style="background: #0d0d14;">
-                <canvas id="mapCanvas" style="width:100%; height: 380px; display: block;"></canvas>
-            </div>
-            <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>
-            <script src="/js/status-3.js" defer></script>
-
-        </div>
-    </section>
-
-    <!-- ===================== 90-DAY HISTORY ===================== -->
-    <section class="relative z-10 max-w-4xl mx-auto px-6 pb-16">
-        <div class="bg-vp-surface border border-vp-border rounded-card p-6 md:p-8 fade-in-up fade-in-up-d6">
-            <h2 class="text-lg font-bold text-white mb-1" style="font-family:'Space Grotesk',sans-serif">90-Day History</h2>
-            <p class="text-xs text-gray-500 mb-6">Daily operational status over the past 90 days</p>
-
-            <div class="relative">
-                <!-- Day bars -->
-                <div id="uptimeBars" class="flex items-end gap-[3px] h-10 mb-3">
-                    <!-- Generated by JS -->
-                </div>
-
-                <!-- Labels -->
-                <div class="flex items-center justify-between">
-                    <span class="text-xs text-gray-600">90 days ago</span>
-                    <span class="text-xs text-gray-600">Today</span>
-                </div>
+                <span id="badge-proxy" class="status-badge checking">Checking</span>
+              </div>
+              <div class="status-card-meta">
+                <span><span id="dot-proxy" class="status-dot checking"></span> init.vaultproof.dev</span>
+                <span id="latency-proxy">-- ms</span>
+              </div>
             </div>
 
-            <div class="flex items-center gap-2 mt-6 pt-5 border-t border-vp-border/50">
-                <svg width="16" height="16" fill="none" stroke="#22c55e" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-                <span class="text-sm text-gray-400">No incidents reported in the last 90 days</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- ===================== FOOTER ===================== -->
-    <footer class="relative z-10 border-t border-vp-border">
-        <div class="max-w-5xl mx-auto px-6 py-12">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-                <div class="flex flex-col items-center md:items-start gap-2">
-                    <div class="flex items-center gap-2.5">
-                        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#6366f1" fill-opacity="0.15"/><path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="1.5" fill="none"/><path d="M14 10V15" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/><circle cx="14" cy="17" r="1" fill="#6366f1"/></svg>
-                        <span class="text-sm font-bold text-white">VaultProof</span>
-                        <span class="text-xs text-gray-600">by Rial Labs</span>
-                    </div>
-                    <p class="text-xs text-gray-600">Built for developers who refuse to trust blindly.</p>
+            <div class="status-card" data-service-card="api">
+              <div class="status-card-head">
+                <div>
+                  <h3>API control plane</h3>
+                  <p>Dashboard data, activity, alerts, keys, plans, and account requests.</p>
                 </div>
-                <div class="flex items-center gap-8 flex-wrap justify-center">
-                    <a href="/docs" class="text-sm text-gray-500 hover:text-white transition-colors">Documentation</a>
-                    <a href="/guides" class="text-sm text-gray-500 hover:text-white transition-colors">Guides</a>
-                    <a href="/compare" class="text-sm text-gray-500 hover:text-white transition-colors">Compare</a>
-                    <a href="/verify" class="text-sm text-gray-500 hover:text-white transition-colors">Verify</a>
-                    <a href="/app/login" class="nav-dashboard text-sm text-gray-500 hover:text-white transition-colors" style="display:none">Dashboard</a>
-                    <a href="https://github.com/windsurftemplate/vaultproof" target="_blank" rel="noopener" class="text-sm text-gray-500 hover:text-white transition-colors">GitHub</a>
-                    <a href="/terms" class="text-sm text-gray-500 hover:text-white transition-colors">Terms</a>
-                    <a href="/privacy" class="text-sm text-gray-500 hover:text-white transition-colors">Privacy</a>
-                    <a href="/security" class="text-sm text-gray-500 hover:text-white transition-colors">Security</a>
-                    <a href="/abuse" class="text-sm text-gray-500 hover:text-white transition-colors">Abuse</a>
-                    <a href="/status" class="text-sm text-gray-500 hover:text-white transition-colors">Status</a>
-                    <a href="mailto:hello@vaultproof.dev" class="text-sm text-gray-500 hover:text-white transition-colors">Contact</a>
-                </div>
+                <span id="badge-api" class="status-badge checking">Checking</span>
+              </div>
+              <div class="status-card-meta">
+                <span><span id="dot-api" class="status-dot checking"></span> api.vaultproof.dev</span>
+                <span id="latency-api">-- ms</span>
+              </div>
             </div>
-        </div>
-    </footer>
 
-    <script src="/js/status-4.js" defer></script>
-<script src="/js/analytics.js" defer></script>
-<script src="/js/status-5.js" defer></script>
-<script src="/js/status-6.js" defer></script>
+            <div class="status-card" data-service-card="dashboard">
+              <div class="status-card-head">
+                <div>
+                  <h3>Dashboard shell</h3>
+                  <p>Login and app routes served from the public web deployment.</p>
+                </div>
+                <span id="badge-dashboard" class="status-badge checking">Checking</span>
+              </div>
+              <div class="status-card-meta">
+                <span><span id="dot-dashboard" class="status-dot checking"></span> /app/login</span>
+                <span id="latency-dashboard">-- ms</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="docs-section" id="history">
+          <div class="section-heading">
+            <p class="eyebrow">History</p>
+            <h2>Recent public status history.</h2>
+            <p>The public page keeps the status view simple. For account-specific errors, check the dashboard Activity and Alerts pages first.</p>
+          </div>
+
+          <div class="history-panel">
+            <div id="uptimeBars" class="uptime-bars" aria-label="90-day uptime history"></div>
+            <div class="history-labels">
+              <span>90 days ago</span>
+              <span>Today</span>
+            </div>
+            <div class="history-note">
+              <span class="status-dot operational" aria-hidden="true"></span>
+              <span>No public incident banner is currently active.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="docs-section" id="coverage">
+          <div class="section-heading">
+            <p class="eyebrow">Coverage</p>
+            <h2>What this page does and does not prove.</h2>
+            <p>Status checks help separate a VaultProof availability issue from a local environment or provider configuration issue.</p>
+          </div>
+
+          <div class="card-grid three">
+            <div class="doc-card">
+              <h3>Public availability</h3>
+              <p>Confirms the main web deployment and dashboard shell can load from the browser.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Runtime routing</h3>
+              <p>Checks the init and proxy edge used by generated provider-compatible base URLs.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Control plane</h3>
+              <p>Checks the API surface that powers dashboard operations and account workflows.</p>
+            </div>
+          </div>
+
+          <div class="callout info">
+            <strong>Still check your provider</strong>
+            <span>A healthy VaultProof route does not guarantee OpenAI, Anthropic, Stripe, or another upstream provider is healthy. If VaultProof is operational, check the provider status page and your provider-side key permissions.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="incident-response">
+          <div class="section-heading">
+            <p class="eyebrow">Incident response</p>
+            <h2>What to do if something looks down.</h2>
+            <p>Use these steps to narrow the issue before rotating keys or changing production configuration.</p>
+          </div>
+
+          <ol class="step-list">
+            <li>
+              <span class="step-number">1</span>
+              <div>
+                <h3>Check the affected surface</h3>
+                <p>If only the dashboard is affected, protected provider calls may still be routing. If proxy checks fail, pause risky deploys and avoid repeated retries.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-number">2</span>
+              <div>
+                <h3>Review Activity and Alerts</h3>
+                <p>Open the dashboard when available and compare recent errors, latency, provider route, and request volume.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-number">3</span>
+              <div>
+                <h3>Contact support with context</h3>
+                <p>Include the affected provider, route, timestamp, status code, and whether the issue appears in local, staging, or production.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section class="docs-section" id="faq">
+          <div class="section-heading">
+            <p class="eyebrow">FAQ</p>
+            <h2>Status page details.</h2>
+          </div>
+
+          <div class="faq-list">
+            <details open>
+              <summary>Why can a browser check show degraded when a service is working?</summary>
+              <p>Some network, CORS, browser extension, or local firewall conditions can block a browser health request. If the page shows degraded but your app works, treat it as a signal to investigate rather than a final incident declaration.</p>
+            </details>
+            <details>
+              <summary>Does this page check every customer token?</summary>
+              <p>No. It checks shared public surfaces. Customer-specific token, budget, provider, or configuration issues should be reviewed in Activity, Alerts, Keys, and Settings.</p>
+            </details>
+            <details>
+              <summary>How often does it refresh?</summary>
+              <p>The browser refreshes checks every 30 seconds while the page is open.</p>
+            </details>
+          </div>
+        </section>
+      </article>
+    </div>
+  </main>
+
+  <footer class="docs-footer">
+    <a href="/">VaultProof</a>
+    <a href="/docs">Docs</a>
+    <a href="/security">Security</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/terms">Terms</a>
+  </footer>
 </body>
 </html>

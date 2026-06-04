@@ -1,201 +1,349 @@
-<!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VaultProof for CI/CD and Kubernetes</title>
-  <meta name="description" content="How VaultProof fits into CI/CD and Kubernetes: before vs after integration, coverage boundaries, and threat classes.">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/cicd-kubernetes-2.js" defer></script>
   <link rel="icon" type="image/png" href="/favicon.png">
-  <link rel="canonical" href="https://vaultproof.dev/cicd-kubernetes">
-  <meta property="og:title" content="VaultProof for CI/CD and Kubernetes">
-  <meta property="og:description" content="Before/after integration and threat coverage for teams running CI/CD pipelines and Kubernetes.">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CI/CD and Kubernetes | VaultProof</title>
+  <meta name="description" content="How VaultProof protects provider API keys in CI/CD pipelines, Kubernetes workloads, and existing secrets stacks.">
+  <meta property="og:title" content="CI/CD and Kubernetes | VaultProof">
+  <meta property="og:description" content="Use VaultProof with CI/CD pipelines and Kubernetes workloads without spreading raw provider API keys.">
   <meta property="og:url" content="https://vaultproof.dev/cicd-kubernetes">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="https://vaultproof.dev/ogimage.png">
-
-  <script src="/js/cicd-kubernetes-1.js"></script>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <meta property="og:image" content="https://vaultproof.dev/og-image2.png">
+  <meta name="twitter:image" content="https://vaultproof.dev/og-image2.png">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="canonical" href="https://vaultproof.dev/cicd-kubernetes">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <style>
-    * { font-family: 'Inter', system-ui, sans-serif; }
-    body { background: #0a0a0f; color: #cbd5e1; }
-    .mobile-menu { display: none; }
-    .mobile-menu.open { display: flex; }
-    .code-block { background:#0d0d14; border:1px solid #1e1e2e; border-radius:12px; overflow-x:auto; }
-    .code-block pre { padding:1rem 1.25rem; font-size:0.8125rem; line-height:1.65; }
-    .chip { border:1px solid rgba(99,102,241,.25); background: rgba(99,102,241,.08); color:#a5b4fc; }
-    .nav-group { position: relative; }
-    .nav-group-btn {
-      display: inline-flex; align-items: center; gap: 4px;
-      font-size: 0.875rem; color: #9ca3af; background: none;
-      border: none; cursor: pointer; padding: 4px 2px;
-      transition: color 0.15s; font-family: inherit; user-select: none;
-    }
-    .nav-group-btn:hover, .nav-group.open .nav-group-btn { color: #fff; }
-    .nav-group-btn svg { transition: transform 0.2s; flex-shrink: 0; }
-    .nav-group.open .nav-group-btn svg { transform: rotate(180deg); }
-    .nav-dropdown {
-      position: absolute; top: calc(100% + 10px); left: 50%;
-      transform: translateX(-50%) translateY(-4px);
-      background: rgba(13,13,20,0.96);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(99,102,241,0.15);
-      border-radius: 14px; padding: 6px; min-width: 176px;
-      opacity: 0; visibility: hidden; pointer-events: none;
-      transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
-      box-shadow: 0 0 0 1px rgba(99,102,241,0.06), 0 8px 32px rgba(0,0,0,0.6), 0 0 24px rgba(99,102,241,0.08);
-      z-index: 100;
-    }
-    .nav-group.open .nav-dropdown {
-      opacity: 1; visibility: visible; pointer-events: auto;
-      transform: translateX(-50%) translateY(0);
-    }
-    .nav-dropdown a {
-      display: flex; align-items: center;
-      padding: 8px 12px; border-radius: 9px; font-size: 0.8125rem;
-      color: #9ca3af; text-decoration: none;
-      transition: color 0.12s, background 0.12s;
-      white-space: nowrap; font-weight: 450;
-    }
-    .nav-dropdown a:hover { color: #fff; background: rgba(99,102,241,0.08); }
-    .btn-nav-scanner {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 0.35rem 1rem; border-radius: 9999px;
-      font-size: 0.8125rem; font-weight: 500; cursor: pointer;
-      border: 1px solid rgba(6,182,212,0.35);
-      color: #22d3ee; background: rgba(6,182,212,0.06);
-      transition: background 0.2s, border-color 0.2s, color 0.2s;
-      text-decoration: none; white-space: nowrap;
-    }
-    .btn-nav-scanner:hover {
-      background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.55); color: #67e8f9;
-    }
-    .btn-creative {
-      display: inline-block;
-      padding: 0.375rem 1.25rem;
-      background: #111;
-      color: white;
-      border: 1px solid rgba(255,255,255,0.1);
-      cursor: pointer;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 9999px;
-      transition: background 0.3s, color 0.3s;
-    }
-    .btn-creative:hover {
-      color: #000;
-      background: #fff;
-    }
-  </style>
-  <link rel="stylesheet" href="/css/site-theme.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/docs-theme.css?v=20260604g">
 </head>
-<body>
-      <nav class="nav">
-      <a href="/" class="nav-logo">
-        <span class="nav-logo-name">VaultProof</span>
-        <span class="nav-logo-version">v0.4.2</span>
-      </a>
-      <div class="nav-spacer"></div>
-      <div class="nav-links">
-        <a href="/scan">scanner</a>
-        <a href="/docs">docs</a>
-        <a href="/blog">insights</a>
-        <a href="/#pricing">pricing</a>
-      </div>
-      <a href="/app/login" class="nav-sign-in">sign in</a>
-      <a href="/app/login" class="nav-cta">get started</a>
-      <button id="mobileToggle" type="button" class="mobile-toggle">menu</button>
-    </nav>
+<body class="docs-document">
+  <a class="skip-link" href="#overview">Skip to CI/CD guide</a>
 
-    <div id="mobileMenu" class="mobile-menu">
-      <a href="/scan">scanner</a>
-      <a href="/docs">docs</a>
-      <a href="/blog">insights</a>
-      <a href="/#pricing">pricing</a>
-      <a href="/app/login">sign in</a>
+  <nav class="site-nav" aria-label="VaultProof navigation">
+    <a class="brand" href="/">
+      <span class="brand-mark">
+        <img class="brand-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <span class="brand-logo-fallback">VP</span>
+      </span>
+      <span>VaultProof</span>
+    </a>
+    <div class="nav-links" aria-label="Primary">
+      <a class="nav-link active" href="/docs" aria-current="page">Docs</a>
+      <a class="nav-link" href="/scan">Scanner</a>
+      <a class="nav-link" href="/security">Security</a>
+      <a class="nav-link" href="/blog/">Blog</a>
     </div>
+    <div class="nav-actions">
+      <a class="nav-secondary" href="/app/login">Sign in</a>
+      <a class="nav-primary" href="/app/login">Open app</a>
+    </div>
+  </nav>
 
-  <main class="max-w-4xl mx-auto px-6 pt-24 pb-12 md:pt-28 md:pb-16">
-    <a href="/docs" class="text-sm text-vp-accent hover:underline">← Back to Docs</a>
-    <h1 class="text-3xl md:text-4xl font-bold text-white mt-4 mb-3">VaultProof in CI/CD and Kubernetes</h1>
-    <p class="text-gray-400 mb-4">A short positioning guide for teams already running pipelines, clusters, and a standard secrets stack.</p>
-    <p class="text-gray-500 text-sm mb-8">This walks through how it works, the before and after integration, and what threat classes it covers, so you get a clear picture of where it sits relative to what you are already running.</p>
-
-    <section class="mb-10">
-      <h2 class="text-xl font-semibold text-white mb-3">What VaultProof Does</h2>
-      <p class="text-gray-300 mb-4">VaultProof is a proxy-based credential protection layer for third-party API keys (OpenAI, Anthropic, Stripe, and similar providers).</p>
-      <div class="code-block">
-<pre>Setup (vaultproof-init):
-1. Find provider keys in .env
-2. Split each key into 2 shares locally
-3. Store encrypted shares server-side
-4. Rewrite runtime config to use vp-proj-... + proxy URLs
-
-Request time:
-Proxy reconstructs key briefly in memory → forwards upstream → zeroes buffer</pre>
+  <main class="docs-page">
+    <section class="docs-hero" id="overview">
+      <div class="hero-copy">
+        <p class="eyebrow">CI/CD and Kubernetes</p>
+        <h1>Run provider APIs from pipelines and pods without spreading raw keys.</h1>
+        <p class="hero-lede">VaultProof gives jobs and workloads VaultProof-routed values instead of original provider credentials. Your existing secrets manager can keep handling infrastructure secrets while VaultProof narrows exposure for outbound third-party API keys.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#setup">Start setup</a>
+          <a class="button secondary" href="/security">Security model</a>
+        </div>
+      </div>
+      <div class="hero-panel" aria-label="Deployment summary">
+        <div class="panel-kicker">Where it fits</div>
+        <ol class="mini-steps">
+          <li><span class="step-badge">1</span><span class="step-copy">Protect provider keys with <code>vaultproof-init</code>.</span></li>
+          <li><span class="step-badge">2</span><span class="step-copy">Store VaultProof values in CI variables or Kubernetes Secrets.</span></li>
+          <li><span class="step-badge">3</span><span class="step-copy">Route SDK traffic through provider-compatible base URLs.</span></li>
+          <li><span class="step-badge">4</span><span class="step-copy">Monitor usage, errors, and unusual traffic from the dashboard.</span></li>
+        </ol>
       </div>
     </section>
 
-    <section class="mb-10">
-      <h2 class="text-xl font-semibold text-white mb-3">Before vs After</h2>
-      <div class="grid md:grid-cols-2 gap-4">
-        <div class="bg-vp-surface border border-vp-border rounded-lg p-5">
-          <div class="chip inline-flex text-xs px-2 py-1 rounded-full mb-3">Before</div>
-          <p class="text-gray-400 text-sm mb-3">Apps, jobs, and pods carry raw provider secrets.</p>
-          <div class="code-block"><pre>OPENAI_API_KEY=sk-proj-...
-ANTHROPIC_API_KEY=sk-ant-...</pre></div>
-        </div>
-        <div class="bg-vp-surface border border-vp-border rounded-lg p-5">
-          <div class="chip inline-flex text-xs px-2 py-1 rounded-full mb-3">After</div>
-          <p class="text-gray-400 text-sm mb-3">Runtime keeps a public project ID and proxy base URLs.</p>
-          <div class="code-block"><pre>VAULTPROOF_PROJECT_ID=vp-proj-...
+    <div class="docs-layout">
+      <aside class="docs-sidebar" id="sidebar-nav" aria-label="CI/CD guide sections">
+        <a href="#model">Model</a>
+        <a href="#setup">Setup</a>
+        <a href="#pipelines">Pipelines</a>
+        <a href="#kubernetes">Kubernetes</a>
+        <a href="#controls">Controls</a>
+        <a href="#boundaries">Boundaries</a>
+        <a href="#rollout">Rollout</a>
+        <a href="#faq">FAQ</a>
+      </aside>
+
+      <article class="docs-main">
+        <section class="docs-section" id="model">
+          <div class="section-heading">
+            <p class="eyebrow">Model</p>
+            <h2>VaultProof protects provider API credentials, not every secret in the cluster.</h2>
+            <p>Use VaultProof for third-party API keys such as AI, payments, email, observability, and SaaS providers. Keep using your current secrets platform for database passwords, workload identity, TLS material, and infrastructure credentials.</p>
+          </div>
+
+          <div class="card-grid three">
+            <div class="doc-card">
+              <h3>Before</h3>
+              <p>Raw provider keys sit in CI variables, build logs, copied env files, deployment manifests, and pod environments.</p>
+            </div>
+            <div class="doc-card">
+              <h3>After</h3>
+              <p>Jobs and workloads receive VaultProof values and provider-compatible base URLs instead of original provider credentials.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Result</h3>
+              <p>An exposed pipeline variable or pod env dump no longer directly reveals the provider credential that can be used outside VaultProof.</p>
+            </div>
+          </div>
+
+          <div class="callout warning">
+            <strong>Plain-language boundary</strong>
+            <span>A VaultProof token is still a runtime credential. Protect it, scope it, monitor it, and rotate provider keys if the original provider key was ever exposed.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="setup">
+          <div class="section-heading">
+            <p class="eyebrow">Setup</p>
+            <h2>Run init before you publish values into CI or Kubernetes.</h2>
+            <p>The hosted init handles provider detection and writes the VaultProof values your app needs. Do the setup from a trusted local checkout or controlled setup job, then move the generated values into your deployment system.</p>
+          </div>
+
+          <ol class="step-list">
+            <li>
+              <span class="step-number">1</span>
+              <div>
+                <h3>Install the hosted init</h3>
+                <p>Run the installer from the project folder that contains your app environment files.</p>
+                <div class="code-card">
+                  <div class="code-title">Project root</div>
+                  <pre><code>curl -fsSL https://vaultproof.dev/install | sh
+vaultproof-init</code></pre>
+                </div>
+              </div>
+            </li>
+            <li>
+              <span class="step-number">2</span>
+              <div>
+                <h3>Review the generated values</h3>
+                <p>Confirm the VaultProof token and provider base URLs were written for the providers your workload actually calls.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-number">3</span>
+              <div>
+                <h3>Publish only VaultProof values</h3>
+                <p>Move the generated VaultProof values into CI/CD variables, Kubernetes Secrets, or your deployment platform. Remove the old raw provider keys from those places.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section class="docs-section" id="pipelines">
+          <div class="section-heading">
+            <p class="eyebrow">Pipelines</p>
+            <h2>CI jobs should receive the VaultProof token, not the original provider key.</h2>
+            <p>For SDK-compatible providers, keep the environment variable names your app already expects, but point them at VaultProof-managed values and base URLs.</p>
+          </div>
+
+          <div class="split-grid">
+            <div class="doc-card">
+              <h3>Before</h3>
+              <p>Pipeline variables contain the raw provider secret.</p>
+              <div class="code-card">
+                <div class="code-title">Avoid this</div>
+                <pre><code>OPENAI_API_KEY=sk-proj-...
+ANTHROPIC_API_KEY=sk-ant-...</code></pre>
+              </div>
+            </div>
+            <div class="doc-card">
+              <h3>After</h3>
+              <p>Pipeline variables contain VaultProof-routed values.</p>
+              <div class="code-card">
+                <div class="code-title">Use this pattern</div>
+                <pre><code>VAULTPROOF_PROJECT_ID=vp-proj-...
 OPENAI_API_KEY=vp-proj-...
-OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1</pre></div>
-        </div>
-      </div>
-    </section>
+OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1</code></pre>
+              </div>
+            </div>
+          </div>
 
-    <section class="mb-10">
-      <h2 class="text-xl font-semibold text-white mb-3">Integration Examples</h2>
-      <p class="text-gray-400 text-sm mb-3">GitHub Actions</p>
-      <div class="code-block mb-4"><pre>env:
+          <div class="code-card">
+            <div class="code-title">GitHub Actions example</div>
+            <pre><code>env:
   VAULTPROOF_PROJECT_ID: ${{ secrets.VAULTPROOF_PROJECT_ID }}
   OPENAI_API_KEY: ${{ secrets.VAULTPROOF_PROJECT_ID }}
-  OPENAI_BASE_URL: https://init.vaultproof.dev/p/openai/v1</pre></div>
+  OPENAI_BASE_URL: https://init.vaultproof.dev/p/openai/v1</code></pre>
+          </div>
+        </section>
 
-      <p class="text-gray-400 text-sm mb-3">Kubernetes</p>
-      <div class="code-block"><pre>kubectl create secret generic app-env \
+        <section class="docs-section" id="kubernetes">
+          <div class="section-heading">
+            <p class="eyebrow">Kubernetes</p>
+            <h2>Store VaultProof values in Kubernetes, then map them into the workload.</h2>
+            <p>The deployment pattern stays familiar: create a Secret, mount the values as environment variables, restart the Deployment, and watch one request in Activity before broad rollout.</p>
+          </div>
+
+          <div class="code-card">
+            <div class="code-title">Create a workload Secret</div>
+            <pre><code>kubectl create secret generic app-env \
   --from-literal=VAULTPROOF_PROJECT_ID=vp-proj-... \
   --from-literal=OPENAI_API_KEY=vp-proj-... \
-  --from-literal=OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1</pre></div>
-      <p class="text-xs text-gray-500 mt-3">If workloads do not send browser Origin headers, keep strict origin enforcement disabled for that project.</p>
-    </section>
+  --from-literal=OPENAI_BASE_URL=https://init.vaultproof.dev/p/openai/v1</code></pre>
+          </div>
 
-    <section class="mb-10">
-      <h2 class="text-xl font-semibold text-white mb-3">Threat Classes Covered</h2>
-      <div class="space-y-4">
-        <div class="bg-vp-surface border border-vp-border rounded-lg p-4">
-          <h3 class="text-sm font-semibold text-emerald-400 mb-1">Strongly Reduced</h3>
-          <p class="text-sm text-gray-400">Plaintext provider key leaks from env files and CI variables, accidental commit/copy/paste exposure, and broad lateral spread of raw keys across services.</p>
-        </div>
-        <div class="bg-vp-surface border border-vp-border rounded-lg p-4">
-          <h3 class="text-sm font-semibold text-amber-400 mb-1">Mitigated (not eliminated)</h3>
-          <p class="text-sm text-gray-400">Leaked <code>vp-proj-...</code> identifiers can still be abused for proxy traffic, but do not directly reveal raw provider keys. Rate limits and origin controls reduce blast radius.</p>
-        </div>
-        <div class="bg-vp-surface border border-vp-border rounded-lg p-4">
-          <h3 class="text-sm font-semibold text-rose-400 mb-1">Out of Scope</h3>
-          <p class="text-sm text-gray-400">Full compromise of both share storage and encryption control plane, compromised workload identity that can already call external APIs, non-HTTP secret types, and business-logic abuse.</p>
-        </div>
-      </div>
-    </section>
+          <div class="code-card">
+            <div class="code-title">Reference from a Deployment</div>
+            <pre><code>envFrom:
+  - secretRef:
+      name: app-env</code></pre>
+          </div>
 
-    <section class="bg-vp-surface border border-vp-border rounded-lg p-5">
-      <h2 class="text-xl font-semibold text-white mb-2">Where It Sits in Your Stack</h2>
-      <p class="text-gray-400 text-sm">VaultProof is not a full replacement for Vault/Secrets Manager/KMS. It is an additional control plane for outbound third-party API credentials, while your existing secrets system continues to handle broader infrastructure secrets.</p>
-    </section>
+          <div class="callout info">
+            <strong>Server-side workloads</strong>
+            <span>If a workload does not send browser Origin headers, do not rely on browser-origin rules alone. Use environment scoping, budgets, alerts, provider rotation, and workload-level network controls.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="controls">
+          <div class="section-heading">
+            <p class="eyebrow">Controls</p>
+            <h2>Use operational controls around every pipeline and workload token.</h2>
+            <p>VaultProof reduces raw-key spread, but the generated runtime values still need normal operational discipline.</p>
+          </div>
+
+          <div class="card-grid two">
+            <div class="doc-card">
+              <h3>Separate environments</h3>
+              <p>Use separate VaultProof values for development, staging, and production so a lower environment cannot quietly spend production budget.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Watch request patterns</h3>
+              <p>Review Activity for provider, endpoint, status, latency, and error changes after a deployment.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Budget and alert</h3>
+              <p>Set practical usage limits and alerts before giving a job or workload sustained customer-facing traffic.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Rotate when exposed</h3>
+              <p>If a raw provider key reached CI variables, logs, or manifests, rotate it at the provider before treating cleanup as complete.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="docs-section" id="boundaries">
+          <div class="section-heading">
+            <p class="eyebrow">Boundaries</p>
+            <h2>Threat coverage is strongest where raw provider keys used to spread.</h2>
+            <p>This is the clearest way to position VaultProof next to your current CI/CD, Kubernetes, and secrets-management controls.</p>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Class</th>
+                  <th>How VaultProof helps</th>
+                  <th>Still required</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Env leaks</td>
+                  <td>Raw provider keys are removed from common runtime env values.</td>
+                  <td>Protect VaultProof tokens and remove old raw values.</td>
+                </tr>
+                <tr>
+                  <td>CI logs</td>
+                  <td>Accidental variable dumps should not reveal original provider credentials.</td>
+                  <td>Mask variables, restrict logs, and rotate exposed provider keys.</td>
+                </tr>
+                <tr>
+                  <td>Pod compromise</td>
+                  <td>An attacker does not immediately receive the raw upstream provider key.</td>
+                  <td>Runtime isolation, egress control, least privilege, and incident response.</td>
+                </tr>
+                <tr>
+                  <td>Business abuse</td>
+                  <td>Usage visibility and limits can help spot unusual patterns.</td>
+                  <td>Application authorization, fraud controls, and provider-side controls.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="docs-section" id="rollout">
+          <div class="section-heading">
+            <p class="eyebrow">Rollout</p>
+            <h2>Roll out one provider and one environment first.</h2>
+            <p>Start with the lowest-risk provider path, confirm traffic in the dashboard, then repeat for the next service or environment.</p>
+          </div>
+
+          <ol class="step-list">
+            <li>
+              <span class="step-number">1</span>
+              <div>
+                <h3>Pick a narrow path</h3>
+                <p>Choose one app, one provider, and one non-production environment. Avoid changing every pipeline and cluster at once.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-number">2</span>
+              <div>
+                <h3>Run a real request</h3>
+                <p>Trigger the normal job or pod code path and confirm Activity shows the expected provider call.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-number">3</span>
+              <div>
+                <h3>Remove old provider keys</h3>
+                <p>Delete raw provider keys from CI variables, Kubernetes Secrets, deployment manifests, hosting settings, and old local env files.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section class="docs-section" id="faq">
+          <div class="section-heading">
+            <p class="eyebrow">FAQ</p>
+            <h2>Common deployment questions.</h2>
+          </div>
+
+          <div class="faq-list">
+            <details open>
+              <summary>Does VaultProof replace Vault, KMS, or cloud Secrets Manager?</summary>
+              <p>No. Use those systems for infrastructure secrets and workload identity. VaultProof adds a provider-key runtime layer for outbound third-party API calls.</p>
+            </details>
+            <details>
+              <summary>Should CI run <code>vaultproof-init</code> on every build?</summary>
+              <p>Usually no. Run init during setup or controlled rotation. CI jobs should receive the generated VaultProof values, not repeatedly discover and rewrite credentials.</p>
+            </details>
+            <details>
+              <summary>What should I do if a raw provider key was already in CI?</summary>
+              <p>Rotate it at the provider, remove it from variables and logs where possible, deploy the VaultProof values, then monitor the replacement traffic.</p>
+            </details>
+          </div>
+        </section>
+      </article>
+    </div>
   </main>
-  <script src="/js/cicd-kubernetes-2.js" defer></script>
+
+  <footer class="docs-footer">
+    <a href="/">VaultProof</a>
+    <a href="/docs">Docs</a>
+    <a href="/security">Security</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/terms">Terms</a>
+  </footer>
 </body>
 </html>

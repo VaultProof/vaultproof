@@ -1,177 +1,284 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
-    <script src="/js/abuse-1.js" defer></script>
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report Abuse | VaultProof</title>
-    <meta name="description" content="Report stolen, leaked, or unauthorized API keys stored on VaultProof.">
-    <meta property="og:title" content="Report Abuse | VaultProof">
-    <meta property="og:description" content="Report stolen, leaked, or unauthorized API keys stored on VaultProof.">
-    <meta property="og:url" content="https://vaultproof.dev/abuse">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-
-    <!-- Tailwind CDN: SRI not applicable (dynamic response) -->
-    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-    <script src="/js/abuse-2.js" defer></script>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        * { font-family: 'Inter', system-ui, sans-serif; }
-        ::selection { background: #6366f1; color: #fff; }
-        body { background: #0a0a0f; }
-
-        .mobile-menu { display: none; }
-        .mobile-menu.open { display: flex; }
-    .btn-creative {
-    display: inline-block;
-    padding: 0.375rem 1.25rem;
-    background: #111;
-    color: white;
-    border: 1px solid rgba(255,255,255,0.1);
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 9999px;
-    transition: background 0.3s, color 0.3s;
-}
-.btn-creative:hover {
-    color: #000;
-    background: #fff;
-}
-    </style>
-  <link rel="stylesheet" href="/css/site-theme.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NE5RYX1WTF"></script>
+  <script src="/js/abuse-1.js" defer></script>
+  <script src="/js/abuse-3.js" defer></script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Report Abuse | VaultProof</title>
+  <meta name="description" content="Report stolen keys, unauthorized VaultProof usage, security abuse, fraud, spam, or provider-key misuse.">
+  <meta property="og:title" content="Report Abuse | VaultProof">
+  <meta property="og:description" content="Report stolen keys, unauthorized VaultProof usage, security abuse, fraud, spam, or provider-key misuse.">
+  <meta property="og:url" content="https://vaultproof.dev/abuse">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://vaultproof.dev/og-image2.png">
+  <meta name="twitter:image" content="https://vaultproof.dev/og-image2.png">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="canonical" href="https://vaultproof.dev/abuse">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/docs-theme.css?v=20260604g">
 </head>
-<body class="text-gray-300 min-h-screen">
+<body class="docs-document">
+  <a class="skip-link" href="#overview">Skip to abuse reporting</a>
 
-        <nav class="nav">
-      <a href="/" class="nav-logo">
-        <span class="nav-logo-name">VaultProof</span>
-        <span class="nav-logo-version">v0.4.2</span>
-      </a>
-      <div class="nav-spacer"></div>
-      <div class="nav-links">
-        <a href="/scan">scanner</a>
-        <a href="/docs">docs</a>
-        <a href="/blog">insights</a>
-        <a href="/#pricing">pricing</a>
-      </div>
-      <a href="/app/login" class="nav-sign-in">sign in</a>
-      <a href="/app/login" class="nav-cta">get started</a>
-      <button id="mobileToggle" type="button" class="mobile-toggle">menu</button>
-    </nav>
-
-    <div id="mobileMenu" class="mobile-menu">
-      <a href="/scan">scanner</a>
-      <a href="/docs">docs</a>
-      <a href="/blog">insights</a>
-      <a href="/#pricing">pricing</a>
-      <a href="/app/login">sign in</a>
+  <nav class="site-nav" aria-label="VaultProof navigation">
+    <a class="brand" href="/">
+      <span class="brand-mark">
+        <img class="brand-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+        <span class="brand-logo-fallback">VP</span>
+      </span>
+      <span>VaultProof</span>
+    </a>
+    <div class="nav-links" aria-label="Primary">
+      <a class="nav-link" href="/docs">Docs</a>
+      <a class="nav-link" href="/scan">Scanner</a>
+      <a class="nav-link" href="/security">Security</a>
+      <a class="nav-link" href="/blog/">Blog</a>
     </div>
+    <div class="nav-actions">
+      <a class="nav-secondary" href="/app/login">Sign in</a>
+      <a class="nav-primary" href="/app/login">Open app</a>
+    </div>
+  </nav>
 
-    <!-- Content -->
-    <main class="max-w-3xl mx-auto px-6 pt-24 pb-16">
-        <h1 class="text-4xl font-extrabold text-white mb-2 tracking-tight" style="font-family:'Space Grotesk',sans-serif">Report Abuse</h1>
-        <p class="text-gray-400 mb-12 leading-relaxed">If you believe an API key stored on VaultProof was stolen, leaked, or is being used without authorization, report it here.</p>
-
-        <div class="space-y-10 text-gray-400 leading-relaxed">
-
-            <!-- Report Form -->
-            <section>
-                <form action="mailto:abuse@vaultproof.dev" method="POST" enctype="text/plain" class="space-y-6">
-
-                    <div>
-                        <label for="email" class="block text-sm font-semibold text-white mb-2">Your Email <span class="text-amber-400">*</span></label>
-                        <input type="email" id="email" name="email" required placeholder="you@example.com"
-                            class="w-full bg-vp-surface border border-vp-border rounded-lg px-4 py-3 text-gray-300 placeholder-gray-600 focus:outline-none focus:border-vp-accent focus:ring-1 focus:ring-vp-accent transition-colors text-sm">
-                    </div>
-
-                    <div>
-                        <label for="role" class="block text-sm font-semibold text-white mb-2">Your Role <span class="text-amber-400">*</span></label>
-                        <select id="role" name="role" required
-                            class="w-full bg-vp-surface border border-vp-border rounded-lg px-4 py-3 text-gray-300 focus:outline-none focus:border-vp-accent focus:ring-1 focus:ring-vp-accent transition-colors text-sm">
-                            <option value="" disabled selected class="text-gray-600">Select your role</option>
-                            <option value="API provider">API provider</option>
-                            <option value="Key owner">Key owner</option>
-                            <option value="Security researcher">Security researcher</option>
-                            <option value="Law enforcement">Law enforcement</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="description" class="block text-sm font-semibold text-white mb-2">Description <span class="text-amber-400">*</span></label>
-                        <textarea id="description" name="description" required rows="5" placeholder="Describe the abuse you are reporting..."
-                            class="w-full bg-vp-surface border border-vp-border rounded-lg px-4 py-3 text-gray-300 placeholder-gray-600 focus:outline-none focus:border-vp-accent focus:ring-1 focus:ring-vp-accent transition-colors text-sm resize-y"></textarea>
-                    </div>
-
-                    <div>
-                        <label for="evidence" class="block text-sm font-semibold text-white mb-2">Evidence <span class="text-gray-600 font-normal">(optional)</span></label>
-                        <textarea id="evidence" name="evidence" rows="4" placeholder="Key prefix, provider name, incident details, timestamps..."
-                            class="w-full bg-vp-surface border border-vp-border rounded-lg px-4 py-3 text-gray-300 placeholder-gray-600 focus:outline-none focus:border-vp-accent focus:ring-1 focus:ring-vp-accent transition-colors text-sm resize-y"></textarea>
-                    </div>
-
-                    <button type="submit"
-                        class="bg-vp-accent hover:bg-indigo-500 text-sm px-8 py-3 rounded-lg font-semibold text-white transition-all">
-                        Submit Report
-                    </button>
-                </form>
-
-                <p class="mt-6 text-sm text-gray-500">For urgent requests, email <a href="mailto:abuse@vaultproof.dev" class="text-vp-accent hover:underline">abuse@vaultproof.dev</a> directly.</p>
-            </section>
-
-            <!-- What happens next -->
-            <section>
-                <h2 class="text-xl font-bold text-white mb-3">What Happens Next</h2>
-                <ul class="list-disc list-inside space-y-1.5 ml-1">
-                    <li>We review all abuse reports within 24 hours</li>
-                    <li>We investigate the claim by cross-referencing access logs and provider reports</li>
-                    <li>If the report is confirmed, we immediately revoke the key and terminate the associated account</li>
-                    <li>We notify the reporter of the outcome when possible</li>
-                </ul>
-            </section>
-
+  <main class="docs-page">
+    <section class="docs-hero" id="overview">
+      <div class="hero-copy">
+        <p class="eyebrow">Report Abuse</p>
+        <h1>Help us stop stolen keys and unsafe usage quickly.</h1>
+        <p class="hero-lede">Use this page to report compromised provider keys, unauthorized VaultProof tokens, fraud, spam, abuse of provider routes, or activity that appears to violate our Terms.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="mailto:abuse@vaultproof.dev">Email abuse team</a>
+          <a class="button secondary" href="/security">Security policy</a>
         </div>
-    </main>
+      </div>
+      <div class="hero-panel" aria-label="Abuse response summary">
+        <div class="panel-kicker">Response path</div>
+        <ol class="mini-steps">
+          <li><span class="step-badge">1</span><span class="step-copy">Send the strongest evidence you can share safely.</span></li>
+          <li><span class="step-badge">2</span><span class="step-copy">Rotate exposed provider keys with the provider right away.</span></li>
+          <li><span class="step-badge">3</span><span class="step-copy">We review reports and preserve relevant platform evidence.</span></li>
+          <li><span class="step-badge">4</span><span class="step-copy">Confirmed abuse can lead to throttling, revocation, or account suspension.</span></li>
+        </ol>
+      </div>
+    </section>
 
-    <!-- Footer -->
-    <footer class="border-t border-vp-border mt-16">
-        <div class="max-w-5xl mx-auto px-6 py-12">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-                <div class="flex flex-col items-center md:items-start gap-2">
-                    <div class="flex items-center gap-2.5">
-                        <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#6366f1" fill-opacity="0.15"/><path d="M8 8L14 4L20 8V16L14 20L8 16V8Z" stroke="#6366f1" stroke-width="1.5" fill="none"/><path d="M14 10V15" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/><circle cx="14" cy="17" r="1" fill="#6366f1"/></svg>
-                        <span class="text-sm font-bold text-white">VaultProof</span>
-                        <span class="text-xs text-gray-600">by Rial Labs</span>
-                    </div>
-                    <p class="text-xs text-gray-600">Built for developers who refuse to trust blindly.</p>
-                </div>
-                <div class="flex items-center gap-8">
-                    <a href="/docs" class="text-sm text-gray-500 hover:text-white transition-colors">Documentation</a>
-                    <a href="/guides" class="text-sm text-gray-500 hover:text-white transition-colors">Guides</a>
-                    <a href="/verify" class="text-sm text-gray-500 hover:text-white transition-colors">Verify</a>
-                    <a href="/status" class="text-sm text-gray-500 hover:text-white transition-colors">Status</a>
-                    <a href="/app/login" class="nav-dashboard text-sm text-gray-500 hover:text-white transition-colors" style="display:none">Dashboard</a>
-                    <a href="/terms" class="text-sm text-gray-500 hover:text-white transition-colors">Terms</a>
-                    <a href="/privacy" class="text-sm text-gray-500 hover:text-white transition-colors">Privacy</a>
-                    <a href="/security" class="text-sm text-gray-500 hover:text-white transition-colors">Security</a>
-                    <a href="/abuse" class="text-sm text-gray-500 hover:text-white transition-colors">Abuse</a>
-                </div>
+    <div class="docs-layout">
+      <aside class="docs-sidebar" id="sidebar-nav" aria-label="Abuse sections">
+        <a href="#report">Report form</a>
+        <a href="#include">What to include</a>
+        <a href="#urgent">Urgent steps</a>
+        <a href="#scope">What to report</a>
+        <a href="#process">Review process</a>
+        <a href="#privacy">Reporter privacy</a>
+        <a href="#contact">Contact</a>
+      </aside>
+
+      <article class="docs-main">
+        <section class="docs-section" id="report">
+          <div class="section-heading">
+            <p class="eyebrow">Report form</p>
+            <h2>Send an abuse report to VaultProof.</h2>
+            <p>This form opens your email client with the details you provide. If the form does not open correctly, email <a href="mailto:abuse@vaultproof.dev">abuse@vaultproof.dev</a> directly.</p>
+          </div>
+
+          <form class="report-form" action="mailto:abuse@vaultproof.dev" method="post" enctype="text/plain">
+            <div class="form-grid two">
+              <div class="form-field">
+                <label for="email">Your email <span aria-hidden="true">*</span></label>
+                <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+              </div>
+              <div class="form-field">
+                <label for="role">Your role <span aria-hidden="true">*</span></label>
+                <select id="role" name="role" required>
+                  <option value="" selected disabled>Select one</option>
+                  <option value="API provider">API provider</option>
+                  <option value="Key owner">Key owner</option>
+                  <option value="Security researcher">Security researcher</option>
+                  <option value="Law enforcement">Law enforcement</option>
+                  <option value="Affected user">Affected user</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
             </div>
-        </div>
-    </footer>
 
-    
-<script src="/js/analytics.js" defer></script>
-<script src="/js/abuse-3.js" defer></script>
-<script src="/js/abuse-4.js" defer></script>
+            <div class="form-field">
+              <label for="summary">Short summary <span aria-hidden="true">*</span></label>
+              <input id="summary" name="summary" type="text" placeholder="Example: suspected stolen OpenAI key routed through VaultProof" required>
+            </div>
+
+            <div class="form-field">
+              <label for="description">Description <span aria-hidden="true">*</span></label>
+              <textarea id="description" name="description" rows="6" placeholder="Describe what happened, when you noticed it, and why you believe it involves VaultProof." required></textarea>
+            </div>
+
+            <div class="form-field">
+              <label for="evidence">Evidence</label>
+              <textarea id="evidence" name="evidence" rows="5" placeholder="Provider name, key prefix, VaultProof token prefix, timestamps, request IDs, domains, screenshots, logs, or ticket references. Do not paste full raw secrets."></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button class="button primary" type="submit">Submit report</button>
+              <p class="form-note">Please do not include full private keys, passwords, customer data, or sensitive request bodies unless we specifically ask for them through a secure channel.</p>
+            </div>
+          </form>
+        </section>
+
+        <section class="docs-section" id="include">
+          <div class="section-heading">
+            <p class="eyebrow">Good reports</p>
+            <h2>Useful details help us act faster.</h2>
+            <p>We can investigate more quickly when the report connects the suspected abuse to a concrete token, provider, account, request pattern, domain, or time window.</p>
+          </div>
+          <div class="card-grid two">
+            <div class="doc-card">
+              <h3>Identifiers</h3>
+              <p>Include safe prefixes, request IDs, provider names, dashboard project names, URLs, timestamps, and account emails when you can share them.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Evidence</h3>
+              <p>Share logs, screenshots, provider notices, billing alerts, repository links, scanner findings, or incident tickets that support the report.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Impact</h3>
+              <p>Tell us whether there is active misuse, unexpected spend, exposed credentials, spam, fraud, denied service, or harm to users.</p>
+            </div>
+            <div class="doc-card">
+              <h3>Safe handling</h3>
+              <p>Redact full secrets, passwords, tokens, private prompts, and customer data. Prefixes and hashes are usually enough for triage.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="docs-section" id="urgent">
+          <div class="section-heading">
+            <p class="eyebrow">Urgent steps</p>
+            <h2>If a provider key is exposed, rotate it at the provider.</h2>
+            <p>VaultProof can help reduce where provider keys live, but a provider key that has already leaked should still be rotated or revoked with the upstream provider.</p>
+          </div>
+          <ol class="step-list">
+            <li>
+              <span class="step-number">1</span>
+              <div>
+                <h3>Revoke or rotate the raw provider key</h3>
+                <p>Use the provider dashboard first so the exposed credential stops working outside VaultProof.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-number">2</span>
+              <div>
+                <h3>Check application and hosting environments</h3>
+                <p>Remove the old key from repos, CI variables, hosting settings, local env files, logs, and copied snippets.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-number">3</span>
+              <div>
+                <h3>Send VaultProof evidence</h3>
+                <p>Email token prefixes, request IDs, timestamps, affected routes, and account details so we can review platform activity.</p>
+              </div>
+            </li>
+          </ol>
+          <div class="callout warning">
+            <strong>Do not wait for our reply to rotate a leaked provider key.</strong>
+            <span>Provider-side revocation is the fastest way to stop credential misuse when a raw key is exposed.</span>
+          </div>
+        </section>
+
+        <section class="docs-section" id="scope">
+          <div class="section-heading">
+            <p class="eyebrow">Scope</p>
+            <h2>Use the abuse channel for harmful or unauthorized activity.</h2>
+            <p>The abuse inbox is for reports that require investigation, enforcement, provider coordination, or evidence preservation.</p>
+          </div>
+          <ul class="check-list warning">
+            <li>Stolen, leaked, scraped, or unauthorized provider keys connected to VaultProof.</li>
+            <li>VaultProof tokens or accounts being used without authorization.</li>
+            <li>Spam, fraud, malware, credential stuffing, denial-of-service activity, or illegal content routed through VaultProof.</li>
+            <li>Attempts to bypass plan limits, rate limits, billing controls, abuse controls, or security boundaries.</li>
+            <li>Security researcher reports that involve real abuse, exposed credentials, or active user risk.</li>
+          </ul>
+          <p>For product bugs or setup help, use <a href="/docs">Docs</a> or contact <a href="mailto:hello@vaultproof.dev">hello@vaultproof.dev</a>. For vulnerability disclosure, use <a href="mailto:security@vaultproof.dev">security@vaultproof.dev</a>.</p>
+        </section>
+
+        <section class="docs-section" id="process">
+          <div class="section-heading">
+            <p class="eyebrow">Review process</p>
+            <h2>We review, preserve evidence, and take proportionate action.</h2>
+            <p>Every report is reviewed for credibility, severity, user impact, and connection to VaultProof systems.</p>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Step</th>
+                  <th>What we do</th>
+                  <th>Possible outcome</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Triage</td>
+                  <td>Review the report, evidence, affected services, and urgency.</td>
+                  <td>Prioritize active abuse, exposed keys, fraud, and safety issues.</td>
+                </tr>
+                <tr>
+                  <td>Investigation</td>
+                  <td>Check relevant account, token, routing, usage, and error metadata where available.</td>
+                  <td>Confirm, reject, or request more information.</td>
+                </tr>
+                <tr>
+                  <td>Action</td>
+                  <td>Apply controls that fit the evidence and risk.</td>
+                  <td>Throttle, revoke, suspend, block, notify, or escalate as appropriate.</td>
+                </tr>
+                <tr>
+                  <td>Follow-up</td>
+                  <td>Share what we can without exposing private account, security, or investigation details.</td>
+                  <td>Close the report or continue monitoring.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="docs-section" id="privacy">
+          <div class="section-heading">
+            <p class="eyebrow">Reporter privacy</p>
+            <h2>We keep abuse reports limited to people who need them.</h2>
+            <p>We use report information to investigate, secure the service, enforce our Terms, comply with law, and communicate with the reporter when appropriate.</p>
+          </div>
+          <div class="callout info">
+            <strong>Law enforcement and legal requests</strong>
+            <span>Send official requests to <a href="mailto:abuse@vaultproof.dev">abuse@vaultproof.dev</a> with agency contact information, legal process, affected identifiers, and the requested time window.</span>
+          </div>
+          <p>We may preserve or disclose information if required by law, necessary to protect users or providers, or needed to investigate and stop abuse. Personal data is handled under the <a href="/privacy">Privacy Policy</a>.</p>
+        </section>
+
+        <section class="docs-section" id="contact">
+          <div class="section-heading">
+            <p class="eyebrow">Contact</p>
+            <h2>Use the right inbox for the fastest response.</h2>
+            <p>Abuse reports go to <a href="mailto:abuse@vaultproof.dev">abuse@vaultproof.dev</a>. Vulnerability reports go to <a href="mailto:security@vaultproof.dev">security@vaultproof.dev</a>. Product and onboarding questions go to <a href="mailto:hello@vaultproof.dev">hello@vaultproof.dev</a>.</p>
+          </div>
+        </section>
+      </article>
+    </div>
+  </main>
+
+  <footer class="docs-footer">
+    <a href="/">VaultProof</a>
+    <a href="/docs">Docs</a>
+    <a href="/security">Security</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/terms">Terms</a>
+    <a href="/abuse">Abuse</a>
+  </footer>
 </body>
 </html>

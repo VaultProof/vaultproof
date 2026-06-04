@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-            const links = document.querySelectorAll('#sidebar-nav .nav-link');
+            const links = document.querySelectorAll('#sidebar-nav a[href^="#"]');
             const sections = [];
 
             links.forEach(link => {

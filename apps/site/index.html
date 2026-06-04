@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VaultProof | Active key protection for AI agents</title>
   <meta name="description" content="VaultProof splits, encrypts, and proxies API keys so apps and AI agents never handle raw provider secrets.">
-  <meta name="keywords" content="API key security, API key management, API proxy, split-key encryption, OpenAI, Anthropic, MCP, AI agent security">
+  <meta name="keywords" content="API key security, API key management, API proxy, split-key encryption, OpenAI, Anthropic, AI agent security">
   <meta property="og:title" content="VaultProof - Active key protection for AI agents">
   <meta property="og:description" content="Split, encrypt, and proxy API keys so apps and agents never hold the real thing.">
   <meta property="og:url" content="https://vaultproof.dev">
@@ -69,7 +69,6 @@
           "Split-key encryption",
           "Secure API proxy",
           "AI agent proxy tokens",
-          "MCP server support",
           "Per-call audit logs",
           "CLI migration workflow"
         ]
@@ -4038,13 +4037,6 @@
             <div class="comparison-cell dash" role="cell">--</div>
           </div>
           <div class="comparison-row" role="row">
-            <div class="comparison-cell comparison-feature" role="cell">MCP authentication route</div>
-            <div class="comparison-cell" role="cell"><span class="dot" aria-label="Included"></span></div>
-            <div class="comparison-cell dash" role="cell">--</div>
-            <div class="comparison-cell dash" role="cell">--</div>
-            <div class="comparison-cell dash" role="cell">--</div>
-          </div>
-          <div class="comparison-row" role="row">
             <div class="comparison-cell comparison-feature" role="cell">Per-call audit log</div>
             <div class="comparison-cell" role="cell"><span class="dot" aria-label="Included"></span></div>
             <div class="comparison-cell" role="cell"><span class="dot" aria-label="Available"></span></div>
@@ -4219,10 +4211,9 @@
         <div>
           <p class="section-kicker">FOR AI AGENTS</p>
           <h2 class="section-title">Your agent gets a proxy URL. Never the key.</h2>
-          <p class="section-copy">Hand Claude, Codex, Cursor, or an MCP server a VaultProof project token and provider-compatible base URL. The agent does its work without seeing the raw sk- value.</p>
+          <p class="section-copy">Hand Claude, Codex, Cursor, or another AI coding workflow a VaultProof project token and provider-compatible base URL. The agent does its work without seeing the raw sk- value.</p>
           <div class="agent-actions">
-            <a class="btn btn-dark" href="/docs#proxy-url-reference" data-i18n-lock>Read proxy docs</a>
-            <a class="btn" href="/mcp-auth">MCP auth</a>
+            <a class="btn" href="/app/login">Open app</a>
           </div>
         </div>
 
@@ -4273,7 +4264,6 @@ curl https://proxy.vaultproof.dev/v1/chat/completions \
           <a class="footer-link" href="/docs#sdk-reference" data-i18n-lock>SDK</a>
           <a class="footer-link" href="/docs#cli-reference" data-i18n-lock>CLI</a>
           <a class="footer-link" href="/guides">Guides</a>
-          <a class="footer-link" href="/mcp-auth">MCP auth</a>
           <a class="footer-link" href="/verify">Verify</a>
         </nav>
 
@@ -4291,7 +4281,6 @@ curl https://proxy.vaultproof.dev/v1/chat/completions \
           <a class="footer-link" href="/blog/leaked-api-key">Leaked API keys</a>
           <a class="footer-link" href="/blog/secure-openai-api-key">Secure OpenAI keys</a>
           <a class="footer-link" href="/blog/vaultproof-vs-doppler-vault">VaultProof vs vaults</a>
-          <a class="footer-link" href="/blog/mcp-config-secrets-leak">MCP config secrets</a>
         </nav>
 
         <nav class="footer-group" aria-label="Company links">
@@ -4305,7 +4294,7 @@ curl https://proxy.vaultproof.dev/v1/chat/completions \
       </div>
 
       <div class="footer-bottom">
-        <p class="footer-copy">&copy; 2026 VaultProof Ltd. Built in Derry.</p>
+        <p class="footer-copy">&copy; 2026 VaultProof Ltd.</p>
         <nav class="footer-bottom-links" aria-label="Legal links">
           <a class="footer-link" href="/privacy">Privacy policy</a>
           <a class="footer-link" href="/terms">Terms of service</a>

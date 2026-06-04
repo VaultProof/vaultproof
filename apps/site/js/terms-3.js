@@ -1,19 +1,29 @@
-(function() {
-    function isLoggedIn() {
-        for (var i = 0; i < localStorage.length; i++) {
-            var key = localStorage.key(i);
-            if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
-                try {
-                    var d = JSON.parse(localStorage.getItem(key));
-                    if (d && d.access_token && d.expires_at > Date.now() / 1000) return true;
-                } catch(e) {}
-            }
-        }
-        return false;
-    }
-    if (isLoggedIn()) {
-        document.querySelectorAll('.nav-dashboard').forEach(function(el) {
-            el.style.display = '';
+document.addEventListener('DOMContentLoaded', function() {
+    var links = document.querySelectorAll('#sidebar-nav a[href^="#"]');
+    if (!links.length) return;
+
+    var sections = [];
+    links.forEach(function(link) {
+        var id = link.getAttribute('href')?.slice(1);
+        if (!id) return;
+
+        var el = document.getElementById(id);
+        if (el) sections.push({ el: el, link: link });
+    });
+
+    function activateSidebarLink() {
+        var current = sections[0];
+        sections.forEach(function(section) {
+            if (section.el.getBoundingClientRect().top <= 120) current = section;
         });
+
+        links.forEach(function(link) {
+            link.classList.remove('active');
+        });
+
+        if (current) current.link.classList.add('active');
     }
-})();
+
+    window.addEventListener('scroll', activateSidebarLink, { passive: true });
+    activateSidebarLink();
+});
