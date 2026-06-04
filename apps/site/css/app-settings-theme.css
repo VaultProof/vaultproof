@@ -88,8 +88,7 @@
 .settings-wrap .text-sm,
 .settings-wrap .text-xs,
 .topbar-crumb,
-.topbar-email,
-.sidebar-user-info {
+.topbar-email {
   color: var(--text-muted) !important;
 }
 

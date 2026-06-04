@@ -10,9 +10,6 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
 
     function syncUserChrome(emailValue) {
       const email = emailValue || user.email || '';
-      const sidebarEmail = document.getElementById('sidebarEmail');
-      if (sidebarEmail) sidebarEmail.textContent = email || '—';
-
       const emailLabel = document.getElementById('user-email');
       if (emailLabel) emailLabel.textContent = email || 'unknown user';
     }
@@ -64,21 +61,9 @@ const API = window.location.hostname.includes('dev.vaultproof') ? 'https://stagi
     }
 
 
-    const sidebarEl = document.getElementById('sidebar');
-    const overlayEl = document.getElementById('sidebarOverlay');
     syncUserChrome();
-    document.getElementById('menuBtn').addEventListener('click', toggleMobileSidebar);
-    if (overlayEl) overlayEl.addEventListener('click', toggleMobileSidebar);
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) logoutBtn.addEventListener('click', logout);
     const signOutBtn = document.getElementById('signOutBtn');
     if (signOutBtn) signOutBtn.addEventListener('click', logout);
-
-    function toggleMobileSidebar() {
-      if (window.innerWidth > 900) return;
-      sidebarEl.classList.toggle('is-open');
-      overlayEl.classList.toggle('hidden');
-    }
 
     async function logout() {
       Object.keys(localStorage).forEach(function(key) {

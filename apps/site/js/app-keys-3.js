@@ -108,21 +108,10 @@
       document.getElementById('sessionExpired').classList.remove('hidden');
     }
 
-    const sidebarEl = document.getElementById('sidebar');
-    const overlayEl = document.getElementById('sidebarOverlay');
-    document.getElementById('sidebarEmail').textContent = user.email || '';
     const userEmail = document.getElementById('user-email');
     if (userEmail) userEmail.textContent = user.email || 'unknown user';
-    document.getElementById('menuBtn').addEventListener('click', toggleMobileSidebar);
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) logoutBtn.addEventListener('click', logout);
     const signOutBtn = document.getElementById('signOutBtn');
     if (signOutBtn) signOutBtn.addEventListener('click', logout);
-
-    function toggleMobileSidebar() {
-      sidebarEl.classList.toggle('-translate-x-full');
-      overlayEl.classList.toggle('hidden');
-    }
 
     async function logout() {
       Object.keys(localStorage).forEach(function(key) {
@@ -987,10 +976,6 @@
       var action = actionEl.getAttribute('data-action');
       if (!action) return;
 
-      if (action === 'toggle-mobile-sidebar') {
-        toggleMobileSidebar();
-        return;
-      }
       if (action === 'close-create-project-modal') {
         closeCreateProjectModal();
         return;

@@ -16,15 +16,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
   <script src="/js/app-keys-2.js" defer></script>
-  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260604a">
-  <link rel="stylesheet" href="/css/app-keys-theme.css?v=20260603e" data-app-shell-stylesheet>
+  <link rel="stylesheet" href="/css/app-sidebar-theme.css?v=20260604b">
+  <link rel="stylesheet" href="/css/app-keys-theme.css?v=20260604a" data-app-shell-stylesheet>
 </head>
 <body>
   <div class="page">
-    <div id="sidebarOverlay" data-action="toggle-mobile-sidebar" class="sidebar-overlay hidden lg:hidden"></div>
-
     <div class="topbar">
-      <button id="menuBtn" type="button" class="menu-btn" aria-label="Open navigation" aria-hidden="true" tabindex="-1" hidden></button>
       <a href="/app/" class="topbar-logo">
         <span class="topbar-logo-mark">
           <img class="topbar-logo-img" src="/og-image2.png?v=20260603c" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
@@ -44,7 +41,6 @@
 
     <div class="layout">
       <aside id="sidebar" class="sidebar enterprise-app-sidebar" aria-label="VaultProof app navigation" data-i18n-lock>
-        <span class="sidebar-user-info" id="sidebarEmail" hidden></span>
         <div class="sidebar-group">
           <div class="sidebar-head">Monitor</div>
           <a href="/app/" class="sidebar-item" title="Dashboard" data-tooltip="Dashboard"><span class="sidebar-icon sidebar-icon-dashboard" aria-hidden="true"></span><span class="sidebar-label">Dashboard</span></a>
@@ -74,9 +70,6 @@
             <span class="sidebar-update-text">Private beta rollout notes</span>
           </span>
         </a>
-        <button id="logoutBtn" type="button" class="logout-btn" hidden>
-          <span class="logout-text sidebar-label">sign out</span>
-        </button>
       </aside>
 
       <main id="mainWrapper" class="main keys-main">
@@ -411,7 +404,7 @@
   </div>
 
   <script src="/js/app-session.js?v=20260603b" defer></script>
-  <script src="/js/app-keys-3.js?v=20260604a" defer data-app-shell-page-script></script>
+  <script src="/js/app-keys-3.js?v=20260604b" defer data-app-shell-page-script></script>
   <script src="/js/analytics.js" defer></script>
 </body>
 </html>

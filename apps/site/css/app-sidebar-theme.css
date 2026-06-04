@@ -271,17 +271,10 @@ body.scanner-app header {
   font-weight: var(--vp-sidebar-text-weight) !important;
 }
 
-.topbar-avatar,
-.scanner-topbar-avatar {
-  display: none !important;
-}
-
 .topbar-signout,
 .scanner-topbar-signout,
 .logout-btn,
-#logoutBtn.logout-btn,
-.topbar-menu,
-.menu-btn {
+#logoutBtn.logout-btn {
   border: 1px solid rgba(148, 163, 184, 0.16) !important;
   background: rgba(255, 255, 255, 0.045) !important;
   color: var(--text-muted) !important;
@@ -291,9 +284,7 @@ body.scanner-app header {
 .topbar-signout:hover,
 .scanner-topbar-signout:hover,
 .logout-btn:hover,
-#logoutBtn.logout-btn:hover,
-.topbar-menu:hover,
-.menu-btn:hover {
+#logoutBtn.logout-btn:hover {
   border-color: rgba(0, 229, 255, 0.34) !important;
   background: rgba(0, 229, 255, 0.10) !important;
   color: var(--text) !important;
@@ -1180,7 +1171,6 @@ html body .page .sidebar-head,
 html body .page .sidebar-item,
 html body .page .sidebar-nav-item,
 html body .page .sidebar-label,
-html body .page .sidebar-user-info,
 html body .page .sidebar-alert-count,
 html body .page .usage-label,
 html body .page .usage-reset,

@@ -25,7 +25,6 @@
 .kpi-sub,
 .security-note,
 .modal-copy,
-.sidebar-user-info,
 .tip,
 .empty-state,
 #projectsLoading,
@@ -93,16 +92,14 @@
 
 .btn-outline,
 .modal-close,
-.tip-close,
-.logout-btn {
+.tip-close {
   background: var(--keys-button) !important;
   color: var(--vp-dashboard-muted-color) !important;
 }
 
 .btn-outline:hover,
 .modal-close:hover,
-.tip-close:hover,
-.logout-btn:hover {
+.tip-close:hover {
   border-color: rgba(0, 229, 255, 0.34) !important;
   background: rgba(0, 229, 255, 0.12) !important;
   color: var(--accent) !important;
