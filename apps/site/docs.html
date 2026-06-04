@@ -569,32 +569,67 @@
 <body>
 
     <div class="page">
-    <nav class="site-nav">
-        <a href="/" class="nav-logo">
-            <span class="nav-logo-name">VaultProof</span>
+    <nav class="site-nav" aria-label="Main navigation" data-i18n-lock>
+        <a class="brand" href="/" aria-label="VaultProof home">
+            <span class="brand-mark">
+                <img class="brand-logo-img" src="/og-image2.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                <span class="brand-logo-fallback">VP</span>
+            </span>
+            <span>VaultProof</span>
         </a>
-        <div class="nav-spacer"></div>
-        <div class="nav-links">
-            <a href="/scan">scanner</a>
-            <a href="/docs">docs</a>
-            <a href="/blog">insights</a>
-            <a href="/#pricing">pricing</a>
-            <a href="/app/login" class="nav-dashboard" style="display:none">dashboard</a>
+
+        <div class="nav-links" aria-label="Primary navigation">
+            <div class="nav-item has-menu">
+                <button class="nav-menu-trigger" type="button" aria-haspopup="true">
+                    Products
+                    <span class="nav-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-menu" role="menu">
+                    <a href="/#product" role="menuitem">Overview<span>Compare split-key proxying with traditional secret stores.</span></a>
+                    <a href="/docs#sdk-reference" role="menuitem" data-i18n-lock>SDK<span>Provider-compatible calls without raw keys in apps.</span></a>
+                    <a href="/docs#cli-reference" role="menuitem" data-i18n-lock>CLI scanner<span>Find, split, and rewrite exposed API keys.</span></a>
+                    <a href="/scan" role="menuitem">Hosted scanner<span>Check repositories before secrets reach production.</span></a>
+                </div>
+            </div>
+            <div class="nav-item has-menu">
+                <button class="nav-menu-trigger" type="button" aria-haspopup="true">
+                    Use cases
+                    <span class="nav-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="nav-menu" role="menu">
+                    <a href="/#how-it-works" role="menuitem">AI agents<span>Give agents proxy URLs instead of provider secrets.</span></a>
+                    <a href="/cicd-kubernetes" role="menuitem">CI/CD<span>Remove raw third-party keys from pipelines and deploy logs.</span></a>
+                    <a href="/enterprise-demo" role="menuitem">Enterprise<span>Governance, audit trails, and dedicated runtime options.</span></a>
+                </div>
+            </div>
+            <a class="nav-link active" href="/docs" aria-current="page">Docs</a>
+            <a class="nav-link" href="/#pricing">Pricing</a>
         </div>
-        <a href="/app/login" class="nav-sign-in">sign in</a>
-        <a href="/app/login" class="nav-cta">get started</a>
-        <button id="mobileToggle" class="mobile-toggle" type="button" aria-label="Toggle menu">
-            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-        </button>
+
+        <div class="nav-actions">
+            <a class="btn btn-plain nav-dashboard" href="/app" style="display:none">Dashboard</a>
+            <a class="btn btn-plain" href="/app/login">Login</a>
+            <a class="btn btn-dark" href="/app/login">Get started</a>
+        </div>
+
+        <button id="mobileToggle" type="button" class="btn mobile-toggle" aria-label="Toggle menu" aria-expanded="false">menu</button>
     </nav>
 
-    <div id="mobileMenu" class="mobile-menu">
-        <a href="/scan">scanner</a>
-        <a href="/docs">docs</a>
-        <a href="/blog">insights</a>
-        <a href="/#pricing">pricing</a>
-        <a href="/app/login" class="nav-dashboard" style="display:none">dashboard</a>
-        <a href="/app/login">sign in</a>
+    <div id="mobileMenu" class="mobile-menu" aria-label="Mobile navigation" data-i18n-lock>
+        <a href="/#product">Products</a>
+        <a href="/#how-it-works">Use cases</a>
+        <a href="/docs" aria-current="page">Docs</a>
+        <a href="/docs#sdk-reference" data-i18n-lock>SDK</a>
+        <a href="/docs#cli-reference" data-i18n-lock>CLI</a>
+        <a href="/scan">Scanner</a>
+        <a href="/cicd-kubernetes">CI/CD</a>
+        <a href="/enterprise-demo">Enterprise</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="/security">Security</a>
+        <a href="/status">Status</a>
+        <a href="/app" class="nav-dashboard" style="display:none">Dashboard</a>
+        <a href="/app/login">Login</a>
+        <a href="/app/login">Get started</a>
     </div>
 
     <div class="docs-layout">
@@ -831,6 +866,7 @@ vaultproof-init --dry-run
 <span class="cmt"># Check if you have any legacy vp_live_ references to clean up</span>
 vaultproof-init --check-legacy</pre>
                     </div>
+                    <p class="text-gray-500 text-xs mt-3">The hosted installer downloads the VaultProof manifest first and verifies the SHA-256 hash of the CLI and provider catalog before installing them.</p>
                 </div>
 
                 <!-- Path C: No SDK needed -->
@@ -1148,6 +1184,7 @@ $ vaultproof-init --check-legacy</pre>
 <pre class="text-gray-300">curl -fsSL https://vaultproof.dev/install | sh
 vaultproof-init</pre>
                         </div>
+                        <p class="text-gray-500 text-xs mt-3">The installer verifies the CLI and provider catalog against the hosted SHA-256 manifest before placing files in <code class="font-mono text-xs">~/.vaultproof/bin</code>.</p>
                     </div>
 
                     <div class="endpoint-card">

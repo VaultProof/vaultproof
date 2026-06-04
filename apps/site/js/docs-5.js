@@ -4,7 +4,15 @@
     if (mobileToggle && mobileMenu) {
         mobileToggle.addEventListener('click', function (event) {
             event.stopPropagation();
-            mobileMenu.classList.toggle('open');
+            var isOpen = mobileMenu.classList.toggle('open');
+            mobileToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+
+        mobileMenu.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', function () {
+                mobileMenu.classList.remove('open');
+                mobileToggle.setAttribute('aria-expanded', 'false');
+            });
         });
     }
 

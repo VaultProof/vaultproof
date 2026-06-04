@@ -17,10 +17,14 @@
 
 /install
   Content-Type: text/x-shellscript; charset=utf-8
-  Cache-Control: public, max-age=300
+  Cache-Control: public, max-age=300, must-revalidate
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Cross-Origin-Resource-Policy: same-origin
 
 /downloads/*
-  Cache-Control: public, max-age=300
+  Cache-Control: public, max-age=300, must-revalidate
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Cross-Origin-Resource-Policy: same-origin
 
 /downloads/*.mjs
   Content-Type: application/javascript; charset=utf-8

@@ -31,12 +31,47 @@ download() {
   fi
 }
 
+manifest_sha() {
+  file_name="$1"
+  node -e '
+const fs = require("fs");
+const manifest = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+const entry = (manifest.files || []).find((file) => file.path === process.argv[2]);
+if (!entry || typeof entry.sha256 !== "string" || !/^[a-f0-9]{64}$/i.test(entry.sha256)) {
+  console.error(`Missing SHA-256 for ${process.argv[2]} in VaultProof manifest.`);
+  process.exit(1);
+}
+process.stdout.write(entry.sha256.toLowerCase());
+' "$MANIFEST_PATH" "$file_name"
+}
+
+verify_sha256() {
+  file_path="$1"
+  expected_sha="$2"
+  label="$3"
+  node -e '
+const fs = require("fs");
+const crypto = require("crypto");
+const actual = crypto.createHash("sha256").update(fs.readFileSync(process.argv[1])).digest("hex");
+if (actual !== process.argv[2]) {
+  console.error(`VaultProof installer integrity check failed for ${process.argv[3]}.`);
+  console.error(`Expected ${process.argv[2]}, got ${actual}.`);
+  process.exit(1);
+}
+' "$file_path" "$expected_sha" "$label"
+}
+
 mkdir -p "$INSTALL_DIR"
 tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t vaultproof)"
 trap 'rm -rf "$tmp_dir"' EXIT INT TERM
+MANIFEST_PATH="$tmp_dir/manifest.json"
 
+download "$BASE_URL/vaultproof-init-manifest.json" "$MANIFEST_PATH"
 download "$BASE_URL/vaultproof-init.mjs" "$tmp_dir/vaultproof-init"
 download "$BASE_URL/providers.json" "$tmp_dir/providers.json"
+
+verify_sha256 "$tmp_dir/vaultproof-init" "$(manifest_sha "vaultproof-init.mjs")" "vaultproof-init.mjs"
+verify_sha256 "$tmp_dir/providers.json" "$(manifest_sha "providers.json")" "providers.json"
 
 chmod 755 "$tmp_dir/vaultproof-init"
 mv "$tmp_dir/vaultproof-init" "$BIN_PATH"
