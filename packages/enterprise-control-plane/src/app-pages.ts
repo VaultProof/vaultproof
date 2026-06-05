@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { injectEnterpriseAnalytics } from './analytics.js';
 import type { EnterpriseControlPlaneEnv } from './config.js';
+import { enterpriseDemoWorkspaceJson } from './enterprise-demo-data.js';
 import {
   ENTERPRISE_APP_SHELL_THEME,
   renderEnterpriseAppSidebar,
@@ -3085,6 +3086,8 @@ function renderEnterpriseMembersPage(): string {
       var ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
       var token = localStorage.getItem('vaultproof_token') || '';
       var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
+      var ENTERPRISE_DEMO_WORKSPACE = ${enterpriseDemoWorkspaceJson()};
+      var enterpriseDemoDataActive = false;
       var roleDefinitions = {
         organization_roles: [
           { value: 'owner', label: 'Owner', summary: 'Full workspace control and final break-glass authority.', permissions: ['all controls'], privileged: true },
@@ -3112,6 +3115,12 @@ function renderEnterpriseMembersPage(): string {
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      }
+      function cloneDemo(value) {
+        return value ? JSON.parse(JSON.stringify(value)) : value;
+      }
+      function demoPayload(name) {
+        return cloneDemo(ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE[name]);
       }
       function friendlyErrorMessage(message) {
         var value = String(message || '');
@@ -3217,6 +3226,9 @@ function renderEnterpriseMembersPage(): string {
         }
       }
       function renderMembers(payload) {
+        if (enterpriseDemoDataActive && (!payload || !Array.isArray(payload.members) || !payload.members.length)) {
+          payload = demoPayload('membersPayload') || payload;
+        }
         if (payload.role_definitions) {
           roleDefinitions = {
             organization_roles: Array.isArray(payload.role_definitions.organization_roles) ? payload.role_definitions.organization_roles : roleDefinitions.organization_roles,
@@ -3283,7 +3295,10 @@ function renderEnterpriseMembersPage(): string {
       }
       async function load() {
         if (!token) {
-          notice('Enterprise session missing.');
+          enterpriseDemoDataActive = true;
+          renderOrgSelector(demoPayload('organizationsPayload') || { organizations: [] });
+          renderMembers(demoPayload('membersPayload') || {});
+          notice('Showing a sample Northstar Finance workspace. Sign in to load your enterprise data.');
           return;
         }
         notice('');
@@ -3296,7 +3311,10 @@ function renderEnterpriseMembersPage(): string {
           if (exportLink) exportLink.href = exportHref;
           renderMembers(await fetchJson('/api/v1/enterprise/members'));
         } catch (error) {
-          notice(error && error.message ? error.message : 'Members failed to load.');
+          enterpriseDemoDataActive = true;
+          renderOrgSelector(demoPayload('organizationsPayload') || { organizations: [] });
+          renderMembers(demoPayload('membersPayload') || {});
+          notice('Showing sample workspace data because members failed to load.');
         }
       }
       var select = byId('orgSelect');
@@ -3494,11 +3512,19 @@ function renderEnterpriseAuditPage(): string {
       var ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
       var token = localStorage.getItem('vaultproof_token') || '';
       var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
+      var ENTERPRISE_DEMO_WORKSPACE = ${enterpriseDemoWorkspaceJson()};
+      var enterpriseDemoDataActive = false;
       var nextBefore = '';
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      }
+      function cloneDemo(value) {
+        return value ? JSON.parse(JSON.stringify(value)) : value;
+      }
+      function demoPayload(name) {
+        return cloneDemo(ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE[name]);
       }
       function friendlyErrorMessage(message) {
         var value = String(message || '');
@@ -3575,6 +3601,9 @@ function renderEnterpriseAuditPage(): string {
       }
       function renderProjects(payload) {
         var select = byId('projectFilter');
+        if (enterpriseDemoDataActive && (!payload || !Array.isArray(payload.projects) || !payload.projects.length)) {
+          payload = demoPayload('projectsPayload') || payload;
+        }
         var projects = Array.isArray(payload.projects) ? payload.projects : [];
         select.innerHTML = '<option value="">All projects</option>' + projects.map(function(project) {
           return '<option value="' + escapeHtml(project.id) + '">' + escapeHtml(project.name || project.vp_proj_id) + '</option>';
@@ -3606,7 +3635,10 @@ function renderEnterpriseAuditPage(): string {
       }
       async function loadBase() {
         if (!token) {
-          notice('Enterprise session missing.');
+          enterpriseDemoDataActive = true;
+          renderOrgSelector(demoPayload('organizationsPayload') || { organizations: [] });
+          renderProjects(demoPayload('projectsPayload') || { projects: [] });
+          notice('Showing a sample Northstar Finance workspace. Sign in to load your enterprise data.');
           return;
         }
         notice('');
@@ -3617,7 +3649,13 @@ function renderEnterpriseAuditPage(): string {
       }
       async function loadAudit(append) {
         updateCsvLink();
-        var payload = await fetchJson(buildAuditPath(append ? nextBefore : ''));
+        var payload = null;
+        try {
+          payload = await fetchJson(buildAuditPath(append ? nextBefore : ''));
+        } catch (error) {
+          if (!enterpriseDemoDataActive) throw error;
+          payload = demoPayload('auditPayload') || { events: [] };
+        }
         renderEvents(payload, append);
       }
       async function reload() {
@@ -3625,7 +3663,11 @@ function renderEnterpriseAuditPage(): string {
           await loadBase();
           await loadAudit(false);
         } catch (error) {
-          notice(error && error.message ? error.message : 'Audit failed to load.');
+          enterpriseDemoDataActive = true;
+          renderOrgSelector(demoPayload('organizationsPayload') || { organizations: [] });
+          renderProjects(demoPayload('projectsPayload') || { projects: [] });
+          renderEvents(demoPayload('auditPayload') || { events: [] }, false);
+          notice('Showing sample workspace data because audit failed to load.');
         }
       }
       byId('filterForm').addEventListener('submit', function(event) {
@@ -3802,12 +3844,20 @@ function renderEnterpriseAlertsPage(): string {
       var ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
       var token = localStorage.getItem('vaultproof_token') || '';
       var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
+      var ENTERPRISE_DEMO_WORKSPACE = ${enterpriseDemoWorkspaceJson()};
+      var enterpriseDemoDataActive = false;
       var nextDeliveryBefore = '';
       var nextRunBefore = '';
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      }
+      function cloneDemo(value) {
+        return value ? JSON.parse(JSON.stringify(value)) : value;
+      }
+      function demoPayload(name) {
+        return cloneDemo(ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE[name]);
       }
       function friendlyErrorMessage(message) {
         var value = String(message || '');
@@ -3943,19 +3993,37 @@ function renderEnterpriseAlertsPage(): string {
       }
       async function reload() {
         if (!token) {
-          notice('Enterprise session missing.');
+          enterpriseDemoDataActive = true;
+          renderOrgSelector(demoPayload('organizationsPayload') || { organizations: [] });
+          renderPayload(demoPayload('alertsPayload') || {}, '');
+          notice('Showing a sample Northstar Finance workspace. Sign in to load your enterprise data.');
           return;
         }
         notice('');
         try {
           renderOrgSelector(await fetchJson('/api/v1/enterprise/orgs'));
-          renderPayload(await fetchJson(buildAlertsPath()), '');
+          var payload = await fetchJson(buildAlertsPath());
+          if (!payload || !Array.isArray(payload.destinations) || !payload.destinations.length) {
+            enterpriseDemoDataActive = true;
+            renderPayload(demoPayload('alertsPayload') || {}, '');
+            notice('Showing a sample Northstar Finance workspace because no alert data exists yet.');
+            return;
+          }
+          enterpriseDemoDataActive = false;
+          renderPayload(payload, '');
         } catch (error) {
-          notice(error && error.message ? error.message : 'Alerts failed to load.');
+          enterpriseDemoDataActive = true;
+          renderOrgSelector(demoPayload('organizationsPayload') || { organizations: [] });
+          renderPayload(demoPayload('alertsPayload') || {}, '');
+          notice('Showing sample workspace data because alerts failed to load.');
         }
       }
       byId('deliveryFilterForm').addEventListener('submit', function(event) {
         event.preventDefault();
+        if (enterpriseDemoDataActive) {
+          renderPayload(demoPayload('alertsPayload') || {}, '');
+          return;
+        }
         fetchJson(buildAlertsPath()).then(function(payload) { renderPayload(payload, ''); }).catch(function(error) { notice(error && error.message ? error.message : 'Alerts failed to load.'); });
       });
       byId('loadMoreDeliveriesBtn').addEventListener('click', function() {
@@ -3965,6 +4033,10 @@ function renderEnterpriseAlertsPage(): string {
         fetchJson(buildAlertsPath({ runBefore: nextRunBefore })).then(function(payload) { renderPayload(payload, 'runs'); }).catch(function(error) { notice(error && error.message ? error.message : 'Older dispatch runs failed to load.'); });
       });
       byId('testSendBtn').addEventListener('click', function() {
+        if (enterpriseDemoDataActive) {
+          notice('Sample test alert recorded locally. Sign in to send a real alert.');
+          return;
+        }
         var destinationId = byId('testSendBtn').dataset.destinationId || '';
         byId('testSendBtn').disabled = true;
         postJson('/api/v1/enterprise/alerts/test-send', { destination_id: destinationId })
@@ -4779,10 +4851,77 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       var cachedRolloutRows = [];
       var providerDefaults = ${renderEnterpriseProviderDefaultsJson()};
       var emailProviderSlugs = ${JSON.stringify(ENTERPRISE_EMAIL_PROVIDER_SLUGS)};
+      var ENTERPRISE_DEMO_WORKSPACE = ${enterpriseDemoWorkspaceJson()};
+      var enterpriseDemoDataActive = false;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      }
+      function cloneDemo(value) {
+        return value ? JSON.parse(JSON.stringify(value)) : value;
+      }
+      function demoPayload(name) {
+        return cloneDemo(ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE[name]);
+      }
+      function demoBootstrap() {
+        return cloneDemo(ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE.bootstrap) || { organizations: [], projects: [], overview: {} };
+      }
+      function overviewHasBusinessData(overview) {
+        overview = overview || {};
+        var summary = overview.providerSlotSummary || {};
+        var traffic = overview.trafficBreakdown || {};
+        return Number(overview.totalCalls || traffic.totalCalls || 0) > 0
+          || Number(overview.totalKeys || summary.totalSlots || 0) > 0
+          || Number(overview.totalProjects || 0) > 0
+          || (Array.isArray(overview.providerUsage) && overview.providerUsage.length > 0);
+      }
+      function bootstrapHasBusinessData(bootstrap) {
+        return Boolean(bootstrap && ((Array.isArray(bootstrap.projects) && bootstrap.projects.length > 0) || overviewHasBusinessData(bootstrap.overview || {})));
+      }
+      function resolveBootstrapData(bootstrap) {
+        if (bootstrapHasBusinessData(bootstrap)) {
+          enterpriseDemoDataActive = bootstrap && bootstrap.overview && (bootstrap.overview.statsSource === 'sample_dashboard' || bootstrap.overview.statsSource === 'sample_workspace');
+          return bootstrap;
+        }
+        enterpriseDemoDataActive = true;
+        return demoBootstrap();
+      }
+      function applyOperationsBootstrap(bootstrap, message) {
+        bootstrap = resolveBootstrapData(bootstrap);
+        if (message && enterpriseDemoDataActive) notice(message);
+        renderOrgSelector(bootstrap);
+        cachedProjects = Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
+        cachedOverview = bootstrap.overview || {};
+        updateKpis();
+        renderProjectOptions();
+        renderProjects();
+        renderInventory();
+        renderPolicy();
+        renderRollout();
+        renderExposureResponse();
+        renderKeys();
+        return renderActivity();
+      }
+      function filteredDemoAuditPayload() {
+        var payload = demoPayload('auditPayload') || { events: [] };
+        var events = Array.isArray(payload.events) ? payload.events : [];
+        var projectFilter = byId('activityProjectFilter') && byId('activityProjectFilter').value || '';
+        var statusFilter = byId('activityStatusFilter') && byId('activityStatusFilter').value || '';
+        var query = (byId('activitySearch') && byId('activitySearch').value || '').trim().toLowerCase();
+        events = events.filter(function(event) {
+          var meta = event.metadata || {};
+          var project = event.project || {};
+          if (projectFilter && project.id !== projectFilter) return false;
+          if (statusFilter && event.event_type !== statusFilter && event.action !== statusFilter) return false;
+          if (query) {
+            var haystack = [event.description, event.event_type, event.action, project.name, meta.provider, meta.slug].filter(Boolean).join(' ').toLowerCase();
+            if (haystack.indexOf(query) === -1) return false;
+          }
+          return event.source === 'proxy';
+        });
+        payload.events = events;
+        return payload;
       }
       function friendlyErrorMessage(message) {
         var value = String(message || '');
@@ -5327,6 +5466,9 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       }
       function manualApiKeyRecords() {
         var records = readManualApiKeys();
+        if (!Object.keys(records).length && enterpriseDemoDataActive && ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE.manualApiKeys) {
+          records = cloneDemo(ENTERPRISE_DEMO_WORKSPACE.manualApiKeys) || {};
+        }
         return Object.keys(records).map(function(id) {
           return manualApiKeyRecord(id, records[id]);
         }).filter(function(record) {
@@ -7418,8 +7560,18 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         if (byId('activityProjectFilter').value) params.set('project_id', byId('activityProjectFilter').value);
         if (byId('activityStatusFilter').value) params.set('event_type', byId('activityStatusFilter').value);
         if (byId('activitySearch').value.trim()) params.set('q', byId('activitySearch').value.trim());
-        var payload = await fetchJson('/api/v1/enterprise/audit?' + params.toString());
+        var payload = null;
+        try {
+          payload = await fetchJson('/api/v1/enterprise/audit?' + params.toString());
+        } catch (error) {
+          if (!enterpriseDemoDataActive) throw error;
+          payload = filteredDemoAuditPayload();
+        }
         var events = Array.isArray(payload.events) ? payload.events : [];
+        if (!events.length && enterpriseDemoDataActive) {
+          payload = filteredDemoAuditPayload();
+          events = Array.isArray(payload.events) ? payload.events : [];
+        }
         text('activityMeta', events.length + ' proxy events');
         byId('activityList').innerHTML = events.length ? events.map(function(event) {
           var meta = event.metadata || {};
@@ -7752,7 +7904,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         try {
           var parsed = JSON.parse(localStorage.getItem(scannerStorageKey()) || '[]');
           var rows = Array.isArray(parsed) ? parsed : Object.keys(parsed || {}).map(function(key) { return parsed[key]; });
-          return rows.filter(function(row) { return row && typeof row === 'object'; }).map(function(row) {
+          var sanitized = rows.filter(function(row) { return row && typeof row === 'object'; }).map(function(row) {
             return {
               id: row.id || ('scanner-' + Math.random().toString(36).slice(2)),
               repository: redactScannerText(row.repository),
@@ -7769,7 +7921,14 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
               updated_at: row.updated_at || null
             };
           }).slice(0, 50);
+          if (!sanitized.length && enterpriseDemoDataActive && ENTERPRISE_DEMO_WORKSPACE && Array.isArray(ENTERPRISE_DEMO_WORKSPACE.scannerFindings)) {
+            return cloneDemo(ENTERPRISE_DEMO_WORKSPACE.scannerFindings);
+          }
+          return sanitized;
         } catch (_error) {
+          if (enterpriseDemoDataActive && ENTERPRISE_DEMO_WORKSPACE && Array.isArray(ENTERPRISE_DEMO_WORKSPACE.scannerFindings)) {
+            return cloneDemo(ENTERPRISE_DEMO_WORKSPACE.scannerFindings);
+          }
           return [];
         }
       }
@@ -8035,26 +8194,15 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       }
       async function reload() {
         if (!token) {
-          notice('Enterprise session missing.');
+          await applyOperationsBootstrap(demoBootstrap(), 'Showing a sample Northstar Finance workspace. Sign in to load your enterprise data.');
           return;
         }
         notice('');
         try {
           var bootstrap = await fetchJson('/api/v1/enterprise/projects/bootstrap');
-          renderOrgSelector(bootstrap);
-          cachedProjects = Array.isArray(bootstrap.projects) ? bootstrap.projects : [];
-          cachedOverview = bootstrap.overview || {};
-          updateKpis();
-          renderProjectOptions();
-          renderProjects();
-          renderInventory();
-          renderPolicy();
-          renderRollout();
-          renderExposureResponse();
-          renderKeys();
-          await renderActivity();
+          await applyOperationsBootstrap(bootstrap, 'Showing a sample Northstar Finance workspace because this organization has no enterprise data yet.');
         } catch (error) {
-          notice(error && error.message ? error.message : 'Enterprise operations failed to load.');
+          await applyOperationsBootstrap(demoBootstrap(), 'Showing sample workspace data because enterprise operations failed to load.');
         }
       }
       if (byId('activityFilterForm')) {
@@ -9657,10 +9805,51 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       var latestPaidOnboardingPacket = null;
       var latestPilotSuccessPacket = null;
       var latestPilotTesterPacket = null;
+      var ENTERPRISE_DEMO_WORKSPACE = ${enterpriseDemoWorkspaceJson()};
+      var enterpriseDemoDataActive = false;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      }
+      function cloneDemo(value) {
+        return value ? JSON.parse(JSON.stringify(value)) : value;
+      }
+      function demoPayload(name) {
+        return cloneDemo(ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE[name]);
+      }
+      function demoBootstrap() {
+        return cloneDemo(ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE.bootstrap) || { organizations: [], projects: [], overview: {} };
+      }
+      function overviewHasBusinessData(overview) {
+        overview = overview || {};
+        var summary = overview.providerSlotSummary || {};
+        var traffic = overview.trafficBreakdown || {};
+        return Number(overview.totalCalls || traffic.totalCalls || 0) > 0
+          || Number(overview.totalKeys || summary.totalSlots || 0) > 0
+          || Number(overview.totalProjects || 0) > 0
+          || (Array.isArray(overview.providerUsage) && overview.providerUsage.length > 0);
+      }
+      function bootstrapHasBusinessData(bootstrap) {
+        return Boolean(bootstrap && ((Array.isArray(bootstrap.projects) && bootstrap.projects.length > 0) || overviewHasBusinessData(bootstrap.overview || {})));
+      }
+      function resolveSupportBootstrap(bootstrap) {
+        if (bootstrapHasBusinessData(bootstrap)) {
+          enterpriseDemoDataActive = bootstrap && bootstrap.overview && (bootstrap.overview.statsSource === 'sample_dashboard' || bootstrap.overview.statsSource === 'sample_workspace');
+          return bootstrap;
+        }
+        enterpriseDemoDataActive = true;
+        return demoBootstrap();
+      }
+      function renderSupportDemo(message) {
+        enterpriseDemoDataActive = true;
+        latestBootstrap = demoBootstrap();
+        latestOverview = latestBootstrap.overview || {};
+        latestOrgPayload = demoPayload('organizationPayload') || {};
+        latestReadiness = demoPayload('readiness') || {};
+        renderOrgSelector(latestBootstrap);
+        renderPanels(latestOrgPayload, latestReadiness, latestOverview, latestBootstrap);
+        notice(message || 'Showing sample workspace data.');
       }
       function friendlyErrorMessage(message) {
         var value = String(message || '');
@@ -10210,6 +10399,9 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       }
       function manualApiKeyRecords() {
         var records = readManualApiKeys();
+        if (!Object.keys(records).length && enterpriseDemoDataActive && ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE.manualApiKeys) {
+          records = cloneDemo(ENTERPRISE_DEMO_WORKSPACE.manualApiKeys) || {};
+        }
         return Object.keys(records).map(function(id) {
           var record = records[id] && typeof records[id] === 'object' ? records[id] : {};
           return {
@@ -10791,7 +10983,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         try {
           var parsed = JSON.parse(localStorage.getItem(scannerStorageKey()) || '[]');
           var rows = Array.isArray(parsed) ? parsed : Object.keys(parsed || {}).map(function(key) { return parsed[key]; });
-          return rows.filter(function(row) { return row && typeof row === 'object'; }).map(function(row) {
+          var sanitized = rows.filter(function(row) { return row && typeof row === 'object'; }).map(function(row) {
             return {
               id: row.id || ('scanner-' + Math.random().toString(36).slice(2)),
               repository: redactScannerText(row.repository),
@@ -10808,7 +11000,14 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
               updated_at: row.updated_at || null
             };
           }).slice(0, 50);
+          if (!sanitized.length && enterpriseDemoDataActive && ENTERPRISE_DEMO_WORKSPACE && Array.isArray(ENTERPRISE_DEMO_WORKSPACE.scannerFindings)) {
+            return cloneDemo(ENTERPRISE_DEMO_WORKSPACE.scannerFindings);
+          }
+          return sanitized;
         } catch (_error) {
+          if (enterpriseDemoDataActive && ENTERPRISE_DEMO_WORKSPACE && Array.isArray(ENTERPRISE_DEMO_WORKSPACE.scannerFindings)) {
+            return cloneDemo(ENTERPRISE_DEMO_WORKSPACE.scannerFindings);
+          }
           return [];
         }
       }
@@ -11122,7 +11321,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         try {
           var parsed = JSON.parse(localStorage.getItem(releaseEvidenceStorageKey()) || '[]');
           var rows = Array.isArray(parsed) ? parsed : Object.keys(parsed || {}).map(function(key) { return parsed[key]; });
-          return rows.filter(function(row) { return row && typeof row === 'object'; }).map(function(row) {
+          var sanitized = rows.filter(function(row) { return row && typeof row === 'object'; }).map(function(row) {
             return {
               id: row.id || ('release-' + Math.random().toString(36).slice(2)),
               release_label: redactReleaseText(row.release_label),
@@ -11141,7 +11340,14 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           }).sort(function(a, b) {
             return String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || ''));
           }).slice(0, 40);
+          if (!sanitized.length && enterpriseDemoDataActive && ENTERPRISE_DEMO_WORKSPACE && Array.isArray(ENTERPRISE_DEMO_WORKSPACE.releaseRecords)) {
+            return cloneDemo(ENTERPRISE_DEMO_WORKSPACE.releaseRecords);
+          }
+          return sanitized;
         } catch (_error) {
+          if (enterpriseDemoDataActive && ENTERPRISE_DEMO_WORKSPACE && Array.isArray(ENTERPRISE_DEMO_WORKSPACE.releaseRecords)) {
+            return cloneDemo(ENTERPRISE_DEMO_WORKSPACE.releaseRecords);
+          }
           return [];
         }
       }
@@ -11290,7 +11496,7 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         try {
           var parsed = JSON.parse(localStorage.getItem(pilotTesterStorageKey()) || '[]');
           var rows = Array.isArray(parsed) ? parsed : Object.keys(parsed || {}).map(function(key) { return parsed[key]; });
-          return rows.filter(function(row) { return row && typeof row === 'object'; }).map(function(row) {
+          var sanitized = rows.filter(function(row) { return row && typeof row === 'object'; }).map(function(row) {
             return {
               id: row.id || ('tester-' + Math.random().toString(36).slice(2)),
               tester_name: redactTesterText(row.tester_name),
@@ -11307,7 +11513,14 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
           }).sort(function(a, b) {
             return String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || ''));
           }).slice(0, 60);
+          if (!sanitized.length && enterpriseDemoDataActive && ENTERPRISE_DEMO_WORKSPACE && Array.isArray(ENTERPRISE_DEMO_WORKSPACE.pilotTesters)) {
+            return cloneDemo(ENTERPRISE_DEMO_WORKSPACE.pilotTesters);
+          }
+          return sanitized;
         } catch (_error) {
+          if (enterpriseDemoDataActive && ENTERPRISE_DEMO_WORKSPACE && Array.isArray(ENTERPRISE_DEMO_WORKSPACE.pilotTesters)) {
+            return cloneDemo(ENTERPRISE_DEMO_WORKSPACE.pilotTesters);
+          }
           return [];
         }
       }
@@ -11328,8 +11541,14 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       function getPilotTesterSessionState() {
         try {
           var parsed = JSON.parse(localStorage.getItem(pilotTesterSessionStorageKey()) || '{}');
+          if ((!parsed || !Object.keys(parsed).length) && enterpriseDemoDataActive && ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE.pilotTesterSession) {
+            return Object.assign(defaultPilotTesterSessionState(), cloneDemo(ENTERPRISE_DEMO_WORKSPACE.pilotTesterSession));
+          }
           return Object.assign(defaultPilotTesterSessionState(), parsed && typeof parsed === 'object' ? parsed : {});
         } catch (_) {
+          if (enterpriseDemoDataActive && ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE.pilotTesterSession) {
+            return Object.assign(defaultPilotTesterSessionState(), cloneDemo(ENTERPRISE_DEMO_WORKSPACE.pilotTesterSession));
+          }
           return defaultPilotTesterSessionState();
         }
       }
@@ -14903,24 +15122,25 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
       }
       async function reload() {
         if (!token) {
-          notice('Enterprise session missing.');
+          renderSupportDemo('Showing a sample Northstar Finance workspace. Sign in to load your enterprise data.');
           return;
         }
         notice('');
         try {
-          var bootstrap = await fetchJson('/api/v1/enterprise/projects/bootstrap');
+          var bootstrap = resolveSupportBootstrap(await fetchJson('/api/v1/enterprise/projects/bootstrap'));
           renderOrgSelector(bootstrap);
           var results = await Promise.all([
             fetchJson('/api/v1/enterprise/orgs/current'),
             fetchJson('/readiness')
           ]);
-          latestOrgPayload = results[0];
-          latestReadiness = results[1];
+          latestOrgPayload = results[0] && results[0].organization ? results[0] : (demoPayload('organizationPayload') || {});
+          latestReadiness = results[1] || (demoPayload('readiness') || {});
           latestOverview = (bootstrap && bootstrap.overview) || {};
           latestBootstrap = bootstrap || {};
+          if (enterpriseDemoDataActive) notice('Showing a sample Northstar Finance workspace because this organization has no enterprise data yet.');
           renderPanels(latestOrgPayload, latestReadiness, latestOverview, latestBootstrap);
         } catch (error) {
-          notice(error && error.message ? error.message : 'Enterprise admin page failed to load.');
+          renderSupportDemo('Showing sample workspace data because this enterprise page failed to load.');
         }
       }
       byId('refreshBtn').addEventListener('click', reload);

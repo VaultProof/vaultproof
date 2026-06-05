@@ -1,5 +1,6 @@
 import { injectEnterpriseAnalytics } from './analytics.js';
 import type { EnterpriseControlPlaneEnv } from './config.js';
+import { enterpriseDemoWorkspaceJson } from './enterprise-demo-data.js';
 import { ENTERPRISE_APP_SHELL_THEME, renderEnterpriseAppSidebar } from './enterprise-app-shell.js';
 
 const ENTERPRISE_AUTH_ERROR_MESSAGE = 'Your enterprise session expired or is missing. Sign in again to continue.';
@@ -107,6 +108,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       letter-spacing: 0 !important;
     }
     .main.enterprise-dashboard-main {
+      margin-top: var(--enterprise-shell-gap);
       padding: 0;
       max-width: none;
       width: 100%;
@@ -1040,6 +1042,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       var latestCallTrend = [];
       var callTrendRangeDays = 7;
       var DASHBOARD_SAMPLE_DATA_ENABLED = ${ENABLE_ENTERPRISE_DASHBOARD_SAMPLE_DATA ? 'true' : 'false'};
+      var ENTERPRISE_DEMO_WORKSPACE = ${enterpriseDemoWorkspaceJson()};
       var dashboardSampleDataActive = false;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
@@ -1078,91 +1081,15 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         date.setUTCDate(date.getUTCDate() - rawNumber(daysAgo));
         return date.toISOString().slice(0, 10);
       }
+      function cloneDemo(value) {
+        return value ? JSON.parse(JSON.stringify(value)) : value;
+      }
+      function demoWorkspacePayload(name) {
+        return cloneDemo(ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE[name]);
+      }
       function buildDashboardSampleOverview() {
-        var dayValues = [82, 96, 74, 118, 131, 145, 109, 156, 168, 141, 174, 188, 160, 192, 205, 214, 176, 221, 238, 210, 247, 265, 230, 276, 294, 249, 318, 337, 302, 356];
-        var callTrend = dayValues.map(function(calls, index) {
-          var denied = index % 9 === 0 ? 3 : index % 5 === 0 ? 1 : 0;
-          var otherErrors = index % 7 === 0 ? 2 : index % 11 === 0 ? 1 : 0;
-          return {
-            day: dayKey(dayValues.length - index - 1),
-            calls: calls,
-            denied: denied,
-            errors: denied + otherErrors,
-          };
-        });
-        var totalCalls = callTrend.reduce(function(sum, item) { return sum + rawNumber(item.calls); }, 0);
-        var deniedCalls = callTrend.reduce(function(sum, item) { return sum + rawNumber(item.denied); }, 0);
-        var errorCalls = callTrend.reduce(function(sum, item) { return sum + rawNumber(item.errors); }, 0);
-        var otherErrorCalls = Math.max(errorCalls - deniedCalls, 0);
-        return {
-          totalProjects: 6,
-          totalKeys: 14,
-          providers: ['openai', 'anthropic', 'stripe', 'sendgrid', 'deepl', 'google'],
-          providerCount: 6,
-          activeApps: 6,
-          totalCalls: totalCalls,
-          errorCalls: errorCalls,
-          deniedCalls: deniedCalls,
-          errorRate: totalCalls ? Math.round((errorCalls / totalCalls) * 1000) / 10 : 0,
-          healthWindowDays: 30,
-          statsSource: 'sample_dashboard',
-          accessLogStatsSource: 'sample_dashboard',
-          providerSlotSummary: {
-            totalSlots: 14,
-            liveSealedSlots: 11,
-            placeholderSlots: 2,
-            mixedSlots: 1,
-            missingSlots: 0,
-          },
-          providerUsage: [
-            { provider: 'openai', labels: ['Customer API', 'AI agent runtime'], slots: 4, liveSealedSlots: 3, placeholderSlots: 1, mixedSlots: 0, missingSlots: 0, recentCalls: 2240, denied: 5, errors: 8, lastActivity: daysAgoIso(0) },
-            { provider: 'anthropic', labels: ['AI agent runtime'], slots: 2, liveSealedSlots: 1, placeholderSlots: 1, mixedSlots: 0, missingSlots: 0, recentCalls: 1465, denied: 4, errors: 6, lastActivity: daysAgoIso(0) },
-            { provider: 'stripe', labels: ['Billing'], slots: 2, liveSealedSlots: 2, placeholderSlots: 0, mixedSlots: 0, missingSlots: 0, recentCalls: 812, denied: 1, errors: 2, lastActivity: daysAgoIso(1) },
-            { provider: 'sendgrid', labels: ['Notifications'], slots: 2, liveSealedSlots: 2, placeholderSlots: 0, mixedSlots: 0, missingSlots: 0, recentCalls: 694, denied: 0, errors: 1, lastActivity: daysAgoIso(1) },
-            { provider: 'deepl', labels: ['Translation'], slots: 2, liveSealedSlots: 2, placeholderSlots: 0, mixedSlots: 0, missingSlots: 0, recentCalls: 367, denied: 0, errors: 0, lastActivity: daysAgoIso(1) },
-            { provider: 'google', labels: ['Analytics'], slots: 2, liveSealedSlots: 1, placeholderSlots: 0, mixedSlots: 1, missingSlots: 0, recentCalls: 433, denied: 2, errors: 3, lastActivity: daysAgoIso(2) },
-          ],
-          trafficBreakdown: {
-            totalCalls: totalCalls,
-            okCalls: Math.max(totalCalls - errorCalls, 0),
-            deniedCalls: deniedCalls,
-            errorCalls: errorCalls,
-            otherErrorCalls: otherErrorCalls,
-          },
-          projectCoverage: {
-            totalProjects: 6,
-            withProviderSlots: 6,
-            withoutProviderSlots: 0,
-            withTraffic: 5,
-            needingAttention: 2,
-          },
-          callTrend: callTrend,
-          projectHealth: [
-            { name: 'Customer API', calls: 1920, denied: 3, errors: 4, lastActivity: daysAgoIso(0) },
-            { name: 'AI agent runtime', calls: 1710, denied: 6, errors: 9, lastActivity: daysAgoIso(0) },
-            { name: 'Billing', calls: 812, denied: 1, errors: 2, lastActivity: daysAgoIso(1) },
-            { name: 'Notifications', calls: 694, denied: 0, errors: 1, lastActivity: daysAgoIso(1) },
-            { name: 'Localization', calls: 367, denied: 0, errors: 0, lastActivity: daysAgoIso(1) },
-            { name: 'Analytics', calls: 433, denied: 2, errors: 3, lastActivity: daysAgoIso(2) },
-          ],
-          alerts: [
-            { severity: 'warning', title: 'Anthropic slot is still demo-only', detail: 'Replace the placeholder key before routing production agent traffic.' },
-            { severity: 'warning', title: 'Google analytics slot has partial setup', detail: 'One project has provider mapping but still needs a sealed production key.' },
-            { severity: 'info', title: 'DeepL translation usage is protected', detail: 'Translation traffic is visible in the provider map without exposing the upstream DeepL key.' },
-            { severity: 'info', title: 'OpenAI traffic is active', detail: 'Customer API and agent runtime requests are moving through the protected proxy.' },
-          ],
-          pilotReview: {
-            headline: 'Sample enterprise workspace',
-          },
-          recentActivity: [
-            { description: 'OpenAI proxy call allowed', action: 'proxy.allowed', timestamp: daysAgoIso(0), metadata: { status_code: 200 }, keySlot: { provider: 'openai' } },
-            { description: 'Anthropic request blocked by policy', action: 'proxy.denied', timestamp: daysAgoIso(0), metadata: { status_code: 403 }, keySlot: { provider: 'anthropic' } },
-            { description: 'Stripe billing key used', action: 'proxy.allowed', timestamp: daysAgoIso(1), metadata: { status_code: 200 }, keySlot: { provider: 'stripe' } },
-            { description: 'SendGrid message sent', action: 'proxy.allowed', timestamp: daysAgoIso(1), metadata: { status_code: 200 }, keySlot: { provider: 'sendgrid' } },
-            { description: 'DeepL translation call allowed', action: 'proxy.allowed', timestamp: daysAgoIso(1), metadata: { status_code: 200 }, keySlot: { provider: 'deepl' } },
-            { description: 'Google analytics key needs review', action: 'proxy.error', timestamp: daysAgoIso(2), metadata: { status_code: 502 }, keySlot: { provider: 'google' } },
-          ],
-        };
+        var bootstrap = ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE.bootstrap;
+        return cloneDemo(bootstrap && bootstrap.overview) || {};
       }
       function overviewCallTrendTotal(overview) {
         var trend = Array.isArray(overview && overview.callTrend) ? overview.callTrend : [];
@@ -1183,6 +1110,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       }
       function resolveDashboardOverview(overview) {
         dashboardSampleDataActive = false;
+        if (overview && (overview.statsSource === 'sample_dashboard' || overview.statsSource === 'sample_workspace')) {
+          dashboardSampleDataActive = true;
+          return overview;
+        }
         if (DASHBOARD_SAMPLE_DATA_ENABLED && !overviewHasRealDashboardData(overview)) {
           dashboardSampleDataActive = true;
           return buildDashboardSampleOverview();
@@ -1529,6 +1460,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         }
       }
       function renderOrganization(payload) {
+        if (DASHBOARD_SAMPLE_DATA_ENABLED && !(payload && payload.organization)) {
+          payload = demoWorkspacePayload('organizationPayload') || payload;
+        }
         var org = payload && payload.organization ? payload.organization : null;
         if (!org) {
           text('orgRole', 'none');
@@ -1597,6 +1531,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         }
       }
       function renderMembers(payload) {
+        if (DASHBOARD_SAMPLE_DATA_ENABLED && !((payload && Array.isArray(payload.members) && payload.members.length))) {
+          payload = demoWorkspacePayload('membersPayload') || payload;
+        }
         var members = Array.isArray(payload && payload.members) ? payload.members : [];
         var invites = Array.isArray(payload && payload.invitations) ? payload.invitations.filter(function(invite) { return invite.status === 'pending'; }) : [];
         text('kpiMembers', number(members.length));
@@ -1609,6 +1546,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           '<div class="row"><div><div class="row-title">Pending invites</div><div class="row-sub">Invitations still waiting for acceptance.</div></div><span class="tag">' + number(invites.length) + '</span></div>';
       }
       function renderAudit(payload) {
+        if (DASHBOARD_SAMPLE_DATA_ENABLED && !((payload && Array.isArray(payload.events) && payload.events.length))) {
+          payload = demoWorkspacePayload('auditPayload') || payload;
+        }
         var events = Array.isArray(payload && payload.events) ? payload.events : [];
         var list = byId('auditList');
         if (!list) return;
@@ -1618,6 +1558,17 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       }
       async function loadDashboard() {
         if (!token) {
+          if (DASHBOARD_SAMPLE_DATA_ENABLED) {
+            var demoOrgs = ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE.organizationsPayload && ENTERPRISE_DEMO_WORKSPACE.organizationsPayload.organizations;
+            currentOrgId = Array.isArray(demoOrgs) && demoOrgs[0] && demoOrgs[0].id ? demoOrgs[0].id : currentOrgId;
+            renderReadiness(demoWorkspacePayload('readiness') || {});
+            renderOrganization(demoWorkspacePayload('organizationPayload') || {});
+            renderOverview(buildDashboardSampleOverview());
+            renderMembers(demoWorkspacePayload('membersPayload') || {});
+            renderAudit(demoWorkspacePayload('auditPayload') || {});
+            setNotice('Showing a sample Northstar Finance workspace. Sign in to load your enterprise data.');
+            return;
+          }
           setNotice('Enterprise session missing.');
           return;
         }
@@ -1647,6 +1598,15 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           await Promise.allSettled([readinessTask].concat(dataPanelTasks));
         } catch (error) {
           if (sequence !== loadSequence) return;
+          if (DASHBOARD_SAMPLE_DATA_ENABLED) {
+            renderReadiness(demoWorkspacePayload('readiness') || {});
+            renderOrganization(demoWorkspacePayload('organizationPayload') || {});
+            renderOverview(buildDashboardSampleOverview());
+            renderMembers(demoWorkspacePayload('membersPayload') || {});
+            renderAudit(demoWorkspacePayload('auditPayload') || {});
+            setNotice('Showing sample workspace data because the dashboard data source is not available.');
+            return;
+          }
           setNotice(error && error.message ? error.message : 'Dashboard failed to load.');
         }
       }

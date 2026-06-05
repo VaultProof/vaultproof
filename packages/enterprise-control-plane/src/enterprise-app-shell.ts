@@ -497,7 +497,23 @@ export function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, _su
           if (button) button.setAttribute('aria-pressed', pinned ? 'true' : 'false');
           try { window.localStorage.setItem(storageKey, pinned ? 'true' : 'false'); } catch (_) {}
         }
+        function setRailHover(active) {
+          shell.classList.toggle('rail-hover', active);
+        }
+        function targetIsInsideShell(target) {
+          return target && target.nodeType && shell.contains(target);
+        }
         try { setPinned(window.localStorage.getItem(storageKey) === 'true'); } catch (_) {}
+        shell.addEventListener('pointerenter', function() { setRailHover(true); });
+        shell.addEventListener('pointerleave', function(event) {
+          if (targetIsInsideShell(event.relatedTarget)) return;
+          setRailHover(false);
+        });
+        shell.addEventListener('focusin', function() { setRailHover(true); });
+        shell.addEventListener('focusout', function(event) {
+          if (targetIsInsideShell(event.relatedTarget)) return;
+          setRailHover(false);
+        });
         if (button) {
           button.addEventListener('click', function(event) {
             event.preventDefault();
@@ -575,6 +591,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       --option-bg: var(--card);
       --option-text: var(--foreground);
       --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+      --enterprise-shell-gap: 12px;
     }
     body {
       background: var(--page-bg) !important;
@@ -697,7 +714,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       max-width: none !important;
       width: 100% !important;
       margin: 0 !important;
-      padding: 12px 8px 12px 8px !important;
+      padding: var(--enterprise-shell-gap) 8px var(--enterprise-shell-gap) 8px !important;
       background: #050607 !important;
     }
     .main {
@@ -830,6 +847,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover,
     .enterprise-icon-rail:focus-within,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .enterprise-icon-rail,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .enterprise-icon-rail,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .enterprise-icon-rail {
       align-items: stretch;
       width: 196px;
@@ -849,6 +868,10 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     .enterprise-icon-rail:hover .rail-bottom,
     .enterprise-icon-rail:focus-within .rail-top,
     .enterprise-icon-rail:focus-within .rail-bottom,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-top,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-bottom,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-top,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-bottom,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-top,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-bottom {
       justify-items: stretch;
@@ -863,6 +886,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover .rail-expanded-head,
     .enterprise-icon-rail:focus-within .rail-expanded-head,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-expanded-head,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-expanded-head,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-expanded-head {
       grid-template-columns: minmax(0, 1fr) 30px;
       gap: 8px;
@@ -887,6 +912,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover .rail-link,
     .enterprise-icon-rail:focus-within .rail-link,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-link,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-link,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-link {
       grid-template-columns: 22px minmax(0, 1fr) auto;
       justify-content: start;
@@ -930,6 +957,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover .rail-label,
     .enterprise-icon-rail:focus-within .rail-label,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-label,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-label,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-label {
       max-width: 118px;
       opacity: 1;
@@ -950,6 +979,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover .rail-shortcut,
     .enterprise-icon-rail:focus-within .rail-shortcut,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-shortcut,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-shortcut,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-shortcut {
       display: inline-flex;
     }
@@ -972,6 +1003,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover .rail-badge,
     .enterprise-icon-rail:focus-within .rail-badge,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-badge,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-badge,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-badge {
       position: static;
       justify-self: end;
@@ -998,6 +1031,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover .rail-pin-button,
     .enterprise-icon-rail:focus-within .rail-pin-button,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-pin-button,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-pin-button,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-pin-button {
       width: 30px;
       opacity: 1;
@@ -1036,6 +1071,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover .rail-status-dot,
     .enterprise-icon-rail:focus-within .rail-status-dot,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-status-dot,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-status-dot,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-status-dot {
       justify-self: start;
       margin-left: 16px;
