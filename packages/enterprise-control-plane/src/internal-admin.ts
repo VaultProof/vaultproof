@@ -126,16 +126,32 @@ interface InternalAdminActionExecutionRecordRow {
   created_at: string;
 }
 
+type InternalAdminKmsProvider = 'aws-kms' | 'gcp-cloud-kms' | 'azure-key-vault';
+
 interface InternalAdminKmsConnectionRow {
   id: string;
   organization_id: string;
-  provider: 'aws-kms';
+  provider: InternalAdminKmsProvider;
   display_name: string | null;
   status: 'waiting_on_customer' | 'ready_to_test' | 'verified' | 'blocked';
   aws_account_id: string | null;
   aws_region: string | null;
   aws_kms_key_arn: string | null;
   aws_role_arn: string | null;
+  gcp_project_id: string | null;
+  gcp_location: string | null;
+  gcp_key_ring: string | null;
+  gcp_crypto_key_resource: string | null;
+  gcp_service_account: string | null;
+  gcp_key_version: string | null;
+  azure_tenant_id: string | null;
+  azure_subscription_id: string | null;
+  azure_resource_group: string | null;
+  azure_key_vault_uri: string | null;
+  azure_key_name: string | null;
+  azure_key_version: string | null;
+  azure_principal_id: string | null;
+  azure_key_type: 'key_vault' | 'managed_hsm' | null;
   external_id: string;
   last_test_status: 'not_tested' | 'passed' | 'failed';
   last_tested_at: string | null;
@@ -146,6 +162,41 @@ interface InternalAdminKmsConnectionRow {
   created_at: string;
   updated_at: string | null;
 }
+
+const INTERNAL_ADMIN_KMS_CONNECTION_SELECT = [
+  'id',
+  'organization_id',
+  'provider',
+  'display_name',
+  'status',
+  'aws_account_id',
+  'aws_region',
+  'aws_kms_key_arn',
+  'aws_role_arn',
+  'gcp_project_id',
+  'gcp_location',
+  'gcp_key_ring',
+  'gcp_crypto_key_resource',
+  'gcp_service_account',
+  'gcp_key_version',
+  'azure_tenant_id',
+  'azure_subscription_id',
+  'azure_resource_group',
+  'azure_key_vault_uri',
+  'azure_key_name',
+  'azure_key_version',
+  'azure_principal_id',
+  'azure_key_type',
+  'external_id',
+  'last_test_status',
+  'last_tested_at',
+  'last_test_error',
+  'metadata',
+  'created_by_user_id',
+  'updated_by_user_id',
+  'created_at',
+  'updated_at',
+].join(', ');
 
 interface InternalAdminAuthUser {
   id: string;
@@ -223,8 +274,19 @@ function isMissingOrganizationSsoSettingsTable(error: { code?: string; message?:
 
 function isMissingOrganizationKmsConnectionsTable(error: { code?: string; message?: string } | null | undefined): boolean {
   const message = String(error?.message || '').toLowerCase();
+  const missingMulticloudColumn = [
+    'gcp_project_id',
+    'gcp_crypto_key_resource',
+    'azure_tenant_id',
+    'azure_key_vault_uri',
+  ].some((column) => message.includes(column));
   return error?.code === '42P01'
     || error?.code === 'PGRST205'
+    || (missingMulticloudColumn && (
+      message.includes('schema cache')
+      || message.includes('does not exist')
+      || message.includes('could not find')
+    ))
     || (message.includes('organization_kms_connections') && (
       message.includes('schema cache')
       || message.includes('does not exist')
@@ -693,7 +755,7 @@ function normalizeInternalAdminSsoProvider(value: unknown): string | null | Resp
   return provider;
 }
 
-function hasRawAwsCredentialFields(body: Record<string, unknown>): boolean {
+function hasRawCloudCredentialFields(body: Record<string, unknown>): boolean {
   const blockedFields = new Set([
     'aws_access_key_id',
     'aws_secret_access_key',
@@ -701,7 +763,21 @@ function hasRawAwsCredentialFields(body: Record<string, unknown>): boolean {
     'access_key_id',
     'secret_access_key',
     'session_token',
+    'gcp_access_token',
+    'gcp_credentials',
+    'gcp_credentials_json',
+    'google_application_credentials',
+    'service_account_json',
+    'azure_access_token',
+    'azure_client_secret',
+    'client_secret',
+    'refresh_token',
+    'id_token',
+    'token',
     'private_key',
+    'private_key_id',
+    'certificate',
+    'pfx',
     'credential',
     'credentials',
   ]);
@@ -783,7 +859,21 @@ function normalizeKmsConnectionStatus(value: unknown, fallback: InternalAdminKms
   return Response.json({ error: 'status must be waiting_on_customer, ready_to_test, verified, or blocked.' }, { status: 400 });
 }
 
-function normalizeAwsKmsExternalId(value: unknown, organizationId: string, existingExternalId?: string | null): string | Response {
+function normalizeKmsProvider(value: unknown): InternalAdminKmsProvider | Response {
+  const provider = typeof value === 'string' && value.trim() ? value.trim().toLowerCase() : 'aws-kms';
+  if (provider === 'aws-kms' || provider === 'gcp-cloud-kms' || provider === 'azure-key-vault') {
+    return provider;
+  }
+  return Response.json({ error: 'provider must be aws-kms, gcp-cloud-kms, or azure-key-vault.' }, { status: 400 });
+}
+
+function kmsProviderLabel(provider: unknown): string {
+  if (provider === 'gcp-cloud-kms') return 'GCP Cloud KMS';
+  if (provider === 'azure-key-vault') return 'Azure Key Vault / Managed HSM';
+  return 'AWS KMS';
+}
+
+function normalizeKmsExternalId(value: unknown, organizationId: string, existingExternalId?: string | null): string | Response {
   const raw = typeof value === 'string' ? value.trim() : '';
   const externalId = raw || existingExternalId || `vaultproof-${organizationId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}-${randomBytes(8).toString('hex')}`;
   if (externalId.length < 16 || externalId.length > 160) {
@@ -797,6 +887,106 @@ function normalizeAwsKmsExternalId(value: unknown, organizationId: string, exist
 
 function looksLikeUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+function normalizeOptionalCloudText(value: unknown, fieldName: string, maxLength: number): string | Response | null {
+  const text = typeof value === 'string' ? value.trim() : '';
+  if (!text) return null;
+  if (text.length > maxLength) {
+    return Response.json({ error: `${fieldName} must be ${maxLength} characters or fewer.` }, { status: 400 });
+  }
+  return text;
+}
+
+function parseGcpKmsResource(value: unknown): {
+  resource: string;
+  projectId: string;
+  location: string;
+  keyRing: string;
+  cryptoKey: string;
+  keyVersion: string | null;
+} | Response | null {
+  const resource = typeof value === 'string' ? value.trim() : '';
+  if (!resource) return null;
+  const match = resource.match(/^projects\/([^/]+)\/locations\/([^/]+)\/keyRings\/([^/]+)\/cryptoKeys\/([^/]+)(?:\/cryptoKeyVersions\/([^/]+))?$/);
+  if (!match) {
+    return Response.json({
+      error: 'gcp_crypto_key_resource must look like projects/<project>/locations/<location>/keyRings/<ring>/cryptoKeys/<key>.',
+    }, { status: 400 });
+  }
+  const [, projectId, location, keyRing, cryptoKey, keyVersion] = match;
+  return {
+    resource: `projects/${projectId}/locations/${location}/keyRings/${keyRing}/cryptoKeys/${cryptoKey}`,
+    projectId,
+    location,
+    keyRing,
+    cryptoKey,
+    keyVersion: keyVersion || null,
+  };
+}
+
+function normalizeGcpResourcePart(value: unknown, fieldName: string): string | Response | null {
+  const text = normalizeOptionalCloudText(value, fieldName, 120);
+  if (!text || text instanceof Response) return text;
+  if (!/^[A-Za-z0-9_.:-]+$/.test(text)) {
+    return Response.json({ error: `${fieldName} can only contain letters, numbers, dots, underscores, colons, and hyphens.` }, { status: 400 });
+  }
+  return text;
+}
+
+function normalizeGcpServiceAccount(value: unknown): string | Response | null {
+  const email = normalizeOptionalCloudText(value, 'gcp_service_account', 180);
+  if (!email || email instanceof Response) return email;
+  if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.iam\.gserviceaccount\.com$/.test(email)) {
+    return Response.json({ error: 'gcp_service_account must be a Google service account email.' }, { status: 400 });
+  }
+  return email;
+}
+
+function normalizeAzureUuid(value: unknown, fieldName: string): string | Response | null {
+  const uuid = normalizeOptionalCloudText(value, fieldName, 64);
+  if (!uuid || uuid instanceof Response) return uuid;
+  if (!looksLikeUuid(uuid)) {
+    return Response.json({ error: `${fieldName} must be a UUID.` }, { status: 400 });
+  }
+  return uuid.toLowerCase();
+}
+
+function normalizeAzureKeyVaultUri(value: unknown): string | Response | null {
+  const raw = normalizeOptionalCloudText(value, 'azure_key_vault_uri', 220);
+  if (!raw || raw instanceof Response) return raw;
+  try {
+    const url = new URL(raw);
+    const host = url.hostname.toLowerCase();
+    if (url.protocol !== 'https:' || (!host.endsWith('.vault.azure.net') && !host.endsWith('.managedhsm.azure.net'))) {
+      return Response.json({ error: 'azure_key_vault_uri must be an https://*.vault.azure.net or https://*.managedhsm.azure.net URL.' }, { status: 400 });
+    }
+    if (url.pathname && url.pathname !== '/') {
+      return Response.json({ error: 'azure_key_vault_uri should be the vault or HSM base URL, without a key path.' }, { status: 400 });
+    }
+    return `https://${host}`;
+  } catch {
+    return Response.json({ error: 'azure_key_vault_uri must be a valid HTTPS URL.' }, { status: 400 });
+  }
+}
+
+function normalizeAzureKeyName(value: unknown): string | Response | null {
+  const keyName = normalizeOptionalCloudText(value, 'azure_key_name', 127);
+  if (!keyName || keyName instanceof Response) return keyName;
+  if (!/^[A-Za-z0-9-]+$/.test(keyName)) {
+    return Response.json({ error: 'azure_key_name can only contain letters, numbers, and hyphens.' }, { status: 400 });
+  }
+  return keyName;
+}
+
+function normalizeAzureKeyType(value: unknown, vaultUri: string | null): 'key_vault' | 'managed_hsm' | Response | null {
+  const raw = typeof value === 'string' ? value.trim().toLowerCase().replace(/-/g, '_') : '';
+  if (raw === 'key_vault' || raw === 'managed_hsm') return raw;
+  if (raw) {
+    return Response.json({ error: 'azure_key_type must be key_vault or managed_hsm.' }, { status: 400 });
+  }
+  if (!vaultUri) return null;
+  return vaultUri.includes('.managedhsm.azure.net') ? 'managed_hsm' : 'key_vault';
 }
 
 function vaultProofAwsRuntimePrincipalArn(env: EnterpriseControlPlaneEnv): string {
@@ -832,11 +1022,205 @@ function buildAwsKmsPreflightCommand(row: Pick<InternalAdminKmsConnectionRow, 'a
   ].join(' \\\n');
 }
 
+function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, "'\\''")}'`;
+}
+
+function gcpCryptoKeyName(resource: string | null): string | null {
+  if (!resource) return null;
+  const match = resource.match(/\/cryptoKeys\/([^/]+)$/);
+  return match?.[1] || null;
+}
+
+function buildGcpKmsIamBindingCommand(row: Pick<InternalAdminKmsConnectionRow, 'gcp_project_id' | 'gcp_location' | 'gcp_key_ring' | 'gcp_crypto_key_resource' | 'gcp_service_account'>): string | null {
+  const cryptoKey = gcpCryptoKeyName(row.gcp_crypto_key_resource);
+  if (!row.gcp_project_id || !row.gcp_location || !row.gcp_key_ring || !cryptoKey || !row.gcp_service_account) return null;
+  return [
+    `gcloud kms keys add-iam-policy-binding ${shellQuote(cryptoKey)}`,
+    `  --project=${shellQuote(row.gcp_project_id)}`,
+    `  --location=${shellQuote(row.gcp_location)}`,
+    `  --keyring=${shellQuote(row.gcp_key_ring)}`,
+    `  --member=${shellQuote(`serviceAccount:${row.gcp_service_account}`)}`,
+    "  --role='roles/cloudkms.cryptoKeyDecrypter'",
+  ].join(' \\\n');
+}
+
+function buildGcpKmsPreflightCommand(row: Pick<InternalAdminKmsConnectionRow, 'gcp_crypto_key_resource' | 'gcp_key_version'>): string | null {
+  if (!row.gcp_crypto_key_resource) return null;
+  return [
+    `CUSTOMER_GCP_KMS_CRYPTO_KEY_RESOURCE="${row.gcp_crypto_key_resource}"`,
+    row.gcp_key_version ? `CUSTOMER_GCP_KMS_KEY_VERSION="${row.gcp_key_version}"` : null,
+    'npm run preflight:gcp-customer-kms',
+  ].filter(Boolean).join(' \\\n');
+}
+
+function azureVaultName(vaultUri: string | null): string | null {
+  if (!vaultUri) return null;
+  try {
+    return new URL(vaultUri).hostname.split('.')[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+function buildAzureKmsScope(row: Pick<InternalAdminKmsConnectionRow, 'azure_subscription_id' | 'azure_resource_group' | 'azure_key_vault_uri' | 'azure_key_name' | 'azure_key_type'>): string | null {
+  const vaultName = azureVaultName(row.azure_key_vault_uri);
+  if (!row.azure_subscription_id || !row.azure_resource_group || !vaultName || !row.azure_key_name || !row.azure_key_type) return null;
+  const resourceType = row.azure_key_type === 'managed_hsm' ? 'managedHSMs' : 'vaults';
+  return `/subscriptions/${row.azure_subscription_id}/resourceGroups/${row.azure_resource_group}/providers/Microsoft.KeyVault/${resourceType}/${vaultName}/keys/${row.azure_key_name}`;
+}
+
+function buildAzureKmsAccessRoleCommand(row: Pick<InternalAdminKmsConnectionRow, 'azure_subscription_id' | 'azure_resource_group' | 'azure_key_vault_uri' | 'azure_key_name' | 'azure_key_type' | 'azure_principal_id'>): string | null {
+  const scope = buildAzureKmsScope(row);
+  if (!scope || !row.azure_principal_id) return null;
+  return [
+    'az role assignment create',
+    `  --assignee ${shellQuote(row.azure_principal_id)}`,
+    "  --role 'Key Vault Crypto Service Release User'",
+    `  --scope ${shellQuote(scope)}`,
+  ].join(' \\\n');
+}
+
+function buildAzureKmsReleaseEnv(row: Pick<InternalAdminKmsConnectionRow, 'azure_key_vault_uri' | 'azure_key_name' | 'azure_key_version'>): string | null {
+  if (!row.azure_key_vault_uri || !row.azure_key_name || !row.azure_key_version) return null;
+  const keyId = `${row.azure_key_vault_uri}/keys/${row.azure_key_name}/${row.azure_key_version}`;
+  return [
+    `AZURE_KEY_ID="${row.azure_key_vault_uri}/keys/${row.azure_key_name}"`,
+    `AZURE_KEY_VERSION="${row.azure_key_version}"`,
+    `AZURE_KEY_RELEASE_URL="${keyId}/release"`,
+  ].join('\n');
+}
+
+function buildKmsPreflightCommand(connection: InternalAdminKmsConnectionRow): string | null {
+  if (connection.provider === 'aws-kms') return buildAwsKmsPreflightCommand(connection);
+  if (connection.provider === 'gcp-cloud-kms') return buildGcpKmsPreflightCommand(connection);
+  return null;
+}
+
+function summarizeKmsConnection(connection: Pick<InternalAdminKmsConnectionRow, 'provider' | 'aws_account_id' | 'aws_region' | 'aws_kms_key_arn' | 'gcp_project_id' | 'gcp_location' | 'gcp_crypto_key_resource' | 'azure_subscription_id' | 'azure_key_vault_uri' | 'azure_key_name'>): string {
+  if (connection.provider === 'gcp-cloud-kms') {
+    return [
+      connection.gcp_project_id || 'project pending',
+      connection.gcp_location || 'location pending',
+      connection.gcp_crypto_key_resource || 'key resource pending',
+    ].join(' - ');
+  }
+  if (connection.provider === 'azure-key-vault') {
+    return [
+      connection.azure_subscription_id || 'subscription pending',
+      connection.azure_key_vault_uri || 'vault/HSM pending',
+      connection.azure_key_name || 'key pending',
+    ].join(' - ');
+  }
+  return [
+    connection.aws_account_id || 'account pending',
+    connection.aws_region || 'region pending',
+    connection.aws_kms_key_arn || 'key ARN pending',
+  ].join(' - ');
+}
+
+function addKmsConnectionHandoffFields(env: EnterpriseControlPlaneEnv, connection: InternalAdminKmsConnectionRow): InternalAdminKmsConnectionRow & {
+  provider_label: string;
+  connection_summary: string;
+  trust_policy: Record<string, unknown> | null;
+  gcp_iam_binding_command: string | null;
+  gcp_preflight_command: string | null;
+  azure_access_role_command: string | null;
+  azure_release_env: string | null;
+  preflight_command: string | null;
+} {
+  return {
+    ...connection,
+    provider_label: kmsProviderLabel(connection.provider),
+    connection_summary: summarizeKmsConnection(connection),
+    trust_policy: connection.provider === 'aws-kms' ? buildAwsKmsTrustPolicy(env, connection.external_id) : null,
+    gcp_iam_binding_command: connection.provider === 'gcp-cloud-kms' ? buildGcpKmsIamBindingCommand(connection) : null,
+    gcp_preflight_command: connection.provider === 'gcp-cloud-kms' ? buildGcpKmsPreflightCommand(connection) : null,
+    azure_access_role_command: connection.provider === 'azure-key-vault' ? buildAzureKmsAccessRoleCommand(connection) : null,
+    azure_release_env: connection.provider === 'azure-key-vault' ? buildAzureKmsReleaseEnv(connection) : null,
+    preflight_command: buildKmsPreflightCommand(connection),
+  };
+}
+
 function buildKmsChecklist(connection: InternalAdminKmsConnectionRow | null): Array<{
   label: string;
   status: 'done' | 'todo';
   detail: string;
 }> {
+  if (!connection) {
+    return [{
+      label: 'KMS provider',
+      status: 'todo',
+      detail: 'Choose AWS KMS, GCP Cloud KMS, or Azure Key Vault / Managed HSM.',
+    }, {
+      label: 'Customer key',
+      status: 'todo',
+      detail: 'Collect the customer-owned key resource without storing cloud credentials.',
+    }, {
+      label: 'VaultProof access',
+      status: 'todo',
+      detail: 'Have the customer grant the VaultProof runtime identity access to the key.',
+    }, {
+      label: 'Verification',
+      status: 'todo',
+      detail: 'Run the provider preflight or release-path check before marking verified.',
+    }];
+  }
+
+  if (connection.provider === 'gcp-cloud-kms') {
+    return [{
+      label: 'GCP project',
+      status: connection.gcp_project_id ? 'done' : 'todo',
+      detail: connection.gcp_project_id || 'Ask for the project that owns the Cloud KMS key.',
+    }, {
+      label: 'Cloud KMS resource',
+      status: connection.gcp_crypto_key_resource ? 'done' : 'todo',
+      detail: connection.gcp_crypto_key_resource || 'Require projects/<project>/locations/<location>/keyRings/<ring>/cryptoKeys/<key>.',
+    }, {
+      label: 'VaultProof service account',
+      status: connection.gcp_service_account ? 'done' : 'todo',
+      detail: connection.gcp_service_account || 'Customer grants Cloud KMS decrypt access to the VaultProof runtime service account.',
+    }, {
+      label: 'Key version',
+      status: connection.gcp_key_version ? 'done' : 'todo',
+      detail: connection.gcp_key_version || 'Use the primary version from the preflight if not supplied.',
+    }, {
+      label: 'Preflight test',
+      status: connection.last_test_status === 'passed' || connection.status === 'verified' ? 'done' : 'todo',
+      detail: connection.last_test_status === 'passed'
+        ? `Passed ${connection.last_tested_at || ''}`.trim()
+        : 'Run GCP Cloud KMS preflight before marking verified.',
+    }];
+  }
+
+  if (connection.provider === 'azure-key-vault') {
+    return [{
+      label: 'Azure tenant',
+      status: connection.azure_tenant_id ? 'done' : 'todo',
+      detail: connection.azure_tenant_id || 'Ask for the Entra tenant ID that owns the vault or HSM.',
+    }, {
+      label: 'Key Vault / HSM',
+      status: connection.azure_key_vault_uri ? 'done' : 'todo',
+      detail: connection.azure_key_vault_uri || 'Use the base https://*.vault.azure.net or https://*.managedhsm.azure.net URL.',
+    }, {
+      label: 'Key name and version',
+      status: connection.azure_key_name && connection.azure_key_version ? 'done' : 'todo',
+      detail: connection.azure_key_name && connection.azure_key_version
+        ? `${connection.azure_key_name} / ${connection.azure_key_version}`
+        : 'Key name and version are needed for secure key release.',
+    }, {
+      label: 'VaultProof principal',
+      status: connection.azure_principal_id ? 'done' : 'todo',
+      detail: connection.azure_principal_id || 'Customer grants Key Vault Crypto Service Release User to the VaultProof principal.',
+    }, {
+      label: 'Release check',
+      status: connection.last_test_status === 'passed' || connection.status === 'verified' ? 'done' : 'todo',
+      detail: connection.last_test_status === 'passed'
+        ? `Passed ${connection.last_tested_at || ''}`.trim()
+        : 'Verify Azure secure key release from the confidential runtime before marking verified.',
+    }];
+  }
+
   return [{
     label: 'AWS account ID',
     status: connection?.aws_account_id ? 'done' : 'todo',
@@ -1185,7 +1569,7 @@ async function getInternalAdminKmsConnections(
   try {
     const { data, error } = await getSupabase(env)
       .from('organization_kms_connections')
-      .select('id, organization_id, provider, display_name, status, aws_account_id, aws_region, aws_kms_key_arn, aws_role_arn, external_id, last_test_status, last_tested_at, last_test_error, metadata, created_by_user_id, updated_by_user_id, created_at, updated_at')
+      .select(INTERNAL_ADMIN_KMS_CONNECTION_SELECT)
       .eq('organization_id', organizationId)
       .order('updated_at', { ascending: false })
       .limit(10);
@@ -1196,7 +1580,7 @@ async function getInternalAdminKmsConnections(
       return { rows: [], schemaReady: false };
     }
     return {
-      rows: normalizeRows(data as MaybeArray<InternalAdminKmsConnectionRow>),
+      rows: normalizeRows(data as unknown as MaybeArray<InternalAdminKmsConnectionRow>),
       schemaReady: true,
     };
   } catch (error) {
@@ -1302,14 +1686,44 @@ function enterpriseBusinessLoginLinks(
   return links;
 }
 
-export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): string {
+type InternalAdminPageMode = 'control' | 'create-business' | 'businesses' | 'support' | 'business-detail';
+
+interface InternalAdminPageOptions {
+  mode?: InternalAdminPageMode;
+}
+
+export function renderInternalAdminPage(
+  env: EnterpriseControlPlaneEnv = {},
+  options: InternalAdminPageOptions = {},
+): string {
+  const pageMode = options.mode || 'control';
+  const pageTitle = pageMode === 'create-business'
+    ? 'Create business'
+    : pageMode === 'businesses'
+      ? 'Businesses'
+      : pageMode === 'support'
+        ? 'Support queue'
+        : pageMode === 'business-detail'
+          ? 'Business detail'
+          : 'Admin Control Center';
+  const pageLead = pageMode === 'create-business'
+    ? 'Create a new customer business workspace, invite the owner, and optionally prepare SSO before handoff.'
+    : pageMode === 'businesses'
+      ? 'Review every customer business, open detail pages, and find the accounts that need SSO, KMS, proxy, or invite follow-up.'
+      : pageMode === 'support'
+        ? 'Triage customer follow-up separately from the business directory so support work stays focused and easy to scan.'
+        : pageMode === 'business-detail'
+          ? 'Manage one business workspace with approval-gated SSO, KMS, proxy, invites, support notes, and evidence links.'
+          : 'Control center for customer operations, launch readiness, usage, access, SSO, KMS, proxy posture, support follow-up, and audit signals.';
+  const navActive = (mode: InternalAdminPageMode): string => pageMode === mode ? ' active' : '';
+
   return injectEnterpriseAnalytics(`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex,nofollow" />
-  <title>VaultProof Internal Admin</title>
+  <title>${pageTitle} - VaultProof Internal Admin</title>
   <style>
     :root { color-scheme: light; --bg:#f8fafc; --foreground:#0f172a; --card:#ffffff; --card-foreground:#0f172a; --muted:#f1f5f9; --muted-foreground:#64748b; --secondary:#f8fafc; --secondary-foreground:#0f172a; --border:#e2e8f0; --border-strong:#cbd5e1; --input:#cbd5e1; --ring:#2563eb; --primary:#0f172a; --primary-foreground:#ffffff; --success:#15803d; --warning:#b45309; --destructive:#dc2626; --blue:#2563eb; --green:var(--success); --warn:var(--warning); --red:var(--destructive); --primary-bg:var(--primary); --radius:8px; --shadow-sm:0 1px 2px rgba(15,23,42,.05); --shadow-md:0 8px 24px rgba(15,23,42,.08); --sidebar-bg:#0f172a; --sidebar-border:#1e293b; --sidebar-muted:#94a3b8; --sidebar-text:#f8fafc; --sidebar-active:#1e293b; --sidebar-hover:#172033; }
     * { box-sizing: border-box; }
@@ -1348,9 +1762,14 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
     .control-title { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:16px; }
     .control-title h2 { margin:0; font-size:20px; font-weight:650; letter-spacing:0; }
     .control-title p { margin:6px 0 0; color:var(--muted-foreground); max-width:760px; line-height:1.5; }
-    .control-kpis { display:grid; grid-template-columns:1.25fr repeat(4, minmax(0,1fr)); gap:12px; margin-bottom:16px; }
+    .control-kpis { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:12px; margin-bottom:16px; }
     .control-kpi { border:1px solid var(--border); border-radius:var(--radius); padding:14px; background:var(--secondary); min-width:0; }
-    .control-kpi.main { background:#eff6ff; border-color:#bfdbfe; }
+    .control-kpi.main { grid-column:span 2; background:#eff6ff; border-color:#bfdbfe; }
+    .control-stat-grid { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; margin:0 0 16px; }
+    .control-stat { border:1px solid var(--border); border-radius:var(--radius); padding:12px; background:var(--card); min-width:0; box-shadow:var(--shadow-sm); }
+    .control-stat span { display:block; color:var(--muted-foreground); font-size:12px; font-weight:500; }
+    .control-stat strong { display:block; margin-top:6px; color:var(--foreground); font-size:22px; line-height:1.1; font-weight:650; overflow-wrap:anywhere; }
+    .control-stat em { display:block; margin-top:5px; color:var(--muted-foreground); font-size:12px; line-height:1.35; font-style:normal; }
     .control-chart-grid { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:14px; }
     .control-chart-grid.visual { grid-template-columns:minmax(0,1.45fr) minmax(320px,.75fr); }
     .control-panel { border:1px solid var(--border); border-radius:var(--radius); padding:15px; background:var(--secondary); min-width:0; }
@@ -1399,15 +1818,19 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
     .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
     .action { border:1px solid var(--border); border-radius:var(--radius); padding:9px 11px; background:var(--card); color:var(--foreground); font-size:14px; font-weight:500; }
     .admin-action-panel { display:grid; gap:16px; margin-top:4px; }
-    .action-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; }
+    .action-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; align-items:start; }
     .action-form { border:1px solid var(--border); border-radius:var(--radius); padding:16px; background:var(--card); display:grid; gap:12px; box-shadow:var(--shadow-sm); }
     .action-form h3 { margin:0; font-size:15px; font-weight:650; letter-spacing:0; }
+    .action-form > button[type="submit"] { width:148px; min-height:38px; justify-self:start; display:inline-flex; align-items:center; justify-content:center; padding:0 14px; white-space:nowrap; }
+    .action-form .row > button { min-height:36px; align-self:start; justify-self:end; display:inline-flex; align-items:center; justify-content:center; padding:0 12px; white-space:nowrap; }
     .field { display:grid; gap:6px; color:var(--foreground); font-size:13px; font-weight:500; text-transform:none; letter-spacing:0; }
     .field input, .field select, .field textarea { width:100%; color:var(--foreground); font-size:14px; font-weight:400; text-transform:none; letter-spacing:0; }
     .checkbox-field { color:var(--foreground); font-size:14px; font-weight:500; text-transform:none; }
     .checkbox-line { display:flex; align-items:center; gap:10px; }
     .checkbox-line input { width:auto; padding:0; }
     .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .kms-provider-fields { display:grid; gap:10px; }
+    .kms-provider-fields[hidden] { display:none; }
     .form-status { color:var(--muted-foreground); font-size:13px; min-height:18px; }
     .form-status.good { color:var(--success); }
     .form-status.bad { color:var(--destructive); }
@@ -1417,23 +1840,24 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
     .inline-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
     .link-stack { display:flex; flex-wrap:wrap; gap:7px; margin-top:8px; }
     .create-business { margin-bottom:16px; }
+    .page-section[hidden] { display:none !important; }
     .code-block { margin-top:8px; border:1px solid #1e293b; border-radius:var(--radius); background:#020617; color:#e2e8f0; padding:12px; overflow:auto; white-space:pre-wrap; font:12px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; text-transform:none; letter-spacing:0; }
-    @media (max-width: 1050px) { .shell { grid-template-columns:1fr; padding:12px; } .sidebar { position:relative; top:0; max-height:none; height:auto; order:2; } .main { order:1; } .topbar { flex-direction:column; } .toolbar { justify-content:flex-start; } .kpis, .two, .action-grid, .admin-actions-toolbar, .form-row, .control-kpis, .control-chart-grid, .control-chart-grid.visual, .donut-wrap { grid-template-columns:1fr; } }
+    @media (max-width: 1200px) { .control-kpis, .control-stat-grid { grid-template-columns:repeat(2, minmax(0,1fr)); } .control-kpi.main { grid-column:auto; } }
+    @media (max-width: 1050px) { .shell { grid-template-columns:1fr; padding:12px; } .sidebar { position:relative; top:0; max-height:none; height:auto; order:2; } .main { order:1; } .topbar { flex-direction:column; } .toolbar { justify-content:flex-start; } .kpis, .two, .action-grid, .admin-actions-toolbar, .form-row, .control-kpis, .control-stat-grid, .control-chart-grid, .control-chart-grid.visual, .donut-wrap { grid-template-columns:1fr; } }
   </style>
 </head>
-<body>
+<body data-admin-page="${pageMode}">
   <div class="shell">
     <aside class="sidebar">
       <div class="brand"><div class="mark">VP</div><div><div class="brand-title">VaultProof Internal</div><div class="brand-sub">employee admin console</div></div></div>
       <div class="nav-label">manage</div>
-      <a class="nav-link active" href="#control-center"><span>Control Center</span><span class="tag">live</span></a>
-      <a class="nav-link" href="#business-create"><span>Create business</span></a>
-      <a class="nav-link" href="#businesses"><span>Businesses</span><span class="tag">read</span></a>
-      <a class="nav-link" href="#users"><span>Users</span></a>
-      <a class="nav-link" href="#sso"><span>SSO</span></a>
-      <a class="nav-link" href="#kms"><span>KMS</span></a>
-      <a class="nav-link" href="#support"><span>Support</span></a>
-      <a class="nav-link" href="#org-detail"><span>Org detail</span></a>
+      <a class="nav-link${navActive('control')}" href="/"><span>Control Center</span><span class="tag">live</span></a>
+      <a class="nav-link${navActive('create-business')}" href="/businesses/new"><span>Create business</span></a>
+      <a class="nav-link${navActive('businesses')}" href="/businesses"><span>Businesses</span><span class="tag">read</span></a>
+      <a class="nav-link${navActive('support')}" href="/support"><span>Support queue</span></a>
+      <a class="nav-link" href="/#users"><span>Users</span></a>
+      <a class="nav-link" href="/#sso"><span>SSO</span></a>
+      <a class="nav-link" href="/#kms"><span>KMS</span></a>
       <div class="nav-label">proof</div>
       <a class="nav-link" href="/app/launch"><span>Launch board</span><span class="tag">staff</span></a>
       <a class="nav-link" href="/app/demo"><span>Buyer walkthrough</span><span class="tag">staff</span></a>
@@ -1448,12 +1872,15 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
     <main class="main">
       <div class="topbar">
         <div>
-          <h1>Enterprise customer operations</h1>
-          <p class="lead">Add businesses, invite business admins, set SSO, and copy the correct per-business login link without entering the customer-facing dashboard.</p>
+          <h1>${pageTitle}</h1>
+          <p class="lead">${pageLead}</p>
         </div>
         <div class="toolbar">
           <button id="refreshBtn" class="primary" type="button">refresh</button>
-          <a class="action" href="/">all businesses</a>
+          <a class="action" href="/">control center</a>
+          <a class="action" href="/businesses/new">create business</a>
+          <a class="action" href="/businesses">businesses</a>
+          <a class="action" href="/support">support queue</a>
           <a class="action" href="/app/launch">launch board</a>
           <a class="action" href="/app/demo">walkthrough</a>
           <a class="action" href="/app/onboarding">onboarding</a>
@@ -1466,7 +1893,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
 
       <div id="notice" class="notice error" style="display:none"></div>
 
-      <section class="card control-center" id="control-center">
+      <section class="card control-center page-section" id="control-center" data-admin-section="control">
         <div class="control-title">
           <div>
             <div class="eyebrow">internal control center</div>
@@ -1477,10 +1904,28 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         </div>
         <div class="control-kpis">
           <div class="control-kpi main"><div class="kpi-label">total API calls</div><div id="controlTotalCalls" class="kpi-value">...</div><div class="kpi-sub">from access-log rollups</div></div>
+          <div class="control-kpi"><div class="kpi-label">active businesses</div><div id="controlActiveBusinesses" class="kpi-value">...</div><div class="kpi-sub">team workspaces</div></div>
           <div class="control-kpi"><div class="kpi-label">signed-on businesses</div><div id="controlSignedBusinesses" class="kpi-value">...</div><div class="kpi-sub">with at least one user</div></div>
           <div class="control-kpi"><div class="kpi-label">users</div><div id="controlUsers" class="kpi-value">...</div><div class="kpi-sub">all memberships</div></div>
           <div class="control-kpi"><div class="kpi-label">SSO ready</div><div id="controlSso" class="kpi-value">...</div><div class="kpi-sub">configured businesses</div></div>
           <div class="control-kpi"><div class="kpi-label">pending invites</div><div id="controlPendingInvites" class="kpi-value">...</div><div class="kpi-sub">customer access follow-up</div></div>
+          <div class="control-kpi"><div class="kpi-label">KMS verified</div><div id="controlKmsVerified" class="kpi-value">...</div><div class="kpi-sub">customer keys tested</div></div>
+          <div class="control-kpi"><div class="kpi-label">proxy frozen</div><div id="controlProxyFrozen" class="kpi-value">...</div><div class="kpi-sub">incident lockouts</div></div>
+          <div class="control-kpi"><div class="kpi-label">denied calls</div><div id="controlDeniedCalls" class="kpi-value">...</div><div class="kpi-sub">policy blocked</div></div>
+        </div>
+        <div class="control-stat-grid">
+          <div class="control-stat"><span>Total businesses</span><strong id="statTotalBusinesses">...</strong><em>active plus archived</em></div>
+          <div class="control-stat"><span>Archived businesses</span><strong id="statArchivedBusinesses">...</strong><em>not active in dashboard</em></div>
+          <div class="control-stat"><span>Active projects</span><strong id="statActiveProjects">...</strong><em>customer scopes</em></div>
+          <div class="control-stat"><span>Admin users</span><strong id="statAdminUsers">...</strong><em>owners and admins</em></div>
+          <div class="control-stat"><span>KMS saved</span><strong id="statKmsSaved">...</strong><em>connections recorded</em></div>
+          <div class="control-stat"><span>KMS verified</span><strong id="statKmsVerified">...</strong><em>passed or verified</em></div>
+          <div class="control-stat"><span>Recommended proxy</span><strong id="statProxyRecommended">...</strong><em>balanced controls</em></div>
+          <div class="control-stat"><span>High security proxy</span><strong id="statProxyHighSecurity">...</strong><em>stricter controls</em></div>
+          <div class="control-stat"><span>Policy denials</span><strong id="statDeniedCalls">...</strong><em>blocked requests</em></div>
+          <div class="control-stat"><span>Provider/app errors</span><strong id="statErrorCalls">...</strong><em>non-success calls</em></div>
+          <div class="control-stat"><span>Success rate</span><strong id="statSuccessRate">...</strong><em>successful proxy calls</em></div>
+          <div class="control-stat"><span>Last API activity</span><strong id="statLastApiActivity">...</strong><em>latest visible call</em></div>
         </div>
         <div class="control-chart-grid visual">
           <div class="control-panel">
@@ -1512,9 +1957,19 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
             <div id="blockerChart" class="chart-list"><div class="chart-empty">Loading blocker chart...</div></div>
           </div>
         </div>
+        <div class="control-chart-grid" style="margin-top:14px">
+          <div class="control-panel">
+            <div class="section-title"><h3>Readiness coverage</h3><span class="mini">SSO, KMS, proxy</span></div>
+            <div id="readinessCoverageChart" class="chart-list"><div class="chart-empty">Loading readiness coverage...</div></div>
+          </div>
+          <div class="control-panel">
+            <div class="section-title"><h3>Attention queue</h3><span class="mini">highest priority follow-up</span></div>
+            <div id="attentionQueueList" class="list"><div class="chart-empty">Loading attention queue...</div></div>
+          </div>
+        </div>
       </section>
 
-      <section class="grid kpis" id="runtime">
+      <section class="grid kpis page-section" id="runtime" data-admin-section="control">
         <div class="card"><div class="kpi-label">businesses</div><div id="kpiBusinesses" class="kpi-value">...</div><div class="kpi-sub">active team orgs</div></div>
         <div class="card"><div class="kpi-label">users</div><div id="kpiUsers" class="kpi-value">...</div><div class="kpi-sub">org memberships</div></div>
         <div class="card"><div class="kpi-label">projects</div><div id="kpiProjects" class="kpi-value">...</div><div class="kpi-sub">active customer scopes</div></div>
@@ -1523,7 +1978,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         <div class="card"><div class="kpi-label">KMS ready</div><div id="kpiKms" class="kpi-value">...</div><div class="kpi-sub">verified customer KMS</div></div>
       </section>
 
-      <section class="card create-business" id="business-create">
+      <section class="card create-business page-section" id="business-create" data-admin-section="create-business">
         <div class="section-title"><h2>Create business</h2><span class="mini">staff approval required</span></div>
         <form id="createBusinessForm" class="action-form">
           <div class="form-row">
@@ -1546,18 +2001,17 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         </form>
       </section>
 
-      <section class="grid two">
-        <div class="card" id="businesses">
-          <div class="section-title"><h2>Businesses</h2><span id="businessMeta" class="mini"></span></div>
-          <div id="businessList" class="list"><div class="empty">Loading businesses...</div></div>
-        </div>
-        <div class="card" id="support">
-          <div class="section-title"><h2>Support queue</h2><span class="mini">safe triage</span></div>
-          <div id="supportList" class="list"><div class="empty">Loading support signals...</div></div>
-        </div>
+      <section class="card page-section" id="businesses" data-admin-section="businesses">
+        <div class="section-title"><h2>Businesses</h2><span id="businessMeta" class="mini"></span></div>
+        <div id="businessList" class="list"><div class="empty">Loading businesses...</div></div>
       </section>
 
-      <section class="grid two" style="margin-top:16px">
+      <section class="card page-section" id="support" data-admin-section="support">
+        <div class="section-title"><h2>Support queue</h2><span class="mini">safe triage</span></div>
+        <div id="supportList" class="list"><div class="empty">Loading support signals...</div></div>
+      </section>
+
+      <section class="grid two page-section" style="margin-top:16px" data-admin-section="control">
         <div class="card" id="users">
           <div class="section-title"><h2>Users and access</h2><span id="userMeta" class="mini"></span></div>
           <div id="userList" class="list"><div class="empty">Loading users...</div></div>
@@ -1568,22 +2022,22 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         </div>
       </section>
 
-      <section class="card" id="kms" style="margin-top:16px">
+      <section class="card page-section" id="kms" style="margin-top:16px" data-admin-section="control">
         <div class="section-title"><h2>Customer KMS onboarding</h2><span id="kmsMeta" class="mini"></span></div>
         <div id="kmsList" class="list"><div class="empty">Loading KMS status...</div></div>
       </section>
 
-      <section class="card" id="org-detail" style="margin-top:16px; display:none">
+      <section class="card page-section" id="org-detail" style="margin-top:16px" data-admin-section="business-detail" hidden>
         <div class="section-title"><h2>Business detail</h2><span id="orgDetailMeta" class="mini">approval-gated actions</span></div>
         <div id="orgDetailContent" class="list"><div class="empty">Open a business to view member timeline, SSO checklist, support notes, and evidence links.</div></div>
       </section>
 
-      <section class="card" id="audit" style="margin-top:16px">
+      <section class="card page-section" id="audit" style="margin-top:16px" data-admin-section="control">
         <div class="section-title"><h2>Recent customer audit</h2><span class="mini">latest governance/runtime signals</span></div>
         <div id="auditList" class="list"><div class="empty">Loading audit...</div></div>
       </section>
 
-      <section class="card" id="internal-audit" style="margin-top:16px">
+      <section class="card page-section" id="internal-audit" style="margin-top:16px" data-admin-section="control">
         <div class="section-title"><h2>Internal admin audit</h2><span class="mini">VaultProof employee access trail</span></div>
         <div id="internalAuditList" class="list"><div class="empty">Loading internal admin audit...</div></div>
       </section>
@@ -1722,12 +2176,34 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         var deniedCalls = Number(summary.api_denied_count || 0);
         var nonDeniedErrors = Math.max(0, errorCalls - deniedCalls);
         var successCalls = Math.max(0, totalCalls - errorCalls);
+        var successRate = totalCalls > 0 ? Math.round((successCalls / totalCalls) * 100) + '%' : 'n/a';
+        var latestApiActivity = activeBusinesses
+          .map(function(biz) { return biz.last_api_call_at || ''; })
+          .filter(Boolean)
+          .sort()
+          .pop() || '';
 
         text('controlTotalCalls', number(totalCalls));
+        text('controlActiveBusinesses', number(activeBusinesses.length));
         text('controlSignedBusinesses', number(signedOnBusinesses.length) + '/' + number(activeBusinesses.length));
         text('controlUsers', number(summary.membership_count));
         text('controlSso', number(summary.sso_configured_count));
         text('controlPendingInvites', number(summary.pending_invitation_count));
+        text('controlKmsVerified', number(summary.kms_verified_count));
+        text('controlProxyFrozen', number(summary.proxy_frozen_count));
+        text('controlDeniedCalls', number(deniedCalls));
+        text('statTotalBusinesses', number(summary.business_count));
+        text('statArchivedBusinesses', number(archivedBusinesses.length));
+        text('statActiveProjects', number(summary.active_project_count));
+        text('statAdminUsers', number(summary.admin_membership_count));
+        text('statKmsSaved', number(summary.kms_configured_count));
+        text('statKmsVerified', number(summary.kms_verified_count));
+        text('statProxyRecommended', number(summary.proxy_recommended_count));
+        text('statProxyHighSecurity', number(summary.proxy_high_security_count));
+        text('statDeniedCalls', number(deniedCalls));
+        text('statErrorCalls', number(errorCalls));
+        text('statSuccessRate', successRate);
+        text('statLastApiActivity', latestApiActivity ? rel(latestApiActivity) : 'none');
         text('controlApiMeta', (summary.api_call_source === 'rollup_table' ? 'rollup-backed' : 'traffic sample') + ' - ' + number(totalCalls) + ' calls');
         text('apiTrendMeta', (Array.isArray(payload.api_call_trend) ? payload.api_call_trend.length : 0) + ' daily buckets');
         byId('apiTrendChart').innerHTML = renderTrendChart(payload.api_call_trend);
@@ -1781,29 +2257,71 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         byId('blockerChart').innerHTML = blockerRows.map(function(item) {
           return chartRow(item.title, item.metric, item.value, blockerMax, item.tone);
         }).join('');
+
+        var proxyCovered = Number(summary.proxy_recommended_count || 0) + Number(summary.proxy_high_security_count || 0);
+        var readinessRows = [
+          { title: 'Signed-on businesses', metric: number(signedOnBusinesses.length) + '/' + number(activeBusinesses.length), value: signedOnBusinesses.length, tone: signedOnBusinesses.length === activeBusinesses.length ? '' : 'warn' },
+          { title: 'SSO configured', metric: number(summary.sso_configured_count) + '/' + number(activeBusinesses.length), value: Number(summary.sso_configured_count || 0), tone: Number(summary.sso_configured_count || 0) === activeBusinesses.length ? '' : 'warn' },
+          { title: 'KMS saved', metric: number(summary.kms_configured_count) + '/' + number(activeBusinesses.length), value: Number(summary.kms_configured_count || 0), tone: Number(summary.kms_configured_count || 0) === activeBusinesses.length ? '' : 'warn' },
+          { title: 'KMS verified', metric: number(summary.kms_verified_count) + '/' + number(activeBusinesses.length), value: Number(summary.kms_verified_count || 0), tone: Number(summary.kms_verified_count || 0) === activeBusinesses.length ? '' : 'warn' },
+          { title: 'Recommended or high-security proxy', metric: number(proxyCovered) + '/' + number(activeBusinesses.length), value: proxyCovered, tone: proxyCovered === activeBusinesses.length ? '' : 'warn' },
+          { title: 'High-security proxy', metric: number(summary.proxy_high_security_count), value: Number(summary.proxy_high_security_count || 0), tone: '' }
+        ];
+        var readinessMax = Math.max.apply(null, [1, activeBusinesses.length].concat(readinessRows.map(function(item) { return item.value; })));
+        byId('readinessCoverageChart').innerHTML = activeBusinesses.length ? readinessRows.map(function(item) {
+          return chartRow(item.title, item.metric, item.value, readinessMax, item.tone);
+        }).join('') : '<div class="chart-empty">Create a business to see readiness coverage.</div>';
+
+        var attention = [];
+        activeBusinesses.forEach(function(biz) {
+          var sso = biz.sso || {};
+          var kms = biz.kms || {};
+          var proxy = biz.proxy_access_policy || {};
+          if (proxy.freeze_state === 'frozen') {
+            attention.push({ score: 100, biz: biz, tag: 'proxy frozen', tone: 'bad', sub: 'Proxy access is frozen. Review incident notes before thawing.' });
+          }
+          if (Number(biz.api_denied_count || 0) > 0) {
+            attention.push({ score: 90, biz: biz, tag: 'denials', tone: 'warn', sub: number(biz.api_denied_count) + ' denied calls need policy review.' });
+          }
+          if (Number(biz.pending_invitation_count || 0) > 0) {
+            attention.push({ score: 80, biz: biz, tag: 'invites', tone: 'warn', sub: number(biz.pending_invitation_count) + ' pending customer invites.' });
+          }
+          if (Number(biz.member_count || 0) === 0) {
+            attention.push({ score: 70, biz: biz, tag: 'no users', tone: 'warn', sub: 'No users have joined this business yet.' });
+          }
+          if (sso.status !== 'configured') {
+            attention.push({ score: 60, biz: biz, tag: 'SSO todo', tone: 'warn', sub: 'Company sign-in has not been marked configured.' });
+          }
+          if (!kms.status || (kms.status !== 'verified' && kms.last_test_status !== 'passed')) {
+            attention.push({ score: 50, biz: biz, tag: 'KMS todo', tone: 'warn', sub: 'Customer-managed KMS is not verified yet.' });
+          }
+        });
+        byId('attentionQueueList').innerHTML = attention.length ? attention
+          .sort(function(left, right) { return right.score - left.score; })
+          .slice(0, 8)
+          .map(function(item) {
+            return row(businessLabel(item.biz), item.sub, item.tag, item.tone, businessAdminPath(item.biz), 'detail');
+          }).join('') : '<div class="chart-empty">No urgent customer follow-up in this snapshot.</div>';
       }
       function selectedBusinessIdentifier() {
-        var match = window.location.pathname.match(/\\/(?:businesses|orgs)\\/([^/]+)/);
+        var path = window.location.pathname.replace(/\\/+$/, '') || '/';
+        if (path === '/businesses' || path === '/businesses/new' || path === '/support' || path === '/orgs') return '';
+        var match = path.match(/\\/(?:businesses|orgs)\\/([^/]+)/);
         return match ? decodeURIComponent(match[1]) : '';
       }
-      function setBusinessDetailMode(enabled) {
-        [
-          'control-center',
-          'runtime',
-          'business-create',
-          'businesses',
-          'support',
-          'users',
-          'sso',
-          'kms',
-          'audit',
-          'internal-audit'
-        ].forEach(function(id) {
-          var el = byId(id);
-          if (el) el.style.display = enabled ? 'none' : '';
+      function adminPageMode() {
+        var path = window.location.pathname.replace(/\\/+$/, '') || '/';
+        if (path === '/businesses/new') return 'create-business';
+        if (path === '/businesses') return 'businesses';
+        if (path === '/support') return 'support';
+        if (path.match(/^\\/(?:businesses|orgs)\\/[^/]+$/)) return 'business-detail';
+        return 'control';
+      }
+      function setAdminPageMode(mode) {
+        document.body.setAttribute('data-admin-page', mode);
+        Array.prototype.forEach.call(document.querySelectorAll('[data-admin-section]'), function(section) {
+          section.hidden = section.getAttribute('data-admin-section') !== mode;
         });
-        var detail = byId('org-detail');
-        if (detail) detail.style.display = enabled ? 'block' : 'none';
       }
       function syncBusinessDetailUrl(org) {
         if (!org || !org.slug || !window.history || !window.history.replaceState) return;
@@ -1902,6 +2420,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         var provider = sso.sso_provider || 'microsoft-entra';
         var loginMode = sso.login_mode || 'sso-first';
         var ssoStatus = sso.status || 'requested';
+        var kmsProvider = kms.provider || 'aws-kms';
         var kmsStatus = kms.status || 'waiting_on_customer';
         var proxyTier = proxy.tier || 'basic';
         var proxyMode = proxy.enforcement_mode || 'monitor';
@@ -1911,6 +2430,9 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         var proxyRateLimit = proxy.default_rate_limit_per_minute ? String(proxy.default_rate_limit_per_minute) : '';
         var trustPolicy = kms.trust_policy ? JSON.stringify(kms.trust_policy, null, 2) : '';
         var preflightCommand = kms.preflight_command || '';
+        var gcpIamCommand = kms.gcp_iam_binding_command || '';
+        var azureAccessCommand = kms.azure_access_role_command || '';
+        var azureReleaseEnv = kms.azure_release_env || '';
         var resendRevoke = pendingInvitations.length ? pendingInvitations.map(function(invite) {
           return '<div class="row"><div><div class="row-title">' + escapeHtml(invite.email) + '</div><div class="row-sub">' + escapeHtml(invite.role + ' invite created ' + rel(invite.created_at)) + '</div><div class="inline-actions"><button type="button" data-invite-action="resend" data-invite-id="' + escapeHtml(invite.id) + '">record resend</button><button class="danger" type="button" data-invite-action="revoke" data-invite-id="' + escapeHtml(invite.id) + '">revoke invite</button></div></div><span class="tag warn">pending</span></div>';
         }).join('') : '<div class="empty">No pending invites to resend or revoke.</div>';
@@ -1918,7 +2440,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
           + '<div class="admin-actions-toolbar"><label class="field">approval secret<input id="adminApprovalSecret" type="password" autocomplete="off" placeholder="required for writes"></label><div><div class="row-title">Enterprise account administration</div><div class="row-sub">Use this staff-only page only in the configured VaultProof staff admin system to set SSO metadata, invite admins, record account status, and keep support notes. Secrets and IdP private material stay out of these forms.</div><div id="adminActionStatus" class="form-status"></div></div></div>'
           + '<div class="action-grid">'
           + '<form id="ssoSettingsForm" class="action-form"><h3>SSO settings</h3><label class="field">company domain<input name="company_domain" value="' + escapeHtml(sso.company_domain || '') + '" placeholder="customer.com"></label><div class="form-row"><label class="field">provider<select name="sso_provider"><option value="microsoft-entra"' + (provider === 'microsoft-entra' ? ' selected' : '') + '>microsoft-entra</option><option value="okta"' + (provider === 'okta' ? ' selected' : '') + '>okta</option><option value="google-workspace"' + (provider === 'google-workspace' ? ' selected' : '') + '>google-workspace</option><option value="generic-saml"' + (provider === 'generic-saml' ? ' selected' : '') + '>generic-saml</option><option value="supabase-saml"' + (provider === 'supabase-saml' ? ' selected' : '') + '>supabase-saml</option></select></label><label class="field">rollout status<select name="status"><option value="requested"' + (ssoStatus === 'requested' ? ' selected' : '') + '>requested</option><option value="configured"' + (ssoStatus === 'configured' ? ' selected' : '') + '>configured</option></select></label></div><label class="field">login mode<select name="login_mode"><option value="sso-first"' + (loginMode === 'sso-first' ? ' selected' : '') + '>sso-first</option><option value="assisted"' + (loginMode === 'assisted' ? ' selected' : '') + '>assisted</option></select></label><div class="row"><div><div class="row-title">Supabase SAML broker check</div><div class="row-sub" id="ssoBrokerCheckStatus">Checks whether the company domain returns a real SSO redirect. If Supabase SAML is disabled, this will show blocked.</div></div><button type="button" id="ssoBrokerCheckBtn">check SSO start</button></div><button class="primary" type="submit">save SSO</button></form>'
-          + '<form id="kmsConnectionForm" class="action-form"><h3>AWS KMS connection</h3><input type="hidden" name="provider" value="aws-kms"><div class="form-row"><label class="field">AWS account ID<input name="aws_account_id" value="' + escapeHtml(kms.aws_account_id || '') + '" placeholder="111122223333"></label><label class="field">AWS region<input name="aws_region" value="' + escapeHtml(kms.aws_region || '') + '" placeholder="us-east-1"></label></div><label class="field">KMS key ARN<input name="aws_kms_key_arn" value="' + escapeHtml(kms.aws_kms_key_arn || '') + '" placeholder="arn:aws:kms:us-east-1:111122223333:key/..."></label><label class="field">customer role ARN<input name="aws_role_arn" value="' + escapeHtml(kms.aws_role_arn || '') + '" placeholder="arn:aws:iam::111122223333:role/VaultProofCustomerKmsRole"></label><div class="form-row"><label class="field">external ID<input name="external_id" value="' + escapeHtml(kms.external_id || '') + '" placeholder="generated if blank"></label><label class="field">status<select name="status"><option value="waiting_on_customer"' + (kmsStatus === 'waiting_on_customer' ? ' selected' : '') + '>waiting_on_customer</option><option value="ready_to_test"' + (kmsStatus === 'ready_to_test' ? ' selected' : '') + '>ready_to_test</option><option value="verified"' + (kmsStatus === 'verified' ? ' selected' : '') + '>verified</option><option value="blocked"' + (kmsStatus === 'blocked' ? ' selected' : '') + '>blocked</option></select></label></div><button class="primary" type="submit">save AWS KMS</button>' + (trustPolicy ? '<div class="row-sub">Customer role trust policy</div><pre class="code-block">' + escapeHtml(trustPolicy) + '</pre>' : '') + (preflightCommand ? '<div class="row-sub">Operator preflight command</div><pre class="code-block">' + escapeHtml(preflightCommand) + '</pre>' : '') + '</form>'
+          + '<form id="kmsConnectionForm" class="action-form"><h3>Customer-managed KMS</h3><div class="form-row"><label class="field">provider<select id="kmsProviderSelect" name="provider"><option value="aws-kms"' + (kmsProvider === 'aws-kms' ? ' selected' : '') + '>AWS KMS</option><option value="gcp-cloud-kms"' + (kmsProvider === 'gcp-cloud-kms' ? ' selected' : '') + '>GCP Cloud KMS</option><option value="azure-key-vault"' + (kmsProvider === 'azure-key-vault' ? ' selected' : '') + '>Azure Key Vault / Managed HSM</option></select></label><label class="field">status<select name="status"><option value="waiting_on_customer"' + (kmsStatus === 'waiting_on_customer' ? ' selected' : '') + '>waiting_on_customer</option><option value="ready_to_test"' + (kmsStatus === 'ready_to_test' ? ' selected' : '') + '>ready_to_test</option><option value="verified"' + (kmsStatus === 'verified' ? ' selected' : '') + '>verified</option><option value="blocked"' + (kmsStatus === 'blocked' ? ' selected' : '') + '>blocked</option></select></label></div><div class="kms-provider-fields" data-kms-provider="aws-kms"><div class="form-row"><label class="field">AWS account ID<input name="aws_account_id" value="' + escapeHtml(kms.aws_account_id || '') + '" placeholder="111122223333"></label><label class="field">AWS region<input name="aws_region" value="' + escapeHtml(kms.aws_region || '') + '" placeholder="us-east-1"></label></div><label class="field">KMS key ARN<input name="aws_kms_key_arn" value="' + escapeHtml(kms.aws_kms_key_arn || '') + '" placeholder="arn:aws:kms:us-east-1:111122223333:key/..."></label><label class="field">customer role ARN<input name="aws_role_arn" value="' + escapeHtml(kms.aws_role_arn || '') + '" placeholder="arn:aws:iam::111122223333:role/VaultProofCustomerKmsRole"></label></div><div class="kms-provider-fields" data-kms-provider="gcp-cloud-kms"><label class="field">Cloud KMS key resource<input name="gcp_crypto_key_resource" value="' + escapeHtml(kms.gcp_crypto_key_resource || '') + '" placeholder="projects/acme-prod/locations/us/keyRings/security/cryptoKeys/vaultproof-unwrap"></label><div class="form-row"><label class="field">VaultProof service account<input name="gcp_service_account" value="' + escapeHtml(kms.gcp_service_account || '') + '" placeholder="vaultproof-runtime@project.iam.gserviceaccount.com"></label><label class="field">key version<input name="gcp_key_version" value="' + escapeHtml(kms.gcp_key_version || '') + '" placeholder="optional"></label></div></div><div class="kms-provider-fields" data-kms-provider="azure-key-vault"><div class="form-row"><label class="field">tenant ID<input name="azure_tenant_id" value="' + escapeHtml(kms.azure_tenant_id || '') + '" placeholder="00000000-0000-0000-0000-000000000000"></label><label class="field">subscription ID<input name="azure_subscription_id" value="' + escapeHtml(kms.azure_subscription_id || '') + '" placeholder="00000000-0000-0000-0000-000000000000"></label></div><label class="field">Key Vault / HSM URL<input name="azure_key_vault_uri" value="' + escapeHtml(kms.azure_key_vault_uri || '') + '" placeholder="https://customer-vault.vault.azure.net"></label><div class="form-row"><label class="field">resource group<input name="azure_resource_group" value="' + escapeHtml(kms.azure_resource_group || '') + '" placeholder="security-rg"></label><label class="field">key type<select name="azure_key_type"><option value=""' + (!kms.azure_key_type ? ' selected' : '') + '>infer from URL</option><option value="key_vault"' + (kms.azure_key_type === 'key_vault' ? ' selected' : '') + '>Key Vault</option><option value="managed_hsm"' + (kms.azure_key_type === 'managed_hsm' ? ' selected' : '') + '>Managed HSM</option></select></label></div><div class="form-row"><label class="field">key name<input name="azure_key_name" value="' + escapeHtml(kms.azure_key_name || '') + '" placeholder="vaultproof-unwrap"></label><label class="field">key version<input name="azure_key_version" value="' + escapeHtml(kms.azure_key_version || '') + '" placeholder="required for release"></label></div><label class="field">VaultProof principal ID<input name="azure_principal_id" value="' + escapeHtml(kms.azure_principal_id || '') + '" placeholder="managed identity object ID"></label></div><label class="field">external ID / tracking ID<input name="external_id" value="' + escapeHtml(kms.external_id || '') + '" placeholder="generated if blank"></label><button class="primary" type="submit">save KMS</button>' + (trustPolicy ? '<div class="row-sub">AWS customer role trust policy</div><pre class="code-block">' + escapeHtml(trustPolicy) + '</pre>' : '') + (gcpIamCommand ? '<div class="row-sub">GCP customer IAM command</div><pre class="code-block">' + escapeHtml(gcpIamCommand) + '</pre>' : '') + (azureAccessCommand ? '<div class="row-sub">Azure customer RBAC command</div><pre class="code-block">' + escapeHtml(azureAccessCommand) + '</pre>' : '') + (azureReleaseEnv ? '<div class="row-sub">Azure runtime release env</div><pre class="code-block">' + escapeHtml(azureReleaseEnv) + '</pre>' : '') + (preflightCommand ? '<div class="row-sub">Operator preflight command</div><pre class="code-block">' + escapeHtml(preflightCommand) + '</pre>' : '') + '</form>'
           + '<form id="proxyAccessPolicyForm" class="action-form"><h3>Proxy access tier</h3><div class="form-row"><label class="field">tier<select name="tier"><option value="basic"' + (proxyTier === 'basic' ? ' selected' : '') + '>basic</option><option value="recommended"' + (proxyTier === 'recommended' ? ' selected' : '') + '>recommended</option><option value="high_security"' + (proxyTier === 'high_security' ? ' selected' : '') + '>high_security</option></select></label><label class="field">mode<select name="enforcement_mode"><option value="monitor"' + (proxyMode === 'monitor' ? ' selected' : '') + '>monitor</option><option value="enforce"' + (proxyMode === 'enforce' ? ' selected' : '') + '>enforce</option><option value="paused"' + (proxyMode === 'paused' ? ' selected' : '') + '>paused</option></select></label></div><label class="field">customer egress CIDRs<textarea name="allowed_egress_cidrs" placeholder="203.0.113.0/24">' + escapeHtml(proxyCidrs) + '</textarea></label><div class="form-row"><label class="field">rate limit/min<input name="default_rate_limit_per_minute" type="number" min="1" max="60000" value="' + escapeHtml(proxyRateLimit) + '" placeholder="project default"></label><label class="field">scope mode<select name="default_provider_scope_mode"><option value="project_policy"' + (proxyScopeMode === 'project_policy' ? ' selected' : '') + '>project_policy</option><option value="deny_unscoped"' + (proxyScopeMode === 'deny_unscoped' ? ' selected' : '') + '>deny_unscoped</option></select></label></div><div class="form-row"><label class="field">require mTLS<select name="require_mtls"><option value="false"' + (!proxy.require_mtls ? ' selected' : '') + '>false</option><option value="true"' + (proxy.require_mtls ? ' selected' : '') + '>true</option></select></label><label class="field">private connectivity<select name="require_private_connectivity"><option value="false"' + (!proxy.require_private_connectivity ? ' selected' : '') + '>false</option><option value="true"' + (proxy.require_private_connectivity ? ' selected' : '') + '>true</option></select></label></div><div class="form-row"><label class="field">auto-freeze<select name="anomaly_auto_freeze_enabled"><option value="true"' + (proxy.anomaly_auto_freeze_enabled !== false ? ' selected' : '') + '>true</option><option value="false"' + (proxy.anomaly_auto_freeze_enabled === false ? ' selected' : '') + '>false</option></select></label><label class="field">freeze state<select name="freeze_state"><option value="active"' + (proxyFreezeState === 'active' ? ' selected' : '') + '>active</option><option value="frozen"' + (proxyFreezeState === 'frozen' ? ' selected' : '') + '>frozen</option><option value="thaw_pending"' + (proxyFreezeState === 'thaw_pending' ? ' selected' : '') + '>thaw_pending</option></select></label></div><label class="field">freeze reason<input name="freeze_reason" value="' + escapeHtml(proxy.freeze_reason || '') + '" placeholder="incident ticket or reason"></label><label class="field">notes<textarea name="notes" placeholder="Customer rollout notes, no secrets">' + escapeHtml(proxy.notes || '') + '</textarea></label><button class="primary" type="submit">save proxy tier</button></form>'
           + '<form id="inviteForm" class="action-form"><h3>Invite enterprise user</h3><label class="field">email<input name="email" type="email" placeholder="identity.owner@customer.com"></label><label class="field">role<select name="role">' + roleOptions('iam_admin') + '</select></label><button class="primary" type="submit">create invite</button></form>'
           + '<form id="businessStatusForm" class="action-form"><h3>Account status</h3><div class="form-row"><label class="field">status<select name="status"><option value="onboarding"' + (currentStatus && currentStatus.status === 'onboarding' ? ' selected' : '') + '>onboarding</option><option value="active"' + (currentStatus && currentStatus.status === 'active' ? ' selected' : '') + '>active</option><option value="at_risk"' + (currentStatus && currentStatus.status === 'at_risk' ? ' selected' : '') + '>at_risk</option><option value="paused"' + (currentStatus && currentStatus.status === 'paused' ? ' selected' : '') + '>paused</option><option value="offboarding"' + (currentStatus && currentStatus.status === 'offboarding' ? ' selected' : '') + '>offboarding</option></select></label><label class="field">plan label<input name="plan_label" value="' + escapeHtml(currentStatus && currentStatus.plan_label ? currentStatus.plan_label : '') + '" placeholder="Enterprise Pilot"></label></div><label class="field">summary<textarea name="summary" placeholder="Current account status">' + escapeHtml(currentStatus && currentStatus.summary ? currentStatus.summary : '') + '</textarea></label><label class="field">next step<input name="next_step" value="' + escapeHtml(currentStatus && currentStatus.next_step ? currentStatus.next_step : '') + '" placeholder="Next customer/admin action"></label><button class="primary" type="submit">record status</button></form>'
@@ -1966,24 +2488,47 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
           }
         });
         var kmsForm = byId('kmsConnectionForm');
+        function syncKmsProviderFields() {
+          if (!kmsForm) return;
+          var select = byId('kmsProviderSelect');
+          var selectedProvider = select && select.value ? select.value : 'aws-kms';
+          Array.prototype.forEach.call(kmsForm.querySelectorAll('[data-kms-provider]'), function(section) {
+            section.hidden = section.getAttribute('data-kms-provider') !== selectedProvider;
+          });
+        }
+        var kmsProviderSelect = byId('kmsProviderSelect');
+        if (kmsProviderSelect) kmsProviderSelect.addEventListener('change', syncKmsProviderFields);
+        syncKmsProviderFields();
         if (kmsForm) kmsForm.addEventListener('submit', async function(event) {
           event.preventDefault();
           try {
-            setActionStatus('Saving AWS KMS connection...', '');
+            var selectedProvider = formValue(kmsForm, 'provider') || 'aws-kms';
+            setActionStatus('Saving customer-managed KMS connection...', '');
             var payload = await postAdminAction('/api/v1/internal-admin/orgs/' + encodeURIComponent(orgId) + '/kms-connections', {
-              provider: 'aws-kms',
+              provider: selectedProvider,
               aws_account_id: formValue(kmsForm, 'aws_account_id'),
               aws_region: formValue(kmsForm, 'aws_region'),
               aws_kms_key_arn: formValue(kmsForm, 'aws_kms_key_arn'),
               aws_role_arn: formValue(kmsForm, 'aws_role_arn'),
+              gcp_crypto_key_resource: formValue(kmsForm, 'gcp_crypto_key_resource'),
+              gcp_service_account: formValue(kmsForm, 'gcp_service_account'),
+              gcp_key_version: formValue(kmsForm, 'gcp_key_version'),
+              azure_tenant_id: formValue(kmsForm, 'azure_tenant_id'),
+              azure_subscription_id: formValue(kmsForm, 'azure_subscription_id'),
+              azure_resource_group: formValue(kmsForm, 'azure_resource_group'),
+              azure_key_vault_uri: formValue(kmsForm, 'azure_key_vault_uri'),
+              azure_key_name: formValue(kmsForm, 'azure_key_name'),
+              azure_key_version: formValue(kmsForm, 'azure_key_version'),
+              azure_principal_id: formValue(kmsForm, 'azure_principal_id'),
+              azure_key_type: formValue(kmsForm, 'azure_key_type'),
               external_id: formValue(kmsForm, 'external_id'),
               status: formValue(kmsForm, 'status')
             });
             var connection = payload.kms_connection || {};
-            setActionStatus('AWS KMS connection saved. External ID: ' + (connection.external_id || 'generated'), 'good');
+            setActionStatus((connection.provider_label || 'KMS') + ' connection saved. Tracking ID: ' + (connection.external_id || 'generated'), 'good');
             renderOrgDetail(await fetchOrgDetail(orgId));
           } catch (error) {
-            setActionStatus(error && error.message ? error.message : 'AWS KMS update failed.', 'bad');
+            setActionStatus(error && error.message ? error.message : 'KMS update failed.', 'bad');
           }
         });
         var proxyForm = byId('proxyAccessPolicyForm');
@@ -2131,8 +2676,9 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         var statusUpdates = Array.isArray(payload.business_status_updates) ? payload.business_status_updates : [];
         var currentStatus = statusUpdates[0] || null;
         var kmsConnections = Array.isArray(payload.kms_connections) ? payload.kms_connections : [];
-        var primaryKms = kmsConnections.find(function(connection) { return connection.provider === 'aws-kms'; }) || null;
+        var primaryKms = kmsConnections[0] || null;
         var kmsChecklist = Array.isArray(payload.kms_checklist) ? payload.kms_checklist : [];
+        var kmsCommand = primaryKms ? (primaryKms.preflight_command || primaryKms.azure_release_env || primaryKms.gcp_iam_binding_command || primaryKms.azure_access_role_command || '') : '';
         var proxyPolicy = payload.proxy_access_policy || null;
         var proxySummary = payload.proxy_access_summary || {};
         var proxyChecklist = Array.isArray(payload.proxy_access_checklist) ? payload.proxy_access_checklist : [];
@@ -2143,7 +2689,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         html += renderAdminActionForms(org, pendingInvitations, currentStatus, primaryKms, proxyPolicy);
         html += '<div class="row"><div><div class="row-title">Business plan and status</div><div class="row-sub">' + (currentStatus ? escapeHtml((currentStatus.plan_label || 'plan not set') + ' - ' + currentStatus.summary + (currentStatus.next_step ? ' - next: ' + currentStatus.next_step : '') + ' - ' + rel(currentStatus.created_at)) : (payload.business_status_schema_ready ? 'No business status has been recorded yet.' : 'Business status table is not applied yet.')) + '</div></div><span class="tag ' + (currentStatus && currentStatus.status === 'active' ? 'good' : 'warn') + '">' + escapeHtml(currentStatus ? currentStatus.status : (payload.business_status_schema_ready ? 'not set' : 'pending')) + '</span></div>';
         html += '<div class="row"><div><div class="row-title">SSO setup checklist</div><div class="row-sub">' + ssoChecklist.map(function(item) { return escapeHtml(item.label + ': ' + item.detail); }).join('<br>') + '</div></div><div>' + tagList(ssoChecklist) + '</div></div>';
-        html += '<div class="row"><div><div class="row-title">AWS KMS onboarding</div><div class="row-sub">' + (kmsChecklist.length ? kmsChecklist.map(function(item) { return escapeHtml(item.label + ': ' + item.detail); }).join('<br>') : (payload.kms_connections_schema_ready ? 'No AWS KMS connection has been saved yet.' : 'KMS connection table is not applied yet.')) + (primaryKms && primaryKms.preflight_command ? '<pre class="code-block">' + escapeHtml(primaryKms.preflight_command) + '</pre>' : '') + '</div></div><div>' + tagList(kmsChecklist) + '<span class="tag ' + (primaryKms && (primaryKms.status === 'verified' || primaryKms.last_test_status === 'passed') ? 'good' : 'warn') + '">' + escapeHtml(primaryKms ? primaryKms.status : (payload.kms_connections_schema_ready ? 'not set' : 'pending')) + '</span></div></div>';
+        html += '<div class="row"><div><div class="row-title">Customer-managed KMS onboarding</div><div class="row-sub">' + (kmsChecklist.length ? kmsChecklist.map(function(item) { return escapeHtml(item.label + ': ' + item.detail); }).join('<br>') : (payload.kms_connections_schema_ready ? 'No customer-managed KMS connection has been saved yet.' : 'KMS connection table is not applied yet.')) + (kmsCommand ? '<pre class="code-block">' + escapeHtml(kmsCommand) + '</pre>' : '') + '</div></div><div>' + tagList(kmsChecklist) + '<span class="tag">' + escapeHtml(primaryKms ? (primaryKms.provider_label || primaryKms.provider || 'KMS') : 'KMS') + '</span><span class="tag ' + (primaryKms && (primaryKms.status === 'verified' || primaryKms.last_test_status === 'passed') ? 'good' : 'warn') + '">' + escapeHtml(primaryKms ? primaryKms.status : (payload.kms_connections_schema_ready ? 'not set' : 'pending')) + '</span></div></div>';
         html += '<div class="row"><div><div class="row-title">Proxy access tier</div><div class="row-sub">' + (proxyChecklist.length ? proxyChecklist.map(function(item) { return escapeHtml(item.label + ': ' + item.detail); }).join('<br>') : (payload.proxy_access_policy_schema_ready ? 'No proxy access policy has been saved yet.' : 'Proxy access policy table is not applied yet.')) + '</div></div><div>' + tagList(proxyChecklist) + '<span class="tag ' + (proxySummary.freeze_state === 'frozen' ? 'bad' : (proxySummary.tier === 'high_security' ? 'good' : (proxySummary.tier === 'recommended' ? 'warn' : ''))) + '">' + escapeHtml((proxySummary.freeze_state === 'frozen' ? 'frozen ' : '') + (proxySummary.tier || 'basic')) + '</span></div></div>';
         html += '<div class="row"><div><div class="row-title">User/member timeline</div><div class="row-sub">' + (timeline.length ? timeline.slice(0, 8).map(function(item) { return escapeHtml(item.label + ' - ' + (item.detail || '') + ' - ' + rel(item.created_at)); }).join('<br>') : 'No member timeline events yet.') + '</div></div><span class="tag">timeline</span></div>';
         html += '<div class="row"><div><div class="row-title">Pending invitation actions</div><div class="row-sub">' + (pendingInvitations.length ? pendingInvitations.map(function(invite) { return escapeHtml(invite.email + ' as ' + invite.role + ' - API: POST /api/v1/internal-admin/orgs/' + org.id + '/invitations/' + invite.id + '/resend or /revoke'); }).join('<br>') : 'No pending invites for this business.') + '</div></div><span class="tag warn">approval gated</span></div>';
@@ -2196,7 +2742,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         var kmsRows = businesses.filter(function(biz) { return biz.kms; });
         byId('kmsList').innerHTML = kmsRows.length ? kmsRows.map(function(biz) {
           var kms = biz.kms || {};
-          return row(biz.name || biz.id, (kms.aws_account_id || 'account pending') + ' - ' + (kms.aws_region || 'region pending') + ' - ' + (kms.provider || 'aws-kms'), kms.status || 'not started', kms.status === 'verified' || kms.last_test_status === 'passed' ? 'good' : 'warn');
+          return row(biz.name || biz.id, (kms.connection_summary || 'connection pending') + ' - ' + (kms.provider_label || kms.provider || 'KMS'), kms.status || 'not started', kms.status === 'verified' || kms.last_test_status === 'passed' ? 'good' : 'warn');
         }).join('') : '<div class="empty">No customer KMS connections saved yet.</div>';
 
         var audit = Array.isArray(payload.recent_audit) ? payload.recent_audit : [];
@@ -2214,9 +2760,10 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
       async function load() {
         notice('');
         try {
+          var mode = adminPageMode();
+          setAdminPageMode(mode);
           var businessIdentifier = selectedBusinessIdentifier();
-          setBusinessDetailMode(Boolean(businessIdentifier));
-          if (businessIdentifier) {
+          if (mode === 'business-detail' && businessIdentifier) {
             renderOrgDetail(await fetchOrgDetail(businessIdentifier));
             return;
           }
@@ -2405,7 +2952,7 @@ async function handleInternalAdminOrgDetail(
       created_at: event.created_at,
     })),
   ].sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime());
-  const primaryKmsConnection = kmsConnectionResult.rows.find((connection) => connection.provider === 'aws-kms') || null;
+  const primaryKmsConnection = kmsConnectionResult.rows[0] || null;
 
   return Response.json({
     generated_at: new Date().toISOString(),
@@ -2435,7 +2982,7 @@ async function handleInternalAdminOrgDetail(
       ? null
       : [
         ssoSchemaReady ? null : 'Apply supabase/migrations/20260419010000_organization_sso_settings.sql',
-        kmsConnectionResult.schemaReady ? null : 'Apply supabase/migrations/20260531000000_organization_kms_connections.sql',
+        kmsConnectionResult.schemaReady ? null : 'Apply supabase/migrations/20260531000000_organization_kms_connections.sql and supabase/migrations/20260605000000_multicloud_kms_connections.sql',
         proxyAccessPolicyResult.schemaReady ? null : 'Apply supabase/migrations/20260601000000_organization_proxy_access_policies.sql',
       ].filter(Boolean).join(' | '),
     users: members.map((member) => ({
@@ -2514,25 +3061,7 @@ async function handleInternalAdminOrgDetail(
       created_at: record.created_at,
     })),
     kms_connections_schema_ready: kmsConnectionResult.schemaReady,
-    kms_connections: kmsConnectionResult.rows.map((connection) => ({
-      id: connection.id,
-      organization_id: connection.organization_id,
-      provider: connection.provider,
-      display_name: connection.display_name,
-      status: connection.status,
-      aws_account_id: connection.aws_account_id,
-      aws_region: connection.aws_region,
-      aws_kms_key_arn: connection.aws_kms_key_arn,
-      aws_role_arn: connection.aws_role_arn,
-      external_id: connection.external_id,
-      last_test_status: connection.last_test_status,
-      last_tested_at: connection.last_tested_at,
-      last_test_error: connection.last_test_error,
-      created_at: connection.created_at,
-      updated_at: connection.updated_at,
-      trust_policy: buildAwsKmsTrustPolicy(env, connection.external_id),
-      preflight_command: buildAwsKmsPreflightCommand(connection),
-    })),
+    kms_connections: kmsConnectionResult.rows.map((connection) => addKmsConnectionHandoffFields(env, connection)),
     kms_checklist: buildKmsChecklist(primaryKmsConnection),
     proxy_access_policy_schema_ready: proxyAccessPolicyResult.schemaReady,
     proxy_access_policy: proxyAccessPolicyResult.row,
@@ -2992,18 +3521,18 @@ async function handleUpdateInternalAdminSsoSettings(
 async function fetchExistingKmsConnection(
   env: EnterpriseControlPlaneEnv,
   organizationId: string,
-  provider = 'aws-kms',
+  provider: InternalAdminKmsProvider = 'aws-kms',
 ): Promise<InternalAdminKmsConnectionRow | null> {
   const { data, error } = await getSupabase(env)
     .from('organization_kms_connections')
-    .select('id, organization_id, provider, display_name, status, aws_account_id, aws_region, aws_kms_key_arn, aws_role_arn, external_id, last_test_status, last_tested_at, last_test_error, metadata, created_by_user_id, updated_by_user_id, created_at, updated_at')
+    .select(INTERNAL_ADMIN_KMS_CONNECTION_SELECT)
     .eq('organization_id', organizationId)
     .eq('provider', provider)
     .limit(1);
   if (error) {
     throw new Error(error.message);
   }
-  return normalizeRows(data as MaybeArray<InternalAdminKmsConnectionRow>)[0] || null;
+  return normalizeRows(data as unknown as MaybeArray<InternalAdminKmsConnectionRow>)[0] || null;
 }
 
 async function handleUpdateInternalAdminKmsConnection(
@@ -3032,16 +3561,14 @@ async function handleUpdateInternalAdminKmsConnection(
     return Response.json({ error: 'Invalid JSON body.' }, { status: 400 });
   }
 
-  if (hasRawAwsCredentialFields(body)) {
+  if (hasRawCloudCredentialFields(body)) {
     return Response.json({
-      error: 'Do not enter AWS access keys, session tokens, private keys, or raw credentials in VaultProof admin. Use a customer IAM role ARN plus external_id.',
+      error: 'Do not enter cloud access keys, tokens, private keys, client secrets, service account JSON, or raw credentials in VaultProof admin. Store only customer KMS resource IDs and access principal metadata.',
     }, { status: 400 });
   }
 
-  const provider = typeof body.provider === 'string' ? body.provider.trim().toLowerCase() : 'aws-kms';
-  if (provider !== 'aws-kms') {
-    return Response.json({ error: 'Only aws-kms onboarding is supported in this flow.' }, { status: 400 });
-  }
+  const provider = normalizeKmsProvider(body.provider);
+  if (provider instanceof Response) return provider;
 
   const orgResult = await getSupabase(env)
     .from('organizations')
@@ -3067,77 +3594,197 @@ async function handleUpdateInternalAdminKmsConnection(
     if (message.includes('organization_kms_connections')) {
       return Response.json({
         error: 'KMS onboarding table is not applied yet.',
-        migration_required: 'Apply supabase/migrations/20260531000000_organization_kms_connections.sql',
+        migration_required: 'Apply supabase/migrations/20260531000000_organization_kms_connections.sql and supabase/migrations/20260605000000_multicloud_kms_connections.sql',
       }, { status: 501 });
     }
     return Response.json({ error: `Internal admin KMS lookup failed: ${message}` }, { status: 500 });
   }
 
-  const parsedKeyArn = parseAwsKmsKeyArn(body.aws_kms_key_arn);
-  if (parsedKeyArn instanceof Response) return parsedKeyArn;
-  const parsedRoleArn = parseAwsRoleArn(body.aws_role_arn);
-  if (parsedRoleArn instanceof Response) return parsedRoleArn;
-
-  const explicitAccountId = normalizeAwsAccountId(body.aws_account_id);
-  if (explicitAccountId instanceof Response) return explicitAccountId;
-  const explicitRegion = normalizeAwsRegion(body.aws_region);
-  if (explicitRegion instanceof Response) return explicitRegion;
-
-  const derivedAccountIds = [
-    explicitAccountId,
-    parsedKeyArn?.accountId || null,
-    parsedRoleArn?.accountId || null,
-  ].filter(Boolean) as string[];
-  const uniqueAccountIds = [...new Set(derivedAccountIds)];
-  if (uniqueAccountIds.length > 1) {
-    return Response.json({ error: 'aws_account_id, aws_kms_key_arn account, and aws_role_arn account must match.' }, { status: 400 });
-  }
-
-  const derivedRegions = [
-    explicitRegion,
-    parsedKeyArn?.region || null,
-  ].filter(Boolean) as string[];
-  const uniqueRegions = [...new Set(derivedRegions)];
-  if (uniqueRegions.length > 1) {
-    return Response.json({ error: 'aws_region must match the region inside aws_kms_key_arn.' }, { status: 400 });
-  }
-
-  if (parsedKeyArn && parsedRoleArn && parsedKeyArn.partition !== parsedRoleArn.partition) {
-    return Response.json({ error: 'aws_kms_key_arn and aws_role_arn must use the same AWS partition.' }, { status: 400 });
-  }
-
-  const externalId = normalizeAwsKmsExternalId(body.external_id, orgId, existing?.external_id || null);
+  const externalId = normalizeKmsExternalId(body.external_id, orgId, existing?.external_id || null);
   if (externalId instanceof Response) return externalId;
 
   const displayNameRaw = typeof body.display_name === 'string' ? body.display_name.trim() : '';
-  const displayName = displayNameRaw ? truncateForAudit(displayNameRaw, 120) : 'AWS customer-managed KMS';
-  const fallbackStatus: InternalAdminKmsConnectionRow['status'] = parsedKeyArn && parsedRoleArn && uniqueRegions[0] && uniqueAccountIds[0]
-    ? 'ready_to_test'
-    : 'waiting_on_customer';
+  const displayName = displayNameRaw ? truncateForAudit(displayNameRaw, 120) : `${kmsProviderLabel(provider)} customer-managed key`;
+
+  const kmsFields: Pick<
+    InternalAdminKmsConnectionRow,
+    | 'aws_account_id'
+    | 'aws_region'
+    | 'aws_kms_key_arn'
+    | 'aws_role_arn'
+    | 'gcp_project_id'
+    | 'gcp_location'
+    | 'gcp_key_ring'
+    | 'gcp_crypto_key_resource'
+    | 'gcp_service_account'
+    | 'gcp_key_version'
+    | 'azure_tenant_id'
+    | 'azure_subscription_id'
+    | 'azure_resource_group'
+    | 'azure_key_vault_uri'
+    | 'azure_key_name'
+    | 'azure_key_version'
+    | 'azure_principal_id'
+    | 'azure_key_type'
+  > = {
+    aws_account_id: null,
+    aws_region: null,
+    aws_kms_key_arn: null,
+    aws_role_arn: null,
+    gcp_project_id: null,
+    gcp_location: null,
+    gcp_key_ring: null,
+    gcp_crypto_key_resource: null,
+    gcp_service_account: null,
+    gcp_key_version: null,
+    azure_tenant_id: null,
+    azure_subscription_id: null,
+    azure_resource_group: null,
+    azure_key_vault_uri: null,
+    azure_key_name: null,
+    azure_key_version: null,
+    azure_principal_id: null,
+    azure_key_type: null,
+  };
+  let fallbackStatus: InternalAdminKmsConnectionRow['status'] = 'waiting_on_customer';
+
+  if (provider === 'aws-kms') {
+    const parsedKeyArn = parseAwsKmsKeyArn(body.aws_kms_key_arn);
+    if (parsedKeyArn instanceof Response) return parsedKeyArn;
+    const parsedRoleArn = parseAwsRoleArn(body.aws_role_arn);
+    if (parsedRoleArn instanceof Response) return parsedRoleArn;
+
+    const explicitAccountId = normalizeAwsAccountId(body.aws_account_id);
+    if (explicitAccountId instanceof Response) return explicitAccountId;
+    const explicitRegion = normalizeAwsRegion(body.aws_region);
+    if (explicitRegion instanceof Response) return explicitRegion;
+
+    const derivedAccountIds = [
+      explicitAccountId,
+      parsedKeyArn?.accountId || null,
+      parsedRoleArn?.accountId || null,
+    ].filter(Boolean) as string[];
+    const uniqueAccountIds = [...new Set(derivedAccountIds)];
+    if (uniqueAccountIds.length > 1) {
+      return Response.json({ error: 'aws_account_id, aws_kms_key_arn account, and aws_role_arn account must match.' }, { status: 400 });
+    }
+
+    const derivedRegions = [
+      explicitRegion,
+      parsedKeyArn?.region || null,
+    ].filter(Boolean) as string[];
+    const uniqueRegions = [...new Set(derivedRegions)];
+    if (uniqueRegions.length > 1) {
+      return Response.json({ error: 'aws_region must match the region inside aws_kms_key_arn.' }, { status: 400 });
+    }
+
+    if (parsedKeyArn && parsedRoleArn && parsedKeyArn.partition !== parsedRoleArn.partition) {
+      return Response.json({ error: 'aws_kms_key_arn and aws_role_arn must use the same AWS partition.' }, { status: 400 });
+    }
+
+    kmsFields.aws_account_id = uniqueAccountIds[0] || existing?.aws_account_id || null;
+    kmsFields.aws_region = uniqueRegions[0] || existing?.aws_region || null;
+    kmsFields.aws_kms_key_arn = parsedKeyArn?.arn || existing?.aws_kms_key_arn || null;
+    kmsFields.aws_role_arn = parsedRoleArn?.arn || existing?.aws_role_arn || null;
+    fallbackStatus = kmsFields.aws_account_id && kmsFields.aws_region && kmsFields.aws_kms_key_arn && kmsFields.aws_role_arn
+      ? 'ready_to_test'
+      : 'waiting_on_customer';
+  } else if (provider === 'gcp-cloud-kms') {
+    const parsedGcpResource = parseGcpKmsResource(body.gcp_crypto_key_resource);
+    if (parsedGcpResource instanceof Response) return parsedGcpResource;
+    const explicitProjectId = normalizeGcpResourcePart(body.gcp_project_id, 'gcp_project_id');
+    if (explicitProjectId instanceof Response) return explicitProjectId;
+    const explicitLocation = normalizeGcpResourcePart(body.gcp_location, 'gcp_location');
+    if (explicitLocation instanceof Response) return explicitLocation;
+    const explicitKeyRing = normalizeGcpResourcePart(body.gcp_key_ring, 'gcp_key_ring');
+    if (explicitKeyRing instanceof Response) return explicitKeyRing;
+    const gcpServiceAccount = normalizeGcpServiceAccount(body.gcp_service_account);
+    if (gcpServiceAccount instanceof Response) return gcpServiceAccount;
+    const explicitKeyVersion = normalizeGcpResourcePart(body.gcp_key_version, 'gcp_key_version');
+    if (explicitKeyVersion instanceof Response) return explicitKeyVersion;
+
+    if (parsedGcpResource && explicitProjectId && explicitProjectId !== parsedGcpResource.projectId) {
+      return Response.json({ error: 'gcp_project_id must match the project inside gcp_crypto_key_resource.' }, { status: 400 });
+    }
+    if (parsedGcpResource && explicitLocation && explicitLocation !== parsedGcpResource.location) {
+      return Response.json({ error: 'gcp_location must match the location inside gcp_crypto_key_resource.' }, { status: 400 });
+    }
+    if (parsedGcpResource && explicitKeyRing && explicitKeyRing !== parsedGcpResource.keyRing) {
+      return Response.json({ error: 'gcp_key_ring must match the key ring inside gcp_crypto_key_resource.' }, { status: 400 });
+    }
+
+    kmsFields.gcp_project_id = explicitProjectId || parsedGcpResource?.projectId || existing?.gcp_project_id || null;
+    kmsFields.gcp_location = explicitLocation || parsedGcpResource?.location || existing?.gcp_location || null;
+    kmsFields.gcp_key_ring = explicitKeyRing || parsedGcpResource?.keyRing || existing?.gcp_key_ring || null;
+    kmsFields.gcp_crypto_key_resource = parsedGcpResource?.resource || existing?.gcp_crypto_key_resource || null;
+    kmsFields.gcp_service_account = gcpServiceAccount || existing?.gcp_service_account || null;
+    kmsFields.gcp_key_version = explicitKeyVersion || parsedGcpResource?.keyVersion || existing?.gcp_key_version || null;
+    fallbackStatus = kmsFields.gcp_crypto_key_resource && kmsFields.gcp_service_account
+      ? 'ready_to_test'
+      : 'waiting_on_customer';
+  } else {
+    const azureTenantId = normalizeAzureUuid(body.azure_tenant_id, 'azure_tenant_id');
+    if (azureTenantId instanceof Response) return azureTenantId;
+    const azureSubscriptionId = normalizeAzureUuid(body.azure_subscription_id, 'azure_subscription_id');
+    if (azureSubscriptionId instanceof Response) return azureSubscriptionId;
+    const azurePrincipalId = normalizeAzureUuid(body.azure_principal_id, 'azure_principal_id');
+    if (azurePrincipalId instanceof Response) return azurePrincipalId;
+    const azureResourceGroup = normalizeOptionalCloudText(body.azure_resource_group, 'azure_resource_group', 90);
+    if (azureResourceGroup instanceof Response) return azureResourceGroup;
+    if (azureResourceGroup && (!/^[A-Za-z0-9._()/-]+$/.test(azureResourceGroup) || azureResourceGroup.endsWith('.'))) {
+      return Response.json({ error: 'azure_resource_group contains invalid characters.' }, { status: 400 });
+    }
+    const azureKeyVaultUri = normalizeAzureKeyVaultUri(body.azure_key_vault_uri);
+    if (azureKeyVaultUri instanceof Response) return azureKeyVaultUri;
+    const azureKeyName = normalizeAzureKeyName(body.azure_key_name);
+    if (azureKeyName instanceof Response) return azureKeyName;
+    const azureKeyVersion = normalizeOptionalCloudText(body.azure_key_version, 'azure_key_version', 128);
+    if (azureKeyVersion instanceof Response) return azureKeyVersion;
+    const resolvedAzureVaultUri = azureKeyVaultUri || existing?.azure_key_vault_uri || null;
+    const azureKeyType = normalizeAzureKeyType(body.azure_key_type, resolvedAzureVaultUri);
+    if (azureKeyType instanceof Response) return azureKeyType;
+
+    kmsFields.azure_tenant_id = azureTenantId || existing?.azure_tenant_id || null;
+    kmsFields.azure_subscription_id = azureSubscriptionId || existing?.azure_subscription_id || null;
+    kmsFields.azure_resource_group = azureResourceGroup || existing?.azure_resource_group || null;
+    kmsFields.azure_key_vault_uri = resolvedAzureVaultUri;
+    kmsFields.azure_key_name = azureKeyName || existing?.azure_key_name || null;
+    kmsFields.azure_key_version = azureKeyVersion || existing?.azure_key_version || null;
+    kmsFields.azure_principal_id = azurePrincipalId || existing?.azure_principal_id || null;
+    kmsFields.azure_key_type = azureKeyType || existing?.azure_key_type || null;
+    fallbackStatus = kmsFields.azure_tenant_id
+      && kmsFields.azure_subscription_id
+      && kmsFields.azure_resource_group
+      && kmsFields.azure_key_vault_uri
+      && kmsFields.azure_key_name
+      && kmsFields.azure_key_version
+      && kmsFields.azure_principal_id
+      ? 'ready_to_test'
+      : 'waiting_on_customer';
+  }
+
   const status = normalizeKmsConnectionStatus(body.status, fallbackStatus);
   if (status instanceof Response) return status;
 
   const now = new Date().toISOString();
   const upsertRow = {
-    organization_id: orgId,
-    provider,
-    display_name: displayName,
-    status,
-    aws_account_id: uniqueAccountIds[0] || existing?.aws_account_id || null,
-    aws_region: uniqueRegions[0] || existing?.aws_region || null,
-    aws_kms_key_arn: parsedKeyArn?.arn || existing?.aws_kms_key_arn || null,
-    aws_role_arn: parsedRoleArn?.arn || existing?.aws_role_arn || null,
-    external_id: externalId,
-    last_test_status: status === 'verified' ? 'passed' : existing?.last_test_status || 'not_tested',
+	    organization_id: orgId,
+	    provider,
+	    display_name: displayName,
+	    status,
+	    ...kmsFields,
+	    external_id: externalId,
+	    last_test_status: status === 'verified' ? 'passed' : existing?.last_test_status || 'not_tested',
     last_tested_at: status === 'verified' ? now : existing?.last_tested_at || null,
     last_test_error: status === 'blocked'
       ? truncateForAudit(typeof body.last_test_error === 'string' ? body.last_test_error.trim() : existing?.last_test_error || 'KMS onboarding blocked.', 500)
       : null,
-    metadata: {
-      ...(existing?.metadata || {}),
-      onboarding_source: 'internal_admin',
-      runtime_principal_arn: vaultProofAwsRuntimePrincipalArn(env),
-    },
+	    metadata: {
+	      ...(existing?.metadata || {}),
+	      onboarding_source: 'internal_admin',
+	      provider_label: kmsProviderLabel(provider),
+	      ...(provider === 'aws-kms' ? { runtime_principal_arn: vaultProofAwsRuntimePrincipalArn(env) } : {}),
+	    },
     created_by_user_id: existing?.created_by_user_id || authorized.auth.userId,
     updated_by_user_id: authorized.auth.userId,
     updated_at: now,
@@ -3146,7 +3793,7 @@ async function handleUpdateInternalAdminKmsConnection(
   const { data, error } = await getSupabase(env)
     .from('organization_kms_connections')
     .upsert(upsertRow, { onConflict: 'organization_id,provider' })
-    .select('id, organization_id, provider, display_name, status, aws_account_id, aws_region, aws_kms_key_arn, aws_role_arn, external_id, last_test_status, last_tested_at, last_test_error, metadata, created_by_user_id, updated_by_user_id, created_at, updated_at')
+    .select(INTERNAL_ADMIN_KMS_CONNECTION_SELECT)
     .single();
 
   if (error || !data) {
@@ -3154,7 +3801,7 @@ async function handleUpdateInternalAdminKmsConnection(
     return Response.json({ error: message }, { status: error && isMissingOrganizationKmsConnectionsTable(error) ? 501 : 400 });
   }
 
-  const connection = data as InternalAdminKmsConnectionRow;
+  const connection = data as unknown as InternalAdminKmsConnectionRow;
   await writeGovernanceAuditEvent(env, {
     organization_id: orgId,
     actor_user_id: authorized.auth.userId,
@@ -3162,14 +3809,19 @@ async function handleUpdateInternalAdminKmsConnection(
     event_type: 'organization_kms_connection_updated',
     target_type: 'organization_kms_connection',
     target_id: connection.id,
-    description: `Updated AWS KMS onboarding for ${connection.aws_account_id || orgId}`,
+    description: `Updated ${kmsProviderLabel(connection.provider)} onboarding for ${summarizeKmsConnection(connection) || orgId}`,
     metadata: {
       provider: connection.provider,
+      provider_label: kmsProviderLabel(connection.provider),
       status: connection.status,
       aws_account_id: connection.aws_account_id,
       aws_region: connection.aws_region,
+      gcp_project_id: connection.gcp_project_id,
+      azure_subscription_id: connection.azure_subscription_id,
       has_kms_key_arn: Boolean(connection.aws_kms_key_arn),
       has_role_arn: Boolean(connection.aws_role_arn),
+      has_gcp_crypto_key_resource: Boolean(connection.gcp_crypto_key_resource),
+      has_azure_key_vault_uri: Boolean(connection.azure_key_vault_uri),
       updated_via: 'internal_admin',
     },
   });
@@ -3183,23 +3835,22 @@ async function handleUpdateInternalAdminKmsConnection(
       organization_id: orgId,
       kms_connection_id: connection.id,
       provider: connection.provider,
+      provider_label: kmsProviderLabel(connection.provider),
       status: connection.status,
       aws_account_id: connection.aws_account_id,
       aws_region: connection.aws_region,
+      gcp_project_id: connection.gcp_project_id,
+      azure_subscription_id: connection.azure_subscription_id,
     },
   );
 
   return Response.json({
-    kms_connection: {
-      ...connection,
-      trust_policy: buildAwsKmsTrustPolicy(env, connection.external_id),
-      preflight_command: buildAwsKmsPreflightCommand(connection),
-    },
+    kms_connection: addKmsConnectionHandoffFields(env, connection),
     kms_checklist: buildKmsChecklist(connection),
     guardrails: [
       'KMS onboarding writes require internal admin actions to be enabled.',
       'KMS onboarding writes require the approval secret header.',
-      'This stores customer AWS ARNs and a VaultProof-generated external_id only. Do not store AWS access keys or provider secrets here.',
+      'This stores customer KMS resource metadata and a VaultProof-generated tracking ID only. Do not store cloud access keys, client secrets, service account JSON, or provider secrets here.',
       'Each KMS connection is scoped to one organization_id and audited in both customer governance audit and internal admin audit.',
     ],
   }, {
@@ -4757,7 +5408,7 @@ export async function handleInternalAdminRoutes(
       .limit(1000),
     supabase
       .from('organization_kms_connections')
-      .select('organization_id, provider, status, last_test_status, updated_at')
+      .select('organization_id, provider, status, aws_account_id, aws_region, aws_kms_key_arn, gcp_project_id, gcp_location, gcp_crypto_key_resource, azure_subscription_id, azure_key_vault_uri, azure_key_name, last_test_status, updated_at')
       .order('updated_at', { ascending: false })
       .limit(1000),
     supabase
@@ -4833,8 +5484,17 @@ export async function handleInternalAdminRoutes(
   }>) : [];
   const kmsRows = kmsSchemaReady ? normalizeRows(kmsResult.data as MaybeArray<{
     organization_id: string;
-    provider: 'aws-kms';
+    provider: InternalAdminKmsProvider;
     status: string | null;
+    aws_account_id: string | null;
+    aws_region: string | null;
+    aws_kms_key_arn: string | null;
+    gcp_project_id: string | null;
+    gcp_location: string | null;
+    gcp_crypto_key_resource: string | null;
+    azure_subscription_id: string | null;
+    azure_key_vault_uri: string | null;
+    azure_key_name: string | null;
     last_test_status: string | null;
     updated_at: string | null;
   }>) : [];
@@ -4856,7 +5516,13 @@ export async function handleInternalAdminRoutes(
   const memberEmailMap = await getUserEmailMap(env, members.map((member) => member.user_id));
   const orgById = new Map(organizations.map((organization) => [organization.id, organization]));
   const ssoByOrgId = new Map(ssoRows.map((row) => [row.organization_id, row]));
-  const kmsByOrgId = new Map(kmsRows.map((row) => [row.organization_id, row]));
+  const kmsByOrgId = new Map<string, typeof kmsRows[number]>();
+  for (const row of kmsRows) {
+    const existing = kmsByOrgId.get(row.organization_id);
+    if (!existing || row.status === 'verified' || row.last_test_status === 'passed') {
+      kmsByOrgId.set(row.organization_id, row);
+    }
+  }
   const proxyPolicyByOrgId = new Map(proxyAccessPolicyRows.map((row) => [
     String(row.organization_id || ''),
     normalizeProxyAccessPolicyRow(row, String(row.organization_id || '')),
@@ -4908,12 +5574,17 @@ export async function handleInternalAdminRoutes(
   const businesses = organizations.map((organization) => {
     const orgMembers = membersByOrg.get(organization.id) || [];
     const orgProjects = projectsByOrg.get(organization.id) || [];
-    const orgInvitations = invitationsByOrg.get(organization.id) || [];
-    const activeOrgProjects = orgProjects.filter((project) => !project.revoked_at);
-    const pendingOrgInvitations = orgInvitations.filter((invitation) => invitation.status === 'pending');
-    const sso = ssoByOrgId.get(organization.id) || null;
-    const kms = kmsByOrgId.get(organization.id) || null;
-    const proxyAccessPolicy = proxyPolicyByOrgId.get(organization.id) || defaultProxyAccessPolicy(organization.id);
+	    const orgInvitations = invitationsByOrg.get(organization.id) || [];
+	    const activeOrgProjects = orgProjects.filter((project) => !project.revoked_at);
+	    const pendingOrgInvitations = orgInvitations.filter((invitation) => invitation.status === 'pending');
+	    const sso = ssoByOrgId.get(organization.id) || null;
+	    const kmsRow = kmsByOrgId.get(organization.id) || null;
+	    const kms = kmsRow ? {
+	      ...kmsRow,
+	      provider_label: kmsProviderLabel(kmsRow.provider),
+	      connection_summary: summarizeKmsConnection(kmsRow),
+	    } : null;
+	    const proxyAccessPolicy = proxyPolicyByOrgId.get(organization.id) || defaultProxyAccessPolicy(organization.id);
     const orgApiCallStats = apiCallsByOrg.get(organization.id) || emptyApiCallStats();
     return {
       id: organization.id,
@@ -4978,7 +5649,7 @@ export async function handleInternalAdminRoutes(
       ? null
       : [
         ssoSchemaReady ? null : 'Apply supabase/migrations/20260419010000_organization_sso_settings.sql',
-        kmsSchemaReady ? null : 'Apply supabase/migrations/20260531000000_organization_kms_connections.sql',
+        kmsSchemaReady ? null : 'Apply supabase/migrations/20260531000000_organization_kms_connections.sql and supabase/migrations/20260605000000_multicloud_kms_connections.sql',
         proxyAccessPolicySchemaReady ? null : 'Apply supabase/migrations/20260601000000_organization_proxy_access_policies.sql',
       ].filter(Boolean).join(' | '),
     api_call_trend: apiCallAnalytics.dailyTotals,
@@ -5021,7 +5692,7 @@ export async function handleInternalAdminRoutes(
         : 'SSO metadata migration is pending; overview omits SSO settings until supabase/migrations/20260419010000_organization_sso_settings.sql is applied.',
       kmsSchemaReady
         ? 'Customer-managed KMS onboarding records are scoped by organization_id.'
-        : 'KMS onboarding migration is pending; overview omits KMS connection status until supabase/migrations/20260531000000_organization_kms_connections.sql is applied.',
+        : 'KMS onboarding migration is pending; overview omits KMS connection status until supabase/migrations/20260531000000_organization_kms_connections.sql and supabase/migrations/20260605000000_multicloud_kms_connections.sql are applied.',
       proxyAccessPolicySchemaReady
         ? 'Proxy access tier records are scoped by organization_id and enforced by the execute proxy.'
         : 'Proxy access policy migration is pending; overview omits tier status until supabase/migrations/20260601000000_organization_proxy_access_policies.sql is applied.',

@@ -3,6 +3,7 @@ export type EnterpriseAppNavPage =
   | 'launch'
   | 'evidence'
   | 'projects'
+  | 'inbox'
   | 'inventory'
   | 'policy'
   | 'rollout'
@@ -83,6 +84,13 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: '/app/projects',
         label: 'Workloads',
         blurb: 'Protected apps, usage, policy, and provider slot posture.',
+      },
+      {
+        page: 'inbox',
+        href: '/app/inbox',
+        label: 'Inbox',
+        blurb: 'Live customer conversations, SLA triage, and account context.',
+        activePill: 'chat',
       },
       {
         page: 'inventory',

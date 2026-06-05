@@ -242,6 +242,20 @@ function installSupabaseStub() {
     aws_region: 'us-east-1',
     aws_kms_key_arn: 'arn:aws:kms:us-east-1:111122223333:key/12345678-1234-1234-1234-123456789abc',
     aws_role_arn: 'arn:aws:iam::111122223333:role/VaultProofCustomerKmsRole',
+    gcp_project_id: null,
+    gcp_location: null,
+    gcp_key_ring: null,
+    gcp_crypto_key_resource: null,
+    gcp_service_account: null,
+    gcp_key_version: null,
+    azure_tenant_id: null,
+    azure_subscription_id: null,
+    azure_resource_group: null,
+    azure_key_vault_uri: null,
+    azure_key_name: null,
+    azure_key_version: null,
+    azure_principal_id: null,
+    azure_key_type: null,
     external_id: 'vaultproof-org123-kms-test',
     last_test_status: 'not_tested',
     last_tested_at: null,
@@ -396,6 +410,20 @@ function installSupabaseStub() {
           aws_region: body.aws_region || null,
           aws_kms_key_arn: body.aws_kms_key_arn || null,
           aws_role_arn: body.aws_role_arn || null,
+          gcp_project_id: body.gcp_project_id || null,
+          gcp_location: body.gcp_location || null,
+          gcp_key_ring: body.gcp_key_ring || null,
+          gcp_crypto_key_resource: body.gcp_crypto_key_resource || null,
+          gcp_service_account: body.gcp_service_account || null,
+          gcp_key_version: body.gcp_key_version || null,
+          azure_tenant_id: body.azure_tenant_id || null,
+          azure_subscription_id: body.azure_subscription_id || null,
+          azure_resource_group: body.azure_resource_group || null,
+          azure_key_vault_uri: body.azure_key_vault_uri || null,
+          azure_key_name: body.azure_key_name || null,
+          azure_key_version: body.azure_key_version || null,
+          azure_principal_id: body.azure_principal_id || null,
+          azure_key_type: body.azure_key_type || null,
           external_id: body.external_id || 'vaultproof-generated-external-id',
           last_test_status: body.last_test_status || 'not_tested',
           last_tested_at: body.last_tested_at || null,
@@ -3846,6 +3874,48 @@ async function assertEnterpriseLoginRoute() {
     assertDashboardShellTheme(page.path, html);
   }
 
+  const inboxResponse = await handleEnterpriseControlPlaneRequest(
+    buildRequest('/app/inbox'),
+    {
+      enterpriseHostname: ENTERPRISE_HOSTNAME,
+    },
+  );
+  const inboxHtml = await inboxResponse.text();
+  if (inboxResponse.status !== 200 || !inboxHtml.includes('Inbox - VaultProof Enterprise')) {
+    throw new Error(`Expected enterprise live chat inbox page to render, got ${inboxResponse.status}`);
+  }
+  for (const required of [
+    'enterprise-live-chat-dashboard',
+    'data-chat-dashboard="vaultproof-enterprise-inbox"',
+    '#0057FF',
+    '#081D34',
+    '#F1F1F1',
+    '#E5E7EB',
+    'grid-template-columns: 64px 360px minmax(0, 1fr) 336px',
+    'transition-all duration-300',
+    'aria-label="Collapse inbox stream"',
+    'aria-label="Collapse customer details"',
+    'chatThreadList',
+    'All</button>',
+    'Unassigned</button>',
+    'Mine</button>',
+    'message-scroll',
+    'AI expansion assistant',
+    'CRM attributes',
+    'definition-list',
+    'Customer details',
+    'Active SLA',
+    'AWS KMS policy validation',
+    'Provider slots',
+  ]) {
+    if (!inboxHtml.includes(required)) {
+      throw new Error(`Expected /app/inbox to include ${required}`);
+    }
+  }
+  if (inboxHtml.includes('https://init.vaultproof.dev') || inboxHtml.includes('https://api.vaultproof.dev') || inboxHtml.includes('/api/scanner')) {
+    throw new Error('Enterprise inbox page must not load B2C APIs');
+  }
+
   const supportPages = [
     {
       path: '/app/docs',
@@ -4146,7 +4216,7 @@ function assertSecurityHeaders(path, response, html = '') {
 }
 
 async function assertEnterpriseSecurityHeaders() {
-  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/evidence', '/app/control', '/app/verifier', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/entitlements', '/app/testers', '/app/release', '/app/scanner', '/app/runbooks', '/app/inventory', '/app/policy', '/app/rollout'];
+  const htmlPaths = ['/', '/app/login', '/app/logout', '/app/dashboard', '/app/evidence', '/app/control', '/app/verifier', '/app/setup', '/app/technical-guide', '/app/security-review', '/app/entitlements', '/app/testers', '/app/release', '/app/scanner', '/app/runbooks', '/app/inbox', '/app/inventory', '/app/policy', '/app/rollout'];
   for (const path of htmlPaths) {
     const response = await handleEnterpriseControlPlaneRequest(
       buildRequest(path),
@@ -4197,6 +4267,7 @@ async function assertEnterpriseAppLinkCrawl() {
     '/app/alerts',
     '/app/activity',
     '/app/projects',
+    '/app/inbox',
     '/app/inventory',
     '/app/policy',
     '/app/rollout',
@@ -4275,6 +4346,7 @@ async function assertEnterpriseMixpanelAnalytics() {
     ['/app/alerts', 'alerts'],
     ['/app/control', 'control'],
     ['/app/projects', 'projects'],
+    ['/app/inbox', 'inbox'],
     ['/app/inventory', 'inventory'],
     ['/app/policy', 'policy'],
     ['/app/rollout', 'rollout'],
@@ -4545,14 +4617,20 @@ async function assertInternalAdminConsole() {
     throw new Error(`Expected internal admin HEAD check to return 200, got ${headPageResponse.status}`);
   }
   for (const required of [
-    'Enterprise customer operations',
+    'Admin Control Center',
     'Control Center',
+    'Control center for customer operations',
     'Enterprise business command view',
     'businessUserChart',
     'businessCallChart',
     'apiTrendChart',
     'accountMixDonut',
     'blockerChart',
+    'readinessCoverageChart',
+    'attentionQueueList',
+    'controlActiveBusinesses',
+    'statSuccessRate',
+    'statLastApiActivity',
     'sparkline-chart',
     'API call trend',
     'API calls by business',
@@ -4583,6 +4661,9 @@ async function assertInternalAdminConsole() {
     'Pilot proposal',
     'Pilot success',
     '/app/launch',
+    '/businesses/new',
+    '/businesses',
+    '/support',
     '/app/demo',
     '/app/onboarding',
     '/app/org',
@@ -4616,6 +4697,29 @@ async function assertInternalAdminConsole() {
   }
   if (pageHtml.includes('https://api.vaultproof.dev') || pageHtml.includes('https://init.vaultproof.dev')) {
     throw new Error('Internal admin page must not use B2C API origins');
+  }
+
+  for (const pageCheck of [
+    { path: '/businesses/new', title: 'Create business - VaultProof Internal Admin', active: 'nav-link active" href="/businesses/new', mode: 'data-admin-page="create-business"' },
+    { path: '/businesses', title: 'Businesses - VaultProof Internal Admin', active: 'nav-link active" href="/businesses"', mode: 'data-admin-page="businesses"' },
+    { path: '/support', title: 'Support queue - VaultProof Internal Admin', active: 'nav-link active" href="/support', mode: 'data-admin-page="support"' },
+  ]) {
+    const splitPageResponse = await handleEnterpriseControlPlaneRequest(
+      buildHostRequest(INTERNAL_ADMIN_HOSTNAME, pageCheck.path, {
+        headers: {
+          cookie: sessionCookie.split(';')[0],
+        },
+      }),
+      env,
+    );
+    const splitPageHtml = await splitPageResponse.text();
+    if (splitPageResponse.status !== 200
+      || !splitPageHtml.includes(pageCheck.title)
+      || !splitPageHtml.includes(pageCheck.active)
+      || !splitPageHtml.includes(pageCheck.mode)
+      || !splitPageHtml.includes('/api/v1/internal-admin/overview')) {
+      throw new Error(`Expected internal admin split page ${pageCheck.path} to render, got ${splitPageResponse.status}`);
+    }
   }
 
   const adminLaunchResponse = await handleEnterpriseControlPlaneRequest(
@@ -4677,8 +4781,8 @@ async function assertInternalAdminConsole() {
     },
     {
       path: '/app/org',
-      title: 'Org — VaultProof',
-      required: ['Org — VaultProof', 'org-dashboard-theme', 'enterprise-static-canonical-org-url', 'https://vaultproof.dev/js/app-org-1.js', '.page > .topbar { display: none !important; }'],
+      title: 'Organization — VaultProof Enterprise',
+      required: ['Organization — VaultProof Enterprise', 'org-page-shadcn-polish', 'enterprise-static-canonical-org-url', 'https://vaultproof.dev/js/app-org-1.js', '.page > .topbar { display: none !important; }'],
     },
     {
       path: '/app/support',
@@ -4741,20 +4845,22 @@ async function assertInternalAdminConsole() {
   if (orgDetailPageResponse.status !== 200) {
     throw new Error(`Expected internal admin org detail page shell to render, got ${orgDetailPageResponse.status}`);
   }
-  for (const required of [
-    'Business detail',
-    'SSO setup checklist',
-    'AWS KMS connection',
-    'Customer KMS onboarding',
-    'Proxy access tier',
-    '/proxy-access-policy',
+	for (const required of [
+	  'Business detail',
+	  'SSO setup checklist',
+	  'Customer-managed KMS',
+	  'GCP Cloud KMS',
+	  'Azure Key Vault / Managed HSM',
+	  'Customer-managed KMS onboarding',
+	  'Proxy access tier',
+	  '/proxy-access-policy',
     'Business login links',
     'data-internal-admin-action="org-account-management"',
-    '/sso-settings',
-    '/kms-connections',
-    'save SSO',
-    'save AWS KMS',
-    'save proxy tier',
+	  '/sso-settings',
+	  '/kms-connections',
+	  'save SSO',
+	  'save KMS',
+	  'save proxy tier',
     'create invite',
     'User/member timeline',
     'Support notes',
@@ -4933,7 +5039,7 @@ async function assertInternalAdminConsole() {
   if (!orgDetail.kms_connections_schema_ready
     || orgDetail.kms_connections?.[0]?.aws_account_id !== '111122223333'
     || !orgDetail.kms_connections?.[0]?.trust_policy?.Statement?.[0]?.Condition?.StringEquals?.['sts:ExternalId']) {
-    throw new Error(`Expected org detail AWS KMS connection with trust policy, got ${JSON.stringify(orgDetail.kms_connections)}`);
+    throw new Error(`Expected org detail customer-managed KMS connection with trust policy, got ${JSON.stringify(orgDetail.kms_connections)}`);
   }
   if (!Array.isArray(orgDetail.kms_checklist) || !orgDetail.kms_checklist.find((item) => item.label === 'External ID')) {
     throw new Error(`Expected org detail KMS checklist, got ${JSON.stringify(orgDetail.kms_checklist)}`);
@@ -5270,11 +5376,77 @@ async function assertInternalAdminConsole() {
   if (!internalAdminAuditEvents.some((event) => event.event_type === 'internal_admin_kms_connection_updated')) {
     throw new Error(`Expected internal KMS connection audit event, got ${JSON.stringify(internalAdminAuditEvents)}`);
   }
-  if (!auditEvents.some((event) => event.event_type === 'organization_kms_connection_updated' && event.metadata?.updated_via === 'internal_admin')) {
-    throw new Error(`Expected customer org audit event for KMS connection update, got ${JSON.stringify(auditEvents)}`);
-  }
+	  if (!auditEvents.some((event) => event.event_type === 'organization_kms_connection_updated' && event.metadata?.updated_via === 'internal_admin')) {
+	    throw new Error(`Expected customer org audit event for KMS connection update, got ${JSON.stringify(auditEvents)}`);
+	  }
 
-  const proxyPolicyUpdateResponse = await handleEnterpriseControlPlaneRequest(
+	  const gcpKmsUpdateResponse = await handleEnterpriseControlPlaneRequest(
+	    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/kms-connections', {
+	      method: 'POST',
+	      headers: {
+	        authorization: `Bearer ${AUTH_TOKEN}`,
+	        'content-type': 'application/json',
+	        'x-vaultproof-internal-admin-approval': 'approval-secret',
+	      },
+	      body: JSON.stringify({
+	        provider: 'gcp-cloud-kms',
+	        gcp_crypto_key_resource: 'projects/customer-prod/locations/us/keyRings/security/cryptoKeys/vaultproof-unwrap',
+	        gcp_service_account: 'vaultproof-runtime@customer-prod.iam.gserviceaccount.com',
+	        gcp_key_version: '1',
+	        status: 'ready_to_test',
+	      }),
+	    }),
+	    {
+	      ...env,
+	      internalAdminActionsEnabled: true,
+	      internalAdminApprovalSecret: 'approval-secret',
+	    },
+	  );
+	  const gcpKmsUpdatePayload = await gcpKmsUpdateResponse.json();
+	  if (gcpKmsUpdateResponse.status !== 200
+	    || gcpKmsUpdatePayload.kms_connection?.provider !== 'gcp-cloud-kms'
+	    || gcpKmsUpdatePayload.kms_connection?.gcp_project_id !== 'customer-prod'
+	    || !String(gcpKmsUpdatePayload.kms_connection?.gcp_iam_binding_command || '').includes('roles/cloudkms.cryptoKeyDecrypter')
+	    || !String(gcpKmsUpdatePayload.kms_connection?.preflight_command || '').includes('preflight:gcp-customer-kms')) {
+	    throw new Error(`Expected approved GCP KMS connection update, got ${gcpKmsUpdateResponse.status}: ${JSON.stringify(gcpKmsUpdatePayload)}`);
+	  }
+
+	  const azureKmsUpdateResponse = await handleEnterpriseControlPlaneRequest(
+	    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/kms-connections', {
+	      method: 'POST',
+	      headers: {
+	        authorization: `Bearer ${AUTH_TOKEN}`,
+	        'content-type': 'application/json',
+	        'x-vaultproof-internal-admin-approval': 'approval-secret',
+	      },
+	      body: JSON.stringify({
+	        provider: 'azure-key-vault',
+	        azure_tenant_id: '11111111-1111-1111-1111-111111111111',
+	        azure_subscription_id: '22222222-2222-2222-2222-222222222222',
+	        azure_resource_group: 'security-rg',
+	        azure_key_vault_uri: 'https://customer-vault.vault.azure.net',
+	        azure_key_name: 'vaultproof-unwrap',
+	        azure_key_version: '33333333333333333333333333333333',
+	        azure_principal_id: '44444444-4444-4444-4444-444444444444',
+	        status: 'ready_to_test',
+	      }),
+	    }),
+	    {
+	      ...env,
+	      internalAdminActionsEnabled: true,
+	      internalAdminApprovalSecret: 'approval-secret',
+	    },
+	  );
+	  const azureKmsUpdatePayload = await azureKmsUpdateResponse.json();
+	  if (azureKmsUpdateResponse.status !== 200
+	    || azureKmsUpdatePayload.kms_connection?.provider !== 'azure-key-vault'
+	    || azureKmsUpdatePayload.kms_connection?.azure_key_type !== 'key_vault'
+	    || !String(azureKmsUpdatePayload.kms_connection?.azure_access_role_command || '').includes('Key Vault Crypto Service Release User')
+	    || !String(azureKmsUpdatePayload.kms_connection?.azure_release_env || '').includes('AZURE_KEY_RELEASE_URL')) {
+	    throw new Error(`Expected approved Azure KMS connection update, got ${azureKmsUpdateResponse.status}: ${JSON.stringify(azureKmsUpdatePayload)}`);
+	  }
+
+	  const proxyPolicyUpdateResponse = await handleEnterpriseControlPlaneRequest(
     buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123/proxy-access-policy', {
       method: 'POST',
       headers: {

@@ -508,25 +508,55 @@ async function handleEnterpriseControlPlaneRequestInner(
   const originLockResponse = verifyOriginLock(request, env);
   if (originLockResponse) return originLockResponse;
 
+  const internalAdminControlCenterPath = url.pathname === '/'
+    || url.pathname === '/app'
+    || url.pathname === '/app/'
+    || url.pathname === '/admin'
+    || url.pathname === '/admin/'
+    || url.pathname === '/internal/admin';
+  const internalAdminBusinessCreatePath = url.pathname === '/businesses/new'
+    || url.pathname === '/businesses/new/'
+    || url.pathname === '/internal/admin/businesses/new'
+    || url.pathname === '/internal/admin/businesses/new/';
+  const internalAdminBusinessListPath = url.pathname === '/businesses'
+    || url.pathname === '/businesses/'
+    || url.pathname === '/orgs'
+    || url.pathname === '/orgs/'
+    || url.pathname === '/internal/admin/businesses'
+    || url.pathname === '/internal/admin/businesses/';
+  const internalAdminSupportQueuePath = url.pathname === '/support'
+    || url.pathname === '/support/'
+    || url.pathname === '/internal/admin/support'
+    || url.pathname === '/internal/admin/support/';
+  const internalAdminBusinessDetailPath = /^\/orgs\/(?!new\/?$)[^/]+\/?$/.test(url.pathname)
+    || /^\/businesses\/(?!new\/?$)[^/]+\/?$/.test(url.pathname)
+    || /^\/internal\/admin\/orgs\/(?!new\/?$)[^/]+\/?$/.test(url.pathname)
+    || /^\/internal\/admin\/businesses\/(?!new\/?$)[^/]+\/?$/.test(url.pathname);
+
   if (
     internalAdminSurface &&
     isReadRequest &&
-    (url.pathname === '/'
-      || url.pathname === '/app'
-      || url.pathname === '/app/'
-      || url.pathname === '/admin'
-      || url.pathname === '/admin/'
-      || url.pathname === '/internal/admin'
-      || /^\/orgs\/[^/]+\/?$/.test(url.pathname)
-      || /^\/businesses\/[^/]+\/?$/.test(url.pathname)
-      || /^\/internal\/admin\/orgs\/[^/]+\/?$/.test(url.pathname)
-      || /^\/internal\/admin\/businesses\/[^/]+\/?$/.test(url.pathname))
+    (internalAdminControlCenterPath
+      || internalAdminBusinessCreatePath
+      || internalAdminBusinessListPath
+      || internalAdminSupportQueuePath
+      || internalAdminBusinessDetailPath)
   ) {
     const authorized = await authorizeInternalAdmin(request, env);
     if (authorized instanceof Response) {
       return redirectToInternalAdminLogin(url);
     }
-    return new Response(renderInternalAdminPage(env), {
+    return new Response(renderInternalAdminPage(env, {
+      mode: internalAdminBusinessCreatePath
+        ? 'create-business'
+        : internalAdminBusinessListPath
+          ? 'businesses'
+          : internalAdminSupportQueuePath
+            ? 'support'
+            : internalAdminBusinessDetailPath
+              ? 'business-detail'
+              : 'control',
+    }), {
       status: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',

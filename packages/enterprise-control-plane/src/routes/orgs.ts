@@ -31,16 +31,32 @@ interface ConfiguredSsoOrganization {
   status: string;
 }
 
+type OrganizationKmsProvider = 'aws-kms' | 'gcp-cloud-kms' | 'azure-key-vault';
+
 interface OrganizationKmsConnection {
   id: string;
   organization_id: string;
-  provider: 'aws-kms';
+  provider: OrganizationKmsProvider;
   display_name: string | null;
   status: string;
   aws_account_id: string | null;
   aws_region: string | null;
   aws_kms_key_arn: string | null;
   aws_role_arn: string | null;
+  gcp_project_id: string | null;
+  gcp_location: string | null;
+  gcp_key_ring: string | null;
+  gcp_crypto_key_resource: string | null;
+  gcp_service_account: string | null;
+  gcp_key_version: string | null;
+  azure_tenant_id: string | null;
+  azure_subscription_id: string | null;
+  azure_resource_group: string | null;
+  azure_key_vault_uri: string | null;
+  azure_key_name: string | null;
+  azure_key_version: string | null;
+  azure_principal_id: string | null;
+  azure_key_type: 'key_vault' | 'managed_hsm' | null;
   external_id: string;
   last_test_status: string;
   last_tested_at: string | null;
@@ -48,6 +64,38 @@ interface OrganizationKmsConnection {
   created_at: string;
   updated_at: string | null;
 }
+
+const ORGANIZATION_KMS_CONNECTION_SELECT = [
+  'id',
+  'organization_id',
+  'provider',
+  'display_name',
+  'status',
+  'aws_account_id',
+  'aws_region',
+  'aws_kms_key_arn',
+  'aws_role_arn',
+  'gcp_project_id',
+  'gcp_location',
+  'gcp_key_ring',
+  'gcp_crypto_key_resource',
+  'gcp_service_account',
+  'gcp_key_version',
+  'azure_tenant_id',
+  'azure_subscription_id',
+  'azure_resource_group',
+  'azure_key_vault_uri',
+  'azure_key_name',
+  'azure_key_version',
+  'azure_principal_id',
+  'azure_key_type',
+  'external_id',
+  'last_test_status',
+  'last_tested_at',
+  'last_test_error',
+  'created_at',
+  'updated_at',
+].join(', ');
 
 interface UpdateOrganizationSsoSettingsBody {
   company_domain?: string | null;
@@ -84,8 +132,19 @@ function canViewOrganizationProxyAccess(role: string): boolean {
 
 function isMissingOrganizationKmsConnectionsTable(error: { code?: string; message?: string } | null | undefined): boolean {
   const message = String(error?.message || '').toLowerCase();
+  const missingMulticloudColumn = [
+    'gcp_project_id',
+    'gcp_crypto_key_resource',
+    'azure_tenant_id',
+    'azure_key_vault_uri',
+  ].some((column) => message.includes(column));
   return error?.code === '42P01'
     || error?.code === 'PGRST205'
+    || (missingMulticloudColumn && (
+      message.includes('schema cache')
+      || message.includes('does not exist')
+      || message.includes('could not find')
+    ))
     || (message.includes('organization_kms_connections') && (
       message.includes('schema cache')
       || message.includes('does not exist')
@@ -116,17 +175,125 @@ function buildAwsKmsTrustPolicy(env: EnterpriseControlPlaneEnv, externalId: stri
   };
 }
 
+function kmsProviderLabel(provider: unknown): string {
+  if (provider === 'gcp-cloud-kms') return 'GCP Cloud KMS';
+  if (provider === 'azure-key-vault') return 'Azure Key Vault / Managed HSM';
+  return 'AWS KMS';
+}
+
+function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, "'\\''")}'`;
+}
+
+function gcpCryptoKeyName(resource: string | null): string | null {
+  if (!resource) return null;
+  const match = resource.match(/\/cryptoKeys\/([^/]+)$/);
+  return match?.[1] || null;
+}
+
+function buildGcpKmsIamBindingCommand(connection: OrganizationKmsConnection): string | null {
+  const cryptoKey = gcpCryptoKeyName(connection.gcp_crypto_key_resource);
+  if (!connection.gcp_project_id || !connection.gcp_location || !connection.gcp_key_ring || !cryptoKey || !connection.gcp_service_account) return null;
+  return [
+    `gcloud kms keys add-iam-policy-binding ${shellQuote(cryptoKey)}`,
+    `  --project=${shellQuote(connection.gcp_project_id)}`,
+    `  --location=${shellQuote(connection.gcp_location)}`,
+    `  --keyring=${shellQuote(connection.gcp_key_ring)}`,
+    `  --member=${shellQuote(`serviceAccount:${connection.gcp_service_account}`)}`,
+    "  --role='roles/cloudkms.cryptoKeyDecrypter'",
+  ].join(' \\\n');
+}
+
+function buildGcpKmsPreflightCommand(connection: OrganizationKmsConnection): string | null {
+  if (!connection.gcp_crypto_key_resource) return null;
+  return [
+    `CUSTOMER_GCP_KMS_CRYPTO_KEY_RESOURCE="${connection.gcp_crypto_key_resource}"`,
+    connection.gcp_key_version ? `CUSTOMER_GCP_KMS_KEY_VERSION="${connection.gcp_key_version}"` : null,
+    'npm run preflight:gcp-customer-kms',
+  ].filter(Boolean).join(' \\\n');
+}
+
+function azureVaultName(vaultUri: string | null): string | null {
+  if (!vaultUri) return null;
+  try {
+    return new URL(vaultUri).hostname.split('.')[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+function buildAzureKmsScope(connection: OrganizationKmsConnection): string | null {
+  const vaultName = azureVaultName(connection.azure_key_vault_uri);
+  if (!connection.azure_subscription_id || !connection.azure_resource_group || !vaultName || !connection.azure_key_name || !connection.azure_key_type) return null;
+  const resourceType = connection.azure_key_type === 'managed_hsm' ? 'managedHSMs' : 'vaults';
+  return `/subscriptions/${connection.azure_subscription_id}/resourceGroups/${connection.azure_resource_group}/providers/Microsoft.KeyVault/${resourceType}/${vaultName}/keys/${connection.azure_key_name}`;
+}
+
+function buildAzureKmsAccessRoleCommand(connection: OrganizationKmsConnection): string | null {
+  const scope = buildAzureKmsScope(connection);
+  if (!scope || !connection.azure_principal_id) return null;
+  return [
+    'az role assignment create',
+    `  --assignee ${shellQuote(connection.azure_principal_id)}`,
+    "  --role 'Key Vault Crypto Service Release User'",
+    `  --scope ${shellQuote(scope)}`,
+  ].join(' \\\n');
+}
+
+function buildAzureKmsReleaseEnv(connection: OrganizationKmsConnection): string | null {
+  if (!connection.azure_key_vault_uri || !connection.azure_key_name || !connection.azure_key_version) return null;
+  const keyId = `${connection.azure_key_vault_uri}/keys/${connection.azure_key_name}/${connection.azure_key_version}`;
+  return [
+    `AZURE_KEY_ID="${connection.azure_key_vault_uri}/keys/${connection.azure_key_name}"`,
+    `AZURE_KEY_VERSION="${connection.azure_key_version}"`,
+    `AZURE_KEY_RELEASE_URL="${keyId}/release"`,
+  ].join('\n');
+}
+
+function buildKmsPreflightCommand(connection: OrganizationKmsConnection): string | null {
+  if (connection.provider === 'aws-kms') {
+    if (!connection.aws_kms_key_arn || !connection.aws_region || !connection.aws_role_arn) return null;
+    return [
+      `CUSTOMER_AWS_KMS_KEY_ID="${connection.aws_kms_key_arn}"`,
+      `CUSTOMER_AWS_RUNTIME_ROLE_ARN="${connection.aws_role_arn}"`,
+      `AWS_REGION="${connection.aws_region}"`,
+      'npm run preflight:aws-customer-kms',
+    ].join(' \\\n');
+  }
+  if (connection.provider === 'gcp-cloud-kms') return buildGcpKmsPreflightCommand(connection);
+  return null;
+}
+
+function summarizeKmsConnection(connection: OrganizationKmsConnection): string {
+  if (connection.provider === 'gcp-cloud-kms') {
+    return [connection.gcp_project_id || 'project pending', connection.gcp_location || 'location pending', connection.gcp_crypto_key_resource || 'key resource pending'].join(' - ');
+  }
+  if (connection.provider === 'azure-key-vault') {
+    return [connection.azure_subscription_id || 'subscription pending', connection.azure_key_vault_uri || 'vault/HSM pending', connection.azure_key_name || 'key pending'].join(' - ');
+  }
+  return [connection.aws_account_id || 'account pending', connection.aws_region || 'region pending', connection.aws_kms_key_arn || 'key ARN pending'].join(' - ');
+}
+
 async function fetchOrganizationKmsConnections(
   env: EnterpriseControlPlaneEnv,
   organizationId: string,
 ): Promise<{
-  rows: Array<OrganizationKmsConnection & { trust_policy: Record<string, unknown> }>;
+  rows: Array<OrganizationKmsConnection & {
+    provider_label: string;
+    connection_summary: string;
+    trust_policy: Record<string, unknown> | null;
+    gcp_iam_binding_command: string | null;
+    gcp_preflight_command: string | null;
+    azure_access_role_command: string | null;
+    azure_release_env: string | null;
+    preflight_command: string | null;
+  }>;
   schemaReady: boolean;
 }> {
   const supabase = getSupabase(env);
   const { data, error } = await supabase
     .from('organization_kms_connections')
-    .select('id, organization_id, provider, display_name, status, aws_account_id, aws_region, aws_kms_key_arn, aws_role_arn, external_id, last_test_status, last_tested_at, last_test_error, created_at, updated_at')
+    .select(ORGANIZATION_KMS_CONNECTION_SELECT)
     .eq('organization_id', organizationId)
     .order('updated_at', { ascending: false })
     .limit(10);
@@ -137,9 +304,16 @@ async function fetchOrganizationKmsConnections(
   }
 
   return {
-    rows: ((data || []) as OrganizationKmsConnection[]).map((connection) => ({
+    rows: ((data || []) as unknown as OrganizationKmsConnection[]).map((connection) => ({
       ...connection,
-      trust_policy: buildAwsKmsTrustPolicy(env, connection.external_id),
+      provider_label: kmsProviderLabel(connection.provider),
+      connection_summary: summarizeKmsConnection(connection),
+      trust_policy: connection.provider === 'aws-kms' ? buildAwsKmsTrustPolicy(env, connection.external_id) : null,
+      gcp_iam_binding_command: connection.provider === 'gcp-cloud-kms' ? buildGcpKmsIamBindingCommand(connection) : null,
+      gcp_preflight_command: connection.provider === 'gcp-cloud-kms' ? buildGcpKmsPreflightCommand(connection) : null,
+      azure_access_role_command: connection.provider === 'azure-key-vault' ? buildAzureKmsAccessRoleCommand(connection) : null,
+      azure_release_env: connection.provider === 'azure-key-vault' ? buildAzureKmsReleaseEnv(connection) : null,
+      preflight_command: buildKmsPreflightCommand(connection),
     })),
     schemaReady: true,
   };
