@@ -3551,6 +3551,14 @@ async function assertEnterpriseLoginRoute() {
     if (!pageHtml.includes('font-size: 2.6rem') && !pageHtml.includes('font-size: 2.25rem')) {
       throw new Error(`Expected ${path} to use a responsive enterprise hero heading size`);
     }
+    const expandedRailStyle = pageHtml.match(/\.enterprise-icon-rail:hover,[\s\S]*?\.sidebar\.enterprise-app-sidebar\.enterprise-dual-sidebar\.rail-pinned \.enterprise-icon-rail\s*\{[^}]+\}/)?.[0] || '';
+    if (!/background:\s*#050607/.test(expandedRailStyle) || /background:\s*#11161c/.test(expandedRailStyle)) {
+      throw new Error(`Expected ${path} expanded icon rail to keep the same black surface as the collapsed rail`);
+    }
+    const railShortcutStyle = pageHtml.match(/\.rail-shortcut\s*\{[^}]+\}/)?.[0] || '';
+    if (!/display:\s*inline-flex/.test(railShortcutStyle) || /display:\s*none/.test(railShortcutStyle)) {
+      throw new Error(`Expected ${path} rail shortcuts to fade in smoothly instead of popping with display:none`);
+    }
     if (pageHtml.includes('https://admin.vaultproof.dev/internal/admin')) {
       throw new Error(`Expected ${path} customer shell to keep internal admin off the enterprise host`);
     }
@@ -3649,12 +3657,19 @@ async function assertEnterpriseLoginRoute() {
     if (!dashboardHtml.includes('/api/v1/enterprise/projects/stats/overview')) {
       throw new Error('Expected enterprise dashboard to call enterprise control-plane APIs');
     }
+    if (!dashboardHtml.includes("credentials: 'same-origin'") || dashboardHtml.includes("setNotice('Sign in to view your VaultProof workspace.") || dashboardHtml.includes("if (!token)")) {
+      throw new Error('Expected enterprise dashboard browser fetches to use the HttpOnly enterprise session cookie instead of requiring a localStorage token');
+    }
     if (!dashboardHtml.includes('loadPanel(sequence') || !dashboardHtml.includes('project stats')) {
       throw new Error('Expected enterprise dashboard to render data panels progressively');
     }
     assertDashboardShellTheme(dashboardPath, dashboardHtml);
     if (!dashboardHtml.includes('VaultProof updates') || dashboardHtml.includes('GCP confidential dashboard')) {
       throw new Error('Expected enterprise dashboard sidebar to use the shared updates card');
+    }
+    const dashboardMainStyle = dashboardHtml.match(/\.main\.enterprise-dashboard-main\s*\{[^}]+\}/)?.[0] || '';
+    if (!/justify-self:\s*start/.test(dashboardMainStyle) || /justify-self:\s*center/.test(dashboardMainStyle)) {
+      throw new Error('Expected enterprise dashboard to stay anchored beside the sidebar on wide screens');
     }
     for (const requiredFeature of [
       'Enterprise dashboard',

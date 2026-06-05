@@ -3182,7 +3182,7 @@ function renderEnterpriseMembersPage(): string {
         return h;
       }
       async function fetchJson(path, options) {
-        var res = await fetch(path, Object.assign({}, options || {}, { headers: Object.assign(headers(), (options && options.headers) || {}) }));
+        var res = await fetch(path, Object.assign({ credentials: 'same-origin' }, options || {}, { headers: Object.assign(headers(), (options && options.headers) || {}) }));
         var payload = await res.json().catch(function() { return null; });
         if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload && payload.data ? payload.data : payload;
@@ -3190,6 +3190,7 @@ function renderEnterpriseMembersPage(): string {
       async function apiJson(path, options) {
         var opts = options || {};
         opts.headers = Object.assign(headers(), opts.headers || {});
+        if (!opts.credentials) opts.credentials = 'same-origin';
         var res = await fetch(path, opts);
         var payload = await res.json().catch(function() { return null; });
         if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
@@ -3294,13 +3295,6 @@ function renderEnterpriseMembersPage(): string {
         }
       }
       async function load() {
-        if (!token) {
-          enterpriseDemoDataActive = true;
-          renderOrgSelector(demoPayload('organizationsPayload') || { organizations: [] });
-          renderMembers(demoPayload('membersPayload') || {});
-          notice('Showing a sample Northstar Finance workspace. Sign in to load your enterprise data.');
-          return;
-        }
         notice('');
         try {
           var orgs = await fetchJson('/api/v1/enterprise/orgs');
@@ -3548,7 +3542,7 @@ function renderEnterpriseAuditPage(): string {
         return h;
       }
       async function fetchJson(path) {
-        var res = await fetch(path, { headers: headers() });
+        var res = await fetch(path, { credentials: 'same-origin', headers: headers() });
         var payload = await res.json().catch(function() { return null; });
         if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload && payload.data ? payload.data : payload;
@@ -3634,13 +3628,6 @@ function renderEnterpriseAuditPage(): string {
         }
       }
       async function loadBase() {
-        if (!token) {
-          enterpriseDemoDataActive = true;
-          renderOrgSelector(demoPayload('organizationsPayload') || { organizations: [] });
-          renderProjects(demoPayload('projectsPayload') || { projects: [] });
-          notice('Showing a sample Northstar Finance workspace. Sign in to load your enterprise data.');
-          return;
-        }
         notice('');
         var orgs = await fetchJson('/api/v1/enterprise/orgs');
         renderOrgSelector(orgs);
@@ -3881,13 +3868,13 @@ function renderEnterpriseAlertsPage(): string {
         return h;
       }
       async function fetchJson(path) {
-        var res = await fetch(path, { headers: headers() });
+        var res = await fetch(path, { credentials: 'same-origin', headers: headers() });
         var payload = await res.json().catch(function() { return null; });
         if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload && payload.data ? payload.data : payload;
       }
       async function postJson(path, body) {
-        var res = await fetch(path, { method: 'POST', headers: headers(), body: JSON.stringify(body || {}) });
+        var res = await fetch(path, { method: 'POST', credentials: 'same-origin', headers: headers(), body: JSON.stringify(body || {}) });
         var payload = await res.json().catch(function() { return null; });
         if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload && payload.data ? payload.data : payload;
@@ -3992,13 +3979,6 @@ function renderEnterpriseAlertsPage(): string {
         byId('loadMoreRunsBtn').style.display = nextRunBefore ? 'inline-block' : 'none';
       }
       async function reload() {
-        if (!token) {
-          enterpriseDemoDataActive = true;
-          renderOrgSelector(demoPayload('organizationsPayload') || { organizations: [] });
-          renderPayload(demoPayload('alertsPayload') || {}, '');
-          notice('Showing a sample Northstar Finance workspace. Sign in to load your enterprise data.');
-          return;
-        }
         notice('');
         try {
           renderOrgSelector(await fetchJson('/api/v1/enterprise/orgs'));
@@ -4968,6 +4948,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       async function fetchJson(path, options) {
         var opts = options || {};
         opts.headers = Object.assign(headers(), opts.headers || {});
+        if (!opts.credentials) opts.credentials = 'same-origin';
         var res = await fetch(path, opts);
         var payload = await res.json().catch(function() { return null; });
         if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
@@ -8193,10 +8174,6 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         copyToClipboard(exposureResponseBrief(), 'Key exposure response brief');
       }
       async function reload() {
-        if (!token) {
-          await applyOperationsBootstrap(demoBootstrap(), 'Showing a sample Northstar Finance workspace. Sign in to load your enterprise data.');
-          return;
-        }
         notice('');
         try {
           var bootstrap = await fetchJson('/api/v1/enterprise/projects/bootstrap');
@@ -9893,8 +9870,8 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         if (currentOrgId) h['x-vaultproof-organization'] = currentOrgId;
         return h;
       }
-      async function fetchJson(path) {
-        var res = await fetch(path, { headers: headers() });
+      async function fetchJson(path, options) {
+        var res = await fetch(path, Object.assign({ credentials: 'same-origin' }, options || {}, { headers: Object.assign(headers(), (options && options.headers) || {}) }));
         var payload = await res.json().catch(function() { return null; });
         if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload && payload.data ? payload.data : payload;
@@ -15121,10 +15098,6 @@ function renderEnterpriseSupportPage(pageName: EnterpriseSupportPageName): strin
         }
       }
       async function reload() {
-        if (!token) {
-          renderSupportDemo('Showing a sample Northstar Finance workspace. Sign in to load your enterprise data.');
-          return;
-        }
         notice('');
         try {
           var bootstrap = resolveSupportBootstrap(await fetchJson('/api/v1/enterprise/projects/bootstrap'));

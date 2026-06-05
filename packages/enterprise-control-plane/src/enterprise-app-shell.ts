@@ -891,7 +891,9 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       border-radius: 0;
       background: #050607;
       box-shadow: none;
-      transition: width 220ms ease, border-color 220ms ease, border-radius 220ms ease, background 220ms ease, box-shadow 220ms ease;
+      transform: translateZ(0);
+      will-change: width;
+      transition: width 280ms cubic-bezier(0.22, 1, 0.36, 1), border-color 220ms ease, border-radius 220ms ease;
     }
     .enterprise-icon-rail:hover,
     .enterprise-icon-rail:focus-within,
@@ -901,8 +903,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       width: 196px;
       border-color: #242830;
       border-radius: 0 16px 16px 0;
-      background: #11161c;
-      box-shadow: 18px 0 42px rgba(0, 0, 0, 0.38);
+      background: #050607;
+      box-shadow: none;
     }
     .rail-top,
     .rail-bottom {
@@ -927,7 +929,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       align-items: center;
       gap: 0;
       width: 100%;
-      transition: grid-template-columns 220ms ease, gap 220ms ease;
+      transition: grid-template-columns 280ms cubic-bezier(0.22, 1, 0.36, 1), gap 220ms ease;
     }
     .enterprise-icon-rail:hover .rail-expanded-head,
     .enterprise-icon-rail:focus-within .rail-expanded-head,
@@ -952,7 +954,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       color: #8b8d93;
       background: transparent;
       text-decoration: none;
-      transition: background 160ms ease, border-color 160ms ease, color 160ms ease, width 220ms ease, column-gap 220ms ease;
+      transition: background 160ms ease, border-color 160ms ease, color 160ms ease, width 280ms cubic-bezier(0.22, 1, 0.36, 1), column-gap 220ms ease;
     }
     .enterprise-icon-rail:hover .rail-link,
     .enterprise-icon-rail:focus-within .rail-link,
@@ -1003,7 +1005,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       font-size: 14px;
       font-weight: 650;
       line-height: 1.1;
-      transition: max-width 220ms ease, opacity 160ms ease;
+      transition: max-width 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease 70ms;
     }
     .enterprise-icon-rail:hover .rail-label,
     .enterprise-icon-rail:focus-within .rail-label,
@@ -1016,21 +1018,30 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       font-weight: 750;
     }
     .rail-shortcut {
-      display: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       padding: 2px 5px;
       border: 1px solid #303640;
       border-radius: 5px;
-      background: #232832;
+      background: #11161c;
       color: #b3bac5;
       font-size: 10px;
       font-weight: 650;
       line-height: 1;
+      max-width: 0;
+      opacity: 0;
+      overflow: hidden;
+      transform: translateX(-4px);
+      transition: max-width 220ms ease, opacity 160ms ease 80ms, transform 180ms ease 80ms;
     }
     .enterprise-icon-rail:hover .rail-shortcut,
     .enterprise-icon-rail:focus-within .rail-shortcut,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-shortcut,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-shortcut {
-      display: inline-flex;
+      max-width: 48px;
+      opacity: 1;
+      transform: translateX(0);
     }
     .rail-badge {
       position: absolute;
@@ -1056,7 +1067,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       position: static;
       justify-self: end;
       margin-left: auto;
-      border-color: #11161c;
+      border-color: #050607;
     }
     .rail-pin-button {
       display: grid;
@@ -1074,7 +1085,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       font-weight: 800;
       line-height: 1;
       opacity: 0;
-      transition: width 220ms ease, opacity 160ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
+      transition: width 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease 80ms, background 160ms ease, border-color 160ms ease, color 160ms ease;
     }
     .enterprise-icon-rail:hover .rail-pin-button,
     .enterprise-icon-rail:focus-within .rail-pin-button,
@@ -1105,8 +1116,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       width: 12px;
       height: 12px;
       border-radius: 999px;
-      background: #11161c;
-      border: 2px solid #11161c;
+      background: #050607;
+      border: 2px solid #050607;
     }
     .rail-status-dot {
       width: 8px;

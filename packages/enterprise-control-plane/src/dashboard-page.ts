@@ -2,7 +2,7 @@ import { injectEnterpriseAnalytics } from './analytics.js';
 import type { EnterpriseControlPlaneEnv } from './config.js';
 import { ENTERPRISE_APP_SHELL_THEME, renderEnterpriseAppSidebar } from './enterprise-app-shell.js';
 
-const ENTERPRISE_AUTH_ERROR_MESSAGE = 'Your enterprise session expired or is missing. Sign in again to continue.';
+const ENTERPRISE_AUTH_ERROR_MESSAGE = 'Your enterprise session expired or is missing.';
 
 export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {}): string {
   return injectEnterpriseAnalytics(`<!doctype html>
@@ -106,8 +106,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       letter-spacing: 0 !important;
     }
     .main.enterprise-dashboard-main {
-      justify-self: center;
-      margin: 0 auto;
+      justify-self: start;
+      margin: 0;
       padding: 0;
       max-width: 1480px !important;
       width: min(100%, 1480px) !important;
@@ -1550,7 +1550,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         return headers;
       }
       async function fetchJson(path, options) {
-        var res = await fetch(path, Object.assign({}, options || {}, { headers: Object.assign(authHeaders(), (options && options.headers) || {}) }));
+        var res = await fetch(path, Object.assign({ credentials: 'same-origin' }, options || {}, { headers: Object.assign(authHeaders(), (options && options.headers) || {}) }));
         var payload = await res.json().catch(function() { return null; });
         if (!res.ok) throw new Error(friendlyErrorMessage((payload && payload.error) || ('Request failed: ' + res.status)));
         return payload && payload.data ? payload.data : payload;
@@ -1715,10 +1715,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         }).join('') : '<div class="empty">No audit events in this window.</div>';
       }
       async function loadDashboard() {
-        if (!token) {
-          setNotice('Sign in to view your VaultProof workspace.');
-          return;
-        }
         var sequence = ++loadSequence;
         var panelFailures = [];
         var initialOrgId = currentOrgId;
