@@ -15959,7 +15959,9 @@ export function renderEnterpriseHealthPage(
 }
 
 export function renderEnterprisePlannedAppPage(pageName: string, env: EnterpriseControlPlaneEnv = {}): string | null {
-  if (pageName === 'inbox') return injectEnterpriseAnalytics(renderEnterpriseLiveChatPage(), env, 'inbox');
+  if (pageName === 'inbox' || pageName === 'knowledge' || pageName === 'reports' || pageName === 'outbound' || pageName === 'contacts') {
+    return injectEnterpriseAnalytics(renderEnterpriseLiveChatPage(pageName), env, pageName);
+  }
   if (pageName === 'members') return injectEnterpriseAnalytics(renderEnterpriseMembersPage(), env, 'members');
   if (pageName === 'audit') return injectEnterpriseAnalytics(renderEnterpriseAuditPage(), env, 'audit');
   if (pageName === 'alerts') return injectEnterpriseAnalytics(renderEnterpriseAlertsPage(), env, 'alerts');

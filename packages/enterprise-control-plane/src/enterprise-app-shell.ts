@@ -4,6 +4,10 @@ export type EnterpriseAppNavPage =
   | 'evidence'
   | 'projects'
   | 'inbox'
+  | 'knowledge'
+  | 'reports'
+  | 'outbound'
+  | 'contacts'
   | 'inventory'
   | 'policy'
   | 'rollout'
@@ -326,10 +330,10 @@ const ENTERPRISE_RAIL_BRAND: EnterpriseRailItem = {
 
 const ENTERPRISE_RAIL_ITEMS: readonly EnterpriseRailItem[] = [
   { label: 'Inbox', icon: 'inbox', href: '/app/inbox', page: 'inbox', badge: '4' },
-  { label: 'Dashboard', icon: 'layout', href: '/app/dashboard', page: 'dashboard' },
-  { label: 'Keys', icon: 'key', href: '/app/keys', page: 'keys' },
-  { label: 'Evidence', icon: 'file-check', href: '/app/evidence', page: 'evidence' },
-  { label: 'Monitor', icon: 'activity', href: '/app/activity', page: 'activity' },
+  { label: 'Knowledge', icon: 'book-open', href: '/app/knowledge', page: 'knowledge' },
+  { label: 'Reports', icon: 'activity', href: '/app/reports', page: 'reports' },
+  { label: 'Outbound', icon: 'message', href: '/app/outbound', page: 'outbound' },
+  { label: 'Contacts', icon: 'user', href: '/app/contacts', page: 'contacts' },
   { label: 'Settings', icon: 'settings', href: '/app/settings', page: 'settings' },
 ];
 
@@ -347,6 +351,10 @@ const ENTERPRISE_NAV_ICON_BY_PAGE: Partial<Record<EnterpriseAppNavPage, string>>
   evidence: 'E',
   projects: 'W',
   inbox: 'C',
+  knowledge: 'K',
+  reports: 'R',
+  outbound: 'O',
+  contacts: 'U',
   inventory: 'I',
   policy: 'P',
   rollout: 'R',

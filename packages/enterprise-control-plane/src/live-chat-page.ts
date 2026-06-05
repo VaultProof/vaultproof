@@ -26,6 +26,8 @@ type ChatIconName =
   | 'user'
   | 'zap';
 
+type MessagingPageName = 'inbox' | 'knowledge' | 'reports' | 'outbound' | 'contacts';
+
 function chatIcon(name: ChatIconName, className = 'chat-icon'): string {
   const paths: Record<ChatIconName, string> = {
     alert: '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
@@ -59,15 +61,17 @@ function chatIcon(name: ChatIconName, className = 'chat-icon'): string {
   return `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths[name]}</svg>`;
 }
 
-export function renderEnterpriseLiveChatPage(): string {
-  const navItems: Array<{ icon: ChatIconName; label: string; href: string; active?: boolean }> = [
-    { icon: 'home', label: 'Home', href: '/app/dashboard' },
-    { icon: 'inbox', label: 'Inbox', href: '/app/inbox', active: true },
-    { icon: 'shield', label: 'Provider slots', href: '/app/keys' },
-    { icon: 'barChart', label: 'Activity', href: '/app/activity' },
-    { icon: 'bell', label: 'Alerts', href: '/app/alerts' },
+export function renderEnterpriseLiveChatPage(activePage: MessagingPageName = 'inbox'): string {
+  const navItems: Array<{ icon: ChatIconName; label: string; href: string; page?: MessagingPageName }> = [
+    { icon: 'inbox', label: 'Inbox', href: '/app/inbox', page: 'inbox' },
+    { icon: 'book', label: 'Knowledge', href: '/app/knowledge', page: 'knowledge' },
+    { icon: 'barChart', label: 'Reports', href: '/app/reports', page: 'reports' },
+    { icon: 'send', label: 'Outbound', href: '/app/outbound', page: 'outbound' },
+    { icon: 'user', label: 'Contacts', href: '/app/contacts', page: 'contacts' },
     { icon: 'settings', label: 'Settings', href: '/app/settings' },
   ];
+  const activeLabel = navItems.find((item) => item.page === activePage)?.label || 'Inbox';
+  const activeStreamLabel = activeLabel.toLowerCase();
 
   return `<!doctype html>
 <html lang="en">
@@ -75,7 +79,7 @@ export function renderEnterpriseLiveChatPage(): string {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex" />
-  <title>Inbox - VaultProof Enterprise</title>
+  <title>${activeLabel} - VaultProof Enterprise</title>
   <style>
     :root {
       color-scheme: light;
@@ -833,30 +837,30 @@ export function renderEnterpriseLiveChatPage(): string {
   <div class="chat-dashboard enterprise-live-chat-dashboard">
     <nav class="primary-nav" aria-label="Primary navigation">
       <a class="nav-mark" href="/app/dashboard" title="VaultProof">VP</a>
-      ${navItems.map((item) => `<a class="nav-button${item.active ? ' active' : ''}" href="${item.href}" title="${item.label}" aria-label="${item.label}">${chatIcon(item.icon)}</a>`).join('')}
+      ${navItems.map((item) => `<a class="nav-button${item.page === activePage ? ' active' : ''}" href="${item.href}" title="${item.label}" aria-label="${item.label}">${chatIcon(item.icon)}</a>`).join('')}
       <div class="nav-spacer"></div>
       <a class="nav-button" href="/app/docs" title="Docs" aria-label="Docs">${chatIcon('book')}</a>
       <a class="agent-dot" href="/app/members" title="Agent profile" aria-label="Agent profile">VP</a>
     </nav>
 
-    <aside class="inbox-stream transition-all duration-300" aria-label="Inbox stream">
+    <aside class="inbox-stream transition-all duration-300" aria-label="${activeStreamLabel} stream">
       <div class="collapsed-rail">
-        <button id="expandInboxBtn" class="icon-button" type="button" aria-label="Expand inbox stream" title="Expand inbox stream">${chatIcon('chevronRight')}</button>
-        <strong>Inbox</strong>
+        <button id="expandInboxBtn" class="icon-button" type="button" aria-label="Expand ${activeStreamLabel} stream" title="Expand ${activeStreamLabel} stream">${chatIcon('chevronRight')}</button>
+        <strong>${activeLabel}</strong>
       </div>
       <div class="stream-header">
         <div class="stream-title-row">
           <div>
-            <h2 class="stream-title">Inbox</h2>
+            <h2 class="stream-title">${activeLabel}</h2>
             <div class="stream-meta"><span id="threadCount">6</span> conversations</div>
           </div>
-          <button id="collapseInboxBtn" class="icon-button" type="button" aria-label="Collapse inbox stream" title="Collapse inbox stream">${chatIcon('chevronLeft')}</button>
+          <button id="collapseInboxBtn" class="icon-button" type="button" aria-label="Collapse ${activeStreamLabel} stream" title="Collapse ${activeStreamLabel} stream">${chatIcon('chevronLeft')}</button>
         </div>
         <label class="search-wrap" for="chatSearch">
           ${chatIcon('search')}
           <input id="chatSearch" type="search" autocomplete="off" placeholder="Search conversations" />
         </label>
-        <div class="filter-row" role="tablist" aria-label="Inbox filters">
+        <div class="filter-row" role="tablist" aria-label="${activeStreamLabel} filters">
           <button class="filter-pill active" type="button" data-filter="all">All</button>
           <button class="filter-pill" type="button" data-filter="unassigned">Unassigned</button>
           <button class="filter-pill" type="button" data-filter="mine">Mine</button>
