@@ -795,6 +795,10 @@ function normalizeAwsKmsExternalId(value: unknown, organizationId: string, exist
   return externalId;
 }
 
+function looksLikeUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
 function vaultProofAwsRuntimePrincipalArn(env: EnterpriseControlPlaneEnv): string {
   return (env.awsKmsRuntimePrincipalArn || 'arn:aws:iam::VAULTPROOF_AWS_ACCOUNT_ID:role/VaultProofRuntimeRole').trim();
 }
@@ -1307,109 +1311,113 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
   <meta name="robots" content="noindex,nofollow" />
   <title>VaultProof Internal Admin</title>
   <style>
-    :root { color-scheme: light; --bg:#f5f7fb; --bg-mid:#e9eff5; --paper:#fff; --panel:rgba(255,255,255,.86); --panel-strong:rgba(255,255,255,.98); --card-bg:#fff; --row-bg:#f8fafc; --surface:#eef3f7; --line:rgba(26,40,52,.14); --line-soft:rgba(26,40,52,.08); --text:#17202a; --muted:#526170; --soft:#7a8794; --gold:#315f95; --accent:#315f95; --accent-soft:rgba(49, 95, 149, .12); --green:#15803d; --red:#dc2626; --blue:#2563eb; --warn:#b45309; --ink:#fff; --primary-bg:#315f95; --primary-text:#ffffff; --primary-border:#315f95; --control-bg:rgba(255,255,255,.92); --option-bg:#fff; --option-text:#17202a; --sidebar-bg:#18201f; --sidebar-card-bg:#101615; --sidebar-text:#fff; --sidebar-muted:rgba(188,216,210,.74); --sidebar-link:rgba(255,255,255,.88); --sidebar-link-active-bg:rgba(49, 95, 149, .16); --sidebar-link-active-border:rgba(111, 158, 213, .42); --sidebar-line:rgba(111, 158, 213, .18); --shadow:0 18px 54px rgba(26,40,52,.10); }
+    :root { color-scheme: light; --bg:#f8fafc; --foreground:#0f172a; --card:#ffffff; --card-foreground:#0f172a; --muted:#f1f5f9; --muted-foreground:#64748b; --secondary:#f8fafc; --secondary-foreground:#0f172a; --border:#e2e8f0; --border-strong:#cbd5e1; --input:#cbd5e1; --ring:#2563eb; --primary:#0f172a; --primary-foreground:#ffffff; --success:#15803d; --warning:#b45309; --destructive:#dc2626; --blue:#2563eb; --green:var(--success); --warn:var(--warning); --red:var(--destructive); --primary-bg:var(--primary); --radius:8px; --shadow-sm:0 1px 2px rgba(15,23,42,.05); --shadow-md:0 8px 24px rgba(15,23,42,.08); --sidebar-bg:#0f172a; --sidebar-border:#1e293b; --sidebar-muted:#94a3b8; --sidebar-text:#f8fafc; --sidebar-active:#1e293b; --sidebar-hover:#172033; }
     * { box-sizing: border-box; }
-    body { margin:0; min-height:100vh; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight:400; color:var(--text); background:var(--bg); }
+    body { margin:0; min-height:100vh; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight:400; color:var(--foreground); background:var(--bg); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
     a { color: inherit; text-decoration: none; }
-    .shell { display:grid; grid-template-columns:300px minmax(0, 1fr); gap:20px; min-height:100vh; max-width:1480px; margin:0 auto; padding:16px 24px; }
-    .sidebar { border:1px solid var(--sidebar-line); background:var(--sidebar-bg); color:var(--sidebar-text); border-radius:8px; padding:16px; position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; box-shadow:0 24px 70px rgba(26,40,52,.22); }
-    .brand { display:flex; gap:12px; align-items:center; margin-bottom:14px; padding:4px 4px 16px; border-bottom:1px solid rgba(255,255,255,.1); }
-    .mark { width:38px; height:38px; border-radius:14px; display:grid; place-items:center; background:var(--primary-bg); color:var(--primary-text); font-weight:700; }
-    .brand-title { font-weight:600; font-size:16px; line-height:1.12; letter-spacing:0; color:var(--sidebar-text); }
-    .brand-sub { color:#6f9ed5; font-size:12px; margin-top:4px; font-weight:400; letter-spacing:.16em; text-transform:uppercase; }
-    .nav-label { color:rgba(255,255,255,.35); font-size:11px; font-weight:400; text-transform:uppercase; letter-spacing:.18em; margin:16px 0 8px 10px; }
-    .nav-link { display:flex; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:8px; color:var(--sidebar-link); border:1px solid rgba(255,255,255,.08); margin-bottom:5px; font-size:14px; font-weight:600; line-height:1.25; }
-    .nav-link:hover, .nav-link.active { background:var(--sidebar-link-active-bg); border-color:var(--sidebar-link-active-border); color:var(--sidebar-text); }
-    .sidebar .tag { color:#6f9ed5; border-color:rgba(111, 158, 213, .34); background:rgba(111, 158, 213, .08); }
-    .sidebar-note { margin-top:18px; border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:14px; color:rgba(255,255,255,.7); background:rgba(255,255,255,.07); font-size:12px; line-height:1.45; }
-    .main { min-width:0; padding:20px; max-width:none; width:100%; background:#fff; border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow); }
-    .topbar { display:flex; justify-content:space-between; gap:18px; align-items:flex-start; margin-bottom:22px; }
-    .eyebrow { display:inline-flex; color:var(--green); background:rgba(21,128,61,.1); border:1px solid rgba(21,128,61,.18); border-radius:999px; padding:6px 9px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.16em; }
-    h1 { margin:12px 0; font-size:2.6rem; line-height:1.08; font-weight:600; letter-spacing:0; max-width:760px; }
-    .lead { color:var(--muted); max-width:780px; line-height:1.6; }
-    button, select, input, textarea { border:1px solid var(--line); background:var(--control-bg); color:var(--text); border-radius:8px; padding:11px 12px; font:inherit; }
-    option { background:var(--option-bg); color:var(--option-text); }
+    .shell { display:grid; grid-template-columns:280px minmax(0, 1fr); gap:20px; min-height:100vh; max-width:1520px; margin:0 auto; padding:20px; }
+    .sidebar { border:1px solid var(--sidebar-border); background:var(--sidebar-bg); color:var(--sidebar-text); border-radius:var(--radius); padding:14px; position:sticky; top:20px; align-self:start; max-height:calc(100vh - 40px); overflow:auto; box-shadow:var(--shadow-md); }
+    .brand { display:flex; gap:11px; align-items:center; margin-bottom:14px; padding:4px 4px 14px; border-bottom:1px solid rgba(255,255,255,.08); }
+    .mark { width:34px; height:34px; border-radius:var(--radius); display:grid; place-items:center; background:#f8fafc; color:#0f172a; font-weight:700; font-size:12px; }
+    .brand-title { font-weight:600; font-size:15px; line-height:1.15; letter-spacing:0; color:var(--sidebar-text); }
+    .brand-sub { color:var(--sidebar-muted); font-size:11px; margin-top:3px; font-weight:500; letter-spacing:0; text-transform:none; }
+    .nav-label { color:var(--sidebar-muted); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; margin:16px 0 7px 10px; }
+    .nav-link { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:36px; padding:8px 10px; border-radius:var(--radius); color:#dbeafe; border:1px solid transparent; margin-bottom:4px; font-size:13px; font-weight:500; line-height:1.25; }
+    .nav-link:hover, .nav-link.active { background:var(--sidebar-active); border-color:rgba(148,163,184,.18); color:#fff; }
+    .sidebar .tag { color:#bfdbfe; border-color:rgba(147,197,253,.22); background:rgba(59,130,246,.12); }
+    .sidebar-note { margin-top:18px; border:1px solid rgba(255,255,255,.1); border-radius:var(--radius); padding:14px; color:var(--sidebar-muted); background:rgba(255,255,255,.04); font-size:12px; line-height:1.45; }
+    .main { min-width:0; width:100%; padding:0; background:transparent; border:0; box-shadow:none; }
+    .topbar { display:flex; justify-content:space-between; gap:18px; align-items:flex-start; margin-bottom:18px; }
+    .eyebrow { display:inline-flex; color:var(--success); background:#f0fdf4; border:1px solid #bbf7d0; border-radius:999px; padding:5px 8px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; }
+    h1 { margin:8px 0 8px; font-size:2rem; line-height:1.15; font-weight:650; letter-spacing:0; max-width:760px; }
+    .lead { color:var(--muted-foreground); max-width:780px; line-height:1.55; margin:0; }
+    button, select, input, textarea { border:1px solid var(--input); background:var(--card); color:var(--foreground); border-radius:var(--radius); padding:9px 11px; font:inherit; font-size:14px; }
+    option { background:var(--card); color:var(--foreground); }
     textarea { resize:vertical; min-height:86px; }
     button { cursor:pointer; }
-    .primary { background:var(--primary-bg); color:var(--primary-text); border-color:var(--primary-border); font-weight:600; }
+    button:hover, .action:hover { background:var(--muted); }
+    button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible { outline:2px solid var(--ring); outline-offset:2px; }
+    .primary { background:var(--primary); color:var(--primary-foreground); border-color:var(--primary); font-weight:600; }
+    .primary:hover { background:#1e293b; border-color:#1e293b; }
     .toolbar { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; }
     .grid { display:grid; gap:16px; }
     .kpis { grid-template-columns:repeat(6, minmax(0,1fr)); margin-bottom:16px; }
     .two { grid-template-columns:minmax(0,1fr) minmax(360px,.8fr); }
-    .card { border:1px solid var(--line); border-radius:8px; padding:20px; background:var(--card-bg); box-shadow:var(--shadow); }
+    .card { border:1px solid var(--border); border-radius:var(--radius); padding:18px; background:var(--card); box-shadow:var(--shadow-sm); }
     .control-center { margin-bottom:16px; overflow:hidden; }
     .control-title { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:16px; }
-    .control-title h2 { margin:0; font-size:22px; font-weight:600; letter-spacing:0; }
-    .control-title p { margin:6px 0 0; color:var(--muted); max-width:760px; line-height:1.5; }
+    .control-title h2 { margin:0; font-size:20px; font-weight:650; letter-spacing:0; }
+    .control-title p { margin:6px 0 0; color:var(--muted-foreground); max-width:760px; line-height:1.5; }
     .control-kpis { display:grid; grid-template-columns:1.25fr repeat(4, minmax(0,1fr)); gap:12px; margin-bottom:16px; }
-    .control-kpi { border:1px solid var(--line-soft); border-radius:8px; padding:15px; background:var(--row-bg); min-width:0; }
-    .control-kpi.main { background:var(--accent-soft); border-color:rgba(49, 95, 149, .22); }
+    .control-kpi { border:1px solid var(--border); border-radius:var(--radius); padding:14px; background:var(--secondary); min-width:0; }
+    .control-kpi.main { background:#eff6ff; border-color:#bfdbfe; }
     .control-chart-grid { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:14px; }
     .control-chart-grid.visual { grid-template-columns:minmax(0,1.45fr) minmax(320px,.75fr); }
-    .control-panel { border:1px solid var(--line-soft); border-radius:8px; padding:16px; background:var(--row-bg); min-width:0; }
-    .control-panel h3 { margin:0; font-size:16px; font-weight:600; letter-spacing:0; }
-    .chart-shell { margin-top:14px; min-height:220px; border:1px solid var(--line-soft); border-radius:8px; background:#fff; padding:14px; display:grid; align-items:end; overflow:hidden; }
+    .control-panel { border:1px solid var(--border); border-radius:var(--radius); padding:15px; background:var(--secondary); min-width:0; }
+    .control-panel h3 { margin:0; font-size:15px; font-weight:650; letter-spacing:0; }
+    .chart-shell { margin-top:14px; min-height:220px; border:1px solid var(--border); border-radius:var(--radius); background:var(--card); padding:14px; display:grid; align-items:end; overflow:hidden; }
     .sparkline-chart { width:100%; height:220px; display:block; }
-    .sparkline-axis { color:var(--muted); font-size:11px; display:flex; justify-content:space-between; gap:10px; margin-top:8px; }
+    .sparkline-axis { color:var(--muted-foreground); font-size:11px; display:flex; justify-content:space-between; gap:10px; margin-top:8px; }
     .donut-wrap { display:grid; grid-template-columns:132px 1fr; gap:14px; align-items:center; margin-top:14px; }
     .donut-chart { width:132px; height:132px; border-radius:999px; display:grid; place-items:center; background:conic-gradient(var(--green) 0deg, var(--green) 1deg, rgba(26,40,52,.10) 1deg, rgba(26,40,52,.10) 360deg); }
-    .donut-hole { width:76px; height:76px; border-radius:999px; background:#fff; display:grid; place-items:center; text-align:center; border:1px solid var(--line-soft); color:var(--text); font-weight:600; }
-    .donut-hole span { display:block; color:var(--muted); font-size:11px; font-weight:400; margin-top:2px; }
+    .donut-hole { width:76px; height:76px; border-radius:999px; background:var(--card); display:grid; place-items:center; text-align:center; border:1px solid var(--border); color:var(--foreground); font-weight:600; }
+    .donut-hole span { display:block; color:var(--muted-foreground); font-size:11px; font-weight:400; margin-top:2px; }
     .legend-list { display:grid; gap:8px; }
-    .legend-item { display:flex; justify-content:space-between; gap:10px; color:var(--muted); font-size:12px; }
-    .legend-item strong { color:var(--text); font-weight:600; }
+    .legend-item { display:flex; justify-content:space-between; gap:10px; color:var(--muted-foreground); font-size:12px; }
+    .legend-item strong { color:var(--foreground); font-weight:600; }
     .legend-dot { width:9px; height:9px; border-radius:999px; display:inline-block; margin-right:7px; }
-    .stacked-bar { display:flex; height:18px; overflow:hidden; border-radius:999px; background:rgba(26,40,52,.10); margin-top:14px; }
+    .stacked-bar { display:flex; height:18px; overflow:hidden; border-radius:999px; background:var(--muted); margin-top:14px; }
     .stacked-segment { min-width:0; transition:width 160ms ease; }
-    .chart-summary { color:var(--muted); font-size:12px; line-height:1.45; margin-top:10px; }
+    .chart-summary { color:var(--muted-foreground); font-size:12px; line-height:1.45; margin-top:10px; }
     .chart-list { display:grid; gap:11px; margin-top:14px; }
     .chart-row { display:grid; gap:6px; }
-    .chart-row-head { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:12px; }
-    .chart-row-head strong { color:var(--text); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .chart-track { height:11px; border-radius:999px; background:rgba(26,40,52,.12); overflow:hidden; }
+    .chart-row-head { display:flex; justify-content:space-between; gap:12px; color:var(--muted-foreground); font-size:12px; }
+    .chart-row-head strong { color:var(--foreground); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .chart-track { height:10px; border-radius:999px; background:var(--muted); overflow:hidden; }
     .chart-bar { height:100%; width:0; border-radius:999px; background:linear-gradient(90deg, var(--green), var(--blue)); }
     .chart-bar.gold { background:linear-gradient(90deg, var(--primary-bg), var(--green)); }
     .chart-bar.warn { background:linear-gradient(90deg, var(--warn), var(--red)); }
-    .chart-empty { color:var(--muted); border:1px dashed var(--line); border-radius:16px; padding:14px; background:var(--row-bg); font-size:13px; }
-    .kpi-label { color:var(--soft); font-size:12px; font-weight:400; text-transform:uppercase; letter-spacing:0; }
-    .kpi-value { font-size:34px; font-weight:600; letter-spacing:0; margin-top:8px; }
-    .kpi-sub { color:var(--muted); font-size:13px; margin-top:6px; }
+    .chart-empty { color:var(--muted-foreground); border:1px dashed var(--border-strong); border-radius:var(--radius); padding:14px; background:var(--secondary); font-size:13px; }
+    .kpi-label { color:var(--muted-foreground); font-size:12px; font-weight:500; text-transform:none; letter-spacing:0; }
+    .kpi-value { font-size:30px; font-weight:650; letter-spacing:0; margin-top:7px; }
+    .kpi-sub { color:var(--muted-foreground); font-size:13px; margin-top:5px; }
     .section-title { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:14px; }
-    .section-title h2 { margin:0; font-size:19px; font-weight:600; letter-spacing:0; }
-    .mini { color:var(--muted); font-size:13px; }
+    .section-title h2 { margin:0; font-size:18px; font-weight:650; letter-spacing:0; }
+    .mini { color:var(--muted-foreground); font-size:13px; }
     .list { display:grid; gap:10px; }
-    .row { display:grid; grid-template-columns:1fr auto; gap:14px; align-items:start; border:1px solid var(--line-soft); border-radius:17px; padding:14px; background:var(--row-bg); }
-    .row-title { font-weight:600; letter-spacing:0; }
-    .row-sub { color:var(--muted); font-size:13px; margin-top:5px; line-height:1.45; }
-    .row-sub.good { color:var(--green); }
-    .row-sub.bad { color:var(--red); }
-    .tag { display:inline-block; color:var(--blue); border:1px solid rgba(37,99,235,.24); border-radius:999px; padding:5px 8px; font-size:12px; margin:3px 4px 0 0; white-space:nowrap; }
-    .tag.good { color:var(--green); border-color:rgba(62,93,87,.24); }
-    .tag.warn { color:var(--warn); border-color:rgba(180,83,9,.30); }
-    .tag.bad { color:var(--red); border-color:rgba(220,38,38,.28); }
-    .notice, .empty { color:var(--muted); border:1px dashed var(--line); border-radius:18px; padding:18px; background:var(--row-bg); }
-    .notice.error { color:var(--red); border-color:rgba(220,38,38,.3); }
+    .row { display:grid; grid-template-columns:1fr auto; gap:14px; align-items:start; border:1px solid var(--border); border-radius:var(--radius); padding:13px; background:var(--card); }
+    .row-title { font-weight:600; letter-spacing:0; color:var(--foreground); }
+    .row-sub { color:var(--muted-foreground); font-size:13px; margin-top:5px; line-height:1.45; }
+    .row-sub.good { color:var(--success); }
+    .row-sub.bad { color:var(--destructive); }
+    .tag { display:inline-flex; align-items:center; color:var(--blue); border:1px solid #bfdbfe; background:#eff6ff; border-radius:999px; padding:4px 8px; font-size:12px; font-weight:500; margin:3px 4px 0 0; white-space:nowrap; }
+    .tag.good { color:var(--success); border-color:#bbf7d0; background:#f0fdf4; }
+    .tag.warn { color:var(--warning); border-color:#fde68a; background:#fffbeb; }
+    .tag.bad { color:var(--destructive); border-color:#fecaca; background:#fef2f2; }
+    .notice, .empty { color:var(--muted-foreground); border:1px dashed var(--border-strong); border-radius:var(--radius); padding:16px; background:var(--secondary); }
+    .notice.error { color:var(--destructive); border-color:#fecaca; background:#fef2f2; }
     .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
-    .action { border:1px solid var(--line); border-radius:14px; padding:10px 12px; background:var(--control-bg); color:var(--text); }
+    .action { border:1px solid var(--border); border-radius:var(--radius); padding:9px 11px; background:var(--card); color:var(--foreground); font-size:14px; font-weight:500; }
     .admin-action-panel { display:grid; gap:16px; margin-top:4px; }
     .action-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; }
-    .action-form { border:1px solid var(--line-soft); border-radius:18px; padding:16px; background:var(--row-bg); display:grid; gap:12px; }
-    .action-form h3 { margin:0; font-size:16px; font-weight:600; letter-spacing:0; }
-    .field { display:grid; gap:6px; color:var(--soft); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0; }
-    .field input, .field select, .field textarea { width:100%; color:var(--text); font-size:14px; font-weight:500; text-transform:none; letter-spacing:0; }
-    .checkbox-field { color:var(--text); font-size:14px; font-weight:600; text-transform:none; }
+    .action-form { border:1px solid var(--border); border-radius:var(--radius); padding:16px; background:var(--card); display:grid; gap:12px; box-shadow:var(--shadow-sm); }
+    .action-form h3 { margin:0; font-size:15px; font-weight:650; letter-spacing:0; }
+    .field { display:grid; gap:6px; color:var(--foreground); font-size:13px; font-weight:500; text-transform:none; letter-spacing:0; }
+    .field input, .field select, .field textarea { width:100%; color:var(--foreground); font-size:14px; font-weight:400; text-transform:none; letter-spacing:0; }
+    .checkbox-field { color:var(--foreground); font-size:14px; font-weight:500; text-transform:none; }
     .checkbox-line { display:flex; align-items:center; gap:10px; }
     .checkbox-line input { width:auto; padding:0; }
     .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .form-status { color:var(--muted); font-size:13px; min-height:18px; }
-    .form-status.good { color:var(--green); }
-    .form-status.bad { color:var(--red); }
+    .form-status { color:var(--muted-foreground); font-size:13px; min-height:18px; }
+    .form-status.good { color:var(--success); }
+    .form-status.bad { color:var(--destructive); }
     .admin-actions-toolbar { display:grid; grid-template-columns:minmax(220px, 360px) 1fr; gap:12px; align-items:end; }
-    .danger { color:#fff; background:var(--red); border:0; }
+    .danger { color:#fff; background:var(--destructive); border-color:var(--destructive); }
+    .danger:hover { background:#b91c1c; border-color:#b91c1c; }
     .inline-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
     .link-stack { display:flex; flex-wrap:wrap; gap:7px; margin-top:8px; }
     .create-business { margin-bottom:16px; }
-    .code-block { margin-top:8px; border:1px solid var(--line-soft); border-radius:8px; background:#0e1514; color:#d7e8e4; padding:12px; overflow:auto; white-space:pre-wrap; font:12px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; text-transform:none; letter-spacing:0; }
+    .code-block { margin-top:8px; border:1px solid #1e293b; border-radius:var(--radius); background:#020617; color:#e2e8f0; padding:12px; overflow:auto; white-space:pre-wrap; font:12px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; text-transform:none; letter-spacing:0; }
     @media (max-width: 1050px) { .shell { grid-template-columns:1fr; padding:12px; } .sidebar { position:relative; top:0; max-height:none; height:auto; order:2; } .main { order:1; } .topbar { flex-direction:column; } .toolbar { justify-content:flex-start; } .kpis, .two, .action-grid, .admin-actions-toolbar, .form-row, .control-kpis, .control-chart-grid, .control-chart-grid.visual, .donut-wrap { grid-template-columns:1fr; } }
   </style>
 </head>
@@ -1445,6 +1453,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         </div>
         <div class="toolbar">
           <button id="refreshBtn" class="primary" type="button">refresh</button>
+          <a class="action" href="/">all businesses</a>
           <a class="action" href="/app/launch">launch board</a>
           <a class="action" href="/app/demo">walkthrough</a>
           <a class="action" href="/app/onboarding">onboarding</a>
@@ -1608,6 +1617,11 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
       function businessLabel(biz) {
         return biz && (biz.name || biz.slug || biz.id) ? (biz.name || biz.slug || biz.id) : 'Business';
       }
+      function businessAdminPath(biz) {
+        var slug = biz && typeof biz.slug === 'string' ? biz.slug.trim() : '';
+        var id = biz && biz.id ? String(biz.id) : '';
+        return '/businesses/' + encodeURIComponent(slug || id);
+      }
       function notice(message) {
         var el = byId('notice');
         if (!el) return;
@@ -1768,12 +1782,36 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
           return chartRow(item.title, item.metric, item.value, blockerMax, item.tone);
         }).join('');
       }
-      function selectedOrgId() {
-        var match = window.location.pathname.match(/\\/orgs\\/([^/]+)/);
+      function selectedBusinessIdentifier() {
+        var match = window.location.pathname.match(/\\/(?:businesses|orgs)\\/([^/]+)/);
         return match ? decodeURIComponent(match[1]) : '';
       }
-      async function fetchOrgDetail(orgId) {
-        var response = await fetch('/api/v1/internal-admin/orgs/' + encodeURIComponent(orgId), {
+      function setBusinessDetailMode(enabled) {
+        [
+          'control-center',
+          'runtime',
+          'business-create',
+          'businesses',
+          'support',
+          'users',
+          'sso',
+          'kms',
+          'audit',
+          'internal-audit'
+        ].forEach(function(id) {
+          var el = byId(id);
+          if (el) el.style.display = enabled ? 'none' : '';
+        });
+        var detail = byId('org-detail');
+        if (detail) detail.style.display = enabled ? 'block' : 'none';
+      }
+      function syncBusinessDetailUrl(org) {
+        if (!org || !org.slug || !window.history || !window.history.replaceState) return;
+        if (!window.location.pathname.match(/^\\/orgs\\//)) return;
+        window.history.replaceState(null, '', '/businesses/' + encodeURIComponent(org.slug));
+      }
+      async function fetchOrgDetail(identifier) {
+        var response = await fetch('/api/v1/internal-admin/orgs/' + encodeURIComponent(identifier), {
           credentials: 'same-origin',
           headers: adminHeaders()
         });
@@ -1850,7 +1888,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         var proxyFrozen = proxy.freeze_state === 'frozen';
         var sub = (biz.owner_email || 'owner unknown') + ' - ' + number(biz.member_count) + ' users - ' + number(biz.active_project_count) + ' projects - ' + number(biz.api_call_count) + ' API calls - created ' + rel(biz.created_at);
         var links = linkTags(biz.business_login_links || []);
-        return '<div class="row"><div><div class="row-title">' + escapeHtml(biz.name || biz.slug || biz.id) + '</div><div class="row-sub">' + escapeHtml(sub) + '</div><div class="link-stack">' + links + '</div></div><div><span class="tag ' + (sso.status === 'configured' ? 'good' : 'warn') + '">' + escapeHtml(sso.status === 'configured' ? 'SSO ready' : 'SSO todo') + '</span><span class="tag ' + (kms.status === 'verified' || kms.last_test_status === 'passed' ? 'good' : (kms.status ? 'warn' : '')) + '">' + escapeHtml(kms.status ? 'KMS ' + kms.status : 'KMS todo') + '</span><span class="tag ' + (proxyFrozen ? 'bad' : (proxyTier === 'high_security' ? 'good' : (proxyTier === 'recommended' ? 'warn' : ''))) + '">' + escapeHtml(proxyFrozen ? 'Proxy frozen' : 'Proxy ' + proxyTier) + '</span><a class="tag" href="/orgs/' + encodeURIComponent(biz.id) + '">detail</a></div></div>';
+        return '<div class="row"><div><div class="row-title">' + escapeHtml(biz.name || biz.slug || biz.id) + '</div><div class="row-sub">' + escapeHtml(sub) + '</div><div class="link-stack">' + links + '</div></div><div><span class="tag ' + (sso.status === 'configured' ? 'good' : 'warn') + '">' + escapeHtml(sso.status === 'configured' ? 'SSO ready' : 'SSO todo') + '</span><span class="tag ' + (kms.status === 'verified' || kms.last_test_status === 'passed' ? 'good' : (kms.status ? 'warn' : '')) + '">' + escapeHtml(kms.status ? 'KMS ' + kms.status : 'KMS todo') + '</span><span class="tag ' + (proxyFrozen ? 'bad' : (proxyTier === 'high_security' ? 'good' : (proxyTier === 'recommended' ? 'warn' : ''))) + '">' + escapeHtml(proxyFrozen ? 'Proxy frozen' : 'Proxy ' + proxyTier) + '</span><a class="tag" href="' + escapeHtml(businessAdminPath(biz)) + '">detail</a></div></div>';
       }
       function roleOptions(selected) {
         return ['viewer', 'member', 'developer', 'auditor', 'iam_admin', 'security_admin', 'platform_admin', 'admin'].map(function(role) {
@@ -2081,6 +2119,7 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
         if (!section) return;
         section.style.display = 'block';
         var org = payload.business || {};
+        syncBusinessDetailUrl(org);
         text('orgDetailMeta', (org.name || org.slug || org.id || 'business') + ' - approval-gated actions');
         var ssoChecklist = Array.isArray(payload.sso_checklist) ? payload.sso_checklist : [];
         var timeline = Array.isArray(payload.member_timeline) ? payload.member_timeline : [];
@@ -2175,9 +2214,13 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
       async function load() {
         notice('');
         try {
+          var businessIdentifier = selectedBusinessIdentifier();
+          setBusinessDetailMode(Boolean(businessIdentifier));
+          if (businessIdentifier) {
+            renderOrgDetail(await fetchOrgDetail(businessIdentifier));
+            return;
+          }
           render(await fetchOverview());
-          var orgId = selectedOrgId();
-          if (orgId) renderOrgDetail(await fetchOrgDetail(orgId));
         } catch (error) {
           notice(error && error.message ? error.message : 'Internal admin failed to load.');
         }
@@ -2195,17 +2238,43 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
 async function handleInternalAdminOrgDetail(
   request: Request,
   env: EnterpriseControlPlaneEnv,
-  organizationId: string,
+  organizationIdentifier: string,
 ): Promise<Response> {
-  const orgId = decodeURIComponent(organizationId || '').trim();
-  if (!orgId) {
-    return Response.json({ error: 'Organization ID is required.' }, { status: 400 });
+  const orgIdentifier = decodeURIComponent(organizationIdentifier || '').trim();
+  if (!orgIdentifier) {
+    return Response.json({ error: 'Organization ID or slug is required.' }, { status: 400 });
   }
 
   const authorized = await authorizeInternalAdmin(request, env);
   if (authorized instanceof Response) return authorized;
 
   const supabase = getSupabase(env);
+  const orgLookupQuery = supabase
+    .from('organizations')
+    .select('id, name, slug, kind, owner_user_id, created_at, updated_at, archived_at')
+    .eq(looksLikeUuid(orgIdentifier) ? 'id' : 'slug', orgIdentifier)
+    .eq('kind', 'team')
+    .limit(1);
+  const orgResult = await orgLookupQuery;
+  if (orgResult.error) {
+    return Response.json({ error: `Internal admin org lookup failed: ${orgResult.error.message}` }, { status: 500 });
+  }
+
+  const organization = normalizeRows(orgResult.data as MaybeArray<{
+    id: string;
+    name: string | null;
+    slug: string | null;
+    kind: string;
+    owner_user_id: string | null;
+    created_at: string;
+    updated_at: string | null;
+    archived_at: string | null;
+  }>)[0];
+  if (!organization) {
+    return Response.json({ error: 'Organization not found.' }, { status: 404 });
+  }
+
+  const orgId = organization.id;
   const auditWriteSucceeded = await writeInternalAdminAuditEvent(
     env,
     authorized.auth,
@@ -2213,7 +2282,6 @@ async function handleInternalAdminOrgDetail(
     'internal_admin_org_detail_viewed',
   );
   const [
-    orgResult,
     memberResult,
     projectResult,
     inviteResult,
@@ -2226,11 +2294,6 @@ async function handleInternalAdminOrgDetail(
     kmsConnectionResult,
     proxyAccessPolicyResult,
   ] = await Promise.all([
-    supabase
-      .from('organizations')
-      .select('id, name, slug, kind, owner_user_id, created_at, updated_at, archived_at')
-      .eq('id', orgId)
-      .limit(1),
     supabase
       .from('organization_members')
       .select('organization_id, user_id, role, created_at')
@@ -2273,23 +2336,9 @@ async function handleInternalAdminOrgDetail(
     console.warn(`internal admin SSO settings read skipped: ${ssoResult.error.message}`);
   }
 
-  const firstError = orgResult.error || memberResult.error || projectResult.error || inviteResult.error || (ssoSchemaReady ? ssoResult.error : null) || auditResult.error;
+  const firstError = memberResult.error || projectResult.error || inviteResult.error || (ssoSchemaReady ? ssoResult.error : null) || auditResult.error;
   if (firstError) {
     return Response.json({ error: `Internal admin org detail query failed: ${firstError.message}` }, { status: 500 });
-  }
-
-  const organization = normalizeRows(orgResult.data as MaybeArray<{
-    id: string;
-    name: string | null;
-    slug: string | null;
-    kind: string;
-    owner_user_id: string | null;
-    created_at: string;
-    updated_at: string | null;
-    archived_at: string | null;
-  }>)[0];
-  if (!organization) {
-    return Response.json({ error: 'Organization not found.' }, { status: 404 });
   }
 
   const members = normalizeRows(memberResult.data as MaybeArray<{

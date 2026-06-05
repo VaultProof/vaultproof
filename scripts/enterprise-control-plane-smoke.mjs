@@ -90,6 +90,7 @@ const fakeProject = {
 const fakeOrganization = {
   id: 'org_123',
   name: 'Example Org',
+  slug: 'example-org',
   kind: 'team',
   owner_user_id: 'user_123',
   created_at: new Date().toISOString(),
@@ -794,7 +795,16 @@ function installSupabaseStub() {
 
     if (url.includes('/rest/v1/organizations') && method === 'GET') {
       if (decodedUrl.includes('select=id') && decodedUrl.includes('slug=eq.')) {
-        return jsonResponse(decodedUrl.includes('slug=eq.example-org') ? [{ id: 'org_123' }] : []);
+        return jsonResponse(decodedUrl.includes('slug=eq.example-org') ? [{
+          id: 'org_123',
+          name: 'Example Org',
+          slug: 'example-org',
+          kind: 'team',
+          owner_user_id: 'user_123',
+          created_at: '2026-04-01T12:00:00.000Z',
+          updated_at: '2026-04-02T12:00:00.000Z',
+          archived_at: null,
+        }] : []);
       }
       if (decodedUrl.includes('archived_by_user_id')) {
         return jsonResponse([{
@@ -4365,6 +4375,7 @@ async function assertEnterpriseMixpanelAnalytics() {
     ['/', 'internal-admin'],
     ['/app', 'internal-admin'],
     ['/orgs/org_123', 'internal-admin'],
+    ['/businesses/example-org', 'internal-admin'],
     ['/app/launch', 'launch'],
     ['/app/demo', 'demo'],
     ['/app/onboarding', 'onboarding'],
@@ -4547,9 +4558,9 @@ async function assertInternalAdminConsole() {
     'API calls by business',
     'controlTotalCalls',
     '--sidebar-muted',
-    '--primary-bg:#315f95',
-    '--sidebar-bg:#18201f',
-    '--bg:#f5f7fb',
+    '--primary:#0f172a',
+    '--sidebar-bg:#0f172a',
+    '--bg:#f8fafc',
     'Create business',
     'createBusinessSsoEnabled',
     'createBusinessSsoFields',
@@ -4719,7 +4730,7 @@ async function assertInternalAdminConsole() {
   }
 
   const orgDetailPageResponse = await handleEnterpriseControlPlaneRequest(
-    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/orgs/org_123', {
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/businesses/example-org', {
       headers: {
         cookie: sessionCookie.split(';')[0],
       },
@@ -4748,6 +4759,7 @@ async function assertInternalAdminConsole() {
     'User/member timeline',
     'Support notes',
     'Evidence links',
+    '/businesses/',
     '/api/v1/internal-admin/orgs/',
   ]) {
     if (!orgDetailPageHtml.includes(required)) {
@@ -4882,7 +4894,7 @@ async function assertInternalAdminConsole() {
   }
 
   const missingSsoOrgDetailResponse = await handleEnterpriseControlPlaneRequest(
-    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123', {
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/example-org', {
       headers: {
         authorization: `Bearer ${AUTH_TOKEN}`,
       },
@@ -4898,7 +4910,7 @@ async function assertInternalAdminConsole() {
   organizationSsoSettingsSchemaReady = true;
 
   const orgDetailResponse = await handleEnterpriseControlPlaneRequest(
-    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/org_123', {
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs/example-org', {
       headers: {
         authorization: `Bearer ${AUTH_TOKEN}`,
       },
@@ -4911,6 +4923,9 @@ async function assertInternalAdminConsole() {
   }
   if (orgDetail.business?.name !== 'Example Org' || orgDetail.business?.member_count !== 1) {
     throw new Error(`Expected org detail business summary, got ${JSON.stringify(orgDetail.business)}`);
+  }
+  if (orgDetail.business?.id !== 'org_123' || orgDetail.business?.slug !== 'example-org') {
+    throw new Error(`Expected internal admin org detail API to resolve slug, got ${JSON.stringify(orgDetail.business)}`);
   }
   if (!Array.isArray(orgDetail.sso_checklist) || !orgDetail.sso_checklist.find((item) => item.label === 'Choose identity provider')) {
     throw new Error(`Expected org detail SSO checklist, got ${JSON.stringify(orgDetail.sso_checklist)}`);

@@ -592,7 +592,7 @@ export function renderInternalAdminLoginPage(env: EnterpriseControlPlaneEnv = {}
   <title>Login</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.101.1" integrity="sha384-0VpB0wAYDdhWCEv3+IjT0Z9Kgpvszkf70RFX3ro7l4QR5nywxsMaOpmvZKsfRF8I" crossorigin="anonymous"></script>
   <style>
-    :root { color-scheme: light; --bg:#f5f7fb; --ink:#17202a; --line:rgba(26,40,52,.14); --primary:#315f95; --primary-text:#ffffff; --red:#dc2626; }
+    :root { color-scheme: light; --bg:#f8fafc; --foreground:#0f172a; --card:#ffffff; --muted:#64748b; --border:#e2e8f0; --input:#cbd5e1; --ring:#2563eb; --primary:#0f172a; --primary-text:#ffffff; --red:#dc2626; --radius:8px; --shadow:0 8px 24px rgba(15,23,42,.08); }
     * { box-sizing: border-box; }
     body {
       min-height: 100vh;
@@ -600,38 +600,51 @@ export function renderInternalAdminLoginPage(env: EnterpriseControlPlaneEnv = {}
       display: grid;
       place-items: center;
       background: var(--bg);
-      color: var(--ink);
+      color: var(--foreground);
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
     .auth-card {
       width: min(100% - 32px, 360px);
       display: grid;
-      gap: 10px;
+      gap: 12px;
+      padding: 22px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
     .hidden { display: none !important; }
     .form-stack, .oauth-stack { display: grid; gap: 10px; }
     .form-input, .btn {
       width: 100%;
       min-height: 44px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
+      border: 1px solid var(--input);
+      border-radius: var(--radius);
       background: #fff;
-      color: var(--ink);
+      color: var(--foreground);
       padding: 0 12px;
       font: inherit;
+      font-size: 14px;
     }
+    .form-input::placeholder { color: var(--muted); }
+    .form-input:focus-visible, .btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-weight: 700;
+      font-weight: 600;
     }
     .btn-primary { background: var(--primary); color: var(--primary-text); border-color: var(--primary); }
+    .btn-primary:hover { background:#1e293b; border-color:#1e293b; }
     .btn-secondary { background: #fff; }
+    .btn-secondary:hover { background:#f1f5f9; }
     #authError, #loginError {
       border: 1px solid rgba(220, 38, 38, 0.24);
-      border-radius: 8px;
+      border-radius: var(--radius);
+      background:#fef2f2;
       color: var(--red);
       padding: 10px;
       font-size: 13px;

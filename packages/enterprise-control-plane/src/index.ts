@@ -518,7 +518,9 @@ async function handleEnterpriseControlPlaneRequestInner(
       || url.pathname === '/admin/'
       || url.pathname === '/internal/admin'
       || /^\/orgs\/[^/]+\/?$/.test(url.pathname)
-      || /^\/internal\/admin\/orgs\/[^/]+\/?$/.test(url.pathname))
+      || /^\/businesses\/[^/]+\/?$/.test(url.pathname)
+      || /^\/internal\/admin\/orgs\/[^/]+\/?$/.test(url.pathname)
+      || /^\/internal\/admin\/businesses\/[^/]+\/?$/.test(url.pathname))
   ) {
     const authorized = await authorizeInternalAdmin(request, env);
     if (authorized instanceof Response) {
