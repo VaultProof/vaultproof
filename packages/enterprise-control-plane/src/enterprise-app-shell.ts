@@ -297,34 +297,48 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
 
 interface EnterpriseRailItem {
   readonly label: string;
-  readonly glyph: string;
+  readonly icon: EnterpriseRailIconName;
   readonly href: string;
   readonly badge?: string;
   readonly page?: EnterpriseAppNavPage;
   readonly shortcut?: string;
 }
 
+type EnterpriseRailIconName =
+  | 'activity'
+  | 'book'
+  | 'book-open'
+  | 'file-check'
+  | 'inbox'
+  | 'key'
+  | 'layout'
+  | 'message'
+  | 'search'
+  | 'settings'
+  | 'shield'
+  | 'user';
+
 const ENTERPRISE_RAIL_BRAND: EnterpriseRailItem = {
   label: 'VaultProof',
-  glyph: 'VP',
+  icon: 'shield',
   href: '/app/dashboard',
 };
 
 const ENTERPRISE_RAIL_ITEMS: readonly EnterpriseRailItem[] = [
-  { label: 'Inbox', glyph: 'C', href: '/app/inbox', page: 'inbox', badge: '4' },
-  { label: 'Dashboard', glyph: 'D', href: '/app/dashboard', page: 'dashboard' },
-  { label: 'Keys', glyph: 'K', href: '/app/keys', page: 'keys' },
-  { label: 'Evidence', glyph: 'E', href: '/app/evidence', page: 'evidence' },
-  { label: 'Monitor', glyph: 'M', href: '/app/activity', page: 'activity' },
-  { label: 'Settings', glyph: 'S', href: '/app/settings', page: 'settings' },
+  { label: 'Inbox', icon: 'inbox', href: '/app/inbox', page: 'inbox', badge: '4' },
+  { label: 'Dashboard', icon: 'layout', href: '/app/dashboard', page: 'dashboard' },
+  { label: 'Keys', icon: 'key', href: '/app/keys', page: 'keys' },
+  { label: 'Evidence', icon: 'file-check', href: '/app/evidence', page: 'evidence' },
+  { label: 'Monitor', icon: 'activity', href: '/app/activity', page: 'activity' },
+  { label: 'Settings', icon: 'settings', href: '/app/settings', page: 'settings' },
 ];
 
 const ENTERPRISE_RAIL_BOTTOM_ITEMS: readonly EnterpriseRailItem[] = [
-  { label: 'Search', glyph: '/', href: '/app/dashboard', shortcut: 'Cmd K' },
-  { label: 'Docs', glyph: '?', href: '/app/docs', page: 'docs' },
-  { label: 'Messages', glyph: 'C', href: '/app/inbox', page: 'inbox' },
-  { label: 'Runbooks', glyph: '*', href: '/app/runbooks', page: 'runbooks' },
-  { label: 'Profile', glyph: 'P', href: '/app/settings', page: 'settings' },
+  { label: 'Search', icon: 'search', href: '/app/dashboard', shortcut: 'Cmd K' },
+  { label: 'Docs', icon: 'book', href: '/app/docs', page: 'docs' },
+  { label: 'Messages', icon: 'message', href: '/app/inbox', page: 'inbox' },
+  { label: 'Runbooks', icon: 'book-open', href: '/app/runbooks', page: 'runbooks' },
+  { label: 'Profile', icon: 'user', href: '/app/settings', page: 'settings' },
 ];
 
 const ENTERPRISE_NAV_ICON_BY_PAGE: Partial<Record<EnterpriseAppNavPage, string>> = {
@@ -376,11 +390,41 @@ function enterpriseNavGlyph(item: EnterpriseSidebarNavItem): string {
   return item.page ? ENTERPRISE_NAV_ICON_BY_PAGE[item.page] || item.label.slice(0, 1).toUpperCase() : ENTERPRISE_NAV_ICON_BY_LABEL[item.label] || item.label.slice(0, 1).toUpperCase();
 }
 
+function enterpriseRailIcon(name: EnterpriseRailIconName): string {
+  const attrs = 'class="rail-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"';
+  switch (name) {
+    case 'activity':
+      return `<svg ${attrs}><path d="M3 12h4l2-7 4 14 2-7h6"></path></svg>`;
+    case 'book':
+      return `<svg ${attrs}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z"></path></svg>`;
+    case 'book-open':
+      return `<svg ${attrs}><path d="M2 4h7a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"></path><path d="M22 4h-7a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h8z"></path></svg>`;
+    case 'file-check':
+      return `<svg ${attrs}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="m9 15 2 2 4-5"></path></svg>`;
+    case 'inbox':
+      return `<svg ${attrs}><path d="M22 12h-6l-2 3h-4l-2-3H2"></path><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>`;
+    case 'key':
+      return `<svg ${attrs}><path d="M21 2l-2 2"></path><path d="m15.5 7.5 3 3L22 7l-3-3"></path><circle cx="7.5" cy="15.5" r="5.5"></circle><path d="m12 11 4-4"></path></svg>`;
+    case 'layout':
+      return `<svg ${attrs}><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path><path d="M9 21V9"></path></svg>`;
+    case 'message':
+      return `<svg ${attrs}><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path></svg>`;
+    case 'search':
+      return `<svg ${attrs}><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>`;
+    case 'settings':
+      return `<svg ${attrs}><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 3.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 3.6 8a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 8 3.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V2a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 3.6a1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 8a1.7 1.7 0 0 0 .6 1 1.7 1.7 0 0 0 1.1.4H22a2 2 0 1 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15z"></path></svg>`;
+    case 'shield':
+      return `<svg ${attrs}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-5"></path></svg>`;
+    case 'user':
+      return `<svg ${attrs}><circle cx="12" cy="8" r="4"></circle><path d="M4 22a8 8 0 0 1 16 0"></path></svg>`;
+  }
+}
+
 function enterpriseRailLink(activePage: EnterpriseAppNavPage, item: EnterpriseRailItem, className = ''): string {
   const active = item.page === activePage;
   const classes = ['rail-link', active ? 'active' : '', className].filter(Boolean).join(' ');
   return `<a class="${classes}" href="${escapeHtml(item.href)}" aria-label="${escapeHtml(item.label)}"${active ? ' aria-current="page"' : ''}>
-          <span class="rail-glyph">${escapeHtml(item.glyph)}</span>
+          <span class="rail-glyph">${enterpriseRailIcon(item.icon)}</span>
           <span class="rail-label">${escapeHtml(item.label)}</span>
           ${item.shortcut ? `<span class="rail-shortcut">${escapeHtml(item.shortcut)}</span>` : ''}
           ${item.badge ? `<span class="rail-badge">${escapeHtml(item.badge)}</span>` : ''}
@@ -936,6 +980,13 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       line-height: 1;
       font-weight: 700;
       letter-spacing: 0 !important;
+    }
+    .rail-icon {
+      display: block;
+      width: 17px;
+      height: 17px;
+      stroke-width: 2;
+      flex: 0 0 auto;
     }
     .rail-link.active .rail-glyph {
       background: #f97316;

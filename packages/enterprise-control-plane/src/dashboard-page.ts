@@ -1,10 +1,8 @@
 import { injectEnterpriseAnalytics } from './analytics.js';
 import type { EnterpriseControlPlaneEnv } from './config.js';
-import { enterpriseDemoWorkspaceJson } from './enterprise-demo-data.js';
 import { ENTERPRISE_APP_SHELL_THEME, renderEnterpriseAppSidebar } from './enterprise-app-shell.js';
 
 const ENTERPRISE_AUTH_ERROR_MESSAGE = 'Your enterprise session expired or is missing. Sign in again to continue.';
-const ENABLE_ENTERPRISE_DASHBOARD_SAMPLE_DATA = true; // Set to false to remove the empty-dashboard sample dataset.
 
 export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {}): string {
   return injectEnterpriseAnalytics(`<!doctype html>
@@ -108,10 +106,11 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       letter-spacing: 0 !important;
     }
     .main.enterprise-dashboard-main {
-      margin-top: var(--enterprise-shell-gap);
+      justify-self: center;
+      margin: 0 auto;
       padding: 0;
-      max-width: none;
-      width: 100%;
+      max-width: 1480px !important;
+      width: min(100%, 1480px) !important;
       background: var(--background);
     }
     .enterprise-page-shell {
@@ -430,6 +429,17 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .call-chart-meta {
       margin-bottom: 10px;
     }
+    .call-chart-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 12px;
+      flex-wrap: wrap;
+    }
+    .call-chart-meta-row .call-chart-meta {
+      margin-bottom: 0;
+    }
     .top-insight-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -573,24 +583,71 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .coverage-value { color: var(--foreground); font-size: 20px; font-weight: 680; }
     .coverage-item .meter { margin-top: 8px; }
     .trend-chart {
-      min-height: 276px;
+      min-height: 432px;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 14px;
+      padding: 16px;
       background: var(--card);
       overflow: hidden;
+      display: grid;
+      align-items: stretch;
+      --color-calls: #8ab4f8;
+      --chart-grid: rgba(148, 163, 184, 0.16);
+      --chart-axis: #94a3b8;
     }
     .trend-line-chart {
       display: grid;
+      gap: 14px;
+      min-width: 0;
+      min-height: 100%;
+    }
+    .trend-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 10px;
       min-width: 0;
     }
-    .trend-plot {
+    .trend-detail {
       display: grid;
-      grid-template-columns: 58px minmax(0, 1fr);
-      gap: 10px;
+      gap: 5px;
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      background: var(--muted-bg);
+    }
+    .trend-detail span {
+      color: var(--muted-foreground);
+      font-size: 11px;
+      font-weight: 650;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+    .trend-detail strong {
+      color: var(--foreground);
+      font-size: 18px;
+      font-weight: 720;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+    .trend-detail em {
+      color: var(--muted-foreground);
+      font-size: 12px;
+      font-style: normal;
+      line-height: 1.25;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .trend-plot {
+      position: relative;
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 12px;
       align-items: stretch;
       min-width: 0;
+      min-height: 318px;
     }
     .trend-scale {
       display: flex;
@@ -600,43 +657,104 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       font-size: 11px;
       line-height: 1.2;
       text-align: right;
-      padding: 10px 0 24px;
+      padding: 8px 0 32px;
     }
     .trend-svg {
       display: block;
       width: 100%;
-      height: 220px;
+      height: 304px;
       overflow: visible;
     }
     .trend-grid-line {
-      stroke: var(--border);
+      stroke: var(--chart-grid);
       stroke-width: 1;
+      stroke-dasharray: 3 7;
+    }
+    .trend-average-line {
+      stroke: rgba(248, 250, 252, 0.34);
+      stroke-width: 1.3;
+      stroke-dasharray: 6 7;
     }
     .trend-area {
-      fill: rgba(138, 180, 248, 0.14);
+      fill: url(#callTrendAreaGradient);
     }
     .trend-line {
       fill: none;
-      stroke: var(--primary-bg);
+      stroke: var(--color-calls);
       stroke-width: 3;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
     .trend-marker {
       fill: var(--card);
-      stroke: var(--primary-bg);
+      stroke: var(--color-calls);
       stroke-width: 2;
     }
     .trend-marker.warn { stroke: var(--warn); }
     .trend-marker.bad { stroke: var(--red); }
+    .trend-hit-area {
+      fill: transparent;
+      cursor: crosshair;
+      pointer-events: all;
+    }
+    .trend-tooltip {
+      position: absolute;
+      z-index: 2;
+      min-width: 168px;
+      padding: 10px 11px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #0d1117;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.34);
+      color: var(--foreground);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -112%);
+      transition: opacity 120ms ease;
+    }
+    .trend-tooltip.visible {
+      opacity: 1;
+    }
+    .trend-tooltip-title {
+      color: var(--foreground);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .trend-tooltip-row {
+      display: grid;
+      grid-template-columns: 8px minmax(0, 1fr) auto;
+      gap: 7px;
+      align-items: center;
+      margin-top: 8px;
+      color: var(--muted-foreground);
+      font-size: 12px;
+      line-height: 1.2;
+    }
+    .trend-tooltip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--tooltip-dot, var(--color-calls));
+    }
+    .trend-tooltip-row strong {
+      color: var(--foreground);
+      font-weight: 750;
+    }
     .trend-axis {
       display: flex;
       justify-content: space-between;
       gap: 12px;
-      color: var(--muted);
+      color: var(--chart-axis);
       font-size: 12px;
       grid-column: 2;
-      margin-top: -8px;
+      margin-top: -10px;
+    }
+    .trend-axis span:nth-child(2) {
+      text-align: center;
+    }
+    .trend-axis span:last-child {
+      text-align: right;
     }
     .row {
       display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;
@@ -741,8 +859,17 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       .control-center-intro { flex-direction: column; }
       .overview-rail { grid-template-columns: 1fr; }
       .trend-plot { grid-template-columns: 1fr; }
+      .trend-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .trend-scale { display: none; }
       .trend-axis { grid-column: 1; }
+    }
+    @media (max-width: 640px) {
+      .main.enterprise-dashboard-main { width: 100% !important; }
+      .trend-chart { min-height: 390px; padding: 12px; }
+      .trend-detail-grid { grid-template-columns: 1fr; }
+      .trend-svg { height: 250px; }
+      .trend-plot { min-height: 264px; }
+      .trend-axis { font-size: 11px; }
     }
     @media (min-width: 981px) and (max-width: 1220px) {
       .feature-grid, .intent-grid, .action-grid, .top-insight-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -804,7 +931,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
                 <div class="call-summary-item"><span class="call-summary-label">Blocked</span><strong id="callWindowBlocked" class="call-summary-value">...</strong></div>
                 <div class="call-summary-item"><span class="call-summary-label">Errors</span><strong id="callWindowErrors" class="call-summary-value">...</strong></div>
               </div>
-              <div id="trendMeta" class="mini call-chart-meta">7 days</div>
+              <div class="call-chart-meta-row">
+                <div id="trendMeta" class="mini call-chart-meta">7 days</div>
+                <div id="trendWindowHint" class="mini">Daily protected API traffic</div>
+              </div>
               <div id="callTrendChart" class="trend-chart"><div class="empty">Loading API calls...</div></div>
             </section>
 
@@ -1041,9 +1171,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       var loadSequence = 0;
       var latestCallTrend = [];
       var callTrendRangeDays = 7;
-      var DASHBOARD_SAMPLE_DATA_ENABLED = ${ENABLE_ENTERPRISE_DASHBOARD_SAMPLE_DATA ? 'true' : 'false'};
-      var ENTERPRISE_DEMO_WORKSPACE = ${enterpriseDemoWorkspaceJson()};
-      var dashboardSampleDataActive = false;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
@@ -1081,43 +1208,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         date.setUTCDate(date.getUTCDate() - rawNumber(daysAgo));
         return date.toISOString().slice(0, 10);
       }
-      function cloneDemo(value) {
-        return value ? JSON.parse(JSON.stringify(value)) : value;
-      }
-      function demoWorkspacePayload(name) {
-        return cloneDemo(ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE[name]);
-      }
-      function buildDashboardSampleOverview() {
-        var bootstrap = ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE.bootstrap;
-        return cloneDemo(bootstrap && bootstrap.overview) || {};
-      }
-      function overviewCallTrendTotal(overview) {
-        var trend = Array.isArray(overview && overview.callTrend) ? overview.callTrend : [];
-        return trend.reduce(function(sum, item) {
-          return sum + rawNumber(item.calls) + rawNumber(item.denied) + rawNumber(item.errors);
-        }, 0);
-      }
-      function overviewHasRealDashboardData(overview) {
-        if (!overview) return false;
-        var slotSummary = overview.providerSlotSummary || {};
-        var traffic = overview.trafficBreakdown || {};
-        var providerUsage = Array.isArray(overview.providerUsage) ? overview.providerUsage : [];
-        return rawNumber(traffic.totalCalls || overview.totalCalls) > 0
-          || rawNumber(slotSummary.totalSlots || overview.totalKeys) > 0
-          || rawNumber(overview.providerCount) > 0
-          || providerUsage.length > 0
-          || overviewCallTrendTotal(overview) > 0;
-      }
       function resolveDashboardOverview(overview) {
-        dashboardSampleDataActive = false;
-        if (overview && (overview.statsSource === 'sample_dashboard' || overview.statsSource === 'sample_workspace')) {
-          dashboardSampleDataActive = true;
-          return overview;
-        }
-        if (DASHBOARD_SAMPLE_DATA_ENABLED && !overviewHasRealDashboardData(overview)) {
-          dashboardSampleDataActive = true;
-          return buildDashboardSampleOverview();
-        }
         return overview || {};
       }
       function setDonut(summary) {
@@ -1288,6 +1379,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           text('callWindowAllowed', '0');
           text('callWindowBlocked', '0');
           text('callWindowErrors', '0');
+          text('trendWindowHint', 'No traffic data');
           return;
         }
         var maxCalls = list.reduce(function(max, item) {
@@ -1304,12 +1396,16 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         }, 0);
         var otherErrorTotal = Math.max(errorTotal - deniedTotal, 0);
         var allowedTotal = Math.max(total - errorTotal, 0);
-        var width = 640;
-        var height = 220;
-        var top = 16;
-        var right = 18;
-        var bottom = 188;
-        var left = 8;
+        var averageCalls = Math.round(total / Math.max(list.length, 1));
+        var allowedRate = total ? Math.round((allowedTotal / total) * 1000) / 10 : 0;
+        var blockedRate = total ? Math.round((deniedTotal / total) * 1000) / 10 : 0;
+        var errorRate = total ? Math.round((errorTotal / total) * 1000) / 10 : 0;
+        var width = 960;
+        var height = 300;
+        var top = 18;
+        var right = 22;
+        var bottom = 254;
+        var left = 12;
         var plotWidth = width - left - right;
         var plotHeight = bottom - top;
         var points = list.map(function(item, index) {
@@ -1325,40 +1421,111 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             errors: rawNumber(item.errors),
           };
         });
-        var linePath = points.map(function(point, index) {
-          return (index ? 'L ' : 'M ') + point.x + ' ' + point.y;
-        }).join(' ');
+        var peakPoint = points.reduce(function(peak, point) {
+          return point.calls > peak.calls ? point : peak;
+        }, points[0]);
+        var averageY = Math.round((top + (1 - (averageCalls / maxCalls)) * plotHeight) * 100) / 100;
+        function smoothAreaPath(pointList) {
+          if (!pointList.length) return '';
+          var path = 'M ' + pointList[0].x + ' ' + pointList[0].y;
+          if (pointList.length === 1) return path;
+          for (var i = 1; i < pointList.length; i += 1) {
+            var previous = pointList[i - 1];
+            var current = pointList[i];
+            var midX = Math.round(((previous.x + current.x) / 2) * 100) / 100;
+            path += ' C ' + midX + ' ' + previous.y + ' ' + midX + ' ' + current.y + ' ' + current.x + ' ' + current.y;
+          }
+          return path;
+        }
+        var linePath = smoothAreaPath(points);
         var areaPath = points.length
-          ? 'M ' + points[0].x + ' ' + bottom + ' ' + points.map(function(point) { return 'L ' + point.x + ' ' + point.y; }).join(' ') + ' L ' + points[points.length - 1].x + ' ' + bottom + ' Z'
+          ? linePath + ' L ' + points[points.length - 1].x + ' ' + bottom + ' L ' + points[0].x + ' ' + bottom + ' Z'
           : '';
         var gridLines = [top, top + plotHeight / 2, bottom].map(function(y) {
           y = Math.round(y * 100) / 100;
-          return '<line class="trend-grid-line" x1="0" x2="' + width + '" y1="' + y + '" y2="' + y + '"></line>';
+          return '<line class="trend-grid-line" x1="' + left + '" x2="' + (width - right) + '" y1="' + y + '" y2="' + y + '"></line>';
         }).join('');
         var markers = points.map(function(point, index) {
           var isLast = index === points.length - 1;
-          if (!isLast && !point.denied && !point.errors) return '';
+          var isPeak = peakPoint && point.x === peakPoint.x && point.y === peakPoint.y;
+          if (!isLast && !isPeak && !point.denied && !point.errors) return '';
           var className = point.denied ? 'trend-marker bad' : point.errors ? 'trend-marker warn' : 'trend-marker';
-          var radius = isLast ? 5 : 4;
+          var radius = isLast || isPeak ? 5 : 3.6;
           var title = number(point.calls) + ' calls on ' + String(point.day || '').slice(5) + (point.denied ? ', blocked traffic' : point.errors ? ', errors present' : '');
           return '<circle class="' + className + '" cx="' + point.x + '" cy="' + point.y + '" r="' + radius + '"><title>' + escapeHtml(title) + '</title></circle>';
         }).join('');
+        function shortDay(value) {
+          return String(value || '').slice(5) || 'n/a';
+        }
+        function trendDetail(label, value, detail) {
+          return '<div class="trend-detail"><span>' + escapeHtml(label) + '</span><strong>' + escapeHtml(value) + '</strong><em>' + escapeHtml(detail) + '</em></div>';
+        }
+        function attachTrendTooltip() {
+          var plot = chart.querySelector('.trend-plot');
+          var svg = chart.querySelector('.trend-svg');
+          var tooltip = chart.querySelector('.trend-tooltip');
+          if (!plot || !svg || !tooltip || !points.length) return;
+          function nearestPoint(clientX) {
+            var svgRect = svg.getBoundingClientRect();
+            var svgX = ((clientX - svgRect.left) / Math.max(svgRect.width, 1)) * width;
+            return points.reduce(function(nearest, point) {
+              return Math.abs(point.x - svgX) < Math.abs(nearest.x - svgX) ? point : nearest;
+            }, points[0]);
+          }
+          function showTooltip(event) {
+            var point = nearestPoint(event.clientX);
+            var svgRect = svg.getBoundingClientRect();
+            var plotRect = plot.getBoundingClientRect();
+            var x = (point.x / width) * svgRect.width + svgRect.left - plotRect.left;
+            var y = (point.y / height) * svgRect.height + svgRect.top - plotRect.top;
+            tooltip.style.left = Math.max(88, Math.min(x, plotRect.width - 88)) + 'px';
+            tooltip.style.top = Math.max(88, y) + 'px';
+            tooltip.innerHTML =
+              '<div class="trend-tooltip-title">' + escapeHtml(shortDay(point.day)) + '</div>' +
+              '<div class="trend-tooltip-row"><span class="trend-tooltip-dot"></span><span>Total calls</span><strong>' + number(point.calls) + '</strong></div>' +
+              '<div class="trend-tooltip-row"><span class="trend-tooltip-dot" style="--tooltip-dot: var(--red)"></span><span>Blocked</span><strong>' + number(point.denied) + '</strong></div>' +
+              '<div class="trend-tooltip-row"><span class="trend-tooltip-dot" style="--tooltip-dot: var(--warn)"></span><span>Errors</span><strong>' + number(point.errors) + '</strong></div>';
+            tooltip.classList.add('visible');
+          }
+          function hideTooltip() {
+            tooltip.classList.remove('visible');
+          }
+          svg.addEventListener('pointermove', showTooltip);
+          svg.addEventListener('pointerleave', hideTooltip);
+          svg.addEventListener('focusout', hideTooltip);
+        }
         var startLabel = list[0] ? String(list[0].day || '').slice(5) : '';
+        var mid = list[Math.floor((list.length - 1) / 2)];
+        var midLabel = mid ? String(mid.day || '').slice(5) : '';
         var endLabel = list[list.length - 1] ? String(list[list.length - 1].day || '').slice(5) : '';
+        var detailGrid =
+          '<div class="trend-detail-grid" aria-label="Protected traffic details">' +
+            trendDetail('Average per day', number(averageCalls), 'Across the selected ' + days + 'd window') +
+            trendDetail('Peak day', number(peakPoint ? peakPoint.calls : 0), shortDay(peakPoint && peakPoint.day)) +
+            trendDetail('Allowed rate', allowedRate + '%', number(allowedTotal) + ' successful calls') +
+            trendDetail('Blocked / errors', blockedRate + '% / ' + errorRate + '%', number(deniedTotal) + ' blocked, ' + number(otherErrorTotal) + ' errors') +
+          '</div>';
         chart.innerHTML =
           '<div class="trend-line-chart">' +
+            detailGrid +
             '<div class="trend-plot">' +
-              '<div class="trend-scale"><span>Peak ' + number(maxCalls) + '</span><span>0</span></div>' +
+              '<div class="trend-scale"><span>Peak ' + number(maxCalls) + '</span><span>Avg ' + number(averageCalls) + '</span><span>0</span></div>' +
               '<svg class="trend-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Daily API calls over the selected window">' +
+                '<defs><linearGradient id="callTrendAreaGradient" x1="0" y1="' + top + '" x2="0" y2="' + bottom + '" gradientUnits="userSpaceOnUse"><stop offset="5%" stop-color="var(--color-calls)" stop-opacity="0.38"></stop><stop offset="95%" stop-color="var(--color-calls)" stop-opacity="0.04"></stop></linearGradient></defs>' +
                 gridLines +
+                '<line class="trend-average-line" x1="' + left + '" x2="' + (width - right) + '" y1="' + averageY + '" y2="' + averageY + '"><title>Average ' + number(averageCalls) + ' calls per day</title></line>' +
                 '<path class="trend-area" d="' + areaPath + '"></path>' +
                 '<path class="trend-line" d="' + linePath + '"></path>' +
                 markers +
+                '<rect class="trend-hit-area" x="' + left + '" y="' + top + '" width="' + plotWidth + '" height="' + plotHeight + '"></rect>' +
               '</svg>' +
-              '<div class="trend-axis"><span>' + escapeHtml(startLabel) + '</span><span>' + escapeHtml(endLabel) + '</span></div>' +
+              '<div class="trend-axis"><span>' + escapeHtml(startLabel) + '</span><span>' + escapeHtml(midLabel) + '</span><span>' + escapeHtml(endLabel) + '</span></div>' +
+              '<div class="trend-tooltip" aria-hidden="true"></div>' +
             '</div>' +
           '</div>';
-        text('trendMeta', 'Selected window: ' + days + 'd' + (dashboardSampleDataActive ? ' - sample data' : ''));
+        attachTrendTooltip();
+        text('trendMeta', 'Selected window: ' + days + 'd');
+        text('trendWindowHint', number(total) + ' calls - ' + allowedRate + '% allowed');
         text('callWindowTotal', number(total));
         text('callWindowAllowed', number(allowedTotal));
         text('callWindowBlocked', number(deniedTotal));
@@ -1460,9 +1627,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         }
       }
       function renderOrganization(payload) {
-        if (DASHBOARD_SAMPLE_DATA_ENABLED && !(payload && payload.organization)) {
-          payload = demoWorkspacePayload('organizationPayload') || payload;
-        }
         var org = payload && payload.organization ? payload.organization : null;
         if (!org) {
           text('orgRole', 'none');
@@ -1531,9 +1695,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         }
       }
       function renderMembers(payload) {
-        if (DASHBOARD_SAMPLE_DATA_ENABLED && !((payload && Array.isArray(payload.members) && payload.members.length))) {
-          payload = demoWorkspacePayload('membersPayload') || payload;
-        }
         var members = Array.isArray(payload && payload.members) ? payload.members : [];
         var invites = Array.isArray(payload && payload.invitations) ? payload.invitations.filter(function(invite) { return invite.status === 'pending'; }) : [];
         text('kpiMembers', number(members.length));
@@ -1546,9 +1707,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           '<div class="row"><div><div class="row-title">Pending invites</div><div class="row-sub">Invitations still waiting for acceptance.</div></div><span class="tag">' + number(invites.length) + '</span></div>';
       }
       function renderAudit(payload) {
-        if (DASHBOARD_SAMPLE_DATA_ENABLED && !((payload && Array.isArray(payload.events) && payload.events.length))) {
-          payload = demoWorkspacePayload('auditPayload') || payload;
-        }
         var events = Array.isArray(payload && payload.events) ? payload.events : [];
         var list = byId('auditList');
         if (!list) return;
@@ -1558,18 +1716,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       }
       async function loadDashboard() {
         if (!token) {
-          if (DASHBOARD_SAMPLE_DATA_ENABLED) {
-            var demoOrgs = ENTERPRISE_DEMO_WORKSPACE && ENTERPRISE_DEMO_WORKSPACE.organizationsPayload && ENTERPRISE_DEMO_WORKSPACE.organizationsPayload.organizations;
-            currentOrgId = Array.isArray(demoOrgs) && demoOrgs[0] && demoOrgs[0].id ? demoOrgs[0].id : currentOrgId;
-            renderReadiness(demoWorkspacePayload('readiness') || {});
-            renderOrganization(demoWorkspacePayload('organizationPayload') || {});
-            renderOverview(buildDashboardSampleOverview());
-            renderMembers(demoWorkspacePayload('membersPayload') || {});
-            renderAudit(demoWorkspacePayload('auditPayload') || {});
-            setNotice('Showing a sample Northstar Finance workspace. Sign in to load your enterprise data.');
-            return;
-          }
-          setNotice('Enterprise session missing.');
+          setNotice('Sign in to view your VaultProof workspace.');
           return;
         }
         var sequence = ++loadSequence;
@@ -1598,16 +1745,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           await Promise.allSettled([readinessTask].concat(dataPanelTasks));
         } catch (error) {
           if (sequence !== loadSequence) return;
-          if (DASHBOARD_SAMPLE_DATA_ENABLED) {
-            renderReadiness(demoWorkspacePayload('readiness') || {});
-            renderOrganization(demoWorkspacePayload('organizationPayload') || {});
-            renderOverview(buildDashboardSampleOverview());
-            renderMembers(demoWorkspacePayload('membersPayload') || {});
-            renderAudit(demoWorkspacePayload('auditPayload') || {});
-            setNotice('Showing sample workspace data because the dashboard data source is not available.');
-            return;
-          }
-          setNotice(error && error.message ? error.message : 'Dashboard failed to load.');
+          setNotice(error && error.message ? friendlyErrorMessage(error.message) : 'Dashboard failed to load.');
         }
       }
       document.querySelectorAll('[data-dashboard-tab]').forEach(function(button) {
