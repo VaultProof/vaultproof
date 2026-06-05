@@ -4551,6 +4551,10 @@ async function assertInternalAdminConsole() {
     '--sidebar-bg:#18201f',
     '--bg:#f5f7fb',
     'Create business',
+    'createBusinessSsoEnabled',
+    'createBusinessSsoFields',
+    'enable_sso',
+    'set up SSO now',
     'Businesses',
     'Users and access',
     'SSO rollout',
@@ -5007,6 +5011,35 @@ async function assertInternalAdminConsole() {
   }
   if (!auditEvents.some((event) => event.event_type === 'organization_created' && event.metadata?.created_via === 'internal_admin')) {
     throw new Error(`Expected customer org audit event for internal business create, got ${JSON.stringify(auditEvents)}`);
+  }
+
+  const businessCreateNoSsoResponse = await handleEnterpriseControlPlaneRequest(
+    buildHostRequest(INTERNAL_ADMIN_HOSTNAME, '/api/v1/internal-admin/orgs', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${AUTH_TOKEN}`,
+        'content-type': 'application/json',
+        'x-vaultproof-internal-admin-approval': 'approval-secret',
+      },
+      body: JSON.stringify({
+        name: 'Pilot Without SSO',
+        slug: 'pilot-without-sso',
+        owner_email: 'pilot-without-sso@example.com',
+        enable_sso: false,
+      }),
+    }),
+    {
+      ...env,
+      internalAdminActionsEnabled: true,
+      internalAdminApprovalSecret: 'approval-secret',
+    },
+  );
+  const businessCreateNoSsoPayload = await businessCreateNoSsoResponse.json();
+  if (businessCreateNoSsoResponse.status !== 201
+    || businessCreateNoSsoPayload.business?.sso !== null
+    || businessCreateNoSsoPayload.business?.sso_schema_ready !== true
+    || businessCreateNoSsoPayload.business?.migration_required !== null) {
+    throw new Error(`Expected business create without SSO to skip SSO seeding, got ${businessCreateNoSsoResponse.status}: ${JSON.stringify(businessCreateNoSsoPayload)}`);
   }
 
   organizationSsoSettingsSchemaReady = false;

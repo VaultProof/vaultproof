@@ -1397,6 +1397,9 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
     .action-form h3 { margin:0; font-size:16px; font-weight:600; letter-spacing:0; }
     .field { display:grid; gap:6px; color:var(--soft); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0; }
     .field input, .field select, .field textarea { width:100%; color:var(--text); font-size:14px; font-weight:500; text-transform:none; letter-spacing:0; }
+    .checkbox-field { color:var(--text); font-size:14px; font-weight:600; text-transform:none; }
+    .checkbox-line { display:flex; align-items:center; gap:10px; }
+    .checkbox-line input { width:auto; padding:0; }
     .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .form-status { color:var(--muted); font-size:13px; min-height:18px; }
     .form-status.good { color:var(--green); }
@@ -1519,12 +1522,15 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
             <label class="field">owner email<input name="owner_email" type="email" placeholder="admin@customer.com"></label>
           </div>
           <div class="form-row">
-            <label class="field">company domain<input name="company_domain" placeholder="customer.com"></label>
             <label class="field">slug<input name="slug" placeholder="acme-security"></label>
-          </div>
-          <div class="form-row">
-            <label class="field">SSO provider<select name="sso_provider"><option value="microsoft-entra">microsoft-entra</option><option value="okta">okta</option><option value="google-workspace">google-workspace</option><option value="generic-saml">generic-saml</option><option value="supabase-saml">supabase-saml</option></select></label>
             <label class="field">approval secret<input id="businessApprovalSecret" type="password" autocomplete="off" placeholder="required for writes"></label>
+          </div>
+          <label class="field checkbox-field"><span class="checkbox-line"><input id="createBusinessSsoEnabled" name="enable_sso" type="checkbox" value="true"><span>set up SSO now</span></span></label>
+          <div id="createBusinessSsoFields" class="grid" hidden>
+            <div class="form-row">
+              <label class="field">company domain<input name="company_domain" placeholder="customer.com"></label>
+              <label class="field">SSO provider<select name="sso_provider"><option value="microsoft-entra">microsoft-entra</option><option value="okta">okta</option><option value="google-workspace">google-workspace</option><option value="generic-saml">generic-saml</option><option value="supabase-saml">supabase-saml</option></select></label>
+            </div>
           </div>
           <button class="primary" type="submit">create business</button>
           <div id="businessCreateStatus" class="form-status"></div>
@@ -2032,24 +2038,38 @@ export function renderInternalAdminPage(env: EnterpriseControlPlaneEnv = {}): st
       function bindCreateBusinessForm() {
         var createForm = byId('createBusinessForm');
         if (!createForm) return;
+        var ssoToggle = byId('createBusinessSsoEnabled');
+        var ssoFields = byId('createBusinessSsoFields');
+        function syncCreateBusinessSsoFields() {
+          if (!ssoFields || !ssoToggle) return;
+          ssoFields.hidden = !ssoToggle.checked;
+        }
+        if (ssoToggle) ssoToggle.addEventListener('change', syncCreateBusinessSsoFields);
+        syncCreateBusinessSsoFields();
         createForm.addEventListener('submit', async function(event) {
           event.preventDefault();
           try {
             setCreateStatus('Creating business...', '');
-            var payload = await postAdminAction('/api/v1/internal-admin/orgs', {
+            var enableSso = Boolean(ssoToggle && ssoToggle.checked);
+            var createPayload = {
               name: formValue(createForm, 'name'),
               owner_email: formValue(createForm, 'owner_email'),
-              company_domain: formValue(createForm, 'company_domain'),
               slug: formValue(createForm, 'slug'),
-              sso_provider: formValue(createForm, 'sso_provider'),
-              login_mode: 'sso-first',
-              sso_status: 'requested'
-            });
+              enable_sso: enableSso
+            };
+            if (enableSso) {
+              createPayload.company_domain = formValue(createForm, 'company_domain');
+              createPayload.sso_provider = formValue(createForm, 'sso_provider');
+              createPayload.login_mode = 'sso-first';
+              createPayload.sso_status = 'requested';
+            }
+            var payload = await postAdminAction('/api/v1/internal-admin/orgs', createPayload);
             var links = payload && payload.business && Array.isArray(payload.business.business_login_links)
               ? payload.business.business_login_links
               : [];
             setCreateStatus('Business created. ' + (links[0] ? links[0].href : 'Open it from the business list.'), 'good');
             createForm.reset();
+            syncCreateBusinessSsoFields();
             await load();
           } catch (error) {
             setCreateStatus(error && error.message ? error.message : 'Business creation failed.', 'bad');
@@ -2603,20 +2623,32 @@ async function handleCreateInternalAdminBusiness(
 
   const requestedSlug = typeof body.slug === 'string' ? normalizeSlug(body.slug) : normalizeSlug(name);
   const slug = requestedSlug || null;
-  const companyDomain = normalizeDomain(typeof body.company_domain === 'string' ? body.company_domain : emailDomain(ownerEmail));
+  const enableSso = body.enable_sso === true
+    || body.enable_sso === 'true'
+    || (body.enable_sso == null && Boolean(body.sso_provider && typeof body.company_domain === 'string' && body.company_domain.trim()));
+  const companyDomain = normalizeDomain(typeof body.company_domain === 'string' ? body.company_domain : '');
   if (companyDomain && !isValidDomain(companyDomain)) {
     return Response.json({ error: 'company_domain must be a valid domain.' }, { status: 400 });
   }
-
-  const ssoProvider = normalizeInternalAdminSsoProvider(body.sso_provider || 'microsoft-entra');
-  if (ssoProvider instanceof Response) return ssoProvider;
-  const loginMode = validateInternalAdminSsoLoginMode(body.login_mode || 'sso-first');
-  if (!loginMode) {
-    return Response.json({ error: 'login_mode must be assisted or sso-first.' }, { status: 400 });
+  if (enableSso && !companyDomain) {
+    return Response.json({ error: 'company_domain is required when SSO setup is enabled.' }, { status: 400 });
   }
-  const ssoStatus = validateInternalAdminSsoStatus(body.sso_status || 'requested');
-  if (!ssoStatus) {
-    return Response.json({ error: 'sso_status must be requested or configured.' }, { status: 400 });
+
+  let ssoProvider: string | null = null;
+  let loginMode: 'sso-first' | 'assisted' | null = null;
+  let ssoStatus: 'requested' | 'configured' | null = null;
+  if (enableSso) {
+    const normalizedSsoProvider = normalizeInternalAdminSsoProvider(body.sso_provider || 'microsoft-entra');
+    if (normalizedSsoProvider instanceof Response) return normalizedSsoProvider;
+    ssoProvider = normalizedSsoProvider;
+    loginMode = validateInternalAdminSsoLoginMode(body.login_mode || 'sso-first');
+    if (!loginMode) {
+      return Response.json({ error: 'login_mode must be assisted or sso-first.' }, { status: 400 });
+    }
+    ssoStatus = validateInternalAdminSsoStatus(body.sso_status || 'requested');
+    if (!ssoStatus) {
+      return Response.json({ error: 'sso_status must be requested or configured.' }, { status: 400 });
+    }
   }
 
   const supabase = getSupabase(env);
@@ -2689,7 +2721,7 @@ async function handleCreateInternalAdminBusiness(
   let sso: Record<string, unknown> | null = null;
   let ssoSchemaReady = true;
   let ssoSeedWarning: string | null = null;
-  if (companyDomain) {
+  if (enableSso) {
     const ssoResult = await supabase
       .from('organization_sso_settings')
       .upsert({
