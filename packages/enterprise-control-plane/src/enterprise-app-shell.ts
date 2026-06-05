@@ -52,6 +52,7 @@ interface EnterpriseSidebarNavItem {
   readonly activePill?: string;
   readonly className?: string;
   readonly external?: boolean;
+  readonly children?: readonly EnterpriseSidebarNavItem[];
 }
 
 interface EnterpriseSidebarNavGroup {
@@ -73,11 +74,60 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         page: 'keys',
         href: '/app/keys',
         label: 'Provider slots',
+        children: [
+          {
+            page: 'keys',
+            href: '/app/keys',
+            label: 'Key inventory',
+          },
+          {
+            page: 'scanner',
+            href: '/app/scanner',
+            label: 'Scanner',
+            activePill: 'new',
+          },
+          {
+            page: 'inventory',
+            href: '/app/inventory',
+            label: 'API Inventory',
+            activePill: 'new',
+          },
+          {
+            page: 'policy',
+            href: '/app/policy',
+            label: 'Policy Drift',
+            activePill: 'new',
+          },
+        ],
       },
       {
         page: 'projects',
         href: '/app/projects',
         label: 'Workloads',
+        children: [
+          {
+            page: 'projects',
+            href: '/app/projects',
+            label: 'Workloads',
+          },
+          {
+            page: 'rollout',
+            href: '/app/rollout',
+            label: 'Rollout Manager',
+            activePill: 'new',
+          },
+          {
+            page: 'control',
+            href: '/app/control',
+            label: 'Control',
+          },
+          {
+            page: 'verifier',
+            href: '/app/verifier',
+            label: 'AI Proof Verifier',
+            pill: 'beta',
+          },
+        ],
       },
       {
         page: 'inbox',
@@ -86,53 +136,31 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         activePill: 'chat',
       },
       {
-        page: 'inventory',
-        href: '/app/inventory',
-        label: 'API Inventory',
-        activePill: 'new',
-      },
-      {
-        page: 'policy',
-        href: '/app/policy',
-        label: 'Policy Drift',
-        activePill: 'new',
-      },
-      {
-        page: 'rollout',
-        href: '/app/rollout',
-        label: 'Rollout Manager',
-        activePill: 'new',
-      },
-      {
-        page: 'readiness',
-        href: '/app/readiness',
-        label: 'Readiness',
-      },
-      {
-        page: 'health',
-        href: '/app/health',
-        label: 'Health',
-      },
-      {
         page: 'activity',
         href: '/app/activity',
-        label: 'Activity',
-      },
-      {
-        page: 'alerts',
-        href: '/app/alerts',
-        label: 'Alerts',
-      },
-      {
-        page: 'control',
-        href: '/app/control',
-        label: 'Control',
-      },
-      {
-        page: 'verifier',
-        href: '/app/verifier',
-        label: 'AI Proof Verifier',
-        pill: 'beta',
+        label: 'Monitor',
+        children: [
+          {
+            page: 'activity',
+            href: '/app/activity',
+            label: 'Activity',
+          },
+          {
+            page: 'alerts',
+            href: '/app/alerts',
+            label: 'Alerts',
+          },
+          {
+            page: 'health',
+            href: '/app/health',
+            label: 'Health',
+          },
+          {
+            page: 'readiness',
+            href: '/app/readiness',
+            label: 'Readiness',
+          },
+        ],
       },
     ],
   },
@@ -144,32 +172,40 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: '/app/evidence',
         label: 'Evidence packet',
         activePill: 'proof',
-      },
-      {
-        page: 'release',
-        href: '/app/release',
-        label: 'Release evidence',
-        activePill: 'new',
-      },
-      {
-        page: 'members',
-        href: '/app/members',
-        label: 'Members',
-      },
-      {
-        page: 'audit',
-        href: '/app/audit',
-        label: 'Audit',
-      },
-      {
-        id: 'auditExportLink',
-        href: '/api/v1/enterprise/audit?format=csv&days=30',
-        label: 'Audit CSV',
-      },
-      {
-        id: 'accessReviewLink',
-        href: '/api/v1/enterprise/members/access-review?format=csv',
-        label: 'Access review CSV',
+        children: [
+          {
+            page: 'evidence',
+            href: '/app/evidence',
+            label: 'Evidence packet',
+            activePill: 'proof',
+          },
+          {
+            page: 'release',
+            href: '/app/release',
+            label: 'Release evidence',
+            activePill: 'new',
+          },
+          {
+            page: 'members',
+            href: '/app/members',
+            label: 'Members',
+          },
+          {
+            page: 'audit',
+            href: '/app/audit',
+            label: 'Audit',
+          },
+          {
+            id: 'auditExportLink',
+            href: '/api/v1/enterprise/audit?format=csv&days=30',
+            label: 'Audit CSV',
+          },
+          {
+            id: 'accessReviewLink',
+            href: '/api/v1/enterprise/members/access-review?format=csv',
+            label: 'Access review CSV',
+          },
+        ],
       },
     ],
   },
@@ -180,21 +216,33 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         page: 'setup',
         href: '/app/setup',
         label: 'Setup guide',
-      },
-      {
-        page: 'testers',
-        href: '/app/testers',
-        label: 'Tester readiness',
-      },
-      {
-        page: 'technical-guide',
-        href: '/app/technical-guide',
-        label: 'Technical guide',
-      },
-      {
-        page: 'security-review',
-        href: '/app/security-review',
-        label: 'Security review',
+        children: [
+          {
+            page: 'setup',
+            href: '/app/setup',
+            label: 'Setup guide',
+          },
+          {
+            page: 'testers',
+            href: '/app/testers',
+            label: 'Tester readiness',
+          },
+          {
+            page: 'technical-guide',
+            href: '/app/technical-guide',
+            label: 'Technical guide',
+          },
+          {
+            page: 'security-review',
+            href: '/app/security-review',
+            label: 'Security review',
+          },
+          {
+            page: 'runbooks',
+            href: '/app/runbooks',
+            label: 'Runbooks',
+          },
+        ],
       },
       {
         page: 'settings',
@@ -217,11 +265,6 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         href: '/app/scanner',
         label: 'Scanner',
         activePill: 'new',
-      },
-      {
-        page: 'runbooks',
-        href: '/app/runbooks',
-        label: 'Runbooks',
       },
     ],
   },
@@ -252,19 +295,36 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
   },
 ];
 
-const ENTERPRISE_RAIL_ITEMS: readonly { readonly label: string; readonly glyph: string; readonly href: string; readonly badge?: string; readonly page?: EnterpriseAppNavPage }[] = [
-  { label: 'VaultProof', glyph: 'VP', href: '/app/dashboard', page: 'dashboard' },
-  { label: 'Monitor', glyph: 'M', href: '/app/activity', page: 'activity', badge: '4' },
+interface EnterpriseRailItem {
+  readonly label: string;
+  readonly glyph: string;
+  readonly href: string;
+  readonly badge?: string;
+  readonly page?: EnterpriseAppNavPage;
+  readonly shortcut?: string;
+}
+
+const ENTERPRISE_RAIL_BRAND: EnterpriseRailItem = {
+  label: 'VaultProof',
+  glyph: 'VP',
+  href: '/app/dashboard',
+};
+
+const ENTERPRISE_RAIL_ITEMS: readonly EnterpriseRailItem[] = [
+  { label: 'Inbox', glyph: 'C', href: '/app/inbox', page: 'inbox', badge: '4' },
+  { label: 'Dashboard', glyph: 'D', href: '/app/dashboard', page: 'dashboard' },
   { label: 'Keys', glyph: 'K', href: '/app/keys', page: 'keys' },
   { label: 'Evidence', glyph: 'E', href: '/app/evidence', page: 'evidence' },
+  { label: 'Monitor', glyph: 'M', href: '/app/activity', page: 'activity' },
   { label: 'Settings', glyph: 'S', href: '/app/settings', page: 'settings' },
 ];
 
-const ENTERPRISE_RAIL_BOTTOM_ITEMS: readonly { readonly label: string; readonly glyph: string; readonly href: string }[] = [
-  { label: 'Search', glyph: '/', href: '/app/dashboard' },
-  { label: 'Help', glyph: '?', href: '/app/docs' },
-  { label: 'Messages', glyph: 'C', href: '/app/inbox' },
-  { label: 'Runbooks', glyph: '*', href: '/app/runbooks' },
+const ENTERPRISE_RAIL_BOTTOM_ITEMS: readonly EnterpriseRailItem[] = [
+  { label: 'Search', glyph: '/', href: '/app/dashboard', shortcut: 'Cmd K' },
+  { label: 'Docs', glyph: '?', href: '/app/docs', page: 'docs' },
+  { label: 'Messages', glyph: 'C', href: '/app/inbox', page: 'inbox' },
+  { label: 'Runbooks', glyph: '*', href: '/app/runbooks', page: 'runbooks' },
+  { label: 'Profile', glyph: 'P', href: '/app/settings', page: 'settings' },
 ];
 
 const ENTERPRISE_NAV_ICON_BY_PAGE: Partial<Record<EnterpriseAppNavPage, string>> = {
@@ -316,27 +376,52 @@ function enterpriseNavGlyph(item: EnterpriseSidebarNavItem): string {
   return item.page ? ENTERPRISE_NAV_ICON_BY_PAGE[item.page] || item.label.slice(0, 1).toUpperCase() : ENTERPRISE_NAV_ICON_BY_LABEL[item.label] || item.label.slice(0, 1).toUpperCase();
 }
 
-function enterpriseRailLink(activePage: EnterpriseAppNavPage, item: (typeof ENTERPRISE_RAIL_ITEMS)[number]): string {
+function enterpriseRailLink(activePage: EnterpriseAppNavPage, item: EnterpriseRailItem, className = ''): string {
   const active = item.page === activePage;
-  return `<a class="rail-link${active ? ' active' : ''}" href="${escapeHtml(item.href)}" aria-label="${escapeHtml(item.label)}"${active ? ' aria-current="page"' : ''}>
+  const classes = ['rail-link', active ? 'active' : '', className].filter(Boolean).join(' ');
+  return `<a class="${classes}" href="${escapeHtml(item.href)}" aria-label="${escapeHtml(item.label)}"${active ? ' aria-current="page"' : ''}>
           <span class="rail-glyph">${escapeHtml(item.glyph)}</span>
+          <span class="rail-label">${escapeHtml(item.label)}</span>
+          ${item.shortcut ? `<span class="rail-shortcut">${escapeHtml(item.shortcut)}</span>` : ''}
           ${item.badge ? `<span class="rail-badge">${escapeHtml(item.badge)}</span>` : ''}
         </a>`;
 }
 
-function enterpriseRailBottomLink(item: (typeof ENTERPRISE_RAIL_BOTTOM_ITEMS)[number]): string {
-  return `<a class="rail-link" href="${escapeHtml(item.href)}" aria-label="${escapeHtml(item.label)}">
-          <span class="rail-glyph">${escapeHtml(item.glyph)}</span>
+function enterpriseRailProgressLink(): string {
+  return `<a class="rail-link rail-progress-link" href="/app/setup" aria-label="Get set up">
+          <span class="rail-progress" aria-hidden="true"><span></span></span>
+          <span class="rail-label">Get set up</span>
         </a>`;
 }
 
-function enterpriseAppNavLink(activePage: EnterpriseAppNavPage, item: EnterpriseSidebarNavItem): string {
+function enterpriseSidebarNavItemHasActivePage(activePage: EnterpriseAppNavPage, item: EnterpriseSidebarNavItem): boolean {
+  return item.page === activePage || Boolean(item.children?.some((child) => enterpriseSidebarNavItemHasActivePage(activePage, child)));
+}
+
+function enterpriseAppNavLink(activePage: EnterpriseAppNavPage, item: EnterpriseSidebarNavItem, depth = 0): string {
   const active = item.page === activePage;
-  const className = ['nav-link', active ? 'active' : '', item.className || ''].filter(Boolean).join(' ');
+  const childActive = Boolean(item.children?.some((child) => enterpriseSidebarNavItemHasActivePage(activePage, child)));
+  const className = ['nav-link', depth > 0 ? 'nav-child-link' : '', active ? 'active' : '', item.className || ''].filter(Boolean).join(' ');
   const activePill = active && item.activePill ? item.activePill : '';
   const pill = item.pill || activePill;
   const isExternalUrl = item.external && /^https?:\/\//.test(item.href);
   const targetAttrs = isExternalUrl ? ' target="_blank" rel="noopener"' : '';
+  if (item.children?.length) {
+    const summaryClassName = ['nav-link', 'nav-submenu-summary', childActive || active ? 'active' : '', item.className || ''].filter(Boolean).join(' ');
+    return `<details class="nav-submenu${childActive || active ? ' active-submenu' : ''}"${childActive || active ? ' open' : ''}>
+          <summary class="${summaryClassName}">
+            <span class="nav-row-icon" aria-hidden="true">${escapeHtml(enterpriseNavGlyph(item))}</span>
+            <span class="nav-link-main">
+              <span class="nav-link-label">${escapeHtml(item.label)}</span>
+              ${pill ? `<span class="nav-pill">${escapeHtml(pill)}</span>` : childActive || active ? '<span class="nav-active-dot" aria-hidden="true"></span>' : ''}
+            </span>
+            <span class="nav-submenu-chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="nav-submenu-links">
+            ${item.children.map((child) => enterpriseAppNavLink(activePage, child, depth + 1)).join('')}
+          </div>
+        </details>`;
+  }
   return `<a class="${className}"${item.id ? ` id="${escapeHtml(item.id)}"` : ''} href="${escapeHtml(item.href)}"${active ? ' aria-current="page"' : ''}${targetAttrs}>
           <span class="nav-row-icon" aria-hidden="true">${escapeHtml(enterpriseNavGlyph(item))}</span>
           <span class="nav-link-main">
@@ -347,7 +432,7 @@ function enterpriseAppNavLink(activePage: EnterpriseAppNavPage, item: Enterprise
 }
 
 function enterpriseSidebarGroupHasActivePage(activePage: EnterpriseAppNavPage, group: EnterpriseSidebarNavGroup): boolean {
-  return group.items.some((item) => item.page === activePage);
+  return group.items.some((item) => enterpriseSidebarNavItemHasActivePage(activePage, item));
 }
 
 function enterpriseSidebarNavGroup(activePage: EnterpriseAppNavPage, group: EnterpriseSidebarNavGroup): string {
@@ -367,11 +452,15 @@ export function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, _su
   return `<aside class="sidebar enterprise-app-sidebar enterprise-dual-sidebar" data-enterprise-sidebar="universal" data-ui-kit="dark-dual-sidebar">
       <div class="enterprise-icon-rail" aria-label="Enterprise quick navigation">
         <div class="rail-top">
+          <div class="rail-expanded-head">
+            ${enterpriseRailLink(activePage, ENTERPRISE_RAIL_BRAND, 'rail-brand-link')}
+            <button class="rail-pin-button" type="button" aria-label="Pin expanded navigation" title="Pin expanded navigation" aria-pressed="false">P</button>
+          </div>
           ${ENTERPRISE_RAIL_ITEMS.map((item) => enterpriseRailLink(activePage, item)).join('')}
         </div>
         <div class="rail-bottom">
-          <span class="rail-progress" aria-label="Runtime status"><span></span></span>
-          ${ENTERPRISE_RAIL_BOTTOM_ITEMS.map((item) => enterpriseRailBottomLink(item)).join('')}
+          ${enterpriseRailProgressLink()}
+          ${ENTERPRISE_RAIL_BOTTOM_ITEMS.map((item) => enterpriseRailLink(activePage, item)).join('')}
           <span class="rail-status-dot" aria-hidden="true"></span>
         </div>
       </div>
@@ -380,11 +469,6 @@ export function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, _su
           <div class="brand-title">VaultProof Enterprise</div>
         </div>
         <div class="workspace-card">
-          <button class="workspace-selector" type="button" aria-label="Current workspace">
-            <span class="workspace-avatar">V</span>
-            <span class="workspace-selector-label">Secure runtime</span>
-            <span class="workspace-chevron" aria-hidden="true"></span>
-          </button>
           <a class="get-started-link" href="/app/setup">
             <span class="nav-row-icon" aria-hidden="true">?</span>
             <span>Get started</span>
@@ -393,13 +477,35 @@ export function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, _su
         <nav class="nav-groups" aria-label="Enterprise workspace navigation">
           ${ENTERPRISE_SIDEBAR_NAV_GROUPS.map((group) => enterpriseSidebarNavGroup(activePage, group)).join('')}
         </nav>
-        <a class="sidebar-studio-link" href="/app/docs">
-          <span class="studio-mark">VP</span>
-          <span>VaultProof Studio</span>
-          <span class="studio-arrow" aria-hidden="true">-&gt;</span>
-        </a>
+        <div class="sidebar-update-card" aria-label="VaultProof updates">
+          <span class="update-mark">VP</span>
+          <span class="update-copy">
+            <span class="update-title">VaultProof updates</span>
+            <span class="update-note">Runtime release notes</span>
+          </span>
+        </div>
       </div>
-    </aside>`;
+    </aside>
+    <script>
+      (function() {
+        var shell = document.querySelector('[data-enterprise-sidebar="universal"]');
+        if (!shell) return;
+        var button = shell.querySelector('.rail-pin-button');
+        var storageKey = 'vaultproofEnterpriseRailPinned';
+        function setPinned(pinned) {
+          shell.classList.toggle('rail-pinned', pinned);
+          if (button) button.setAttribute('aria-pressed', pinned ? 'true' : 'false');
+          try { window.localStorage.setItem(storageKey, pinned ? 'true' : 'false'); } catch (_) {}
+        }
+        try { setPinned(window.localStorage.getItem(storageKey) === 'true'); } catch (_) {}
+        if (button) {
+          button.addEventListener('click', function(event) {
+            event.preventDefault();
+            setPinned(!shell.classList.contains('rail-pinned'));
+          });
+        }
+      })();
+    </script>`;
 }
 
 export const ENTERPRISE_APP_SHELL_THEME = `
@@ -585,17 +691,17 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     .shell,
     .layout {
       display: grid !important;
-      grid-template-columns: 296px minmax(0, 1fr) !important;
+      grid-template-columns: 312px minmax(0, 1fr) !important;
       gap: 8px !important;
       min-height: 100vh;
       max-width: none !important;
       width: 100% !important;
       margin: 0 !important;
-      padding: 3px 8px 8px 0 !important;
+      padding: 12px 8px 12px 8px !important;
       background: #050607 !important;
     }
     .main {
-      min-height: calc(100vh - 11px) !important;
+      min-height: calc(100vh - 24px) !important;
       min-width: 0;
       max-width: none !important;
       width: 100% !important;
@@ -684,12 +790,12 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar {
       position: sticky;
-      top: 3px;
+      top: 12px;
       display: grid !important;
-      grid-template-columns: 40px 232px;
+      grid-template-columns: 56px 240px;
       gap: 8px;
-      width: 280px;
-      height: calc(100vh - 6px);
+      width: 304px;
+      height: calc(100vh - 24px);
       min-height: 620px;
       align-self: start;
       padding: 0;
@@ -705,33 +811,88 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       letter-spacing: 0 !important;
     }
     .enterprise-icon-rail {
+      position: relative;
+      z-index: 3;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       align-items: center;
-      width: 40px;
+      width: 56px;
       min-height: 100%;
-      padding: 18px 4px 10px;
+      padding: 20px 8px 10px;
+      overflow: hidden;
+      border: 1px solid transparent;
+      border-left: 0;
+      border-radius: 0;
       background: #050607;
+      box-shadow: none;
+      transition: width 220ms ease, border-color 220ms ease, border-radius 220ms ease, background 220ms ease, box-shadow 220ms ease;
+    }
+    .enterprise-icon-rail:hover,
+    .enterprise-icon-rail:focus-within,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .enterprise-icon-rail {
+      align-items: stretch;
+      width: 196px;
+      border-color: #242830;
+      border-radius: 0 16px 16px 0;
+      background: #11161c;
+      box-shadow: 18px 0 42px rgba(0, 0, 0, 0.38);
     }
     .rail-top,
     .rail-bottom {
       display: grid;
       justify-items: center;
       gap: 12px;
+      width: 100%;
+    }
+    .enterprise-icon-rail:hover .rail-top,
+    .enterprise-icon-rail:hover .rail-bottom,
+    .enterprise-icon-rail:focus-within .rail-top,
+    .enterprise-icon-rail:focus-within .rail-bottom,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-top,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-bottom {
+      justify-items: stretch;
+    }
+    .rail-expanded-head {
+      display: grid;
+      grid-template-columns: 40px 0;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+      transition: grid-template-columns 220ms ease, gap 220ms ease;
+    }
+    .enterprise-icon-rail:hover .rail-expanded-head,
+    .enterprise-icon-rail:focus-within .rail-expanded-head,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-expanded-head {
+      grid-template-columns: minmax(0, 1fr) 30px;
+      gap: 8px;
     }
     .rail-link {
       position: relative;
       display: grid;
-      width: 32px;
-      height: 32px;
-      place-items: center;
+      grid-template-columns: 22px minmax(0, 0fr);
+      align-items: center;
+      justify-content: center;
+      column-gap: 0;
+      width: 40px;
+      min-width: 40px;
+      height: 36px;
+      padding: 0 8px;
       border: 1px solid transparent;
       border-radius: 8px;
       color: #8b8d93;
       background: transparent;
       text-decoration: none;
-      transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+      transition: background 160ms ease, border-color 160ms ease, color 160ms ease, width 220ms ease, column-gap 220ms ease;
+    }
+    .enterprise-icon-rail:hover .rail-link,
+    .enterprise-icon-rail:focus-within .rail-link,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-link {
+      grid-template-columns: 22px minmax(0, 1fr) auto;
+      justify-content: start;
+      width: 100%;
+      min-width: 0;
+      column-gap: 8px;
     }
     .rail-link:hover,
     .rail-link.active {
@@ -754,10 +915,48 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       background: #f97316;
       color: #111318;
     }
+    .rail-label {
+      display: block;
+      min-width: 0;
+      max-width: 0;
+      overflow: hidden;
+      opacity: 0;
+      white-space: nowrap;
+      color: inherit;
+      font-size: 14px;
+      font-weight: 650;
+      line-height: 1.1;
+      transition: max-width 220ms ease, opacity 160ms ease;
+    }
+    .enterprise-icon-rail:hover .rail-label,
+    .enterprise-icon-rail:focus-within .rail-label,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-label {
+      max-width: 118px;
+      opacity: 1;
+    }
+    .rail-brand-link .rail-label {
+      font-weight: 750;
+    }
+    .rail-shortcut {
+      display: none;
+      padding: 2px 5px;
+      border: 1px solid #303640;
+      border-radius: 5px;
+      background: #232832;
+      color: #b3bac5;
+      font-size: 10px;
+      font-weight: 650;
+      line-height: 1;
+    }
+    .enterprise-icon-rail:hover .rail-shortcut,
+    .enterprise-icon-rail:focus-within .rail-shortcut,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-shortcut {
+      display: inline-flex;
+    }
     .rail-badge {
       position: absolute;
-      top: -5px;
-      right: -4px;
+      top: -4px;
+      right: -2px;
       display: grid;
       min-width: 16px;
       height: 16px;
@@ -770,6 +969,48 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       font-weight: 700;
       line-height: 1;
       border: 1px solid #050607;
+    }
+    .enterprise-icon-rail:hover .rail-badge,
+    .enterprise-icon-rail:focus-within .rail-badge,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-badge {
+      position: static;
+      justify-self: end;
+      margin-left: auto;
+      border-color: #11161c;
+    }
+    .rail-pin-button {
+      display: grid;
+      width: 0;
+      height: 30px;
+      min-width: 0;
+      padding: 0;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid transparent !important;
+      border-radius: 8px;
+      background: transparent !important;
+      color: #b3bac5 !important;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1;
+      opacity: 0;
+      transition: width 220ms ease, opacity 160ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
+    }
+    .enterprise-icon-rail:hover .rail-pin-button,
+    .enterprise-icon-rail:focus-within .rail-pin-button,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-pin-button {
+      width: 30px;
+      opacity: 1;
+    }
+    .rail-pin-button:hover,
+    .rail-pin-button:focus-visible,
+    .rail-pin-button[aria-pressed="true"] {
+      background: #181b21 !important;
+      border-color: #303640 !important;
+      color: #ffffff !important;
+    }
+    .rail-progress-link .rail-progress {
+      flex: 0 0 auto;
     }
     .rail-progress {
       display: grid;
@@ -792,6 +1033,12 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       border-radius: 999px;
       background: #4ade80;
       box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.12);
+    }
+    .enterprise-icon-rail:hover .rail-status-dot,
+    .enterprise-icon-rail:focus-within .rail-status-dot,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-status-dot {
+      justify-self: start;
+      margin-left: 16px;
     }
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .sidebar-panel {
       display: flex;
@@ -827,7 +1074,6 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       border-radius: 0;
       background: transparent;
     }
-    .workspace-selector,
     .get-started-link {
       display: flex;
       align-items: center;
@@ -844,37 +1090,9 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       text-decoration: none;
       transition: background 160ms ease, border-color 160ms ease;
     }
-    .workspace-selector:hover,
     .get-started-link:hover {
       background: #232832 !important;
       border-color: #3f4652;
-    }
-    .workspace-avatar {
-      display: grid;
-      width: 24px;
-      height: 24px;
-      place-items: center;
-      flex: 0 0 auto;
-      border-radius: 999px;
-      background: #ff6b2c;
-      color: #111318;
-      font-size: 12px;
-      font-weight: 800;
-    }
-    .workspace-selector-label {
-      min-width: 0;
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .workspace-chevron {
-      width: 8px;
-      height: 8px;
-      border-right: 2px solid #d9dde5;
-      border-bottom: 2px solid #d9dde5;
-      transform: rotate(45deg) translateY(-2px);
-      flex: 0 0 auto;
     }
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-groups {
       display: grid;
@@ -932,6 +1150,13 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       gap: 3px;
       padding: 0;
     }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-submenu {
+      display: grid;
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent !important;
+    }
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-link {
       display: grid;
       grid-template-columns: 22px minmax(0, 1fr);
@@ -949,11 +1174,58 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       text-decoration: none;
       transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
     }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-submenu-summary {
+      grid-template-columns: 22px minmax(0, 1fr) 10px;
+      cursor: pointer;
+      list-style: none;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-submenu-summary::-webkit-details-marker {
+      display: none;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-submenu-chevron {
+      width: 7px;
+      height: 7px;
+      justify-self: center;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      opacity: 0.9;
+      transform: rotate(-45deg);
+      transition: transform 160ms ease;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-submenu[open] > .nav-submenu-summary .nav-submenu-chevron {
+      transform: rotate(45deg) translate(-1px, -1px);
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-submenu-links {
+      display: grid;
+      gap: 3px;
+      margin: 2px 0 8px 29px;
+      padding: 0 0 0 10px;
+      border-left: 2px solid #303640;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-child-link {
+      grid-template-columns: minmax(0, 1fr);
+      min-height: 32px;
+      padding: 6px 10px;
+      color: #d7d9de;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-child-link .nav-row-icon {
+      display: none;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-child-link .nav-link-main {
+      gap: 8px;
+    }
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-link:hover,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-link.active {
       background: #1c222b;
       border-color: #303640;
       color: #ffffff;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-child-link:hover,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-child-link.active {
+      background: #3a4049;
+      border-color: #3f4652;
     }
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-row-icon {
       display: grid;
@@ -1005,24 +1277,21 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       border-color: rgba(248, 113, 113, 0.28);
       color: #f87171;
     }
-    .sidebar-studio-link {
+    .sidebar-update-card {
       position: relative;
       display: flex;
       align-items: center;
       gap: 8px;
-      min-height: 38px;
+      min-height: 48px;
       margin-top: auto;
-      padding: 8px 10px;
+      padding: 9px 10px;
       overflow: hidden;
       border: 1px solid rgba(249, 115, 22, 0.72);
       border-radius: 11px;
       background: linear-gradient(90deg, rgba(249, 115, 22, 0.10), rgba(168, 85, 247, 0.12));
       color: #ffffff;
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 650;
     }
-    .sidebar-studio-link::after {
+    .sidebar-update-card::after {
       content: "";
       position: absolute;
       right: -22px;
@@ -1032,7 +1301,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       background: rgba(249, 115, 22, 0.24);
       filter: blur(16px);
     }
-    .studio-mark {
+    .update-mark {
       display: grid;
       width: 16px;
       height: 16px;
@@ -1044,21 +1313,35 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       font-weight: 800;
       z-index: 1;
     }
-    .studio-arrow {
-      margin-left: auto;
+    .update-copy {
+      display: grid;
+      min-width: 0;
+      gap: 1px;
       z-index: 1;
+    }
+    .update-title {
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.15;
+    }
+    .update-note {
+      color: #a8b3c2;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.2;
     }
     @media (max-width: 980px) {
       .shell, .layout {
-        grid-template-columns: 296px minmax(360px, 1fr) !important;
+        grid-template-columns: 312px minmax(360px, 1fr) !important;
         width: max-content !important;
         min-width: 100vw !important;
-        padding: 3px 8px 8px 0 !important;
+        padding: 12px 8px 12px 8px !important;
       }
       .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar {
         order: 0;
         position: relative;
-        height: calc(100vh - 6px);
+        height: calc(100vh - 24px);
         min-height: 620px;
         display: grid !important;
       }

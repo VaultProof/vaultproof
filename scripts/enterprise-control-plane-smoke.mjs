@@ -3477,8 +3477,8 @@ async function assertEnterpriseLoginRoute() {
       'nav-label">workspace',
       'nav-label">evidence',
       'nav-label">guides',
-      'Secure runtime',
-      'VaultProof Studio',
+      'VaultProof updates',
+      'Runtime release notes',
       '/app/dashboard',
       '/app/evidence',
       '/app/release',
@@ -3495,13 +3495,29 @@ async function assertEnterpriseLoginRoute() {
       'data-enterprise-sidebar="universal"',
       'data-ui-kit="dark-dual-sidebar"',
       'enterprise-icon-rail',
+      'rail-expanded-head',
+      'rail-brand-link',
+      'rail-label',
+      'rail-pin-button',
+      'aria-pressed="false"',
+      'rail-pinned',
+      'vaultproofEnterpriseRailPinned',
+      'Get set up',
+      'Cmd K',
+      'Key inventory',
+      'Monitor',
+      'nav-submenu',
+      'nav-submenu-summary',
+      'nav-submenu-chevron',
+      'nav-submenu-links',
+      'nav-child-link',
       'rail-badge',
       'rail-progress',
       'sidebar-panel',
       'workspace-card',
-      'workspace-selector',
       'get-started-link',
-      'sidebar-studio-link',
+      'sidebar-update-card',
+      'update-title',
       'nav-row-icon',
       'nav-group-summary',
       'nav-group-links',
@@ -3517,7 +3533,8 @@ async function assertEnterpriseLoginRoute() {
       '--card-bg: var(--card)',
       '--primary-bg: var(--primary)',
       '--radius: 8px',
-      'grid-template-columns: 296px minmax(0, 1fr)',
+      'grid-template-columns: 312px minmax(0, 1fr)',
+      'width: 196px;',
       '.sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-link',
       'box-shadow: none !important;',
       'letter-spacing: 0 !important;',
@@ -3562,6 +3579,12 @@ async function assertEnterpriseLoginRoute() {
       'nav-group-count',
       'nav-link-blurb',
       '.sidebar.enterprise-app-sidebar .nav-link',
+      'Secure runtime',
+      'workspace-selector',
+      'workspace-avatar',
+      'workspace-chevron',
+      'VaultProof Studio',
+      'sidebar-studio-link',
     ]) {
       if (pageHtml.includes(removedShellElement)) {
         throw new Error(`Expected ${path} to omit removed dashboard shell element (${removedShellElement})`);
@@ -3630,8 +3653,8 @@ async function assertEnterpriseLoginRoute() {
       throw new Error('Expected enterprise dashboard to render data panels progressively');
     }
     assertDashboardShellTheme(dashboardPath, dashboardHtml);
-    if (!dashboardHtml.includes('Secure runtime') || dashboardHtml.includes('GCP confidential dashboard')) {
-      throw new Error('Expected enterprise dashboard sidebar selector to use the shared secure runtime label');
+    if (!dashboardHtml.includes('VaultProof updates') || dashboardHtml.includes('GCP confidential dashboard')) {
+      throw new Error('Expected enterprise dashboard sidebar to use the shared updates card');
     }
     for (const requiredFeature of [
       'Enterprise dashboard',
