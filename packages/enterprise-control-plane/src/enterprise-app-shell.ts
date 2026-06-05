@@ -43,13 +43,10 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#039;');
 }
 
-const ENTERPRISE_SIDEBAR_SUBTITLE = 'confidential dashboard';
-
 interface EnterpriseSidebarNavItem {
   readonly page?: EnterpriseAppNavPage;
   readonly href: string;
   readonly label: string;
-  readonly blurb: string;
   readonly id?: string;
   readonly pill?: string;
   readonly activePill?: string;
@@ -70,84 +67,71 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         page: 'dashboard',
         href: '/app/dashboard',
         label: 'Dashboard',
-        blurb: 'Runtime posture, access, evidence, and urgent actions.',
         activePill: 'new',
       },
       {
         page: 'keys',
         href: '/app/keys',
         label: 'Provider slots',
-        blurb: 'Provider key slots, exposure response, material mode, and emergency revoke.',
       },
       {
         page: 'projects',
         href: '/app/projects',
         label: 'Workloads',
-        blurb: 'Protected apps, usage, policy, and provider slot posture.',
       },
       {
         page: 'inbox',
         href: '/app/inbox',
         label: 'Inbox',
-        blurb: 'Live customer conversations, SLA triage, and account context.',
         activePill: 'chat',
       },
       {
         page: 'inventory',
         href: '/app/inventory',
         label: 'API Inventory',
-        blurb: 'Protected API catalog, owners, risk, review status, and evidence.',
         activePill: 'new',
       },
       {
         page: 'policy',
         href: '/app/policy',
         label: 'Policy Drift',
-        blurb: 'Control gaps, accepted-risk records, owners, expiry, and launch blockers.',
         activePill: 'new',
       },
       {
         page: 'rollout',
         href: '/app/rollout',
         label: 'Rollout Manager',
-        blurb: 'Workload cutover, canary status, owners, rollback, and evidence.',
         activePill: 'new',
       },
       {
         page: 'readiness',
         href: '/app/readiness',
         label: 'Readiness',
-        blurb: 'Production gate for runtime, executor, and key custody.',
       },
       {
         page: 'health',
         href: '/app/health',
         label: 'Health',
-        blurb: 'Lightweight status for the control plane and edge.',
       },
       {
         page: 'activity',
         href: '/app/activity',
         label: 'Activity',
-        blurb: 'Runtime events, request IDs, latency, and outcomes.',
       },
       {
         page: 'alerts',
         href: '/app/alerts',
         label: 'Alerts',
-        blurb: 'Destinations, delivery tests, and incident notices.',
       },
       {
         page: 'control',
         href: '/app/control',
         label: 'Control',
-        blurb: 'Project policy, caller lock, limits, and secure execution.',
       },
       {
         page: 'verifier',
         href: '/app/verifier',
         label: 'AI Proof Verifier',
-        blurb: 'Register external models and validate proof bundles.',
         pill: 'beta',
       },
     ],
@@ -159,39 +143,33 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         page: 'evidence',
         href: '/app/evidence',
         label: 'Evidence packet',
-        blurb: 'Readiness, access, audit, policy, and proof exports.',
         activePill: 'proof',
       },
       {
         page: 'release',
         href: '/app/release',
         label: 'Release evidence',
-        blurb: 'Build tags, approvals, verification, rollback, and customer-safe release proof.',
         activePill: 'new',
       },
       {
         page: 'members',
         href: '/app/members',
         label: 'Members',
-        blurb: 'People, invitations, roles, and project assignments.',
       },
       {
         page: 'audit',
         href: '/app/audit',
         label: 'Audit',
-        blurb: 'Governance and runtime events for review.',
       },
       {
         id: 'auditExportLink',
         href: '/api/v1/enterprise/audit?format=csv&days=30',
         label: 'Audit CSV',
-        blurb: 'Download the last 30 days of audit evidence.',
       },
       {
         id: 'accessReviewLink',
         href: '/api/v1/enterprise/members/access-review?format=csv',
         label: 'Access review CSV',
-        blurb: 'Export members, roles, and project access.',
       },
     ],
   },
@@ -202,57 +180,48 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         page: 'setup',
         href: '/app/setup',
         label: 'Setup guide',
-        blurb: 'Implementation guide for enterprise rollout.',
       },
       {
         page: 'testers',
         href: '/app/testers',
         label: 'Tester readiness',
-        blurb: 'Tester roster, login readiness, scenario assignments, feedback, and blockers.',
       },
       {
         page: 'technical-guide',
         href: '/app/technical-guide',
         label: 'Technical guide',
-        blurb: 'Identity, network, custody, attestation, and debugging.',
       },
       {
         page: 'security-review',
         href: '/app/security-review',
         label: 'Security review',
-        blurb: 'Security and procurement packet with customer-safe proof.',
       },
       {
         page: 'settings',
         href: '/app/settings',
         label: 'Settings',
-        blurb: 'Tenant defaults and organization notices.',
       },
       {
         page: 'plans',
         href: '/app/plans',
         label: 'Plans',
-        blurb: 'Package limits, rollout readiness, and customer guardrails.',
       },
       {
         page: 'entitlements',
         href: '/app/entitlements',
         label: 'Entitlements',
-        blurb: 'Contract capacity, support tier, renewal, and usage guardrails.',
         activePill: 'paid',
       },
       {
         page: 'scanner',
         href: '/app/scanner',
         label: 'Scanner',
-        blurb: 'Redacted repository exposure findings, owners, rotation, and evidence.',
         activePill: 'new',
       },
       {
         page: 'runbooks',
         href: '/app/runbooks',
         label: 'Runbooks',
-        blurb: 'Deploy, evidence, rotation, DNS, edge, and cleanup.',
       },
     ],
   },
@@ -263,29 +232,103 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
         page: 'docs',
         href: '/app/docs',
         label: 'Enterprise docs',
-        blurb: 'Enterprise-only docs for setup, SSO, exposure response, evidence, and operations.',
         activePill: 'docs',
       },
       {
         href: 'https://vaultproof.dev/status',
         label: 'Status',
-        blurb: 'Service availability and incident updates.',
         external: true,
       },
       {
         href: 'mailto:hello@vaultproof.dev',
         label: 'Support',
-        blurb: 'Reach the VaultProof team.',
       },
       {
         href: '/app/logout',
         label: 'Sign out',
-        blurb: 'End the current enterprise session.',
         className: 'signout-link',
       },
     ],
   },
 ];
+
+const ENTERPRISE_RAIL_ITEMS: readonly { readonly label: string; readonly glyph: string; readonly href: string; readonly badge?: string; readonly page?: EnterpriseAppNavPage }[] = [
+  { label: 'VaultProof', glyph: 'VP', href: '/app/dashboard', page: 'dashboard' },
+  { label: 'Monitor', glyph: 'M', href: '/app/activity', page: 'activity', badge: '4' },
+  { label: 'Keys', glyph: 'K', href: '/app/keys', page: 'keys' },
+  { label: 'Evidence', glyph: 'E', href: '/app/evidence', page: 'evidence' },
+  { label: 'Settings', glyph: 'S', href: '/app/settings', page: 'settings' },
+];
+
+const ENTERPRISE_RAIL_BOTTOM_ITEMS: readonly { readonly label: string; readonly glyph: string; readonly href: string }[] = [
+  { label: 'Search', glyph: '/', href: '/app/dashboard' },
+  { label: 'Help', glyph: '?', href: '/app/docs' },
+  { label: 'Messages', glyph: 'C', href: '/app/inbox' },
+  { label: 'Runbooks', glyph: '*', href: '/app/runbooks' },
+];
+
+const ENTERPRISE_NAV_ICON_BY_PAGE: Partial<Record<EnterpriseAppNavPage, string>> = {
+  dashboard: 'D',
+  launch: 'L',
+  evidence: 'E',
+  projects: 'W',
+  inbox: 'C',
+  inventory: 'I',
+  policy: 'P',
+  rollout: 'R',
+  readiness: 'G',
+  health: 'H',
+  activity: 'M',
+  alerts: 'A',
+  control: 'X',
+  verifier: 'V',
+  org: 'O',
+  members: 'U',
+  audit: 'Q',
+  keys: 'K',
+  docs: 'B',
+  setup: '+',
+  demo: 'P',
+  'technical-guide': 'T',
+  'security-review': 'S',
+  settings: 'S',
+  entitlements: '$',
+  onboarding: 'O',
+  plans: 'P',
+  pilot: 'P',
+  'pilot-success': 'P',
+  testers: 'T',
+  release: 'R',
+  scanner: 'Z',
+  support: '?',
+  runbooks: 'R',
+};
+
+const ENTERPRISE_NAV_ICON_BY_LABEL: Record<string, string> = {
+  'Audit CSV': 'CSV',
+  'Access review CSV': 'CSV',
+  Status: 'ST',
+  Support: '?',
+  'Sign out': 'OUT',
+};
+
+function enterpriseNavGlyph(item: EnterpriseSidebarNavItem): string {
+  return item.page ? ENTERPRISE_NAV_ICON_BY_PAGE[item.page] || item.label.slice(0, 1).toUpperCase() : ENTERPRISE_NAV_ICON_BY_LABEL[item.label] || item.label.slice(0, 1).toUpperCase();
+}
+
+function enterpriseRailLink(activePage: EnterpriseAppNavPage, item: (typeof ENTERPRISE_RAIL_ITEMS)[number]): string {
+  const active = item.page === activePage;
+  return `<a class="rail-link${active ? ' active' : ''}" href="${escapeHtml(item.href)}" aria-label="${escapeHtml(item.label)}"${active ? ' aria-current="page"' : ''}>
+          <span class="rail-glyph">${escapeHtml(item.glyph)}</span>
+          ${item.badge ? `<span class="rail-badge">${escapeHtml(item.badge)}</span>` : ''}
+        </a>`;
+}
+
+function enterpriseRailBottomLink(item: (typeof ENTERPRISE_RAIL_BOTTOM_ITEMS)[number]): string {
+  return `<a class="rail-link" href="${escapeHtml(item.href)}" aria-label="${escapeHtml(item.label)}">
+          <span class="rail-glyph">${escapeHtml(item.glyph)}</span>
+        </a>`;
+}
 
 function enterpriseAppNavLink(activePage: EnterpriseAppNavPage, item: EnterpriseSidebarNavItem): string {
   const active = item.page === activePage;
@@ -295,11 +338,11 @@ function enterpriseAppNavLink(activePage: EnterpriseAppNavPage, item: Enterprise
   const isExternalUrl = item.external && /^https?:\/\//.test(item.href);
   const targetAttrs = isExternalUrl ? ' target="_blank" rel="noopener"' : '';
   return `<a class="${className}"${item.id ? ` id="${escapeHtml(item.id)}"` : ''} href="${escapeHtml(item.href)}"${active ? ' aria-current="page"' : ''}${targetAttrs}>
+          <span class="nav-row-icon" aria-hidden="true">${escapeHtml(enterpriseNavGlyph(item))}</span>
           <span class="nav-link-main">
             <span class="nav-link-label">${escapeHtml(item.label)}</span>
             ${pill ? `<span class="nav-pill">${escapeHtml(pill)}</span>` : active ? '<span class="nav-active-dot" aria-hidden="true"></span>' : ''}
           </span>
-          <span class="nav-link-blurb">${escapeHtml(item.blurb)}</span>
         </a>`;
 }
 
@@ -313,7 +356,6 @@ function enterpriseSidebarNavGroup(activePage: EnterpriseAppNavPage, group: Ente
   return `<details class="nav-group${activeClass}"${open ? ' open' : ''}>
         <summary class="nav-group-summary">
           <span class="nav-label">${escapeHtml(group.label)}</span>
-          <span class="nav-group-count">${group.items.length}</span>
         </summary>
         <div class="nav-group-links">
           ${group.items.map((item) => enterpriseAppNavLink(activePage, item)).join('')}
@@ -321,24 +363,41 @@ function enterpriseSidebarNavGroup(activePage: EnterpriseAppNavPage, group: Ente
       </details>`;
 }
 
-export function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, _subtitle = ENTERPRISE_SIDEBAR_SUBTITLE): string {
-  const sidebarSubtitle = ENTERPRISE_SIDEBAR_SUBTITLE;
-
-  return `<aside class="sidebar enterprise-app-sidebar" data-enterprise-sidebar="universal" data-ui-kit="shadcn-studio">
+export function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, _subtitle?: string): string {
+  return `<aside class="sidebar enterprise-app-sidebar enterprise-dual-sidebar" data-enterprise-sidebar="universal" data-ui-kit="dark-dual-sidebar">
+      <div class="enterprise-icon-rail" aria-label="Enterprise quick navigation">
+        <div class="rail-top">
+          ${ENTERPRISE_RAIL_ITEMS.map((item) => enterpriseRailLink(activePage, item)).join('')}
+        </div>
+        <div class="rail-bottom">
+          <span class="rail-progress" aria-label="Runtime status"><span></span></span>
+          ${ENTERPRISE_RAIL_BOTTOM_ITEMS.map((item) => enterpriseRailBottomLink(item)).join('')}
+          <span class="rail-status-dot" aria-hidden="true"></span>
+        </div>
+      </div>
       <div class="sidebar-panel">
         <div class="brand">
           <div class="brand-title">VaultProof Enterprise</div>
-          <div class="brand-sub">${escapeHtml(sidebarSubtitle)}</div>
         </div>
         <div class="workspace-card">
-          <div class="workspace-kicker">Organization Workspace</div>
-          <div class="workspace-title">Provisioned organization</div>
-          <p>VaultProof creates and manages the enterprise workspace for each organization.</p>
-          <span>Workspace selection is controlled by the organization.</span>
+          <button class="workspace-selector" type="button" aria-label="Current workspace">
+            <span class="workspace-avatar">V</span>
+            <span class="workspace-selector-label">Secure runtime</span>
+            <span class="workspace-chevron" aria-hidden="true"></span>
+          </button>
+          <a class="get-started-link" href="/app/setup">
+            <span class="nav-row-icon" aria-hidden="true">?</span>
+            <span>Get started</span>
+          </a>
         </div>
         <nav class="nav-groups" aria-label="Enterprise workspace navigation">
           ${ENTERPRISE_SIDEBAR_NAV_GROUPS.map((group) => enterpriseSidebarNavGroup(activePage, group)).join('')}
         </nav>
+        <a class="sidebar-studio-link" href="/app/docs">
+          <span class="studio-mark">VP</span>
+          <span>VaultProof Studio</span>
+          <span class="studio-arrow" aria-hidden="true">-&gt;</span>
+        </a>
       </div>
     </aside>`;
 }
@@ -347,24 +406,24 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     /* enterprise-universal-sidebar */
     :root {
       color-scheme: dark;
-      --background: #0b0f14;
+      --background: #050607;
       --foreground: #f8fafc;
-      --card: #111827;
+      --card: #11161c;
       --card-foreground: #f8fafc;
       --primary: #8ab4f8;
       --primary-foreground: #08111f;
-      --secondary: #1b2432;
+      --secondary: #181b21;
       --secondary-foreground: #e8eef7;
-      --muted-bg: #151d29;
+      --muted-bg: #171b22;
       --muted-foreground: #a8b3c2;
-      --accent-bg: #18243a;
+      --accent-bg: #1c222b;
       --accent-foreground: #d7e7ff;
-      --border: #2a3442;
+      --border: #2d3138;
       --input: #334155;
       --ring: #8ab4f8;
       --radius: 8px;
       --bg: var(--background);
-      --bg-mid: #121a25;
+      --bg-mid: #181b21;
       --bg-card: var(--card);
       --paper: var(--card);
       --surface: var(--muted-bg);
@@ -382,7 +441,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       --sidebar-link-active-text: var(--foreground);
       --sidebar-accent: var(--primary);
       --control-bg: var(--card);
-      --page-bg: var(--background);
+      --page-bg: #050607;
       --line: var(--border);
       --line-soft: var(--border);
       --rule: 1px solid var(--border);
@@ -511,261 +570,500 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     #sidebar:not(.enterprise-app-sidebar) {
       display: none !important;
     }
-    .shell, .layout {
-      display: grid;
-      grid-template-columns: 300px minmax(0, 1fr);
-      gap: 20px;
-      min-height: 100vh;
-      max-width: 1480px;
-      margin: 0 auto;
-      padding: 16px 24px;
-    }
-    .main {
-      min-width: 0;
-    }
     .toolbar #orgSelect {
       display: none !important;
     }
-    .sidebar.enterprise-app-sidebar {
-      display: block !important;
-      border: 0;
-      background: transparent;
-      padding: 0;
-      min-height: auto;
+    /* enterprise-dual-sidebar-dark-mode */
+    html,
+    body {
+      background: #050607 !important;
+    }
+    body {
+      min-height: 100vh;
+      overflow-x: auto;
+    }
+    .shell,
+    .layout {
+      display: grid !important;
+      grid-template-columns: 296px minmax(0, 1fr) !important;
+      gap: 8px !important;
+      min-height: 100vh;
+      max-width: none !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 3px 8px 8px 0 !important;
+      background: #050607 !important;
+    }
+    .main {
+      min-height: calc(100vh - 11px) !important;
+      min-width: 0;
+      max-width: none !important;
+      width: 100% !important;
+      padding: 24px !important;
+      border: 1px solid #242830 !important;
+      border-radius: 18px !important;
+      background: #181b21 !important;
+      box-shadow: none !important;
+      overflow: hidden;
+    }
+    main.main > .topbar,
+    .page-header {
+      background: #11161c !important;
+      border-color: #2d3138 !important;
+      border-radius: 14px !important;
+      box-shadow: none !important;
+    }
+    .card,
+    .panel,
+    .kpi-grid,
+    .banner,
+    .invite-panel,
+    .action-strip,
+    .member-card,
+    .policy-card,
+    .policy-provider-card,
+    .exec-card,
+    .resource-card,
+    .checklist-box,
+    .doc-section,
+    .callout {
+      background: #11161c !important;
+      border-color: #2d3138 !important;
+      border-radius: 12px !important;
+      box-shadow: none !important;
+    }
+    .row,
+    .list-row,
+    .invite-row,
+    .intent-card,
+    .action-card,
+    .feature-card,
+    .role-card,
+    .tabbar,
+    .event,
+    .resource-link,
+    .kpi-card,
+    .control-kpi,
+    .control-panel,
+    .chart-shell,
+    .inventory-row,
+    .launch-check-row,
+    .go-evidence-row,
+    .evidence-callout,
+    .entitlement-meter,
+    .scanner-row,
+    .release-row,
+    .tester-row {
+      background: #171b22 !important;
+      border-color: #2a2f37 !important;
+      border-radius: 10px !important;
+      box-shadow: none !important;
+    }
+    select,
+    button,
+    input,
+    textarea {
+      background: #1c2027 !important;
+      color: #f8fafc !important;
+      border-color: #343941 !important;
+    }
+    input::placeholder,
+    textarea::placeholder {
+      color: #8b8d93 !important;
+    }
+    table,
+    th,
+    td,
+    pre,
+    code,
+    .json-box,
+    .code-block {
+      background-color: #0d1117 !important;
+      color: #e5e7eb !important;
+      border-color: #2d3138 !important;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar {
+      position: sticky;
+      top: 3px;
+      display: grid !important;
+      grid-template-columns: 40px 232px;
+      gap: 8px;
+      width: 280px;
+      height: calc(100vh - 6px);
+      min-height: 620px;
       align-self: start;
+      padding: 0;
+      background: transparent;
       overflow: visible;
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: 16px;
       font-weight: 400;
       line-height: 1.5;
     }
-    .sidebar.enterprise-app-sidebar,
-    .sidebar.enterprise-app-sidebar * {
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar * {
       letter-spacing: 0 !important;
     }
-    .sidebar.enterprise-app-sidebar .sidebar-panel {
-      background: var(--sidebar-bg);
-      color: var(--sidebar-text);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 12px;
-      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
-      overflow: visible;
+    .enterprise-icon-rail {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      width: 40px;
+      min-height: 100%;
+      padding: 18px 4px 10px;
+      background: #050607;
     }
-    .sidebar.enterprise-app-sidebar .brand {
-      margin-bottom: 10px;
-      padding: 8px 8px 12px;
-      border-bottom: 1px solid var(--border);
-    }
-    .sidebar.enterprise-app-sidebar .brand-title {
-      font-weight: 600;
-      font-size: 16px;
-      line-height: 1.12;
-      letter-spacing: 0;
-      color: var(--sidebar-text);
-    }
-    .sidebar.enterprise-app-sidebar .brand-sub {
-      color: var(--sidebar-muted);
-      font-size: 12px;
-      margin-top: 4px;
-      font-weight: 500;
-      letter-spacing: 0;
-      text-transform: uppercase;
-    }
-    .sidebar.enterprise-app-sidebar .workspace-card {
-      border: 1px solid var(--border);
-      background: var(--sidebar-card-bg);
-      border-radius: var(--radius);
-      padding: 12px;
-      margin: 0 0 12px;
-    }
-    .sidebar.enterprise-app-sidebar .workspace-kicker {
-      color: var(--sidebar-accent);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0;
-      text-transform: uppercase;
-    }
-    .sidebar.enterprise-app-sidebar .workspace-title {
-      color: var(--sidebar-text);
-      font-size: 15px;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-    .sidebar.enterprise-app-sidebar .workspace-card p {
-      color: var(--sidebar-muted) !important;
-      margin: 4px 0 10px;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-    .sidebar.enterprise-app-sidebar .workspace-card span {
-      display: inline-flex;
-      color: var(--sidebar-muted);
-      border: 1px solid var(--border);
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 8px 10px;
-      font-size: 12px;
-      font-weight: 500;
-      line-height: 1.3;
-    }
-    .sidebar.enterprise-app-sidebar .nav-groups {
+    .rail-top,
+    .rail-bottom {
       display: grid;
-      gap: 6px;
+      justify-items: center;
+      gap: 12px;
     }
-    .sidebar.enterprise-app-sidebar .nav-group {
-      margin: 0;
+    .rail-link {
+      position: relative;
+      display: grid;
+      width: 32px;
+      height: 32px;
+      place-items: center;
       border: 1px solid transparent;
-      border-radius: var(--radius);
+      border-radius: 8px;
+      color: #8b8d93;
       background: transparent;
+      text-decoration: none;
+      transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+    }
+    .rail-link:hover,
+    .rail-link.active {
+      color: #ffffff;
+      background: #181b21;
+      border-color: #303640;
+    }
+    .rail-glyph {
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      font-size: 9px;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: 0 !important;
+    }
+    .rail-link.active .rail-glyph {
+      background: #f97316;
+      color: #111318;
+    }
+    .rail-badge {
+      position: absolute;
+      top: -5px;
+      right: -4px;
+      display: grid;
+      min-width: 16px;
+      height: 16px;
+      place-items: center;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: #b4532d;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+      border: 1px solid #050607;
+    }
+    .rail-progress {
+      display: grid;
+      width: 18px;
+      height: 18px;
+      place-items: center;
+      border-radius: 999px;
+      background: conic-gradient(#4ade80 0 72%, #303640 72% 100%);
+    }
+    .rail-progress span {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: #11161c;
+      border: 2px solid #11161c;
+    }
+    .rail-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #4ade80;
+      box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.12);
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .sidebar-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      height: 100%;
+      padding: 12px;
       overflow: hidden;
+      border: 1px solid #242830;
+      border-radius: 16px;
+      background: #11161c;
+      color: #f8fafc;
+      box-shadow: none;
     }
-    .sidebar.enterprise-app-sidebar .nav-group[open] {
-      background: var(--muted-bg);
-      border-color: var(--border);
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .brand {
+      margin: 0;
+      padding: 6px 12px 12px;
+      border: 0;
     }
-    .sidebar.enterprise-app-sidebar .nav-group.active-group {
-      border-color: var(--sidebar-link-active-border);
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .brand-title {
+      color: #ffffff;
+      font-size: 19px;
+      font-weight: 750;
+      line-height: 1.2;
     }
-    .sidebar.enterprise-app-sidebar .nav-group-summary {
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .workspace-card {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0 0 14px;
+      border: 0;
+      border-bottom: 1px solid #303640;
+      border-radius: 0;
+      background: transparent;
+    }
+    .workspace-selector,
+    .get-started-link {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 10px;
-      min-height: 38px;
-      padding: 9px 10px;
+      width: 100%;
+      min-height: 40px;
+      padding: 8px 11px;
+      border: 1px solid #303640;
+      border-radius: 10px;
+      background: #1b2027 !important;
+      color: #f8fafc !important;
+      font-size: 14px;
+      font-weight: 650;
+      text-decoration: none;
+      transition: background 160ms ease, border-color 160ms ease;
+    }
+    .workspace-selector:hover,
+    .get-started-link:hover {
+      background: #232832 !important;
+      border-color: #3f4652;
+    }
+    .workspace-avatar {
+      display: grid;
+      width: 24px;
+      height: 24px;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 999px;
+      background: #ff6b2c;
+      color: #111318;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .workspace-selector-label {
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .workspace-chevron {
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid #d9dde5;
+      border-bottom: 2px solid #d9dde5;
+      transform: rotate(45deg) translateY(-2px);
+      flex: 0 0 auto;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-groups {
+      display: grid;
+      gap: 0;
+      margin-top: 14px;
+      padding-right: 2px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #303640 transparent;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-group {
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent !important;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-group + .nav-group {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #303640;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-group-summary {
+      min-height: 24px;
+      padding: 0 8px 6px;
+      color: #8b8d93;
+      background: transparent !important;
       cursor: pointer;
       list-style: none;
       user-select: none;
     }
-    .sidebar.enterprise-app-sidebar .nav-group-summary::-webkit-details-marker {
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-group-summary::-webkit-details-marker {
       display: none;
     }
-    .sidebar.enterprise-app-sidebar .nav-group-summary::after {
-      content: "";
-      width: 8px;
-      height: 8px;
-      border-right: 1.5px solid var(--sidebar-muted);
-      border-bottom: 1.5px solid var(--sidebar-muted);
-      transform: rotate(45deg);
-      transition: transform 160ms ease;
-      flex: 0 0 auto;
-      margin-left: auto;
-    }
-    .sidebar.enterprise-app-sidebar .nav-group[open] > .nav-group-summary::after {
-      transform: rotate(225deg);
-      margin-top: 5px;
-    }
-    .sidebar.enterprise-app-sidebar .nav-group-summary:hover,
-    .sidebar.enterprise-app-sidebar .nav-group.active-group > .nav-group-summary {
-      background: var(--accent-bg);
-    }
-    .sidebar.enterprise-app-sidebar .nav-label {
-      color: var(--sidebar-muted);
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0;
-      margin: 0;
-    }
-    .sidebar.enterprise-app-sidebar .active-group .nav-label {
-      color: var(--sidebar-accent);
-    }
-    .sidebar.enterprise-app-sidebar .nav-group-count {
-      color: var(--sidebar-muted);
-      border: 1px solid var(--border);
-      background: var(--card);
-      border-radius: 999px;
-      padding: 2px 7px;
-      font-size: 11px;
-      line-height: 1.2;
-      flex: 0 0 auto;
-    }
-    .sidebar.enterprise-app-sidebar .nav-group-links {
-      display: grid;
-      gap: 4px;
-      padding: 0 6px 6px;
-    }
-    .sidebar.enterprise-app-sidebar .nav-link {
-      display: block;
-      padding: 9px 10px;
-      border-radius: var(--radius);
-      color: var(--sidebar-link, var(--nav-text));
-      margin: 0;
-      border: 1px solid transparent;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 600;
-      line-height: 1.25;
-    }
-    .sidebar.enterprise-app-sidebar .nav-link-main {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      min-width: 0;
-    }
-    .sidebar.enterprise-app-sidebar .nav-link-label {
-      min-width: 0;
-    }
-    .sidebar.enterprise-app-sidebar .nav-link-blurb {
-      display: block;
-      color: var(--sidebar-muted);
-      font-size: 12px;
-      font-weight: 400;
-      line-height: 1.25rem;
-      margin-top: 4px;
-    }
-    .sidebar.enterprise-app-sidebar .nav-link:hover,
-    .sidebar.enterprise-app-sidebar .nav-link.active {
-      background: var(--sidebar-link-active-bg, var(--panel));
-      border-color: var(--sidebar-link-active-border, var(--line));
-      color: var(--sidebar-link-active-text, var(--text));
-    }
-    .sidebar.enterprise-app-sidebar .nav-link:hover .nav-link-blurb,
-    .sidebar.enterprise-app-sidebar .nav-link.active .nav-link-blurb {
-      color: var(--sidebar-muted);
-    }
-    .sidebar.enterprise-app-sidebar .signout-link {
-      color: var(--red);
-    }
-    .sidebar.enterprise-app-sidebar .signout-link:hover {
-      background: rgba(248, 113, 113, 0.12);
-      border-color: rgba(248, 113, 113, 0.28);
-      color: var(--red);
-    }
-    .sidebar.enterprise-app-sidebar .nav-pill {
-      font-size: 10px;
-      color: var(--accent-foreground);
-      border: 1px solid rgba(138, 180, 248, 0.26);
-      background: var(--accent-bg);
-      border-radius: 999px;
-      padding: 2px 7px;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-    .sidebar.enterprise-app-sidebar .nav-active-dot {
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-group-summary::after {
       width: 7px;
       height: 7px;
+      border-color: #8b8d93;
+      transform: rotate(45deg);
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-group[open] > .nav-group-summary::after {
+      transform: rotate(225deg);
+      margin-top: 4px;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-label {
+      color: #8b8d93;
+      font-size: 11px;
+      font-weight: 650;
+      text-transform: uppercase;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .active-group .nav-label {
+      color: #f8fafc;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-group-links {
+      display: grid;
+      gap: 3px;
+      padding: 0;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-link {
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr);
+      column-gap: 9px;
+      align-items: center;
+      min-height: 33px;
+      margin: 0;
+      padding: 6px 9px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: #d7d9de;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-link:hover,
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-link.active {
+      background: #1c222b;
+      border-color: #303640;
+      color: #ffffff;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-row-icon {
+      display: grid;
+      width: 18px;
+      height: 18px;
+      place-items: center;
+      border-radius: 5px;
+      color: #ffffff;
+      font-size: 8px;
+      font-weight: 800;
+      line-height: 1;
+      background: transparent;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-link.active .nav-row-icon,
+    .get-started-link .nav-row-icon {
+      background: #f8fafc;
+      color: #11161c;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-link-main {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-link-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-active-dot {
+      width: 6px;
+      height: 6px;
+      box-shadow: none;
+      background: #ffffff;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-pill {
+      border-color: #5b6371;
+      background: #232832;
+      color: #f8fafc;
+      font-size: 9px;
+      font-weight: 650;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .signout-link {
+      color: #f87171;
+    }
+    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .signout-link:hover {
+      background: rgba(248, 113, 113, 0.12);
+      border-color: rgba(248, 113, 113, 0.28);
+      color: #f87171;
+    }
+    .sidebar-studio-link {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      margin-top: auto;
+      padding: 8px 10px;
+      overflow: hidden;
+      border: 1px solid rgba(249, 115, 22, 0.72);
+      border-radius: 11px;
+      background: linear-gradient(90deg, rgba(249, 115, 22, 0.10), rgba(168, 85, 247, 0.12));
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 650;
+    }
+    .sidebar-studio-link::after {
+      content: "";
+      position: absolute;
+      right: -22px;
+      width: 70px;
+      height: 54px;
       border-radius: 999px;
-      background: var(--sidebar-accent);
-      box-shadow: 0 0 0 4px rgba(138, 180, 248, 0.16);
-      flex: 0 0 auto;
+      background: rgba(249, 115, 22, 0.24);
+      filter: blur(16px);
+    }
+    .studio-mark {
+      display: grid;
+      width: 16px;
+      height: 16px;
+      place-items: center;
+      border-radius: 5px;
+      background: #ffffff;
+      color: #11161c;
+      font-size: 7px;
+      font-weight: 800;
+      z-index: 1;
+    }
+    .studio-arrow {
+      margin-left: auto;
+      z-index: 1;
     }
     @media (max-width: 980px) {
       .shell, .layout {
-        grid-template-columns: 1fr;
-        padding: 12px;
+        grid-template-columns: 296px minmax(360px, 1fr) !important;
+        width: max-content !important;
+        min-width: 100vw !important;
+        padding: 3px 8px 8px 0 !important;
       }
-      .sidebar.enterprise-app-sidebar {
-        order: 2;
+      .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar {
+        order: 0;
         position: relative;
-        height: auto;
-        min-height: auto;
-        display: flex !important;
+        height: calc(100vh - 6px);
+        min-height: 620px;
+        display: grid !important;
       }
       .main {
-        order: 1;
+        order: 0;
       }
     }
 `;

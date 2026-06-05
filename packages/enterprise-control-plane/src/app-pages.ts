@@ -471,10 +471,10 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     main.main > .topbar,
     .page-header {
       border: 1px solid var(--line) !important;
-      background: var(--card, var(--paper, #111827)) !important;
-      border-radius: 8px !important;
+      background: var(--card, var(--paper, #11161c)) !important;
+      border-radius: 14px !important;
       padding: 20px !important;
-      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18) !important;
+      box-shadow: none !important;
     }
     h1,
     .page-title {
@@ -592,8 +592,8 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     .doc-section {
       background: var(--card, var(--paper, #111827)) !important;
       border-color: var(--line) !important;
-      border-radius: 8px !important;
-      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22) !important;
+      border-radius: 12px !important;
+      box-shadow: none !important;
     }
     .action-strip,
     .list-row,
@@ -619,7 +619,7 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     .tester-row {
       background: var(--row-bg, #151d29) !important;
       border-color: var(--line-soft) !important;
-      border-radius: 8px !important;
+      border-radius: 10px !important;
     }
     .subnav {
       background: var(--surface, #151d29) !important;
@@ -670,7 +670,7 @@ const ENTERPRISE_STATIC_APP_POLISH_THEME = `
     }
     html,
     body {
-      background: var(--page-bg, #0b0f14) !important;
+      background: var(--page-bg, #050607) !important;
       color: var(--text, #f8fafc) !important;
     }
     .page,
