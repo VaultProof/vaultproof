@@ -25,6 +25,7 @@
     "publish:gcp-enterprise-secrets": "bash infra/gcp/enterprise-secure-runtime/publish-runtime-secrets.sh",
     "collect:gcp-runtime-evidence": "bash infra/gcp/enterprise-secure-runtime/collect-runtime-evidence.sh",
     "prepare:gcp-first-goal-runtime": "bash infra/gcp/enterprise-secure-runtime/prepare-first-goal-runtime.sh",
+    "seed:enterprise-demo-account": "node scripts/create-enterprise-demo-account.mjs",
     "preflight:gcp-customer-kms": "node scripts/gcp-customer-kms-preflight.mjs",
     "preflight:aws-customer-kms": "node scripts/aws-customer-kms-preflight.mjs",
     "gate:gcp-first-goal": "node scripts/run-gcp-first-goal-gate.mjs",
