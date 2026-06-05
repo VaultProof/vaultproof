@@ -490,6 +490,7 @@ export function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, _su
       (function() {
         var shell = document.querySelector('[data-enterprise-sidebar="universal"]');
         if (!shell) return;
+        var rail = shell.querySelector('.enterprise-icon-rail');
         var button = shell.querySelector('.rail-pin-button');
         var storageKey = 'vaultproofEnterpriseRailPinned';
         function setPinned(pinned) {
@@ -500,20 +501,23 @@ export function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, _su
         function setRailHover(active) {
           shell.classList.toggle('rail-hover', active);
         }
-        function targetIsInsideShell(target) {
-          return target && target.nodeType && shell.contains(target);
+        function targetIsInsideRail(target) {
+          return rail && target && target.nodeType && rail.contains(target);
         }
         try { setPinned(window.localStorage.getItem(storageKey) === 'true'); } catch (_) {}
-        shell.addEventListener('pointerenter', function() { setRailHover(true); });
-        shell.addEventListener('pointerleave', function(event) {
-          if (targetIsInsideShell(event.relatedTarget)) return;
-          setRailHover(false);
-        });
-        shell.addEventListener('focusin', function() { setRailHover(true); });
-        shell.addEventListener('focusout', function(event) {
-          if (targetIsInsideShell(event.relatedTarget)) return;
-          setRailHover(false);
-        });
+        if (rail) {
+          rail.addEventListener('pointerenter', function() { setRailHover(true); });
+          rail.addEventListener('pointerleave', function(event) {
+            if (targetIsInsideRail(event.relatedTarget)) return;
+            setRailHover(false);
+          });
+          rail.addEventListener('focusin', function() { setRailHover(true); });
+          rail.addEventListener('focusout', function(event) {
+            if (targetIsInsideRail(event.relatedTarget)) return;
+            setRailHover(false);
+          });
+        }
+        shell.addEventListener('pointerleave', function() { setRailHover(false); });
         if (button) {
           button.addEventListener('click', function(event) {
             event.preventDefault();
@@ -847,7 +851,6 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover,
     .enterprise-icon-rail:focus-within,
-    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .enterprise-icon-rail,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .enterprise-icon-rail,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .enterprise-icon-rail {
       align-items: stretch;
@@ -868,8 +871,6 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     .enterprise-icon-rail:hover .rail-bottom,
     .enterprise-icon-rail:focus-within .rail-top,
     .enterprise-icon-rail:focus-within .rail-bottom,
-    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-top,
-    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-bottom,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-top,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-bottom,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-top,
@@ -886,7 +887,6 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover .rail-expanded-head,
     .enterprise-icon-rail:focus-within .rail-expanded-head,
-    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-expanded-head,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-expanded-head,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-expanded-head {
       grid-template-columns: minmax(0, 1fr) 30px;
@@ -912,7 +912,6 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover .rail-link,
     .enterprise-icon-rail:focus-within .rail-link,
-    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-link,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-link,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-link {
       grid-template-columns: 22px minmax(0, 1fr) auto;
@@ -957,7 +956,6 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover .rail-label,
     .enterprise-icon-rail:focus-within .rail-label,
-    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-label,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-label,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-label {
       max-width: 118px;
@@ -979,7 +977,6 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover .rail-shortcut,
     .enterprise-icon-rail:focus-within .rail-shortcut,
-    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-shortcut,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-shortcut,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-shortcut {
       display: inline-flex;
@@ -1003,7 +1000,6 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover .rail-badge,
     .enterprise-icon-rail:focus-within .rail-badge,
-    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-badge,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-badge,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-badge {
       position: static;
@@ -1031,7 +1027,6 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover .rail-pin-button,
     .enterprise-icon-rail:focus-within .rail-pin-button,
-    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-pin-button,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-pin-button,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-pin-button {
       width: 30px;
@@ -1071,7 +1066,6 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .enterprise-icon-rail:hover .rail-status-dot,
     .enterprise-icon-rail:focus-within .rail-status-dot,
-    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar:hover .rail-status-dot,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-hover .rail-status-dot,
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar.rail-pinned .rail-status-dot {
       justify-self: start;
