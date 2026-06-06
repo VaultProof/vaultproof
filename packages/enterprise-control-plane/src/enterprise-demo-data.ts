@@ -2,6 +2,7 @@ type JsonObject = Record<string, unknown>;
 
 const DEMO_ORG_ID = 'demo-org-northstar-finance';
 const DEMO_ORG_SLUG = 'northstar-finance';
+const DEMO_TREND_DAYS = 180;
 
 function daysAgoIso(days: number, hourOffset = 0): string {
   const date = new Date();
@@ -23,12 +24,40 @@ function providerSlot(
   mode: 'sealed-live' | 'demo-placeholder' | 'mixed' | 'missing',
   extra: JsonObject = {},
 ): JsonObject {
+  const seed = Array.from(`${id}:${provider}`).reduce((total, char) => total + char.charCodeAt(0), 0);
+  const owners: Record<string, string> = {
+    anthropic: 'priya.shah@northstarfinance.example',
+    cloudflare: 'luis.romero@northstarfinance.example',
+    deepl: 'noah.klein@northstarfinance.example',
+    github: 'hana.okafor@northstarfinance.example',
+    google: 'luis.romero@northstarfinance.example',
+    intercom: 'maya.chen@northstarfinance.example',
+    openai: 'priya.shah@northstarfinance.example',
+    postmark: 'eli.morgan@northstarfinance.example',
+    sendgrid: 'eli.morgan@northstarfinance.example',
+    slack: 'luis.romero@northstarfinance.example',
+    stripe: 'revenue-ops@northstarfinance.example',
+    supabase: 'hana.okafor@northstarfinance.example',
+  };
+  const recentCalls = 680 + (seed % 42) * 117;
+  const deniedCalls = mode === 'demo-placeholder' ? 18 + (seed % 9) : seed % 7;
+  const errorCalls = deniedCalls + (mode === 'mixed' ? 12 : seed % 11);
   return {
     key_id: id,
     provider,
     slug: provider,
     material_mode: mode,
     material_ready: mode === 'sealed-live',
+    environment: provider === 'supabase' || provider === 'anthropic' ? 'sandbox' : 'production',
+    owner_email: owners[provider] || 'platform-oncall@northstarfinance.example',
+    rotation_status: mode === 'sealed-live' ? 'current' : mode === 'mixed' ? 'rotating' : 'scheduled',
+    rotation_sla: mode === 'sealed-live' ? `${21 + (seed % 24)} days` : `${5 + (seed % 9)} days`,
+    policy_status: mode === 'sealed-live' ? 'caller lock enforced' : 'setup review',
+    last_used_at: daysAgoIso(seed % 5, seed % 4),
+    usage_window_days: 30,
+    recent_calls: recentCalls,
+    denied_calls: deniedCalls,
+    error_calls: errorCalls,
     ...extra,
   };
 }
@@ -59,15 +88,15 @@ function project(
 }
 
 function buildCallTrend(): JsonObject[] {
-  const dayValues = [
-    980, 1124, 1040, 1288, 1362, 1420, 1194, 1515, 1678, 1490,
-    1765, 1882, 1716, 1994, 2118, 2240, 1956, 2328, 2444, 2260,
-    2598, 2716, 2412, 2828, 2964, 2520, 3194, 3320, 3048, 3562,
-  ];
-  return dayValues.map((calls, index) => {
-    const daysAgo = dayValues.length - index - 1;
-    const denied = index % 8 === 0 ? 18 : index % 5 === 0 ? 7 : index % 3 === 0 ? 3 : 0;
-    const otherErrors = index % 9 === 0 ? 12 : index % 6 === 0 ? 5 : 2;
+  return Array.from({ length: DEMO_TREND_DAYS }, (_, index) => {
+    const daysAgo = DEMO_TREND_DAYS - index - 1;
+    const weekendWeight = index % 7 === 5 || index % 7 === 6 ? 0.76 : 1;
+    const growth = 780 + index * 17;
+    const seasonality = Math.sin(index / 5.5) * 130 + Math.cos(index / 18) * 92;
+    const rolloutLift = index > 128 ? 620 : index > 82 ? 310 : index > 44 ? 120 : 0;
+    const calls = Math.max(360, Math.round((growth + seasonality + rolloutLift) * weekendWeight));
+    const denied = index % 41 === 0 ? 34 : index % 23 === 0 ? 18 : index % 11 === 0 ? 8 : index % 6 === 0 ? 3 : 1;
+    const otherErrors = index % 37 === 0 ? 26 : index % 19 === 0 ? 14 : index % 8 === 0 ? 7 : 2;
     return {
       day: dayKey(daysAgo),
       calls,
@@ -357,7 +386,7 @@ function buildOverview(): JsonObject {
     errorCalls,
     deniedCalls,
     errorRate: totalCalls ? Math.round((errorCalls / totalCalls) * 1000) / 10 : 0,
-    healthWindowDays: 30,
+    healthWindowDays: DEMO_TREND_DAYS,
     statsSource: 'sample_dashboard',
     accessLogStatsSource: 'sample_dashboard',
     sampleWorkspace: 'northstar_finance_group',

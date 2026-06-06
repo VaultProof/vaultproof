@@ -592,6 +592,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       display: grid;
       align-items: stretch;
       --color-calls: #8ab4f8;
+      --color-errors: #fbbf24;
+      --color-blocked: #f87171;
       --chart-grid: rgba(148, 163, 184, 0.16);
       --chart-axis: #94a3b8;
     }
@@ -678,6 +680,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .trend-area {
       fill: url(#callTrendAreaGradient);
     }
+    .trend-month-line {
+      stroke: rgba(148, 163, 184, 0.16);
+      stroke-width: 1;
+    }
     .trend-line {
       fill: none;
       stroke: var(--color-calls);
@@ -685,13 +691,47 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       stroke-linecap: round;
       stroke-linejoin: round;
     }
+    .trend-line.errors {
+      stroke: var(--color-errors);
+      stroke-width: 2.2;
+    }
+    .trend-line.blocked {
+      stroke: var(--color-blocked);
+      stroke-width: 2.2;
+    }
     .trend-marker {
       fill: var(--card);
       stroke: var(--color-calls);
       stroke-width: 2;
     }
-    .trend-marker.warn { stroke: var(--warn); }
-    .trend-marker.bad { stroke: var(--red); }
+    .trend-marker.warn,
+    .trend-marker.errors { stroke: var(--color-errors); }
+    .trend-marker.bad,
+    .trend-marker.blocked { stroke: var(--color-blocked); }
+    .trend-legend {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      color: var(--muted-foreground);
+      font-size: 12px;
+      font-weight: 650;
+      line-height: 1.2;
+      margin-bottom: -6px;
+    }
+    .trend-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .trend-legend i {
+      display: inline-block;
+      width: 18px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--legend-color, var(--color-calls));
+    }
     .trend-hit-area {
       fill: transparent;
       cursor: crosshair;
@@ -750,7 +790,14 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       grid-column: 2;
       margin-top: -10px;
     }
-    .trend-axis span:nth-child(2) {
+    .trend-axis span {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .trend-axis span:not(:first-child):not(:last-child) {
       text-align: center;
     }
     .trend-axis span:last-child {
@@ -917,12 +964,12 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="section-title call-overview-head">
                 <div>
                   <h2>API Calls</h2>
-                  <p>How many requests are running through VaultProof, with blocked and error days highlighted.</p>
+                  <p>Daily protected API traffic with separate lines for blocked requests and upstream errors.</p>
                 </div>
                 <div class="timeframe-toggle" role="group" aria-label="API call time range">
-                  <button class="timeframe-button active" type="button" data-call-range="7">7d</button>
-                  <button class="timeframe-button" type="button" data-call-range="14">14d</button>
                   <button class="timeframe-button" type="button" data-call-range="30">30d</button>
+                  <button class="timeframe-button" type="button" data-call-range="90">90d</button>
+                  <button class="timeframe-button active" type="button" data-call-range="180">6mo</button>
                 </div>
               </div>
               <div class="call-summary-grid" aria-label="Selected API call window">
@@ -932,7 +979,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
                 <div class="call-summary-item"><span class="call-summary-label">Errors</span><strong id="callWindowErrors" class="call-summary-value">...</strong></div>
               </div>
               <div class="call-chart-meta-row">
-                <div id="trendMeta" class="mini call-chart-meta">7 days</div>
+                <div id="trendMeta" class="mini call-chart-meta">6 months</div>
                 <div id="trendWindowHint" class="mini">Daily protected API traffic</div>
               </div>
               <div id="callTrendChart" class="trend-chart"><div class="empty">Loading API calls...</div></div>
@@ -969,8 +1016,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="card visual-card">
                 <div class="section-title">
                   <div>
-                    <h2>Project coverage</h2>
-                    <p>How much of the organization has key slots and observed runtime activity.</p>
+                    <h2>Token coverage</h2>
+                    <p>How much of the organization has VaultProof tokens, key slots, and observed runtime activity.</p>
                   </div>
                 </div>
                 <div id="projectCoverageList" class="coverage-grid"><div class="empty">Loading coverage...</div></div>
@@ -1078,7 +1125,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           <div class="section-title">
             <div>
               <h2>Organization coverage</h2>
-              <p>Project-level coverage for provider slots, observed runtime traffic, and attention signals.</p>
+              <p>Token-level coverage for provider slots, observed runtime traffic, and attention signals.</p>
             </div>
           </div>
           <div id="keyCoverageRows" class="coverage-grid"><div class="empty">Loading organization coverage...</div></div>
@@ -1101,7 +1148,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="row"><div><div class="row-title">Release evidence</div><div class="row-sub">Customer-safe proof of build tag, approval, verification, rollout state, and rollback path.</div></div><span class="tag good">recorded</span></div>
               <div class="row"><div><div class="row-title">Tester readiness</div><div class="row-sub">Browser-local roster, login readiness, scenario assignment, feedback, and blockers for customer sessions.</div></div><span class="tag good">tracked</span></div>
               <div class="row"><div><div class="row-title">Audit export</div><div class="row-sub">CSV evidence for governance and runtime events.</div></div><span class="tag good">available</span></div>
-              <div class="row"><div><div class="row-title">Access review</div><div class="row-sub">CSV evidence for members, roles, and project access.</div></div><span class="tag good">available</span></div>
+              <div class="row"><div><div class="row-title">Access review</div><div class="row-sub">CSV evidence for members, roles, and token access.</div></div><span class="tag good">available</span></div>
             </div>
           </div>
           <div class="card">
@@ -1135,8 +1182,8 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       <section id="tab-operations" class="tab-panel" data-tab-panel="operations" hidden>
         <section class="grid two">
           <div class="card">
-            <div class="section-title"><h2>Project health</h2><span id="projectHealthMeta" class="mini"></span></div>
-            <div id="projectHealthList" class="list"><div class="empty">Loading projects...</div></div>
+            <div class="section-title"><h2>Token health</h2><span id="projectHealthMeta" class="mini"></span></div>
+            <div id="projectHealthList" class="list"><div class="empty">Loading tokens...</div></div>
           </div>
 
           <div class="card">
@@ -1170,7 +1217,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
       var loadSequence = 0;
       var latestCallTrend = [];
-      var callTrendRangeDays = 7;
+      var callTrendRangeDays = 180;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
       function escapeHtml(value) {
@@ -1284,10 +1331,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var totalSlots = rawNumber(summary.totalSlots);
         var live = rawNumber(summary.liveSealedSlots);
         var rows = [
-          coverageItem('Projects with key slots', number(withSlots) + '/' + number(totalProjects), number(rawNumber(coverage.withoutProviderSlots)) + ' projects without active slots', percent(withSlots, totalProjects), withSlots === totalProjects && totalProjects ? 'good' : 'warn'),
-          coverageItem('Projects with traffic', number(withTraffic) + '/' + number(totalProjects), 'Proxy activity observed in the health window', percent(withTraffic, totalProjects), withTraffic ? 'blue' : 'warn'),
+          coverageItem('Tokens with key slots', number(withSlots) + '/' + number(totalProjects), number(rawNumber(coverage.withoutProviderSlots)) + ' tokens without active slots', percent(withSlots, totalProjects), withSlots === totalProjects && totalProjects ? 'good' : 'warn'),
+          coverageItem('Tokens with traffic', number(withTraffic) + '/' + number(totalProjects), 'Proxy activity observed in the health window', percent(withTraffic, totalProjects), withTraffic ? 'blue' : 'warn'),
           coverageItem('Keys ready', number(live) + '/' + number(totalSlots), 'Protected keys ready for upstream dispatch', percent(live, totalSlots), live === totalSlots && totalSlots ? 'good' : 'warn'),
-          coverageItem('Needs attention', number(needingAttention), 'Projects with denied or error traffic', totalProjects ? percent(needingAttention, totalProjects) : 0, needingAttention ? 'bad' : 'good'),
+          coverageItem('Needs attention', number(needingAttention), 'Tokens with denied or error traffic', totalProjects ? percent(needingAttention, totalProjects) : 0, needingAttention ? 'bad' : 'good'),
         ];
         var list = byId(id);
         if (list) list.innerHTML = rows.join('');
@@ -1346,7 +1393,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           items.push({ title: 'Review denied or error traffic', detail: number(denied) + ' denied and ' + number(Math.max(totalErrors - denied, otherErrors)) + ' other error calls are in the current window.', area: 'Activity', tone: denied ? 'bad' : 'warn' });
         }
         if (withoutSlots > 0) {
-          items.push({ title: 'Projects missing key coverage', detail: number(withoutSlots) + ' ' + plural(withoutSlots, 'project') + (withoutSlots === 1 ? ' is' : ' are') + ' not mapped to an active provider slot.', area: 'API Inventory', tone: 'warn' });
+          items.push({ title: 'Tokens missing key coverage', detail: number(withoutSlots) + ' ' + plural(withoutSlots, 'token') + (withoutSlots === 1 ? ' is' : ' are') + ' not mapped to an active provider slot.', area: 'API Inventory', tone: 'warn' });
         }
         if (totalSlots > 0 && rawNumber(traffic.totalCalls || overview.totalCalls) === 0) {
           items.push({ title: 'No protected runtime traffic yet', detail: 'Provider slots exist, but no workflow has sent traffic through VaultProof in this window.', area: 'Rollout', tone: 'warn' });
@@ -1355,19 +1402,19 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         if (list) {
           list.innerHTML = items.length
             ? items.slice(0, 5).map(attentionRow).join('')
-            : '<div class="attention-row"><div><div class="row-title">No active attention items</div><div class="row-sub">Key readiness, project coverage, and API call results do not show dashboard-level blockers.</div></div><span class="tag good">Clear</span></div>';
+            : '<div class="attention-row"><div><div class="row-title">No active attention items</div><div class="row-sub">Key readiness, token coverage, and API call results do not show dashboard-level blockers.</div></div><span class="tag good">Clear</span></div>';
         }
         text('attentionMeta', items.length ? number(items.length) + ' open' : 'clear');
       }
       function updateCallRangeButtons(days) {
         document.querySelectorAll('[data-call-range]').forEach(function(button) {
-          var active = Number(button.getAttribute('data-call-range') || 7) === days;
+          var active = Number(button.getAttribute('data-call-range') || 180) === days;
           button.classList.toggle('active', active);
           button.setAttribute('aria-pressed', active ? 'true' : 'false');
         });
       }
       function renderCallTrend(trend, days) {
-        days = rawNumber(days) || 7;
+        days = rawNumber(days) || 180;
         var list = Array.isArray(trend) ? trend.slice(-days) : [];
         var chart = byId('callTrendChart');
         updateCallRangeButtons(days);
@@ -1399,7 +1446,12 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var averageCalls = Math.round(total / Math.max(list.length, 1));
         var allowedRate = total ? Math.round((allowedTotal / total) * 1000) / 10 : 0;
         var blockedRate = total ? Math.round((deniedTotal / total) * 1000) / 10 : 0;
-        var errorRate = total ? Math.round((errorTotal / total) * 1000) / 10 : 0;
+        var errorRate = total ? Math.round((otherErrorTotal / total) * 1000) / 10 : 0;
+        var maxEvents = list.reduce(function(max, item) {
+          var denied = rawNumber(item.denied);
+          var otherErrors = Math.max(rawNumber(item.errors) - denied, 0);
+          return Math.max(max, denied, otherErrors);
+        }, 1);
         var width = 960;
         var height = 300;
         var top = 18;
@@ -1410,34 +1462,49 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var plotHeight = bottom - top;
         var points = list.map(function(item, index) {
           var calls = rawNumber(item.calls);
+          var denied = rawNumber(item.denied);
+          var errors = Math.max(rawNumber(item.errors) - denied, 0);
           var x = list.length === 1 ? left + plotWidth / 2 : left + (index * plotWidth / (list.length - 1));
-          var y = top + (1 - (calls / maxCalls)) * plotHeight;
+          var callY = top + (1 - (calls / maxCalls)) * plotHeight;
+          var blockedY = top + (1 - (denied / maxEvents)) * plotHeight;
+          var errorY = top + (1 - (errors / maxEvents)) * plotHeight;
           return {
             x: Math.round(x * 100) / 100,
-            y: Math.round(y * 100) / 100,
+            y: Math.round(callY * 100) / 100,
+            callY: Math.round(callY * 100) / 100,
+            blockedY: Math.round(blockedY * 100) / 100,
+            errorY: Math.round(errorY * 100) / 100,
             calls: calls,
             day: item.day,
-            denied: rawNumber(item.denied),
-            errors: rawNumber(item.errors),
+            denied: denied,
+            errors: errors,
           };
         });
         var peakPoint = points.reduce(function(peak, point) {
           return point.calls > peak.calls ? point : peak;
         }, points[0]);
+        var peakBlockedPoint = points.reduce(function(peak, point) {
+          return point.denied > peak.denied ? point : peak;
+        }, points[0]);
+        var peakErrorPoint = points.reduce(function(peak, point) {
+          return point.errors > peak.errors ? point : peak;
+        }, points[0]);
         var averageY = Math.round((top + (1 - (averageCalls / maxCalls)) * plotHeight) * 100) / 100;
-        function smoothAreaPath(pointList) {
+        function smoothPath(pointList, yField) {
           if (!pointList.length) return '';
-          var path = 'M ' + pointList[0].x + ' ' + pointList[0].y;
+          var path = 'M ' + pointList[0].x + ' ' + pointList[0][yField];
           if (pointList.length === 1) return path;
           for (var i = 1; i < pointList.length; i += 1) {
             var previous = pointList[i - 1];
             var current = pointList[i];
             var midX = Math.round(((previous.x + current.x) / 2) * 100) / 100;
-            path += ' C ' + midX + ' ' + previous.y + ' ' + midX + ' ' + current.y + ' ' + current.x + ' ' + current.y;
+            path += ' C ' + midX + ' ' + previous[yField] + ' ' + midX + ' ' + current[yField] + ' ' + current.x + ' ' + current[yField];
           }
           return path;
         }
-        var linePath = smoothAreaPath(points);
+        var linePath = smoothPath(points, 'callY');
+        var errorLinePath = smoothPath(points, 'errorY');
+        var blockedLinePath = smoothPath(points, 'blockedY');
         var areaPath = points.length
           ? linePath + ' L ' + points[points.length - 1].x + ' ' + bottom + ' L ' + points[0].x + ' ' + bottom + ' Z'
           : '';
@@ -1445,17 +1512,60 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           y = Math.round(y * 100) / 100;
           return '<line class="trend-grid-line" x1="' + left + '" x2="' + (width - right) + '" y1="' + y + '" y2="' + y + '"></line>';
         }).join('');
+        function monthName(value) {
+          var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          var date = new Date(String(value || '') + 'T00:00:00.000Z');
+          if (!Number.isFinite(date.getTime())) return String(value || '').slice(5) || 'n/a';
+          return monthNames[date.getUTCMonth()] + (list.length <= 45 ? ' ' + date.getUTCDate() : '');
+        }
+        function shortDay(value) {
+          var date = new Date(String(value || '') + 'T00:00:00.000Z');
+          if (!Number.isFinite(date.getTime())) return String(value || '').slice(5) || 'n/a';
+          return monthName(value) + ', ' + date.getUTCFullYear();
+        }
+        function axisTicks() {
+          if (!points.length) return [];
+          if (points.length > 60) {
+            var monthly = [];
+            var lastMonth = '';
+            points.forEach(function(point, index) {
+              var month = String(point.day || '').slice(0, 7);
+              if (index === 0 || index === points.length - 1 || month !== lastMonth) {
+                monthly.push({ point: point, label: monthName(point.day) });
+                lastMonth = month;
+              }
+            });
+            if (monthly.length <= 7) return monthly;
+            var step = Math.ceil(monthly.length / 7);
+            return monthly.filter(function(_, index) {
+              return index === 0 || index === monthly.length - 1 || index % step === 0;
+            });
+          }
+          var count = Math.min(points.length, 6);
+          var ticks = [];
+          for (var index = 0; index < count; index += 1) {
+            var pointIndex = count === 1 ? 0 : Math.round(index * (points.length - 1) / (count - 1));
+            var point = points[pointIndex];
+            ticks.push({ point: point, label: monthName(point.day) });
+          }
+          return ticks;
+        }
+        var ticks = axisTicks();
+        var monthLines = ticks.slice(1, -1).map(function(tick) {
+          return '<line class="trend-month-line" x1="' + tick.point.x + '" x2="' + tick.point.x + '" y1="' + top + '" y2="' + bottom + '"></line>';
+        }).join('');
         var markers = points.map(function(point, index) {
           var isLast = index === points.length - 1;
           var isPeak = peakPoint && point.x === peakPoint.x && point.y === peakPoint.y;
-          if (!isLast && !isPeak && !point.denied && !point.errors) return '';
-          var className = point.denied ? 'trend-marker bad' : point.errors ? 'trend-marker warn' : 'trend-marker';
+          if (!isLast && !isPeak) return '';
+          var className = 'trend-marker';
           var radius = isLast || isPeak ? 5 : 3.6;
-          var title = number(point.calls) + ' calls on ' + String(point.day || '').slice(5) + (point.denied ? ', blocked traffic' : point.errors ? ', errors present' : '');
+          var title = number(point.calls) + ' calls on ' + shortDay(point.day);
           return '<circle class="' + className + '" cx="' + point.x + '" cy="' + point.y + '" r="' + radius + '"><title>' + escapeHtml(title) + '</title></circle>';
         }).join('');
-        function shortDay(value) {
-          return String(value || '').slice(5) || 'n/a';
+        function eventMarker(point, field, yField, className, label) {
+          if (!point || !point[field]) return '';
+          return '<circle class="trend-marker ' + className + '" cx="' + point.x + '" cy="' + point[yField] + '" r="4"><title>' + escapeHtml(number(point[field]) + ' ' + label + ' on ' + shortDay(point.day)) + '</title></circle>';
         }
         function trendDetail(label, value, detail) {
           return '<div class="trend-detail"><span>' + escapeHtml(label) + '</span><strong>' + escapeHtml(value) + '</strong><em>' + escapeHtml(detail) + '</em></div>';
@@ -1477,14 +1587,16 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
             var svgRect = svg.getBoundingClientRect();
             var plotRect = plot.getBoundingClientRect();
             var x = (point.x / width) * svgRect.width + svgRect.left - plotRect.left;
-            var y = (point.y / height) * svgRect.height + svgRect.top - plotRect.top;
+            var yAnchor = Math.min(point.callY, point.blockedY, point.errorY);
+            var y = (yAnchor / height) * svgRect.height + svgRect.top - plotRect.top;
             tooltip.style.left = Math.max(88, Math.min(x, plotRect.width - 88)) + 'px';
             tooltip.style.top = Math.max(88, y) + 'px';
             tooltip.innerHTML =
               '<div class="trend-tooltip-title">' + escapeHtml(shortDay(point.day)) + '</div>' +
               '<div class="trend-tooltip-row"><span class="trend-tooltip-dot"></span><span>Total calls</span><strong>' + number(point.calls) + '</strong></div>' +
-              '<div class="trend-tooltip-row"><span class="trend-tooltip-dot" style="--tooltip-dot: var(--red)"></span><span>Blocked</span><strong>' + number(point.denied) + '</strong></div>' +
-              '<div class="trend-tooltip-row"><span class="trend-tooltip-dot" style="--tooltip-dot: var(--warn)"></span><span>Errors</span><strong>' + number(point.errors) + '</strong></div>';
+              '<div class="trend-tooltip-row"><span class="trend-tooltip-dot" style="--tooltip-dot: var(--green)"></span><span>Allowed</span><strong>' + number(Math.max(point.calls - point.denied - point.errors, 0)) + '</strong></div>' +
+              '<div class="trend-tooltip-row"><span class="trend-tooltip-dot" style="--tooltip-dot: var(--color-blocked)"></span><span>Blocked</span><strong>' + number(point.denied) + '</strong></div>' +
+              '<div class="trend-tooltip-row"><span class="trend-tooltip-dot" style="--tooltip-dot: var(--color-errors)"></span><span>Errors</span><strong>' + number(point.errors) + '</strong></div>';
             tooltip.classList.add('visible');
           }
           function hideTooltip() {
@@ -1494,38 +1606,50 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           svg.addEventListener('pointerleave', hideTooltip);
           svg.addEventListener('focusout', hideTooltip);
         }
-        var startLabel = list[0] ? String(list[0].day || '').slice(5) : '';
-        var mid = list[Math.floor((list.length - 1) / 2)];
-        var midLabel = mid ? String(mid.day || '').slice(5) : '';
-        var endLabel = list[list.length - 1] ? String(list[list.length - 1].day || '').slice(5) : '';
+        var selectedWindowLabel = days >= 180 ? '6mo' : days + 'd';
         var detailGrid =
           '<div class="trend-detail-grid" aria-label="Protected traffic details">' +
             trendDetail('Average per day', number(averageCalls), 'Across the selected ' + days + 'd window') +
             trendDetail('Peak day', number(peakPoint ? peakPoint.calls : 0), shortDay(peakPoint && peakPoint.day)) +
-            trendDetail('Allowed rate', allowedRate + '%', number(allowedTotal) + ' successful calls') +
-            trendDetail('Blocked / errors', blockedRate + '% / ' + errorRate + '%', number(deniedTotal) + ' blocked, ' + number(otherErrorTotal) + ' errors') +
+            trendDetail('Blocked', blockedRate + '%', number(deniedTotal) + ' blocked requests') +
+            trendDetail('Errors', errorRate + '%', number(otherErrorTotal) + ' upstream or system errors') +
           '</div>';
+        var legend =
+          '<div class="trend-legend" aria-label="Chart legend">' +
+            '<span><i style="--legend-color: var(--color-calls)"></i>Calls</span>' +
+            '<span><i style="--legend-color: var(--color-errors)"></i>Errors</span>' +
+            '<span><i style="--legend-color: var(--color-blocked)"></i>Blocked</span>' +
+          '</div>';
+        var axis = '<div class="trend-axis">' + ticks.map(function(tick) {
+          return '<span>' + escapeHtml(tick.label) + '</span>';
+        }).join('') + '</div>';
         chart.innerHTML =
           '<div class="trend-line-chart">' +
             detailGrid +
+            legend +
             '<div class="trend-plot">' +
-              '<div class="trend-scale"><span>Peak ' + number(maxCalls) + '</span><span>Avg ' + number(averageCalls) + '</span><span>0</span></div>' +
-              '<svg class="trend-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Daily API calls over the selected window">' +
+              '<div class="trend-scale"><span>Peak ' + number(maxCalls) + '</span><span>Events ' + number(maxEvents) + '</span><span>0</span></div>' +
+              '<svg class="trend-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Daily API calls, errors, and blocked requests over the selected window">' +
                 '<defs><linearGradient id="callTrendAreaGradient" x1="0" y1="' + top + '" x2="0" y2="' + bottom + '" gradientUnits="userSpaceOnUse"><stop offset="5%" stop-color="var(--color-calls)" stop-opacity="0.38"></stop><stop offset="95%" stop-color="var(--color-calls)" stop-opacity="0.04"></stop></linearGradient></defs>' +
                 gridLines +
+                monthLines +
                 '<line class="trend-average-line" x1="' + left + '" x2="' + (width - right) + '" y1="' + averageY + '" y2="' + averageY + '"><title>Average ' + number(averageCalls) + ' calls per day</title></line>' +
                 '<path class="trend-area" d="' + areaPath + '"></path>' +
                 '<path class="trend-line" d="' + linePath + '"></path>' +
+                '<path class="trend-line errors" d="' + errorLinePath + '"></path>' +
+                '<path class="trend-line blocked" d="' + blockedLinePath + '"></path>' +
                 markers +
+                eventMarker(peakErrorPoint, 'errors', 'errorY', 'errors', 'errors') +
+                eventMarker(peakBlockedPoint, 'denied', 'blockedY', 'blocked', 'blocked') +
                 '<rect class="trend-hit-area" x="' + left + '" y="' + top + '" width="' + plotWidth + '" height="' + plotHeight + '"></rect>' +
               '</svg>' +
-              '<div class="trend-axis"><span>' + escapeHtml(startLabel) + '</span><span>' + escapeHtml(midLabel) + '</span><span>' + escapeHtml(endLabel) + '</span></div>' +
+              axis +
               '<div class="trend-tooltip" aria-hidden="true"></div>' +
             '</div>' +
           '</div>';
         attachTrendTooltip();
-        text('trendMeta', 'Selected window: ' + days + 'd');
-        text('trendWindowHint', number(total) + ' calls - ' + allowedRate + '% allowed');
+        text('trendMeta', 'Selected window: ' + selectedWindowLabel);
+        text('trendWindowHint', number(total) + ' calls - ' + allowedRate + '% allowed - ' + number(list.length) + ' daily points');
         text('callWindowTotal', number(total));
         text('callWindowAllowed', number(allowedTotal));
         text('callWindowBlocked', number(deniedTotal));
@@ -1634,7 +1758,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           return;
         }
         text('orgRole', org.role || 'member');
-        text('orgDetail', (org.name || 'Organization') + ' - ' + number(org.member_count) + ' members - ' + number(org.project_count) + ' projects');
+        text('orgDetail', (org.name || 'Organization') + ' - ' + number(org.member_count) + ' members - ' + number(org.project_count) + ' tokens');
         text('kpiMembersSub', (payload.sso_status && payload.sso_status.provider_status === 'configured') ? 'SSO configured' : 'SSO not fully configured');
       }
       function renderOverview(overview) {
@@ -1674,7 +1798,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           operationList.innerHTML = alerts.length ? alerts.slice(0, 5).map(function(alert) {
             var tone = alert.severity === 'critical' ? 'bad' : alert.severity === 'warning' ? 'warn' : 'good';
             return '<div class="row"><div><div class="row-title">' + escapeHtml(alert.title || 'Attention signal') + '</div><div class="row-sub">' + escapeHtml(alert.detail || '') + '</div></div><span class="tag ' + tone + '">' + escapeHtml(alert.severity || 'info') + '</span></div>';
-          }).join('') : '<div class="row"><div><div class="row-title">No active attention signals</div><div class="row-sub">Provider slots, traffic, and project health do not show dashboard-level blockers.</div></div><span class="tag good">clear</span></div>';
+          }).join('') : '<div class="row"><div><div class="row-title">No active attention signals</div><div class="row-sub">Provider slots, traffic, and token health do not show dashboard-level blockers.</div></div><span class="tag good">clear</span></div>';
         }
         var projects = Array.isArray(overview.projectHealth) ? overview.projectHealth : [];
         var projectList = byId('projectHealthList');
@@ -1682,7 +1806,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           projectList.innerHTML = projects.length ? projects.slice(0, 6).map(function(project) {
             var status = project.denied || project.errors ? 'watch' : project.calls ? 'healthy' : 'setup';
             return '<div class="row"><div><div class="row-title">' + escapeHtml(project.name || project.vp_proj_id || project.project_id) + '</div><div class="row-sub">' + number(project.calls) + ' calls - ' + number(project.errors) + ' errors - last ' + escapeHtml(relativeTime(project.lastActivity)) + '</div></div><span class="tag">' + status + '</span></div>';
-          }).join('') : '<div class="empty">No project health data yet.</div>';
+          }).join('') : '<div class="empty">No token health data yet.</div>';
         }
         var activityList = byId('activityList');
         var activity = Array.isArray(overview.recentActivity) ? overview.recentActivity : [];
@@ -1725,7 +1849,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           dataPanelsStarted = true;
           return [
             loadPanel(sequence, 'organization', fetchJson('/api/v1/enterprise/orgs/current'), renderOrganization, panelFailures),
-            loadPanel(sequence, 'project stats', fetchJson('/api/v1/enterprise/projects/stats/overview'), renderOverview, panelFailures),
+            loadPanel(sequence, 'token stats', fetchJson('/api/v1/enterprise/projects/stats/overview'), renderOverview, panelFailures),
             loadPanel(sequence, 'members', fetchJson('/api/v1/enterprise/members'), renderMembers, panelFailures),
             loadPanel(sequence, 'audit', fetchJson('/api/v1/enterprise/audit?limit=6&days=30'), renderAudit, panelFailures)
           ];
@@ -1751,7 +1875,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       });
       document.querySelectorAll('[data-call-range]').forEach(function(button) {
         button.addEventListener('click', function() {
-          callTrendRangeDays = rawNumber(button.getAttribute('data-call-range')) || 7;
+          callTrendRangeDays = rawNumber(button.getAttribute('data-call-range')) || 180;
           renderCallTrend(latestCallTrend, callTrendRangeDays);
         });
       });

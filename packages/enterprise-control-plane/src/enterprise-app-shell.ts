@@ -345,59 +345,6 @@ const ENTERPRISE_RAIL_BOTTOM_ITEMS: readonly EnterpriseRailItem[] = [
   { label: 'Profile', icon: 'user', href: '/app/settings', page: 'settings' },
 ];
 
-const ENTERPRISE_NAV_ICON_BY_PAGE: Partial<Record<EnterpriseAppNavPage, string>> = {
-  dashboard: 'D',
-  launch: 'L',
-  evidence: 'E',
-  projects: 'W',
-  inbox: 'C',
-  knowledge: 'K',
-  reports: 'R',
-  outbound: 'O',
-  contacts: 'U',
-  inventory: 'I',
-  policy: 'P',
-  rollout: 'R',
-  readiness: 'G',
-  health: 'H',
-  activity: 'M',
-  alerts: 'A',
-  control: 'X',
-  verifier: 'V',
-  org: 'O',
-  members: 'U',
-  audit: 'Q',
-  keys: 'K',
-  docs: 'B',
-  setup: '+',
-  demo: 'P',
-  'technical-guide': 'T',
-  'security-review': 'S',
-  settings: 'S',
-  entitlements: '$',
-  onboarding: 'O',
-  plans: 'P',
-  pilot: 'P',
-  'pilot-success': 'P',
-  testers: 'T',
-  release: 'R',
-  scanner: 'Z',
-  support: '?',
-  runbooks: 'R',
-};
-
-const ENTERPRISE_NAV_ICON_BY_LABEL: Record<string, string> = {
-  'Audit CSV': 'CSV',
-  'Access review CSV': 'CSV',
-  Status: 'ST',
-  Support: '?',
-  'Sign out': 'OUT',
-};
-
-function enterpriseNavGlyph(item: EnterpriseSidebarNavItem): string {
-  return item.page ? ENTERPRISE_NAV_ICON_BY_PAGE[item.page] || item.label.slice(0, 1).toUpperCase() : ENTERPRISE_NAV_ICON_BY_LABEL[item.label] || item.label.slice(0, 1).toUpperCase();
-}
-
 function enterpriseRailIcon(name: EnterpriseRailIconName): string {
   const attrs = 'class="rail-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"';
   switch (name) {
@@ -462,7 +409,6 @@ function enterpriseAppNavLink(activePage: EnterpriseAppNavPage, item: Enterprise
     const summaryClassName = ['nav-link', 'nav-submenu-summary', childActive || active ? 'active' : '', item.className || ''].filter(Boolean).join(' ');
     return `<details class="nav-submenu${childActive || active ? ' active-submenu' : ''}"${childActive || active ? ' open' : ''}>
           <summary class="${summaryClassName}">
-            <span class="nav-row-icon" aria-hidden="true">${escapeHtml(enterpriseNavGlyph(item))}</span>
             <span class="nav-link-main">
               <span class="nav-link-label">${escapeHtml(item.label)}</span>
               ${pill ? `<span class="nav-pill">${escapeHtml(pill)}</span>` : childActive || active ? '<span class="nav-active-dot" aria-hidden="true"></span>' : ''}
@@ -475,7 +421,6 @@ function enterpriseAppNavLink(activePage: EnterpriseAppNavPage, item: Enterprise
         </details>`;
   }
   return `<a class="${className}"${item.id ? ` id="${escapeHtml(item.id)}"` : ''} href="${escapeHtml(item.href)}"${active ? ' aria-current="page"' : ''}${targetAttrs}>
-          <span class="nav-row-icon" aria-hidden="true">${escapeHtml(enterpriseNavGlyph(item))}</span>
           <span class="nav-link-main">
             <span class="nav-link-label">${escapeHtml(item.label)}</span>
             ${pill ? `<span class="nav-pill">${escapeHtml(pill)}</span>` : active ? '<span class="nav-active-dot" aria-hidden="true"></span>' : ''}
@@ -522,7 +467,6 @@ export function renderEnterpriseAppSidebar(activePage: EnterpriseAppNavPage, _su
         </div>
         <div class="workspace-card">
           <a class="get-started-link" href="/app/setup">
-            <span class="nav-row-icon" aria-hidden="true">?</span>
             <span>Get started</span>
           </a>
         </div>
@@ -1260,8 +1204,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     }
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-link {
       display: grid;
-      grid-template-columns: 22px minmax(0, 1fr);
-      column-gap: 9px;
+      grid-template-columns: minmax(0, 1fr);
+      column-gap: 0;
       align-items: center;
       min-height: 33px;
       margin: 0;
@@ -1276,7 +1220,7 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
     }
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-submenu-summary {
-      grid-template-columns: 22px minmax(0, 1fr) 10px;
+      grid-template-columns: minmax(0, 1fr) 10px;
       cursor: pointer;
       list-style: none;
     }
@@ -1311,9 +1255,6 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       font-size: 14px;
       font-weight: 500;
     }
-    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-child-link .nav-row-icon {
-      display: none;
-    }
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-child-link .nav-link-main {
       gap: 8px;
     }
@@ -1327,23 +1268,6 @@ export const ENTERPRISE_APP_SHELL_THEME = `
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-child-link.active {
       background: #3a4049;
       border-color: #3f4652;
-    }
-    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-row-icon {
-      display: grid;
-      width: 18px;
-      height: 18px;
-      place-items: center;
-      border-radius: 5px;
-      color: #ffffff;
-      font-size: 8px;
-      font-weight: 800;
-      line-height: 1;
-      background: transparent;
-    }
-    .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-link.active .nav-row-icon,
-    .get-started-link .nav-row-icon {
-      background: #f8fafc;
-      color: #11161c;
     }
     .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar .nav-link-main {
       display: flex;

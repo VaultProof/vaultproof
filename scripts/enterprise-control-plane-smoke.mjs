@@ -3518,7 +3518,7 @@ async function assertEnterpriseLoginRoute() {
       'get-started-link',
       'sidebar-update-card',
       'update-title',
-      'nav-row-icon',
+      'nav-link-label',
       'nav-group-summary',
       'nav-group-links',
       'active-group',
@@ -3550,6 +3550,9 @@ async function assertEnterpriseLoginRoute() {
     }
     if (!pageHtml.includes('font-size: 2.6rem') && !pageHtml.includes('font-size: 2.25rem')) {
       throw new Error(`Expected ${path} to use a responsive enterprise hero heading size`);
+    }
+    if (pageHtml.includes('nav-row-icon')) {
+      throw new Error(`Expected ${path} sidebar labels to render without leading glyph initials`);
     }
     const expandedRailStyle = pageHtml.match(/\.enterprise-icon-rail:hover,[\s\S]*?\.sidebar\.enterprise-app-sidebar\.enterprise-dual-sidebar\.rail-pinned \.enterprise-icon-rail\s*\{[^}]+\}/)?.[0] || '';
     if (!/background:\s*#050607/.test(expandedRailStyle) || /background:\s*#11161c/.test(expandedRailStyle)) {
@@ -3660,7 +3663,7 @@ async function assertEnterpriseLoginRoute() {
     if (!dashboardHtml.includes("credentials: 'same-origin'") || dashboardHtml.includes("setNotice('Sign in to view your VaultProof workspace.") || dashboardHtml.includes("if (!token)")) {
       throw new Error('Expected enterprise dashboard browser fetches to use the HttpOnly enterprise session cookie instead of requiring a localStorage token');
     }
-    if (!dashboardHtml.includes('loadPanel(sequence') || !dashboardHtml.includes('project stats')) {
+    if (!dashboardHtml.includes('loadPanel(sequence') || !dashboardHtml.includes('token stats')) {
       throw new Error('Expected enterprise dashboard to render data panels progressively');
     }
     assertDashboardShellTheme(dashboardPath, dashboardHtml);
@@ -3705,15 +3708,16 @@ async function assertEnterpriseLoginRoute() {
       'trend-line-chart',
       'trend-svg',
       'trend-area',
+      'trend-legend',
       'trend-axis',
-      'data-call-range="7"',
-      'data-call-range="14"',
       'data-call-range="30"',
+      'data-call-range="90"',
+      'data-call-range="180"',
       'Key readiness',
       'materialDonut',
       'API call results',
       'trafficOutcomeBar',
-      'Project coverage',
+      'Token coverage',
       'projectCoverageList',
       'callTrendChart',
       'Provider usage',
@@ -3873,7 +3877,7 @@ async function assertEnterpriseLoginRoute() {
     {
       path: '/app/keys',
       title: 'Provider Slots - VaultProof Enterprise',
-      required: ['/api/v1/enterprise/projects', 'provider-slots-shadcn-polish', 'keys-board-panel', 'keys-proxy-panel', 'Key inventory', 'keyOverviewPanel', 'protected API keys in system', 'keyProviderChart', 'keyStatusDonut', 'keySystemSummaryList', 'Provider breakdown', 'Readiness mix', 'add slot', 'create slot', 'Extra headers JSON', 'slotExtraHeaders', 'generic-bearer', 'generic-header', 'minimax', 'deepl', 'deepl-pro', 'DeepL-Auth-Key {key}', 'api-free.deepl.com', 'api.deepl.com', 'github', 'notion', 'cloudflare', 'anthropic-version', 'apikey', 'x-algolia-application-id', 'emergency revoke', 'live sealed material', 'placeholder material', 'Customer API proxy test kit', 'copy dry-run request', 'copy blocked-recipient request', 'YOUR_VAULTPROOF_SESSION_JWT', 'Email API key walkthrough', 'protected email dry-run', 'blocked recipient test', 'Policy denial evidence', 'resend', 'sendgrid', 'postmark', 'brevo', 'mailersend', 'sendinblue', 'sparkpost', 'mailtrap', 'supabase', 'algolia', 'shopify', 'grafana', 'weaviate', 'langfuse', 'azure-openai', 'nvidia', 'sambanova', 'fal', 'brave-search', 'serper', 'unstructured', 'qdrant', 'turso', 'netlify', 'digitalocean', 'heroku', 'fly', 'railway', 'terraform-cloud', 'pulumi', 'fastly', 'tailscale', 'azure-management', 'gcp-resource-manager', 'microsoft-graph', 'google-workspace', 'bitbucket', 'circleci', 'buildkite', 'dockerhub', 'quay', 'npm-registry', 'betterstack', 'logsnag', 'raygun', 'semgrep', 'sonarcloud', 'elasticsearch', 'elastic-cloud', 'meilisearch', 'typesense', 'kubernetes', 'hashicorp-vault', 'onepassword-connect', 'doppler', 'infisical', 'segment', 'plausible', 'hume', 'runpod', 'webflow', 'salesforce', 'zoho-crm', 'zoom', 'facebook-graph', 'linkedin', 'wordpress', 'okta', 'opsgenie', 'axiom', 'rollbar', 'asana', 'monday', 'clickup', 'figma', 'zendesk', 'jira', 'adyen', 'chargebee', 'x-figma-token', 'SSWS {key}', 'GenieKey {key}', 'ApiKey {key}', 'x-vault-token', 'circle-token', 'Zoho-oauthtoken {key}', 'fastly-key', 'application/vnd.heroku+json; version=3'],
+      required: ['/api/v1/enterprise/projects', 'provider-slots-shadcn-polish', 'keysDemoDataBanner', 'Northstar Finance key protection demo', 'key-slot-record', 'key-slot-meta-grid', 'owner_email', 'recent_calls', 'rotation_status', 'keys-board-panel', 'keys-proxy-panel', 'Key inventory', 'keyOverviewPanel', 'protected API keys in system', 'keyProviderChart', 'keyStatusDonut', 'keySystemSummaryList', 'Provider breakdown', 'Readiness mix', 'add slot', 'create slot', 'Extra headers JSON', 'slotExtraHeaders', 'generic-bearer', 'generic-header', 'minimax', 'deepl', 'deepl-pro', 'DeepL-Auth-Key {key}', 'api-free.deepl.com', 'api.deepl.com', 'github', 'notion', 'cloudflare', 'anthropic-version', 'apikey', 'x-algolia-application-id', 'emergency revoke', 'live sealed material', 'placeholder material', 'Customer API proxy test kit', 'copy dry-run request', 'copy blocked-recipient request', 'YOUR_VAULTPROOF_SESSION_JWT', 'Email API key walkthrough', 'protected email dry-run', 'blocked recipient test', 'Policy denial evidence', 'resend', 'sendgrid', 'postmark', 'brevo', 'mailersend', 'sendinblue', 'sparkpost', 'mailtrap', 'supabase', 'algolia', 'shopify', 'grafana', 'weaviate', 'langfuse', 'azure-openai', 'nvidia', 'sambanova', 'fal', 'brave-search', 'serper', 'unstructured', 'qdrant', 'turso', 'netlify', 'digitalocean', 'heroku', 'fly', 'railway', 'terraform-cloud', 'pulumi', 'fastly', 'tailscale', 'azure-management', 'gcp-resource-manager', 'microsoft-graph', 'google-workspace', 'bitbucket', 'circleci', 'buildkite', 'dockerhub', 'quay', 'npm-registry', 'betterstack', 'logsnag', 'raygun', 'semgrep', 'sonarcloud', 'elasticsearch', 'elastic-cloud', 'meilisearch', 'typesense', 'kubernetes', 'hashicorp-vault', 'onepassword-connect', 'doppler', 'infisical', 'segment', 'plausible', 'hume', 'runpod', 'webflow', 'salesforce', 'zoho-crm', 'zoom', 'facebook-graph', 'linkedin', 'wordpress', 'okta', 'opsgenie', 'axiom', 'rollbar', 'asana', 'monday', 'clickup', 'figma', 'zendesk', 'jira', 'adyen', 'chargebee', 'x-figma-token', 'SSWS {key}', 'GenieKey {key}', 'ApiKey {key}', 'x-vault-token', 'circle-token', 'Zoho-oauthtoken {key}', 'fastly-key', 'application/vnd.heroku+json; version=3'],
     },
   ];
   for (const page of operationsPages) {

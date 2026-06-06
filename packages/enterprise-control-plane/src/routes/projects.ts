@@ -500,7 +500,7 @@ type OverviewProviderKey = {
   material_ready?: boolean;
 };
 
-const DASHBOARD_TRAFFIC_WINDOW_DAYS = 30;
+const DASHBOARD_TRAFFIC_WINDOW_DAYS = 180;
 
 function countValue(value: unknown): number {
   const numeric = Number(value || 0);

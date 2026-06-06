@@ -1651,6 +1651,110 @@ const ENTERPRISE_VERIFIER_SHADCN_THEME = `
 
 const ENTERPRISE_KEYS_SHADCN_THEME = `
     /* provider-slots-shadcn-polish */
+    .keys-main {
+      max-width: 1320px !important;
+      padding-top: 24px !important;
+    }
+    .keys-main .topbar {
+      margin-bottom: 16px !important;
+      padding-bottom: 16px !important;
+      border-bottom: 1px solid var(--border, var(--line, #2a3442)) !important;
+    }
+    .keys-main .topbar h1 {
+      font-size: clamp(2.25rem, 5vw, 4.25rem) !important;
+      letter-spacing: -0.055em !important;
+    }
+    .keys-main .lead {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+      font-size: 0.96rem !important;
+      max-width: 680px !important;
+    }
+    .keys-main .toolbar {
+      align-items: center !important;
+    }
+    .keys-main .toolbar select,
+    .keys-main .toolbar button,
+    .keys-main .toolbar a {
+      min-height: 40px !important;
+      border-radius: 8px !important;
+      font-size: 0.875rem !important;
+      font-weight: 650 !important;
+      line-height: 1.15 !important;
+    }
+    .keys-main .kpis {
+      gap: 12px !important;
+      margin-bottom: 16px !important;
+    }
+    .keys-main .kpis .card {
+      background: rgba(17, 24, 39, 0.76) !important;
+      border: 1px solid var(--border, var(--line, #2a3442)) !important;
+      box-shadow: none !important;
+      padding: 16px !important;
+    }
+    .keys-main .kpi-value {
+      color: var(--foreground, var(--text, #f8fafc)) !important;
+      font-size: 2rem !important;
+      line-height: 1 !important;
+    }
+    .keys-demo-banner {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 16px;
+      border: 1px solid rgba(138, 180, 248, 0.24);
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(138, 180, 248, 0.12), rgba(21, 29, 41, 0.86));
+      box-shadow: inset 0 1px 0 rgba(248, 250, 252, 0.04);
+    }
+    .keys-demo-banner h2 {
+      margin: 4px 0 6px;
+      font-size: 1rem;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+    }
+    .keys-demo-banner p {
+      margin: 0;
+      color: var(--muted-foreground, var(--muted, #a8b3c2));
+      font-size: 0.875rem;
+      line-height: 1.5;
+      max-width: 760px;
+    }
+    .keys-demo-eyebrow {
+      color: var(--accent, #8ab4f8);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    .keys-demo-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(92px, 1fr));
+      gap: 10px;
+      min-width: min(360px, 100%);
+    }
+    .keys-demo-metric {
+      border: 1px solid var(--line-soft, rgba(168, 179, 194, 0.12));
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: rgba(11, 15, 20, 0.3);
+    }
+    .keys-demo-metric strong {
+      display: block;
+      color: var(--foreground, var(--text, #f8fafc));
+      font-size: 1.25rem;
+      line-height: 1.1;
+    }
+    .keys-demo-metric span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted-foreground, var(--muted, #a8b3c2));
+      font-size: 0.72rem;
+      font-weight: 750;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
     #keyOverviewPanel,
     .keys-form-panel,
     .keys-response-panel > .card,
@@ -1659,7 +1763,8 @@ const ENTERPRISE_KEYS_SHADCN_THEME = `
     .keys-proxy-panel {
       background: var(--card, #111827) !important;
       border: 1px solid var(--border, var(--line, #2a3442)) !important;
-      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18) !important;
     }
     #keyOverviewPanel,
     .keys-form-panel,
@@ -1712,6 +1817,18 @@ const ENTERPRISE_KEYS_SHADCN_THEME = `
       border-color: var(--line-soft, rgba(168, 179, 194, 0.12)) !important;
       box-shadow: inset 0 1px 0 rgba(248, 250, 252, 0.04) !important;
     }
+    .key-overview-grid {
+      gap: 14px !important;
+    }
+    .key-total-card,
+    .key-chart-card {
+      border-radius: 8px !important;
+    }
+    .key-total-sub,
+    .key-chart-head,
+    .key-legend-row {
+      color: var(--muted-foreground, var(--muted, #a8b3c2)) !important;
+    }
     .key-stat {
       background: rgba(11, 15, 20, 0.32) !important;
     }
@@ -1727,6 +1844,9 @@ const ENTERPRISE_KEYS_SHADCN_THEME = `
     .keys-incident-form {
       gap: 12px !important;
       align-items: end;
+    }
+    .keys-form-panel {
+      margin-bottom: 16px !important;
     }
     .keys-provider-slot-form label,
     .keys-incident-form label {
@@ -1775,6 +1895,69 @@ const ENTERPRISE_KEYS_SHADCN_THEME = `
       border-radius: 8px !important;
       padding: 16px !important;
       box-shadow: none !important;
+    }
+    .keys-board-panel .list,
+    .keys-proxy-panel .list,
+    .keys-email-panel .list,
+    .keys-response-panel .list {
+      gap: 12px !important;
+    }
+    .key-slot-record,
+    .api-test-row,
+    .email-key-row,
+    .exposure-response-row {
+      grid-template-columns: minmax(0, 1fr) minmax(190px, auto) !important;
+      gap: 18px !important;
+    }
+    .key-slot-main {
+      min-width: 0;
+    }
+    .key-slot-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .key-slot-heading .row-title {
+      font-size: 1rem;
+      line-height: 1.3;
+    }
+    .key-slot-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .key-slot-metric {
+      border: 1px solid var(--line-soft, rgba(168, 179, 194, 0.12));
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(11, 15, 20, 0.24);
+      min-width: 0;
+    }
+    .key-slot-metric strong {
+      display: block;
+      color: var(--foreground, var(--text, #f8fafc));
+      font-size: 0.96rem;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+    .key-slot-metric span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted-foreground, var(--muted, #a8b3c2));
+      font-size: 0.7rem;
+      font-weight: 750;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .key-slot-actions {
+      min-width: 190px;
+    }
+    .key-slot-actions button {
+      width: 100%;
+      max-width: 220px;
     }
     .keys-board-panel .row:hover,
     .keys-proxy-panel .row:hover,
@@ -1844,7 +2027,34 @@ const ENTERPRISE_KEYS_SHADCN_THEME = `
     .keys-email-panel .row-actions {
       align-items: flex-start;
     }
+    .keys-response-panel {
+      gap: 16px !important;
+      margin-bottom: 16px !important;
+    }
+    .keys-email-panel {
+      gap: 16px !important;
+      margin-bottom: 16px !important;
+    }
+    #apiProxyTestPanel {
+      margin-top: 16px !important;
+    }
     @media (max-width: 760px) {
+      .keys-demo-banner,
+      .keys-demo-metrics,
+      .key-slot-record,
+      .api-test-row,
+      .email-key-row,
+      .exposure-response-row,
+      .key-slot-meta-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .key-slot-actions {
+        min-width: 0;
+        justify-content: flex-start !important;
+      }
+      .key-slot-actions button {
+        width: auto;
+      }
       #keyOverviewPanel > .section-title,
       .keys-form-panel > .section-title,
       .keys-board-panel > .section-title,
@@ -4232,7 +4442,7 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
   <div class="shell">
     ${renderEnterpriseAppSidebar(pageName, pageKicker)}
 
-    <main class="main">
+    <main class="main ${pageName === 'keys' ? 'keys-main' : ''}">
       <div class="topbar">
         <div>
           <div class="kicker">${escapeHtml(pageKicker)}</div>
@@ -4252,6 +4462,20 @@ function renderEnterpriseOperationsPage(pageName: 'activity' | 'projects' | 'inv
       </div>
 
       <div id="notice" class="notice error" style="display:none"></div>
+
+      ${pageName === 'keys' ? `
+      <section id="keysDemoDataBanner" class="keys-demo-banner" style="display:none">
+        <div>
+          <div class="keys-demo-eyebrow">sample workspace</div>
+          <h2>Northstar Finance key protection demo</h2>
+          <p>Demo data shows a realistic enterprise rollout with protected provider slots, owner metadata, usage volume, blocked calls, errors, rotation state, and copy-safe test actions.</p>
+        </div>
+        <div class="keys-demo-metrics" aria-label="Demo workspace metrics">
+          <div class="keys-demo-metric"><strong id="keysDemoSlotCount">0</strong><span>slots</span></div>
+          <div class="keys-demo-metric"><strong id="keysDemoProviderCount">0</strong><span>providers</span></div>
+          <div class="keys-demo-metric"><strong id="keysDemoWorkloadCount">0</strong><span>workloads</span></div>
+        </div>
+      </section>` : ''}
 
       ${pageName === 'keys' ? `
       <section id="keyOverviewPanel" class="card key-overview-panel" style="display:none;margin-bottom:16px">
@@ -4859,9 +5083,21 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
       function bootstrapHasBusinessData(bootstrap) {
         return Boolean(bootstrap && ((Array.isArray(bootstrap.projects) && bootstrap.projects.length > 0) || overviewHasBusinessData(bootstrap.overview || {})));
       }
+      function bootstrapProviderSlotCount(bootstrap) {
+        return (bootstrap && Array.isArray(bootstrap.projects) ? bootstrap.projects : []).reduce(function(total, project) {
+          return total + (Array.isArray(project.provider_slots) ? project.provider_slots.length : 0);
+        }, 0);
+      }
+      function bootstrapUsesSampleData(bootstrap) {
+        var source = bootstrap && bootstrap.overview && bootstrap.overview.statsSource;
+        return source === 'sample_dashboard' || source === 'sample_workspace';
+      }
       function resolveBootstrapData(bootstrap) {
         if (bootstrapHasBusinessData(bootstrap)) {
-          enterpriseDemoDataActive = bootstrap && bootstrap.overview && (bootstrap.overview.statsSource === 'sample_dashboard' || bootstrap.overview.statsSource === 'sample_workspace');
+          enterpriseDemoDataActive = bootstrapUsesSampleData(bootstrap);
+          if (PAGE_MODE === 'keys' && enterpriseDemoDataActive && bootstrapProviderSlotCount(bootstrap) === 0) {
+            return demoBootstrap();
+          }
           return bootstrap;
         }
         enterpriseDemoDataActive = true;
@@ -7605,7 +7841,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         var summary = summarizeKeyRows(rows);
         text('keyOverviewMeta', number(summary.total) + ' protected API key ' + (summary.total === 1 ? 'slot' : 'slots'));
         text('keyTotalValue', number(summary.total));
-        text('keyTotalSub', number(summary.providerCount) + ' provider group' + (summary.providerCount === 1 ? '' : 's') + ' across ' + number(summary.projectCount) + ' project' + (summary.projectCount === 1 ? '' : 's') + '. Raw key values are not shown here.');
+        text('keyTotalSub', number(summary.providerCount) + ' provider group' + (summary.providerCount === 1 ? '' : 's') + ' across ' + number(summary.projectCount) + ' workload' + (summary.projectCount === 1 ? '' : 's') + '. Raw key values are not shown here.');
         text('keyLiveValue', number(summary.live));
         text('keyReviewValue', number(summary.review));
         text('keyReadinessMeta', summary.total ? number(Math.round((summary.live / summary.total) * 100)) + '% live sealed' : 'no keys yet');
@@ -7670,14 +7906,76 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
           var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
           var materialLabel = displayMaterialMode(materialMode);
           var denyButton = slotIsEmailProvider(item.slot) ? '<button type="button" data-action="copy-proxy-deny-test" data-project-id="' + escapeHtml(item.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy blocked-recipient request</button>' : '';
-          return '<div class="row"><div><div class="row-title">' + escapeHtml(slug) + ' API proxy self-test</div><div class="row-sub">POST /api/v1/enterprise/projects/' + escapeHtml(item.project.id) + '/providers/' + escapeHtml(slug) + '/execute - dry-run request with VaultProof auth, gateway marker, client class, and organization header. No raw provider key is copied into the customer app.</div><div><span class="tag ' + materialClass + '">' + escapeHtml(materialLabel) + '</span><span class="tag good">YOUR_VAULTPROOF_SESSION_JWT</span><span class="tag">x-vaultproof-customer-gateway</span><span class="tag">audit evidence</span></div></div><div class="row-actions"><button type="button" class="primary" data-action="copy-proxy-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy dry-run request</button>' + denyButton + '</div></div>';
+          return '<div class="row api-test-row"><div><div class="row-title">' + escapeHtml(slug) + ' API proxy self-test</div><div class="row-sub">POST /api/v1/enterprise/projects/' + escapeHtml(item.project.id) + '/providers/' + escapeHtml(slug) + '/execute - dry-run request with VaultProof auth, gateway marker, client class, and organization header. No raw provider key is copied into the customer app.</div><div><span class="tag ' + materialClass + '">' + escapeHtml(materialLabel) + '</span><span class="tag good">YOUR_VAULTPROOF_SESSION_JWT</span><span class="tag">x-vaultproof-customer-gateway</span><span class="tag">audit evidence</span></div></div><div class="row-actions"><button type="button" class="primary" data-action="copy-proxy-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy dry-run request</button>' + denyButton + '</div></div>';
         }).join('') : '<div class="empty">No provider slots are visible yet. Add a provider slot before sharing the customer API proxy self-test kit.</div>';
+      }
+      function keySlotStats(item) {
+        var health = projectHealthMap()[item.project.id] || {};
+        var slot = item.slot || {};
+        var calls = Number(slot.recent_calls || slot.recentCalls || health.calls || 0);
+        var denied = Number(slot.denied_calls || slot.deniedCalls || health.denied || 0);
+        var errors = Number(slot.error_calls || slot.errorCalls || health.errors || 0);
+        var lastUsed = slot.last_used_at || slot.lastUsedAt || health.lastActivity || null;
+        return {
+          calls: calls,
+          denied: denied,
+          errors: errors,
+          lastUsed: lastUsed,
+          errorRate: calls ? Math.round((errors / calls) * 1000) / 10 : 0
+        };
+      }
+      function keySlotProviderCount(rows) {
+        var providers = {};
+        rows.forEach(function(item) {
+          var provider = item.slot && (item.slot.slug || item.slot.provider);
+          if (provider) providers[provider] = true;
+        });
+        return Object.keys(providers).length;
+      }
+      function renderKeyDemoBanner(rows) {
+        var banner = byId('keysDemoDataBanner');
+        if (!banner || PAGE_MODE !== 'keys') return;
+        banner.style.display = enterpriseDemoDataActive ? 'grid' : 'none';
+        text('keysDemoSlotCount', number(rows.length));
+        text('keysDemoProviderCount', number(keySlotProviderCount(rows)));
+        text('keysDemoWorkloadCount', number(cachedProjects.length));
+      }
+      function renderKeySlotRow(item) {
+        var policy = item.project.caller_lock_policy || {};
+        var override = policy.provider_overrides && policy.provider_overrides[item.slot.slug || item.slot.provider];
+        var canAdmin = item.project.project_role === 'owner' || item.project.project_role === 'admin';
+        var emailAction = slotIsEmailProvider(item.slot) ? '<button type="button" data-action="email-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">protected email dry-run</button>' : '';
+        var revokeAction = canAdmin ? '<button type="button" class="danger" data-action="revoke-slot" data-project-id="' + escapeHtml(item.project.id) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">emergency revoke</button>' : '<span class="tag warn">read-only</span>';
+        var action = emailAction + revokeAction;
+        var materialMode = item.slot.material_mode || 'missing';
+        var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
+        var materialLabel = displayMaterialMode(materialMode);
+        var secretKind = slotIsEmailProvider(item.slot) ? 'email API key' : 'provider API key';
+        var slotClass = classifyInventorySecret({
+          project: item.project,
+          provider: {
+            provider: item.slot.provider,
+            slug: item.slot.slug || item.slot.provider,
+            default_path: providerDemoPath(item.slot)
+          },
+          manual_key: null,
+          annotation: {}
+        });
+        var stats = keySlotStats(item);
+        var owner = item.slot.owner_email || item.slot.owner || 'owner not set';
+        var environment = item.slot.environment || 'environment not set';
+        var rotation = item.slot.rotation_status || 'manual checklist';
+        var rotationSla = item.slot.rotation_sla ? ' - ' + item.slot.rotation_sla : '';
+        var policyStatus = item.slot.policy_status || (override ? 'provider override' : 'project policy');
+        var errorTone = stats.errors || stats.denied ? 'warn' : 'good';
+        return '<div class="row key-slot-record"><div class="key-slot-main"><div class="key-slot-heading"><div class="row-title">' + escapeHtml(item.slot.slug || item.slot.provider) + '</div><span class="tag ' + materialClass + '">' + escapeHtml(materialLabel) + '</span><span class="tag">' + escapeHtml(environment) + '</span></div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - provider ' + escapeHtml(item.slot.provider) + ' - key id ' + escapeHtml(item.slot.key_id) + '</div><div><span class="tag good">active</span><span class="tag">' + escapeHtml(secretKind) + '</span><span class="tag ' + escapeHtml(slotClass.tone) + '">' + escapeHtml(slotClass.recommendation_label) + '</span><span class="tag">' + escapeHtml(policyStatus) + '</span><span class="tag">rotation: ' + escapeHtml(rotation) + escapeHtml(rotationSla) + '</span><span class="tag">SKR: executor-bound</span></div><div class="key-slot-meta-grid"><div class="key-slot-metric"><strong>' + number(stats.calls) + '</strong><span>30d calls</span></div><div class="key-slot-metric"><strong>' + number(stats.denied) + '</strong><span>blocked</span></div><div class="key-slot-metric"><strong>' + number(stats.errors) + '</strong><span>errors</span></div><div class="key-slot-metric"><strong>' + escapeHtml(rel(stats.lastUsed)) + '</strong><span>last used</span></div></div><div class="row-sub">Owner: ' + escapeHtml(owner) + ' - error rate ' + number(stats.errorRate) + '% - raw provider key never renders in this dashboard.</div></div><div class="row-actions key-slot-actions"><span class="tag ' + errorTone + '">' + (stats.errors || stats.denied ? 'review activity' : 'healthy') + '</span>' + action + '</div></div>';
       }
       function renderKeys() {
         byId('keysPanel').style.display = PAGE_MODE === 'keys' ? 'block' : 'none';
         if (byId('emailKeyDemoPanel')) byId('emailKeyDemoPanel').style.display = PAGE_MODE === 'keys' ? 'grid' : 'none';
         if (PAGE_MODE !== 'keys') return;
         var rows = collectKeyRows();
+        renderKeyDemoBanner(rows);
         renderKeyOverview(rows);
         renderApiProxyTestKit(rows);
         text('keyMeta', rows.length + ' active provider slots');
@@ -7688,32 +7986,10 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
             var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
             var materialLabel = displayMaterialMode(materialMode);
             var action = '<div class="row-actions"><button type="button" class="primary" data-action="email-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">protected email dry-run</button><button type="button" data-action="email-deny-test" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">blocked recipient test</button></div>';
-            return '<div class="row"><div><div class="row-title">' + escapeHtml(emailProviderLabel(item.slot.provider)) + ' protected send</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - path ' + escapeHtml(emailDemoPath(item.slot)) + ' - material ' + escapeHtml(materialLabel) + '</div><div><span class="tag ' + materialClass + '">' + escapeHtml(materialLabel) + '</span><span class="tag good">no raw key in browser</span><span class="tag">audit evidence</span><span class="tag warn">recipient allowlist</span></div></div>' + action + '</div>';
+            return '<div class="row email-key-row"><div><div class="row-title">' + escapeHtml(emailProviderLabel(item.slot.provider)) + ' protected send</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - path ' + escapeHtml(emailDemoPath(item.slot)) + ' - material ' + escapeHtml(materialLabel) + '</div><div><span class="tag ' + materialClass + '">' + escapeHtml(materialLabel) + '</span><span class="tag good">no raw key in browser</span><span class="tag">audit evidence</span><span class="tag warn">recipient allowlist</span></div></div>' + action + '</div>';
           }).join('') : '<div class="row"><div><div class="row-title">No email provider key protected yet</div><div class="row-sub">Create a Resend, SendGrid, Mailgun, Postmark, or AWS SES provider slot, then run protected email dry-run before the customer walkthrough.</div><div><span class="tag warn">required for pilot</span><span class="tag">raw keys stay out</span></div></div><div class="row-actions"><button type="button" class="primary" data-action="prefill-email-slot">create resend slot</button></div></div>';
         }
-        byId('keyList').innerHTML = rows.length ? rows.map(function(item) {
-          var policy = item.project.caller_lock_policy || {};
-          var override = policy.provider_overrides && policy.provider_overrides[item.slot.slug || item.slot.provider];
-          var canAdmin = item.project.project_role === 'owner' || item.project.project_role === 'admin';
-          var emailAction = slotIsEmailProvider(item.slot) ? '<button type="button" data-action="email-dry-run" data-project-id="' + escapeHtml(item.project.id) + '" data-provider="' + escapeHtml(item.slot.provider) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">protected email dry-run</button>' : '';
-          var revokeAction = canAdmin ? '<button type="button" class="danger" data-action="revoke-slot" data-project-id="' + escapeHtml(item.project.id) + '" data-slug="' + escapeHtml(item.slot.slug || item.slot.provider) + '">emergency revoke</button>' : '<span class="tag warn">read-only</span>';
-          var action = emailAction + revokeAction;
-          var materialMode = item.slot.material_mode || 'missing';
-          var materialClass = materialMode === 'sealed-live' ? 'good' : materialMode === 'demo-placeholder' ? 'warn' : 'bad';
-          var materialLabel = displayMaterialMode(materialMode);
-          var secretKind = slotIsEmailProvider(item.slot) ? 'email API key' : 'provider API key';
-          var slotClass = classifyInventorySecret({
-            project: item.project,
-            provider: {
-              provider: item.slot.provider,
-              slug: item.slot.slug || item.slot.provider,
-              default_path: providerDemoPath(item.slot)
-            },
-            manual_key: null,
-            annotation: {}
-          });
-          return '<div class="row"><div><div class="row-title">' + escapeHtml(item.slot.slug || item.slot.provider) + '</div><div class="row-sub">' + escapeHtml(item.project.name || item.project.vp_proj_id) + ' - provider ' + escapeHtml(item.slot.provider) + ' - key id ' + escapeHtml(item.slot.key_id) + '</div><div><span class="tag good">active</span><span class="tag">' + escapeHtml(secretKind) + '</span><span class="tag ' + escapeHtml(slotClass.tone) + '">' + escapeHtml(slotClass.recommendation_label) + '</span><span class="tag ' + materialClass + '">' + materialLabel + '</span><span class="tag">' + (override ? 'provider override' : 'project policy') + '</span><span class="tag">rotation: manual checklist</span><span class="tag">SKR: executor-bound</span></div></div><div class="row-actions">' + action + '</div></div>';
-        }).join('') : '<div class="empty">No active provider slots found.</div>';
+        byId('keyList').innerHTML = rows.length ? rows.map(renderKeySlotRow).join('') : '<div class="empty">No active provider slots found.</div>';
       }
       function syncProviderDefaults(force) {
         var providerInput = byId('slotProvider');
@@ -8150,7 +8426,7 @@ ${renderDatalistOptions(ENTERPRISE_MANUAL_API_KEY_PROVIDER_OPTIONS)}
         var revokeButton = row.can_emergency_revoke
           ? '<button type="button" class="danger" data-action="revoke-slot" data-project-id="' + escapeHtml(row.project.id) + '" data-slug="' + escapeHtml(slug) + '">emergency revoke</button>'
           : '<span class="tag warn">admin required</span>';
-        return '<div class="row"><div><div class="row-title">' + escapeHtml(row.project.name || row.project.vp_proj_id || 'Project') + ' - ' + escapeHtml(slug) + '</div><div class="row-sub">Material ' + escapeHtml(displayMaterialMode(row.provider.material_mode || 'missing')) + ' - calls ' + number(row.traffic.calls) + ' - denied ' + number(row.traffic.denied) + ' - last seen ' + escapeHtml(rel(row.traffic.last_seen_at)) + '</div><div><span class="tag ' + tone + '">' + escapeHtml(row.risk) + '</span><span class="tag">' + escapeHtml(row.provider.provider || 'provider') + '</span><span class="tag ' + (row.project.strict_origin ? 'good' : 'warn') + '">' + (row.project.strict_origin ? 'strict origin' : 'origin relaxed') + '</span>' + scannerTag + '</div><div class="row-sub">' + row.actions.map(escapeHtml).join(' - ') + '</div></div><div class="row-actions">' + revokeButton + '<button type="button" data-action="copy-proxy-dry-run" data-project-id="' + escapeHtml(row.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy dry-run</button><a class="tag" href="/app/scanner">scanner</a><a class="tag" href="/app/activity">activity</a></div></div>';
+        return '<div class="row exposure-response-row"><div><div class="row-title">' + escapeHtml(row.project.name || row.project.vp_proj_id || 'Project') + ' - ' + escapeHtml(slug) + '</div><div class="row-sub">Material ' + escapeHtml(displayMaterialMode(row.provider.material_mode || 'missing')) + ' - calls ' + number(row.traffic.calls) + ' - denied ' + number(row.traffic.denied) + ' - last seen ' + escapeHtml(rel(row.traffic.last_seen_at)) + '</div><div><span class="tag ' + tone + '">' + escapeHtml(row.risk) + '</span><span class="tag">' + escapeHtml(row.provider.provider || 'provider') + '</span><span class="tag ' + (row.project.strict_origin ? 'good' : 'warn') + '">' + (row.project.strict_origin ? 'strict origin' : 'origin relaxed') + '</span>' + scannerTag + '</div><div class="row-sub">' + row.actions.map(escapeHtml).join(' - ') + '</div></div><div class="row-actions">' + revokeButton + '<button type="button" data-action="copy-proxy-dry-run" data-project-id="' + escapeHtml(row.project.id) + '" data-slug="' + escapeHtml(slug) + '">copy dry-run</button><a class="tag" href="/app/scanner">scanner</a><a class="tag" href="/app/activity">activity</a></div></div>';
       }
       function renderExposureResponse() {
         var panel = byId('exposureResponsePanel');
