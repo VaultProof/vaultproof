@@ -3720,8 +3720,6 @@ async function assertEnterpriseLoginRoute() {
       'Token coverage',
       'projectCoverageList',
       'callTrendChart',
-      'Provider usage',
-      'providerUsageList',
       'Key map by provider',
       'keyMapProviderList',
       'Key setup readiness',

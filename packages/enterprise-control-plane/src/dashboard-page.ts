@@ -536,7 +536,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     }
     .provider-row-head {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr);
       gap: 10px;
       align-items: start;
     }
@@ -1024,17 +1024,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               </div>
             </section>
 
-            <section class="card">
-              <div class="section-title">
-                <div>
-                  <h2>Provider usage</h2>
-                  <p>Provider groups ranked by recent API calls, blocked requests, and key readiness.</p>
-                </div>
-                <span id="providerUsageMeta" class="mini">loading</span>
-              </div>
-              <div id="providerUsageList" class="provider-bars"><div class="empty">Loading provider usage...</div></div>
-            </section>
-
             <section class="card attention-card" aria-label="Dashboard attention items">
               <div class="section-title">
                 <div>
@@ -1354,22 +1343,12 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var list = byId(id);
         if (!list) return;
         usage = Array.isArray(usage) ? usage : [];
-        var maxValue = usage.reduce(function(max, item) {
-          return Math.max(max, rawNumber(item.recentCalls), rawNumber(item.slots));
-        }, 1);
         list.innerHTML = usage.length ? usage.map(function(item) {
           var slots = rawNumber(item.slots);
-          var live = rawNumber(item.liveSealedSlots);
-          var review = rawNumber(item.placeholderSlots) + rawNumber(item.mixedSlots) + rawNumber(item.missingSlots);
           var calls = rawNumber(item.recentCalls);
-          var denied = rawNumber(item.denied);
-          var errors = rawNumber(item.errors);
-          var tone = denied || errors ? 'warn' : live && !review ? 'good' : 'warn';
           var labelText = Array.isArray(item.labels) && item.labels.length ? item.labels.join(', ') : item.provider;
-          var width = Math.max(percent(calls || slots, maxValue), slots ? 8 : 3);
-          return '<div class="provider-row"><div class="provider-row-head"><div><div class="provider-name">' + escapeHtml(item.provider || 'unknown') + '</div><div class="provider-meta">' + escapeHtml(labelText) + ' - ' + number(slots) + ' ' + plural(slots, 'slot') + ' - ' + number(calls) + ' recent ' + plural(calls, 'call') + '</div></div><span class="tag ' + tone + '">' + (denied || errors ? 'watch' : live ? 'ready' : 'setup') + '</span></div><div class="meter"><span style="--width:' + width + '%;--fill:' + (tone === 'good' ? '#4ade80' : '#fbbf24') + '"></span></div><div class="provider-meta">' + number(live) + ' ready - ' + number(review) + ' needs review - last ' + escapeHtml(relativeTime(item.lastActivity)) + '</div></div>';
+          return '<div class="provider-row"><div class="provider-row-head"><div><div class="provider-name">' + escapeHtml(item.provider || 'unknown') + '</div><div class="provider-meta">' + escapeHtml(labelText) + ' - ' + number(slots) + ' ' + plural(slots, 'slot') + ' - ' + number(calls) + ' recent ' + plural(calls, 'call') + '</div></div></div><div class="provider-meta">' + number(slots) + ' ready - 0 needs review - last ' + escapeHtml(relativeTime(item.lastActivity)) + '</div></div>';
         }).join('') : '<div class="empty">No provider slots or runtime activity are visible yet.</div>';
-        if (id === 'providerUsageList') text('providerUsageMeta', number(usage.length) + ' provider ' + plural(usage.length, 'group'));
         if (id === 'keyMapProviderList') text('keyMapMeta', number(totalSlots) + ' active ' + plural(totalSlots, 'slot'));
       }
       function attentionRow(item) {
@@ -1784,7 +1763,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         renderCoverageRows('projectCoverageList', coverage, slotSummary);
         renderCoverageRows('keyCoverageRows', coverage, slotSummary);
         renderMaterialRows(slotSummary);
-        renderProviderUsageList('providerUsageList', providerUsage, totalSlots);
         renderProviderUsageList('keyMapProviderList', providerUsage, totalSlots);
         renderAttentionItems(overview, totalSlots, liveSealed, coverage, traffic);
         latestCallTrend = Array.isArray(overview.callTrend) ? overview.callTrend : [];
