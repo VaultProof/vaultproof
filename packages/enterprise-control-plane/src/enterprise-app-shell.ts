@@ -112,7 +112,7 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
           {
             page: 'projects',
             href: '/app/projects',
-            label: 'Workloads',
+            label: 'Overview',
           },
           {
             page: 'rollout',
@@ -180,7 +180,7 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
           {
             page: 'evidence',
             href: '/app/evidence',
-            label: 'Evidence packet',
+            label: 'Overview',
             activePill: 'proof',
           },
           {
@@ -224,7 +224,7 @@ const ENTERPRISE_SIDEBAR_NAV_GROUPS: readonly EnterpriseSidebarNavGroup[] = [
           {
             page: 'setup',
             href: '/app/setup',
-            label: 'Setup guide',
+            label: 'Overview',
           },
           {
             page: 'testers',
@@ -1311,20 +1311,13 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       margin-top: auto;
       padding: 9px 10px;
       overflow: hidden;
-      border: 1px solid rgba(249, 115, 22, 0.72);
+      border: 1px solid #303640;
       border-radius: 11px;
-      background: linear-gradient(90deg, rgba(249, 115, 22, 0.10), rgba(168, 85, 247, 0.12));
+      background: #171b22;
       color: #ffffff;
     }
     .sidebar-update-card::after {
-      content: "";
-      position: absolute;
-      right: -22px;
-      width: 70px;
-      height: 54px;
-      border-radius: 999px;
-      background: rgba(249, 115, 22, 0.24);
-      filter: blur(16px);
+      content: none;
     }
     .update-mark {
       display: grid;
@@ -1332,8 +1325,8 @@ export const ENTERPRISE_APP_SHELL_THEME = `
       height: 16px;
       place-items: center;
       border-radius: 5px;
-      background: #ffffff;
-      color: #11161c;
+      background: rgba(138, 180, 248, 0.16);
+      color: #d7e7ff;
       font-size: 7px;
       font-weight: 800;
       z-index: 1;

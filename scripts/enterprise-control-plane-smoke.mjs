@@ -3551,13 +3551,12 @@ async function assertEnterpriseLoginRoute() {
       '--soft: var(--muted-foreground)',
       'font-size: 14px;',
       'font-weight: 500;',
-      'font-size: 1.875rem',
     ]) {
       if (!pageHtml.includes(required)) {
         throw new Error(`Expected ${path} to use the main enterprise dashboard shell theme (${required})`);
       }
     }
-    if (!pageHtml.includes('font-size: 2.6rem') && !pageHtml.includes('font-size: 2.25rem')) {
+    if (!pageHtml.includes('font-size: clamp(30px, 3vw, 42px)') && !pageHtml.includes('font-size: 2.6rem') && !pageHtml.includes('font-size: 2.25rem')) {
       throw new Error(`Expected ${path} to use a responsive enterprise hero heading size`);
     }
     if (pageHtml.includes('nav-row-icon')) {

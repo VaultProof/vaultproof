@@ -13,337 +13,360 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
   <meta name="robots" content="noindex" />
   <title>Enterprise Dashboard - VaultProof</title>
   <style>
-    :root {
-      color-scheme: dark;
-      --bg: #0b0f14;
-      --panel: #111827;
-      --panel-strong: #111827;
-      --card-bg: #111827;
-      --row-bg: #151d29;
-      --line: #2a3442;
-      --line-soft: #2a3442;
-      --text: #f8fafc;
-      --muted: #a8b3c2;
-      --soft: #a8b3c2;
-      --gold: #8ab4f8;
-      --green: #4ade80;
-      --red: #f87171;
-      --blue: #93c5fd;
-      --warn: #fbbf24;
-      --ink: #08111f;
-      --control-bg: #111827;
-      --primary-bg: #8ab4f8;
-      --primary-text: #08111f;
-      --primary-border: #8ab4f8;
-      --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
-      --dashboard-ink: #f8fafc;
-      --dashboard-cloud: #2a3442;
-      --dashboard-rose: #8ab4f8;
-      --dashboard-panel: #0b0f14;
-      --dashboard-track: #151d29;
-    }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-weight: 400;
-      color: var(--text);
-      background: #0b0f14;
+      color: #f8fafc;
+      background: #050607;
     }
     a { color: inherit; text-decoration: none; }
     ${ENTERPRISE_APP_SHELL_THEME}
+    /* dashboard-refresh */
     :root {
-      --background: #0b0f14;
+      --background: #050607;
       --foreground: #f8fafc;
-      --card: #111827;
+      --card: #11161c;
       --card-foreground: #f8fafc;
-      --popover: #111827;
+      --popover: #11161c;
       --popover-foreground: #f8fafc;
       --primary: #8ab4f8;
       --primary-foreground: #08111f;
-      --secondary: #1b2432;
+      --secondary: #181b21;
       --secondary-foreground: #e8eef7;
-      --muted-bg: #151d29;
-      --muted-foreground: #a8b3c2;
-      --accent-bg: #18243a;
+      --muted-bg: #171b22;
+      --muted-foreground: #8b8d93;
+      --accent-bg: #1c222b;
       --accent-foreground: #d7e7ff;
-      --destructive: #f87171;
-      --destructive-foreground: #21090b;
-      --border: #2a3442;
-      --input: #334155;
+      --border: #2d3138;
+      --input: #343941;
       --ring: #8ab4f8;
       --radius: 8px;
-      --bg: var(--background);
-      --page-bg: var(--background);
-      --panel: var(--card);
-      --panel-strong: var(--card);
-      --card-bg: var(--card);
-      --row-bg: var(--muted-bg);
-      --control-bg: var(--card);
       --line: var(--border);
-      --line-soft: var(--border);
-      --text: var(--foreground);
-      --muted: var(--muted-foreground);
-      --soft: var(--muted-foreground);
-      --nav-text: var(--muted-foreground);
-      --action-text: var(--foreground);
-      --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
-      --gold: #8ab4f8;
-      --accent: #8ab4f8;
-      --accent-soft: rgba(138, 180, 248, 0.14);
-      --primary-bg: #8ab4f8;
-      --primary-text: #08111f;
-      --primary-border: #8ab4f8;
-      --dashboard-rose: #8ab4f8;
-      --sidebar-link-active-bg: var(--accent-bg);
-      --sidebar-link-active-border: rgba(138, 180, 248, 0.26);
-      --sidebar-link-active-text: var(--foreground);
-      --sidebar-accent: var(--primary);
+      --line-soft: #242830;
+      --row-bg: var(--muted-bg);
+      --control-bg: #1c2027;
+      --dashboard-ink: #f8fafc;
+      --dashboard-cloud: #2d3138;
+      --dashboard-rose: #f87171;
+      --dashboard-panel: #0a0d13;
+      --dashboard-track: #11161c;
+      --green: #4ade80;
+      --red: #f87171;
+      --blue: #8ab4f8;
+      --warn: #fbbf24;
+    }
+    body { background: #050607 !important; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
     .enterprise-dashboard-main,
     .enterprise-dashboard-main * {
       letter-spacing: 0 !important;
     }
-    .main.enterprise-dashboard-main {
-      justify-self: start;
-      margin: 0;
-      padding: 0;
-      max-width: 1480px !important;
-      width: min(100%, 1480px) !important;
-      background: var(--background);
-    }
-    .enterprise-page-shell {
-      background: transparent;
-      border: 0;
-      border-radius: 0;
-      padding: 0;
-      box-shadow: none;
-      display: grid;
-      gap: 20px;
-    }
-    .control-center-card {
-      border: 1px solid var(--border);
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 16px;
-      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
-    }
-    .dashboard-hero {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 18px;
-      padding: 2px 2px 0;
-    }
-    .hero-copy {
-      display: grid;
-      align-content: center;
-      gap: 8px;
-      min-width: 0;
-    }
-    .hero-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .hero-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--muted-foreground);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 5px 9px;
-      background: var(--card);
-      font-size: 12px;
-      white-space: nowrap;
-    }
-    .hero-status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--green);
-      box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.16);
-    }
-    .eyebrow {
-      display: inline-flex;
-      color: var(--accent-foreground);
-      background: var(--accent-bg);
-      border: 1px solid rgba(138, 180, 248, 0.24);
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-      font-weight: 600;
-    }
-    h1 { color: var(--foreground); font-size: 1.875rem; font-weight: 650; letter-spacing: 0; line-height: 2.25rem; margin: 0; max-width: 760px; }
-    @media (min-width: 640px) {
-      h1 { font-size: 2.25rem; }
-    }
-    .lead { color: var(--muted); max-width: 760px; font-size: 14px; line-height: 1.75; }
-    @media (min-width: 640px) {
-      .lead { font-size: 16px; }
-    }
-    .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .hero-toolbar { margin-top: 18px; }
-    select, button {
+    select,
+    button {
       border: 1px solid var(--input);
-      background: var(--card);
+      background: var(--control-bg);
       color: var(--foreground);
       border-radius: var(--radius);
       padding: 11px 12px;
       font: inherit;
     }
-    option { background: var(--option-bg); color: var(--option-text); }
-    button { cursor: pointer; }
-    .primary {
-      background: var(--primary);
-      color: var(--primary-foreground);
-      border-color: var(--primary);
-      font-weight: 600;
-    }
-    .control-center-intro {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 18px;
-      margin-bottom: 12px;
-    }
-    .control-title {
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0;
-      margin: 0;
+    option {
+      background: var(--card);
       color: var(--foreground);
     }
-    .control-copy {
-      color: var(--muted);
-      margin: 6px 0 0;
-      max-width: 700px;
-      line-height: 1.5;
-      font-size: 14px;
+    button {
+      cursor: pointer;
     }
-    .grid { display: grid; gap: 14px; }
-    .two { grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr); }
-    .dashboard-overview-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 14px;
-      align-items: start;
+    .primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--primary-foreground);
+      font-weight: 650;
     }
+    .grid,
     .overview-primary,
-    .overview-rail {
+    .overview-rail,
+    .visual-card,
+    .coverage-grid,
+    .provider-bars,
+    .attention-list,
+    .list {
       display: grid;
       gap: 14px;
       min-width: 0;
     }
-    .card {
-      border: 1px solid var(--border);
-      background: var(--card);
+    .two {
+      grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+    }
+    .card,
+    .rail-card,
+    .intent-card,
+    .action-card {
+      border: 1px solid #242830;
       border-radius: var(--radius);
-      padding: 18px;
-      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
-    }
-    .status-pill {
-      display: inline-flex; align-items: center; gap: 8px;
-      border-radius: 999px; padding: 7px 10px; font-size: 12px; font-weight: 600;
-      background: rgba(74, 222, 128, 0.10); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.26);
-    }
-    .status-pill.warn { background: rgba(251, 191, 36, 0.10); color: var(--warn); border-color: rgba(251, 191, 36, 0.30); }
-    .status-pill.bad { background: rgba(248, 113, 113, 0.12); color: var(--red); border-color: rgba(248, 113, 113, 0.30); }
-    .attention-card {
-      border-color: var(--border);
       background: var(--card);
+      color: var(--foreground);
+      box-shadow: none;
     }
-    .attention-list {
+    .card,
+    .rail-card {
+      padding: 18px;
+    }
+    .intent-card,
+    .action-card {
+      padding: 16px;
+    }
+    .intent-grid {
       display: grid;
-      gap: 10px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
     }
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .action-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 176px;
+    }
+    .action-card h3,
+    .intent-card h3 {
+      margin: 0;
+      color: var(--foreground);
+      font-size: 16px;
+      line-height: 1.2;
+    }
+    .action-card p,
+    .intent-card p {
+      margin: 8px 0 0;
+      color: var(--muted-foreground);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .action-card .action {
+      margin-top: auto;
+      align-self: flex-start;
+    }
+    .feature-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .feature-tag {
+      color: var(--green);
+      border: 1px solid rgba(74, 222, 128, 0.30);
+      border-radius: 999px;
+      padding: 4px 7px;
+      font-size: 11px;
+    }
+    .feature-tag.pending {
+      color: var(--warn);
+      border-color: rgba(251, 191, 36, 0.32);
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .section-title h2 {
+      margin: 0;
+      color: var(--foreground);
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .section-title p {
+      margin: 4px 0 0;
+      color: var(--muted-foreground);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .mini {
+      color: var(--muted-foreground);
+      font-size: 13px;
+    }
+    .row,
     .attention-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 14px;
       align-items: center;
-      border: 1px solid var(--line-soft);
+      border: 1px solid #242830;
       border-radius: var(--radius);
       padding: 13px;
-      background: var(--card);
-    }
-    .attention-row.warn { border-color: rgba(251, 191, 36, 0.30); background: rgba(251, 191, 36, 0.10); }
-    .attention-row.bad { border-color: rgba(248, 113, 113, 0.30); background: rgba(248, 113, 113, 0.10); }
-    .section-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
-    .section-title h2 { margin: 0; color: var(--foreground); font-size: 16px; font-weight: 600; letter-spacing: 0; }
-    .section-title p { margin: 4px 0 0; color: var(--muted-foreground); font-size: 13px; line-height: 1.45; }
-    .mini { color: var(--muted-foreground); font-size: 13px; }
-    .list { display: grid; gap: 10px; }
-    .business-card h2, .intent-card h3, .action-card h3 { margin: 0; letter-spacing: 0; }
-    .business-card p, .intent-card p, .action-card p { margin: 8px 0 0; color: var(--muted); line-height: 1.5; font-size: 13px; }
-    .tabbar {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 4px;
-      margin-bottom: 16px;
       background: var(--muted-bg);
     }
-    .tab-button {
-      border-radius: 6px;
-      padding: 8px 11px;
-      color: var(--muted-foreground);
-      background: transparent;
-      border-color: transparent;
-      font-size: 13px;
+    .attention-row.warn {
+      border-color: rgba(251, 191, 36, 0.30);
+      background: rgba(251, 191, 36, 0.10);
     }
-    .tab-button.active {
-      background: var(--card);
+    .attention-row.bad {
+      border-color: rgba(248, 113, 113, 0.30);
+      background: rgba(248, 113, 113, 0.10);
+    }
+    .row-title {
       color: var(--foreground);
-      border-color: var(--border);
-      font-weight: 600;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+      font-weight: 650;
     }
-    .tab-panel { display: grid; gap: 16px; }
-    .tab-panel[hidden] { display: none; }
-    .intent-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-    .intent-card, .action-card {
+    .row-sub {
+      color: var(--muted-foreground);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .tag,
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .tag {
+      color: var(--accent-foreground);
+      font-size: 12px;
+      border: 1px solid rgba(138, 180, 248, 0.26);
+      padding: 5px 8px;
+      background: var(--accent-bg);
+    }
+    .tag.good {
+      color: var(--green);
+      border-color: rgba(74, 222, 128, 0.30);
+      background: rgba(74, 222, 128, 0.10);
+    }
+    .tag.warn {
+      color: var(--warn);
+      border-color: rgba(251, 191, 36, 0.32);
+      background: rgba(251, 191, 36, 0.10);
+    }
+    .tag.bad {
+      color: var(--red);
+      border-color: rgba(248, 113, 113, 0.32);
+      background: rgba(248, 113, 113, 0.10);
+    }
+    .status-pill {
+      padding: 7px 10px;
+      color: var(--green);
+      border: 1px solid rgba(74, 222, 128, 0.26);
+      background: rgba(74, 222, 128, 0.10);
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .status-pill.warn {
+      color: var(--warn);
+      border-color: rgba(251, 191, 36, 0.30);
+      background: rgba(251, 191, 36, 0.10);
+    }
+    .status-pill.bad {
+      color: var(--red);
+      border-color: rgba(248, 113, 113, 0.30);
+      background: rgba(248, 113, 113, 0.12);
+    }
+    .empty,
+    .error {
+      color: var(--muted-foreground);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      background: var(--muted-bg);
+    }
+    .error {
+      color: var(--red);
+      border-color: rgba(248, 113, 113, 0.34);
+    }
+    .action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 16px;
+      padding: 10px 12px;
+      color: var(--foreground);
       background: var(--card);
     }
-    .rail-card {
+    .action.primary {
+      color: var(--primary-foreground);
+      background: var(--primary);
+      border-color: var(--primary);
+      font-weight: 650;
+    }
+    .tab-panel {
       display: grid;
-      gap: 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      background: var(--card);
-      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+      gap: 20px;
+    }
+    .tab-panel[hidden] {
+      display: none;
+    }
+    .dashboard-hero,
+    .hero-row,
+    .toolbar,
+    .timeframe-toggle,
+    .trend-legend,
+    .trend-legend span,
+    .coverage-top {
+      display: flex;
+      align-items: center;
+    }
+    .dashboard-hero {
+      justify-content: space-between;
+    }
+    .hero-copy {
+      display: grid;
+      align-content: center;
+      min-width: 0;
+    }
+    .hero-row,
+    .toolbar {
+      flex-wrap: wrap;
+    }
+    .hero-status,
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    .hero-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--green);
+    }
+    h1 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+    .lead {
+      margin: 0;
+    }
+    .dashboard-overview-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: start;
     }
     .overview-rail {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
-    .rail-card.accent {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: var(--primary-foreground);
-    }
-    .rail-card.accent .rail-title,
-    .rail-card.accent .rail-value {
-      color: var(--primary-foreground);
-    }
-    .rail-card.accent .rail-copy,
-    .rail-card.accent .rail-meta {
-      color: rgba(8, 17, 31, 0.78);
-    }
-    .rail-card.accent .tag {
-      color: var(--primary-foreground);
-      border-color: rgba(8, 17, 31, 0.24);
-      background: rgba(8, 17, 31, 0.08);
+    .rail-card {
+      display: grid;
+      gap: 12px;
     }
     .rail-title {
       color: var(--foreground);
@@ -353,7 +376,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .rail-value {
       color: var(--foreground);
       font-size: 28px;
-      font-weight: 700;
+      font-weight: 750;
       line-height: 1;
     }
     .rail-copy,
@@ -363,92 +386,15 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       line-height: 1.45;
       margin: 0;
     }
-    .rail-actions {
-      display: grid;
-      gap: 8px;
-    }
-    .action-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-    .action-card { display: flex; flex-direction: column; gap: 10px; min-height: 176px; }
-    .action-card .action { margin-top: auto; align-self: flex-start; }
-    .call-overview-card {
-      border-color: var(--border);
-      background: var(--card);
-    }
-    .call-overview-head {
-      align-items: flex-start;
-    }
-    .timeframe-toggle {
-      display: inline-flex;
-      gap: 4px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 4px;
-      background: var(--muted-bg);
-      flex: 0 0 auto;
-    }
-    .timeframe-button {
-      border: 0;
-      border-radius: 6px;
-      background: transparent;
-      color: var(--muted-foreground);
-      padding: 8px 10px;
-      min-width: 52px;
-      font-size: 13px;
-    }
-    .timeframe-button.active {
-      background: var(--card);
-      color: var(--foreground);
-      font-weight: 650;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
-    }
-    .call-summary-grid {
+    .call-summary-grid,
+    .top-insight-grid,
+    .trend-detail-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-    .call-summary-item {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 12px;
-      background: var(--muted-bg);
-    }
-    .call-summary-label {
-      color: var(--muted-foreground);
-      font-size: 12px;
-      text-transform: uppercase;
-      font-weight: 650;
-    }
-    .call-summary-value {
-      color: var(--foreground);
-      display: block;
-      font-size: 24px;
-      font-weight: 720;
-      margin-top: 6px;
-    }
-    .call-chart-meta {
-      margin-bottom: 10px;
-    }
-    .call-chart-meta-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin: 0 0 12px;
-      flex-wrap: wrap;
-    }
-    .call-chart-meta-row .call-chart-meta {
-      margin-bottom: 0;
+      min-width: 0;
     }
     .top-insight-grid {
-      display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-    }
-    .visual-card {
-      display: grid;
-      gap: 14px;
-      min-width: 0;
     }
     .visual-body {
       display: grid;
@@ -463,14 +409,13 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       justify-items: center;
     }
     .donut {
-      width: 148px;
-      aspect-ratio: 1;
-      border-radius: 50%;
+      position: relative;
       display: grid;
       place-items: center;
+      aspect-ratio: 1;
+      border-radius: 50%;
       background: conic-gradient(#263241 0deg 360deg);
       box-shadow: inset 0 0 0 1px rgba(248, 250, 252, 0.08);
-      position: relative;
     }
     .donut::after {
       content: "";
@@ -487,8 +432,15 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       gap: 3px;
       text-align: center;
     }
-    .donut-center strong { color: var(--dashboard-ink); font-size: 26px; line-height: 1; }
-    .donut-center span { color: var(--muted-foreground); font-size: 12px; }
+    .donut-center strong {
+      color: var(--dashboard-ink);
+      font-size: 26px;
+      line-height: 1;
+    }
+    .donut-center span {
+      color: var(--muted-foreground);
+      font-size: 12px;
+    }
     .legend {
       display: grid;
       gap: 8px;
@@ -506,33 +458,30 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       width: 10px;
       height: 10px;
       border-radius: 999px;
-      background: var(--dot, var(--primary-bg));
+      background: var(--dot, var(--primary));
     }
     .bar-stack {
       display: flex;
       width: 100%;
       min-height: 22px;
+      border: 1px solid var(--border);
       border-radius: 999px;
       overflow: hidden;
       background: var(--muted-bg);
-      border: 1px solid var(--border);
     }
     .bar-segment {
       min-width: 0;
       width: var(--width, 0%);
-      background: var(--fill, var(--primary-bg));
+      background: var(--fill, var(--primary));
     }
-    .provider-bars {
-      display: grid;
-      gap: 10px;
-    }
-    .provider-row {
+    .provider-row,
+    .coverage-item {
       display: grid;
       gap: 8px;
-      border: 1px solid var(--border);
+      border: 1px solid #242830;
       border-radius: var(--radius);
       padding: 12px;
-      background: var(--card);
+      background: var(--muted-bg);
     }
     .provider-row-head {
       display: grid;
@@ -550,10 +499,23 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       font-size: 12px;
       margin-top: 3px;
     }
+    .coverage-top {
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .coverage-label {
+      color: var(--muted-foreground);
+      font-size: 13px;
+    }
+    .coverage-value {
+      color: var(--foreground);
+      font-size: 20px;
+      font-weight: 680;
+    }
     .meter {
       height: 8px;
       border-radius: 999px;
-      background: var(--muted-bg);
+      background: #0d1117;
       overflow: hidden;
     }
     .meter > span {
@@ -561,86 +523,20 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       height: 100%;
       width: var(--width, 0%);
       border-radius: inherit;
-      background: var(--fill, var(--primary-bg));
+      background: var(--fill, var(--primary));
     }
-    .coverage-grid {
-      display: grid;
-      gap: 10px;
+    .coverage-item .meter {
+      margin-top: 8px;
     }
-    .coverage-item {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 12px;
-      background: var(--card);
-    }
-    .coverage-top {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    .coverage-label { color: var(--muted-foreground); font-size: 13px; }
-    .coverage-value { color: var(--foreground); font-size: 20px; font-weight: 680; }
-    .coverage-item .meter { margin-top: 8px; }
     .trend-chart {
-      min-height: 432px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      background: var(--card);
       overflow: hidden;
       display: grid;
       align-items: stretch;
-      --color-calls: #8ab4f8;
-      --color-errors: #fbbf24;
-      --color-blocked: #f87171;
-      --chart-grid: rgba(148, 163, 184, 0.16);
-      --chart-axis: #94a3b8;
     }
     .trend-line-chart {
       display: grid;
-      gap: 14px;
       min-width: 0;
       min-height: 100%;
-    }
-    .trend-detail-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      min-width: 0;
-    }
-    .trend-detail {
-      display: grid;
-      gap: 5px;
-      min-width: 0;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 10px 12px;
-      background: var(--muted-bg);
-    }
-    .trend-detail span {
-      color: var(--muted-foreground);
-      font-size: 11px;
-      font-weight: 650;
-      line-height: 1.2;
-      text-transform: uppercase;
-    }
-    .trend-detail strong {
-      color: var(--foreground);
-      font-size: 18px;
-      font-weight: 720;
-      line-height: 1.1;
-      white-space: nowrap;
-    }
-    .trend-detail em {
-      color: var(--muted-foreground);
-      font-size: 12px;
-      font-style: normal;
-      line-height: 1.25;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
     .trend-plot {
       position: relative;
@@ -649,7 +545,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       gap: 12px;
       align-items: stretch;
       min-width: 0;
-      min-height: 318px;
     }
     .trend-scale {
       display: flex;
@@ -705,31 +600,26 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       stroke-width: 2;
     }
     .trend-marker.warn,
-    .trend-marker.errors { stroke: var(--color-errors); }
+    .trend-marker.errors {
+      stroke: var(--color-errors);
+    }
     .trend-marker.bad,
-    .trend-marker.blocked { stroke: var(--color-blocked); }
+    .trend-marker.blocked {
+      stroke: var(--color-blocked);
+    }
     .trend-legend {
-      display: flex;
-      align-items: center;
       justify-content: flex-end;
-      gap: 12px;
       color: var(--muted-foreground);
       font-size: 12px;
       font-weight: 650;
       line-height: 1.2;
-      margin-bottom: -6px;
     }
     .trend-legend span {
-      display: inline-flex;
-      align-items: center;
       gap: 6px;
       white-space: nowrap;
     }
     .trend-legend i {
       display: inline-block;
-      width: 18px;
-      height: 3px;
-      border-radius: 999px;
       background: var(--legend-color, var(--color-calls));
     }
     .trend-hit-area {
@@ -803,107 +693,566 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .trend-axis span:last-child {
       text-align: right;
     }
-    .row {
-      display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;
-      border: 1px solid var(--line-soft);
-      border-radius: 8px; padding: 13px;
-      background: var(--row-bg);
+    .main.enterprise-dashboard-main {
+      justify-self: start;
+      margin: 0;
+      padding: 0 !important;
+      max-width: none !important;
+      width: 100% !important;
+      background: #0a0d13 !important;
+      border-color: #242830 !important;
+      border-radius: 18px !important;
+      overflow: hidden;
     }
-    .row-title { font-weight: 600; }
-    .row-sub { color: var(--muted-foreground); font-size: 13px; margin-top: 4px; }
-    .tag {
-      color: var(--accent-foreground);
+    .dashboard-topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 380px) auto auto;
+      align-items: center;
+      gap: 14px;
+      min-height: 58px;
+      padding: 0 28px;
+      border-bottom: 1px solid #242830;
+      background: #0a0d13;
+    }
+    .dashboard-breadcrumb {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 9px;
+      color: #7d828c;
+      font-size: 13px;
+    }
+    .dashboard-breadcrumb strong {
+      color: #d9dee7;
+      font-weight: 600;
+    }
+    .dashboard-breadcrumb span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .dashboard-search {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 9px;
+      min-height: 34px;
+      padding: 0 10px;
+      border: 1px solid #242830;
+      border-radius: 8px;
+      background: #11161c;
+      color: #7d828c;
       font-size: 12px;
-      border: 1px solid rgba(138, 180, 248, 0.26);
+    }
+    .dashboard-search input {
+      width: 100%;
+      min-width: 0;
+      padding: 0 !important;
+      border: 0 !important;
+      background: transparent !important;
+      color: #d9dee7 !important;
+      font: inherit;
+      outline: none;
+    }
+    .dashboard-search kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 18px;
+      border: 1px solid #303640;
+      border-radius: 5px;
+      color: #8b8d93;
+      background: #171b22;
+      font-size: 10px;
+      font-family: inherit;
+    }
+    .dashboard-icon-button {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      padding: 0 !important;
+      border-radius: 8px;
+      border: 1px solid #242830 !important;
+      background: #11161c !important;
+      color: #9ca3af !important;
+    }
+    .dashboard-user {
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr);
+      align-items: center;
+      gap: 10px;
+      min-width: 154px;
+    }
+    .dashboard-avatar {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
       border-radius: 999px;
-      padding: 5px 8px;
-      background: var(--accent-bg);
+      color: #08111f;
+      background: linear-gradient(135deg, #8ab4f8, #4ade80);
+      font-size: 12px;
+      font-weight: 800;
     }
-    .tag.good { color: var(--green); border-color: rgba(74, 222, 128, 0.30); background: rgba(74, 222, 128, 0.10); }
-    .tag.warn { color: var(--warn); border-color: rgba(251, 191, 36, 0.32); background: rgba(251, 191, 36, 0.10); }
-    .tag.bad { color: var(--red); border-color: rgba(248, 113, 113, 0.32); background: rgba(248, 113, 113, 0.10); }
-    .empty, .error {
-      color: var(--muted-foreground);
-      border: 1px dashed var(--border);
-      border-radius: var(--radius);
-      padding: 18px;
-      background: var(--muted-bg);
+    .dashboard-user strong {
+      display: block;
+      color: #f8fafc;
+      font-size: 13px;
+      line-height: 1.1;
     }
-    .error { color: var(--red); border-color: rgba(248, 113, 113, 0.34); }
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-    .action { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; color: var(--foreground); background: var(--card); }
-    .action.primary { color: var(--primary-text, var(--text)); }
-    .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
-    .feature-card {
-      display: flex; flex-direction: column; gap: 10px;
-      min-height: 170px; border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 16px;
-      background: var(--card);
-      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    .dashboard-user span {
+      display: block;
+      color: #8b8d93;
+      font-size: 11px;
+      line-height: 1.2;
     }
-    .feature-card:hover { transform: translateY(-2px); border-color: rgba(138, 180, 248, 0.36); background: var(--row-bg); }
-    .feature-card h3 { margin: 0; font-size: 16px; line-height: 1.15; letter-spacing: 0; }
-    .feature-card p { margin: 0; color: var(--muted-foreground); font-size: 13px; line-height: 1.45; flex: 1; }
-    .feature-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-    .feature-tag { color: var(--green); border: 1px solid rgba(74, 222, 128, 0.30); border-radius: 999px; padding: 4px 7px; font-size: 11px; }
-    .feature-tag.pending { color: var(--warn); border-color: rgba(251, 191, 36, 0.32); }
-    .enterprise-dashboard-main .card,
-    .enterprise-dashboard-main .rail-card {
-      background: var(--card) !important;
-      border-color: var(--border) !important;
-      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28) !important;
-      color: var(--foreground) !important;
+    .enterprise-page-shell {
+      padding: 0 28px 34px;
+      gap: 0;
+      background: #0a0d13;
     }
-    .enterprise-dashboard-main .rail-card.accent {
-      background: var(--primary) !important;
-      border-color: var(--primary) !important;
-      color: var(--primary-foreground) !important;
-    }
-    .enterprise-dashboard-main .tabbar {
-      background: var(--muted-bg) !important;
-      border-color: var(--border) !important;
+    .control-center-card {
+      border: 0 !important;
+      border-radius: 0;
+      padding: 0;
+      background: transparent !important;
       box-shadow: none !important;
     }
+    .enterprise-dashboard-main .tabbar {
+      display: flex;
+      gap: 24px;
+      align-items: stretch;
+      flex-wrap: nowrap;
+      min-height: 64px;
+      margin: 0 -28px 26px;
+      padding: 0 40px;
+      border: 0 !important;
+      border-bottom: 1px solid #242830 !important;
+      border-radius: 0 !important;
+      background: #0a0d13 !important;
+      overflow-x: auto;
+    }
     .enterprise-dashboard-main .tab-button {
-      color: var(--muted-foreground) !important;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      min-height: 64px;
+      padding: 0 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
       background: transparent !important;
-      border-color: transparent !important;
+      color: #8b8d93 !important;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: none !important;
     }
     .enterprise-dashboard-main .tab-button.active {
-      background: var(--card) !important;
-      color: var(--foreground) !important;
-      border-color: var(--border) !important;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22) !important;
+      color: #f8fafc !important;
+      background: transparent !important;
+      border: 0 !important;
+      box-shadow: none !important;
     }
+    .enterprise-dashboard-main .tab-button.active::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 2px;
+      border-radius: 999px 999px 0 0;
+      background: linear-gradient(90deg, #8ab4f8, #4ade80);
+      box-shadow: 0 0 18px rgba(138, 180, 248, 0.42);
+    }
+    .tab-panel {
+      gap: 20px;
+    }
+    .dashboard-hero {
+      align-items: flex-end;
+      gap: 24px;
+      padding: 0 0 22px;
+    }
+    .hero-copy {
+      gap: 9px;
+      max-width: 820px;
+    }
+    .hero-row {
+      gap: 9px;
+    }
+    .eyebrow,
+    .hero-status {
+      min-height: 24px;
+      border-radius: 7px;
+      padding: 4px 9px;
+      background: #11161c;
+      border-color: #303640;
+      color: #aeb5c2;
+      text-transform: none;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .eyebrow {
+      color: #d7e7ff;
+      border-color: rgba(138, 180, 248, 0.30);
+      background: rgba(138, 180, 248, 0.10);
+    }
+    .hero-status.live {
+      color: #86efac;
+      border-color: rgba(74, 222, 128, 0.28);
+      background: rgba(74, 222, 128, 0.08);
+    }
+    .hero-status.sync {
+      border-color: transparent;
+      background: transparent;
+      color: #7d828c;
+      padding-left: 0;
+    }
+    .hero-status-dot {
+      width: 6px;
+      height: 6px;
+      box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.12);
+    }
+    h1 {
+      max-width: none;
+      color: #f8fafc;
+      font-size: clamp(30px, 3vw, 42px);
+      line-height: 1.02;
+      font-weight: 800;
+    }
+    .lead {
+      max-width: 900px;
+      margin: 0;
+      color: #8b8d93;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .hero-toolbar {
+      margin-top: 0;
+      justify-content: flex-end;
+      flex-wrap: nowrap;
+    }
+    .hero-toolbar .action,
+    .hero-toolbar button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 8px 12px;
+      border: 1px solid #303640 !important;
+      border-radius: 8px;
+      background: #11161c !important;
+      color: #d9dee7 !important;
+      font-size: 13px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .hero-toolbar .primary {
+      background: #8ab4f8 !important;
+      border-color: #8ab4f8 !important;
+      color: #08111f !important;
+      box-shadow: 0 12px 30px rgba(138, 180, 248, 0.24);
+    }
+    .posture-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .posture-card {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      min-height: 75px;
+      padding: 14px 16px;
+      border: 1px solid #242830;
+      border-radius: 8px;
+      background: #11161c;
+    }
+    .posture-icon {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      color: #8ab4f8;
+      background: rgba(138, 180, 248, 0.10);
+      font-weight: 800;
+    }
+    .posture-card.good .posture-icon {
+      color: #4ade80;
+      background: rgba(74, 222, 128, 0.10);
+    }
+    .posture-card.warn .posture-icon {
+      color: #fbbf24;
+      background: rgba(251, 191, 36, 0.10);
+    }
+    .posture-label {
+      display: block;
+      color: #747b86;
+      font-size: 11px;
+      font-weight: 750;
+      line-height: 1.1;
+      text-transform: uppercase;
+    }
+    .posture-card strong {
+      display: block;
+      margin-top: 4px;
+      color: #f8fafc;
+      font-size: 20px;
+      line-height: 1;
+      font-weight: 780;
+    }
+    .posture-card small {
+      display: block;
+      margin-top: 4px;
+      color: #8b8d93;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+    .dashboard-overview-grid {
+      gap: 20px;
+    }
+    .overview-primary {
+      gap: 20px;
+    }
+    .enterprise-dashboard-main .card,
+    .enterprise-dashboard-main .rail-card {
+      background: #11161c !important;
+      border-color: #242830 !important;
+      border-radius: 8px !important;
+      box-shadow: none !important;
+    }
+    .call-summary-grid {
+      gap: 12px;
+      margin-bottom: 0;
+    }
+    .enterprise-dashboard-main .call-summary-item {
+      position: relative;
+      display: grid;
+      gap: 7px;
+      min-height: 132px;
+      overflow: hidden;
+      padding: 20px 20px 17px;
+      border: 1px solid #242830 !important;
+      border-radius: 8px;
+      background: #11161c !important;
+      color: #f8fafc !important;
+    }
+    .call-summary-item::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: var(--metric-color, #8ab4f8);
+      opacity: 0.86;
+    }
+    .call-summary-label {
+      color: #747b86;
+      font-size: 11px;
+      letter-spacing: 0 !important;
+      text-transform: uppercase;
+    }
+    .call-summary-value {
+      margin: 0;
+      color: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 34px;
+      line-height: 1;
+      font-weight: 750;
+    }
+    .metric-value-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      min-width: 0;
+    }
+    .metric-delta {
+      color: #4ade80;
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+    .metric-delta.bad { color: #f87171; }
+    .metric-delta.warn { color: #fbbf24; }
+    .call-summary-sub {
+      color: #8b8d93;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+    .metric-spark {
+      position: absolute;
+      right: 18px;
+      top: 30px;
+      width: 98px;
+      height: 54px;
+      color: var(--metric-color, #8ab4f8);
+      opacity: 0.8;
+    }
+    .metric-total { --metric-color: #8ab4f8; }
+    .metric-allowed { --metric-color: #4ade80; }
+    .metric-blocked { --metric-color: #f87171; }
+    .metric-errors { --metric-color: #fbbf24; }
+    .call-overview-card {
+      padding: 22px !important;
+    }
+    .call-overview-head {
+      margin-bottom: 20px;
+    }
+    .section-kicker,
+    .card-kicker {
+      display: block;
+      margin-bottom: 8px;
+      color: #747b86;
+      font-size: 11px;
+      font-weight: 750;
+      line-height: 1.1;
+      text-transform: uppercase;
+    }
+    .section-title h2 {
+      color: #f8fafc;
+      font-size: 18px;
+      font-weight: 760;
+    }
+    .section-title p {
+      color: #8b8d93;
+      font-size: 13px;
+    }
+    .timeframe-toggle {
+      border-color: #242830;
+      background: #0d1117;
+      border-radius: 8px;
+    }
+    .timeframe-button {
+      min-width: 48px;
+      padding: 7px 10px !important;
+      color: #8b8d93 !important;
+      background: transparent !important;
+    }
+    .timeframe-button.active {
+      background: #171b22 !important;
+      color: #f8fafc !important;
+      border-color: #303640 !important;
+      box-shadow: none !important;
+    }
+    .trend-chart {
+      min-height: 492px;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      --color-calls: #5b8cff;
+      --color-errors: #c98222;
+      --color-blocked: #cf5566;
+      --chart-grid: rgba(148, 163, 184, 0.12);
+      --chart-axis: #747b86;
+    }
+    .trend-line-chart {
+      gap: 18px;
+    }
+    .trend-legend {
+      justify-content: flex-end;
+      gap: 8px;
+      margin: 0;
+    }
+    .trend-legend span {
+      min-height: 28px;
+      padding: 0 10px;
+      border: 1px solid #242830;
+      border-radius: 7px;
+      background: #0d1117;
+    }
+    .trend-legend i {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+    }
+    .trend-plot {
+      min-height: 318px;
+      padding-top: 8px;
+    }
+    .trend-detail-grid {
+      gap: 0;
+      padding-top: 18px;
+      border-top: 1px solid #242830;
+    }
+    .trend-detail {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+      border: 0;
+      border-radius: 0;
+      padding: 0 18px;
+      background: transparent;
+    }
+    .trend-detail:first-child {
+      padding-left: 0;
+    }
+    .trend-detail:not(:last-child) {
+      border-right: 1px solid #242830;
+    }
+    .trend-detail span {
+      color: #747b86;
+    }
+    .trend-detail strong {
+      color: #f8fafc;
+      font-size: 24px;
+    }
+    .trend-detail em {
+      color: #747b86;
+    }
+    .top-insight-grid {
+      gap: 12px;
+    }
+    .visual-card {
+      min-height: 285px;
+    }
+    .visual-card .section-title {
+      align-items: flex-start;
+    }
+    .donut {
+      width: 170px;
+    }
+    .donut::after {
+      background: #11161c;
+    }
+    .legend-row,
+    .coverage-label,
+    .provider-meta,
+    .mini,
+    .row-sub {
+      color: #8b8d93 !important;
+    }
+    .coverage-item,
+    .provider-row,
+    .attention-row,
     .enterprise-dashboard-main .row,
     .enterprise-dashboard-main .intent-card,
-    .enterprise-dashboard-main .action-card,
-    .enterprise-dashboard-main .feature-card {
-      background: var(--card) !important;
-      border-color: var(--border) !important;
-      color: var(--foreground) !important;
+    .enterprise-dashboard-main .action-card {
+      background: #171b22 !important;
+      border-color: #242830 !important;
     }
-    .enterprise-dashboard-main .call-summary-item,
-    .enterprise-dashboard-main .empty,
-    .enterprise-dashboard-main .error {
-      background: var(--muted-bg) !important;
-      border-color: var(--border) !important;
-      color: var(--muted-foreground) !important;
+    .overview-rail {
+      gap: 12px;
     }
-    .enterprise-dashboard-main .primary,
-    .enterprise-dashboard-main .action.primary {
-      background: var(--primary) !important;
-      color: var(--primary-foreground) !important;
-      border-color: var(--primary) !important;
+    .enterprise-dashboard-main .rail-card.accent {
+      background: linear-gradient(135deg, #8ab4f8, #4ade80) !important;
+      border-color: rgba(138, 180, 248, 0.48) !important;
     }
     @media (max-width: 980px) {
+      .dashboard-topbar { grid-template-columns: minmax(0, 1fr); align-items: stretch; padding: 14px 16px; }
+      .dashboard-user { display: none; }
+      .enterprise-page-shell { padding: 0 16px 26px; }
+      .enterprise-dashboard-main .tabbar { margin: 0 -16px 22px; padding: 0 24px; }
       .dashboard-hero { align-items: flex-start; flex-direction: column; }
       .toolbar { justify-content: flex-start; }
-      .two, .dashboard-overview-grid, .feature-grid, .intent-grid, .action-grid, .top-insight-grid, .call-summary-grid { grid-template-columns: 1fr; }
+      .two, .dashboard-overview-grid, .intent-grid, .action-grid, .top-insight-grid, .call-summary-grid, .posture-grid { grid-template-columns: 1fr; }
       .call-overview-head { align-items: stretch; }
       .timeframe-toggle { width: 100%; }
       .timeframe-button { flex: 1; }
-      .control-center-intro { flex-direction: column; }
       .overview-rail { grid-template-columns: 1fr; }
       .trend-plot { grid-template-columns: 1fr; }
       .trend-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -911,15 +1260,35 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       .trend-axis { grid-column: 1; }
     }
     @media (max-width: 640px) {
+      .shell,
+      .layout {
+        grid-template-columns: minmax(0, 1fr) !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 8px !important;
+      }
+      .sidebar.enterprise-app-sidebar.enterprise-dual-sidebar {
+        display: none !important;
+      }
       .main.enterprise-dashboard-main { width: 100% !important; }
+      .dashboard-search { grid-template-columns: 18px minmax(0, 1fr); }
+      .dashboard-search kbd { display: none; }
+      .hero-toolbar { width: 100%; justify-content: stretch; }
+      .hero-toolbar .action,
+      .hero-toolbar button { flex: 1; justify-content: center; text-align: center; }
       .trend-chart { min-height: 390px; padding: 12px; }
+      .call-overview-card { padding: 16px !important; }
+      .metric-spark { display: none; }
       .trend-detail-grid { grid-template-columns: 1fr; }
+      .trend-detail { padding: 10px 0; }
+      .trend-detail:not(:last-child) { border-right: 0; border-bottom: 1px solid #242830; }
       .trend-svg { height: 250px; }
       .trend-plot { min-height: 264px; }
       .trend-axis { font-size: 11px; }
     }
     @media (min-width: 981px) and (max-width: 1220px) {
-      .feature-grid, .intent-grid, .action-grid, .top-insight-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .intent-grid, .action-grid, .top-insight-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .posture-grid, .call-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .overview-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
@@ -929,25 +1298,30 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     ${renderEnterpriseAppSidebar('dashboard')}
 
     <main class="main enterprise-dashboard-main">
-      <section class="enterprise-page-shell">
-        <section class="dashboard-hero" aria-label="Enterprise control center overview">
-          <div class="hero-copy">
-            <div class="hero-row">
-              <div class="eyebrow">Enterprise dashboard</div>
-              <div class="hero-status"><span class="hero-status-dot"></span><span>Live workspace</span></div>
-            </div>
-            <h1>API Key Security Overview</h1>
+      <header class="dashboard-topbar" aria-label="Enterprise dashboard header">
+        <div class="dashboard-breadcrumb" aria-label="Workspace breadcrumb">
+          <span>Workspace</span><span aria-hidden="true">/</span><strong id="topOrgName">acme-prod</strong><span aria-hidden="true">/</span><span>Dashboard</span>
+        </div>
+        <label class="dashboard-search">
+          <span aria-hidden="true">⌕</span>
+          <span class="sr-only">Search keys, workloads, incidents</span>
+          <input type="search" readonly placeholder="Search keys, workloads, incidents..." />
+          <kbd>⌘K</kbd>
+        </label>
+        <button class="dashboard-icon-button" type="button" aria-label="Notifications">•</button>
+        <div class="dashboard-user" aria-label="Signed-in enterprise user">
+          <span class="dashboard-avatar" aria-hidden="true">MC</span>
+          <div>
+            <strong>Mia Chen</strong>
+            <span>Security owner</span>
           </div>
-        </section>
-
-      <div id="authNotice" class="error" style="display:none"></div>
+        </div>
+      </header>
+      <section class="enterprise-page-shell">
+        <div id="authNotice" class="error" style="display:none"></div>
 
         <section class="control-center-card" aria-label="Enterprise control center" data-ui-kit="shadcn-studio">
-          <div class="control-center-intro">
-            <div>
-              <h2 class="control-title">Control center</h2>
-            </div>
-          </div>
+          <span class="sr-only">Control center</span>
 
           <nav class="tabbar" aria-label="Enterprise dashboard tabs">
             <button class="tab-button active" type="button" data-dashboard-tab="overview">Overview</button>
@@ -958,29 +1332,111 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           </nav>
 
       <section id="tab-overview" class="tab-panel" data-tab-panel="overview">
+        <section class="dashboard-hero" aria-label="Enterprise control center overview">
+          <div class="hero-copy">
+            <div class="hero-row">
+              <div class="eyebrow">Enterprise dashboard</div>
+              <div class="hero-status live"><span class="hero-status-dot"></span><span>Live workspace</span></div>
+              <div class="hero-status sync"><span id="lastSyncLabel">last sync · 12s</span></div>
+            </div>
+            <h1 aria-label="API Key Security Overview">API key security overview</h1>
+            <p class="lead">Real-time posture across protected tokens, runtime traffic and key rotations. Filtered for production workloads.</p>
+          </div>
+          <div class="toolbar hero-toolbar" aria-label="Dashboard actions">
+            <button type="button">prod · all regions</button>
+            <a class="action" href="/api/v1/enterprise/audit?format=csv&days=30">Export</a>
+            <a class="action primary" href="/app/settings">Configure</a>
+          </div>
+        </section>
+
+        <section class="posture-grid" aria-label="Enterprise posture snapshot">
+          <div class="posture-card good">
+            <span id="postureStateIcon" class="posture-icon" aria-hidden="true">✓</span>
+            <div>
+              <span class="posture-label">Posture</span>
+              <strong id="postureState">Healthy</strong>
+              <small id="postureSub">92% controls passing</small>
+            </div>
+          </div>
+          <div class="posture-card">
+            <span class="posture-icon" aria-hidden="true">↯</span>
+            <div>
+              <span class="posture-label">Active scans</span>
+              <strong id="postureScans">14</strong>
+              <small id="postureScansSub">avg 4.2s / scan</small>
+            </div>
+          </div>
+          <div class="posture-card warn">
+            <span class="posture-icon" aria-hidden="true">!</span>
+            <div>
+              <span class="posture-label">Open incidents</span>
+              <strong id="postureIncidents">5</strong>
+              <small id="postureIncidentsSub">2 critical · 2 warn</small>
+            </div>
+          </div>
+          <div class="posture-card">
+            <span class="posture-icon" aria-hidden="true">↻</span>
+            <div>
+              <span class="posture-label">Pending rotations</span>
+              <strong id="postureRotations">3</strong>
+              <small id="postureRotationsSub">next: 04:00 UTC</small>
+            </div>
+          </div>
+        </section>
+
         <section class="dashboard-overview-grid" aria-label="Dashboard overview workspace">
           <div class="overview-primary">
+            <section class="call-summary-grid" aria-label="Selected API call window">
+              <div class="call-summary-item metric-total">
+                <span class="call-summary-label">Total calls</span>
+                <div class="metric-value-row">
+                  <strong id="callWindowTotal" class="call-summary-value">...</strong>
+                  <span id="callWindowTotalDelta" class="metric-delta">+12.4%</span>
+                </div>
+                <span id="callWindowTotalSub" class="call-summary-sub">180d window</span>
+                <svg class="metric-spark" viewBox="0 0 100 54" aria-hidden="true"><path d="M4 39 C22 38 28 39 42 34 C60 28 68 24 80 13 C88 7 92 10 96 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M4 53 L4 40 C22 38 28 39 42 34 C60 28 68 24 80 13 C88 7 92 10 96 6 L96 53 Z" fill="currentColor" opacity="0.12"></path></svg>
+              </div>
+              <div class="call-summary-item metric-allowed">
+                <span class="call-summary-label">Allowed</span>
+                <div class="metric-value-row">
+                  <strong id="callWindowAllowed" class="call-summary-value">...</strong>
+                  <span id="callWindowAllowedDelta" class="metric-delta">+11.8%</span>
+                </div>
+                <span id="callWindowAllowedSub" class="call-summary-sub">92.1% pass rate</span>
+                <svg class="metric-spark" viewBox="0 0 100 54" aria-hidden="true"><path d="M4 39 C24 38 34 38 48 33 C62 28 70 18 82 10 C88 6 93 8 96 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M4 53 L4 40 C24 38 34 38 48 33 C62 28 70 18 82 10 C88 6 93 8 96 5 L96 53 Z" fill="currentColor" opacity="0.12"></path></svg>
+              </div>
+              <div class="call-summary-item metric-blocked">
+                <span class="call-summary-label">Blocked</span>
+                <div class="metric-value-row">
+                  <strong id="callWindowBlocked" class="call-summary-value">...</strong>
+                  <span id="callWindowBlockedDelta" class="metric-delta bad">-3.2%</span>
+                </div>
+                <span id="callWindowBlockedSub" class="call-summary-sub">5.7% of traffic</span>
+                <svg class="metric-spark" viewBox="0 0 100 54" aria-hidden="true"><path d="M4 36 C14 35 18 38 28 35 C40 31 52 32 66 23 C78 16 84 10 94 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M4 53 L4 36 C14 35 18 38 28 35 C40 31 52 32 66 23 C78 16 84 10 94 20 L96 53 Z" fill="currentColor" opacity="0.12"></path></svg>
+              </div>
+              <div class="call-summary-item metric-errors">
+                <span class="call-summary-label">Errors</span>
+                <div class="metric-value-row">
+                  <strong id="callWindowErrors" class="call-summary-value">...</strong>
+                  <span id="callWindowErrorsDelta" class="metric-delta warn">+1.1%</span>
+                </div>
+                <span id="callWindowErrorsSub" class="call-summary-sub">2.3% upstream</span>
+                <svg class="metric-spark" viewBox="0 0 100 54" aria-hidden="true"><path d="M4 37 C20 37 32 37 44 37 C56 28 64 33 72 20 C82 12 88 6 96 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M4 53 L4 37 C20 37 32 37 44 37 C56 28 64 33 72 20 C82 12 88 6 96 14 L96 53 Z" fill="currentColor" opacity="0.12"></path></svg>
+              </div>
+            </section>
+
             <section class="card call-overview-card" aria-label="API calls overview">
               <div class="section-title call-overview-head">
                 <div>
-                  <h2>API Calls</h2>
-                  <p>Daily protected API traffic with separate lines for blocked requests and upstream errors.</p>
+                  <span class="section-kicker">API traffic</span>
+                  <h2>API Calls, blocked and errors over time</h2>
+                  <p><span id="trendMeta" class="call-chart-meta">Selected window: 6mo</span> · <span id="trendWindowHint">Daily protected API traffic</span></p>
                 </div>
                 <div class="timeframe-toggle" role="group" aria-label="API call time range">
                   <button class="timeframe-button" type="button" data-call-range="30">30d</button>
                   <button class="timeframe-button" type="button" data-call-range="90">90d</button>
                   <button class="timeframe-button active" type="button" data-call-range="180">6mo</button>
                 </div>
-              </div>
-              <div class="call-summary-grid" aria-label="Selected API call window">
-                <div class="call-summary-item"><span class="call-summary-label">Total calls</span><strong id="callWindowTotal" class="call-summary-value">...</strong></div>
-                <div class="call-summary-item"><span class="call-summary-label">Allowed</span><strong id="callWindowAllowed" class="call-summary-value">...</strong></div>
-                <div class="call-summary-item"><span class="call-summary-label">Blocked</span><strong id="callWindowBlocked" class="call-summary-value">...</strong></div>
-                <div class="call-summary-item"><span class="call-summary-label">Errors</span><strong id="callWindowErrors" class="call-summary-value">...</strong></div>
-              </div>
-              <div class="call-chart-meta-row">
-                <div id="trendMeta" class="mini call-chart-meta">6 months</div>
-                <div id="trendWindowHint" class="mini">Daily protected API traffic</div>
               </div>
               <div id="callTrendChart" class="trend-chart"><div class="empty">Loading API calls...</div></div>
             </section>
@@ -989,8 +1445,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="card visual-card">
                 <div class="section-title">
                   <div>
-                    <h2>Key readiness</h2>
-                    <p>Which protected API keys are ready for real traffic, still demo-only, or missing setup.</p>
+                    <span class="card-kicker">Key readiness</span>
+                    <h2>Protected API keys</h2>
+                    <p>Real-traffic vs demo-only vs missing setup.</p>
                   </div>
                 </div>
                 <div class="donut-wrap">
@@ -1002,8 +1459,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="card visual-card">
                 <div class="section-title">
                   <div>
-                    <h2>API call results</h2>
-                    <p>Allowed requests compared with blocked requests and upstream errors.</p>
+                    <span class="card-kicker">API call results</span>
+                    <h2>Allowed vs blocked vs errors</h2>
+                    <p>Distribution across the selected window.</p>
                   </div>
                   <span id="trafficMeta" class="mini">0 calls</span>
                 </div>
@@ -1016,8 +1474,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               <div class="card visual-card">
                 <div class="section-title">
                   <div>
-                    <h2>Token coverage</h2>
-                    <p>How much of the organization has VaultProof tokens, key slots, and observed runtime activity.</p>
+                    <span class="card-kicker">Token coverage</span>
+                    <h2>Organization rollout</h2>
+                    <p>How much of the org has tokens, key slots and observed runtime activity.</p>
                   </div>
                 </div>
                 <div id="projectCoverageList" class="coverage-grid"><div class="empty">Loading coverage...</div></div>
@@ -1202,7 +1661,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
   <script>
     (function() {
       var ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
-      var token = localStorage.getItem('vaultproof_token') || '';
       var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
       var loadSequence = 0;
       var latestCallTrend = [];
@@ -1233,16 +1691,32 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       function plural(value, singular, pluralLabel) {
         return rawNumber(value) === 1 ? singular : (pluralLabel || singular + 's');
       }
-      function daysAgoIso(days) {
-        var date = new Date();
-        date.setUTCDate(date.getUTCDate() - rawNumber(days));
-        return date.toISOString();
+      function setMetricDelta(id, value, invert) {
+        var el = byId(id);
+        if (!el) return;
+        var n = Number(value || 0);
+        if (!Number.isFinite(n)) n = 0;
+        var rounded = Math.round(n * 10) / 10;
+        el.textContent = (rounded >= 0 ? '+' : '') + rounded + '%';
+        var isGood = invert ? rounded <= 0 : rounded >= 0;
+        el.className = 'metric-delta ' + (isGood ? '' : 'bad');
       }
-      function dayKey(daysAgo) {
-        var date = new Date();
-        date.setUTCHours(0, 0, 0, 0);
-        date.setUTCDate(date.getUTCDate() - rawNumber(daysAgo));
-        return date.toISOString().slice(0, 10);
+      function setPostureTone(tone, icon) {
+        var state = byId('postureState');
+        var card = state && state.closest ? state.closest('.posture-card') : null;
+        if (card) card.className = 'posture-card ' + (tone || '');
+        text('postureStateIcon', icon || '✓');
+      }
+      function percentChange(previous, current) {
+        previous = rawNumber(previous);
+        current = rawNumber(current);
+        if (previous <= 0) return current > 0 ? 100 : 0;
+        return ((current - previous) / previous) * 100;
+      }
+      function sumTrend(items, resolver) {
+        return (Array.isArray(items) ? items : []).reduce(function(sum, item) {
+          return sum + rawNumber(resolver(item));
+        }, 0);
       }
       function resolveDashboardOverview(overview) {
         return overview || {};
@@ -1405,6 +1879,14 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           text('callWindowAllowed', '0');
           text('callWindowBlocked', '0');
           text('callWindowErrors', '0');
+          text('callWindowTotalSub', days + 'd window');
+          text('callWindowAllowedSub', '0% pass rate');
+          text('callWindowBlockedSub', '0% of traffic');
+          text('callWindowErrorsSub', '0% upstream');
+          setMetricDelta('callWindowTotalDelta', 0);
+          setMetricDelta('callWindowAllowedDelta', 0);
+          setMetricDelta('callWindowBlockedDelta', 0, true);
+          setMetricDelta('callWindowErrorsDelta', 0, true);
           text('trendWindowHint', 'No traffic data');
           return;
         }
@@ -1426,6 +1908,18 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var allowedRate = total ? Math.round((allowedTotal / total) * 1000) / 10 : 0;
         var blockedRate = total ? Math.round((deniedTotal / total) * 1000) / 10 : 0;
         var errorRate = total ? Math.round((otherErrorTotal / total) * 1000) / 10 : 0;
+        var splitIndex = Math.max(1, Math.floor(list.length / 2));
+        var previousWindow = list.slice(0, splitIndex);
+        var currentWindow = list.slice(splitIndex);
+        if (!currentWindow.length) currentWindow = previousWindow;
+        var previousTotal = sumTrend(previousWindow, function(item) { return item.calls; });
+        var currentTotal = sumTrend(currentWindow, function(item) { return item.calls; });
+        var previousAllowed = sumTrend(previousWindow, function(item) { return Math.max(rawNumber(item.calls) - rawNumber(item.errors), 0); });
+        var currentAllowed = sumTrend(currentWindow, function(item) { return Math.max(rawNumber(item.calls) - rawNumber(item.errors), 0); });
+        var previousBlocked = sumTrend(previousWindow, function(item) { return item.denied; });
+        var currentBlocked = sumTrend(currentWindow, function(item) { return item.denied; });
+        var previousOtherErrors = sumTrend(previousWindow, function(item) { return Math.max(rawNumber(item.errors) - rawNumber(item.denied), 0); });
+        var currentOtherErrors = sumTrend(currentWindow, function(item) { return Math.max(rawNumber(item.errors) - rawNumber(item.denied), 0); });
         var maxEvents = list.reduce(function(max, item) {
           var denied = rawNumber(item.denied);
           var otherErrors = Math.max(rawNumber(item.errors) - denied, 0);
@@ -1604,7 +2098,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         }).join('') + '</div>';
         chart.innerHTML =
           '<div class="trend-line-chart">' +
-            detailGrid +
             legend +
             '<div class="trend-plot">' +
               '<div class="trend-scale"><span>Peak ' + number(maxCalls) + '</span><span>Events ' + number(maxEvents) + '</span><span>0</span></div>' +
@@ -1625,6 +2118,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
               axis +
               '<div class="trend-tooltip" aria-hidden="true"></div>' +
             '</div>' +
+            detailGrid +
           '</div>';
         attachTrendTooltip();
         text('trendMeta', 'Selected window: ' + selectedWindowLabel);
@@ -1633,6 +2127,14 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         text('callWindowAllowed', number(allowedTotal));
         text('callWindowBlocked', number(deniedTotal));
         text('callWindowErrors', number(otherErrorTotal));
+        text('callWindowTotalSub', selectedWindowLabel + ' window');
+        text('callWindowAllowedSub', allowedRate + '% pass rate');
+        text('callWindowBlockedSub', blockedRate + '% of traffic');
+        text('callWindowErrorsSub', errorRate + '% upstream');
+        setMetricDelta('callWindowTotalDelta', percentChange(previousTotal, currentTotal));
+        setMetricDelta('callWindowAllowedDelta', percentChange(previousAllowed, currentAllowed));
+        setMetricDelta('callWindowBlockedDelta', percentChange(previousBlocked, currentBlocked), true);
+        setMetricDelta('callWindowErrorsDelta', percentChange(previousOtherErrors, currentOtherErrors), true);
       }
       function relativeTime(value) {
         if (!value) return 'never';
@@ -1648,7 +2150,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       }
       function authHeaders() {
         var headers = { 'Content-Type': 'application/json' };
-        if (token) headers.Authorization = 'Bearer ' + token;
         if (currentOrgId) headers['x-vaultproof-organization'] = currentOrgId;
         return headers;
       }
@@ -1701,8 +2202,9 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var ready = payload && payload.production_ready === true;
         var runtimeTier = payload && payload.runtime_tier === 'shared-demo' ? 'shared-demo' : 'dedicated-production';
         var sharedDemo = runtimeTier === 'shared-demo';
-        text('kpiRuntime', ready ? 'ready' : 'watch');
-        text('kpiRuntimeSub', ready ? (sharedDemo ? 'shared enterprise runtime' : 'GCP confidential production') : 'needs review');
+        text('postureState', ready ? 'Healthy' : 'Watch');
+        text('postureSub', ready ? 'runtime controls passing' : 'runtime needs review');
+        setPostureTone(ready ? 'good' : 'warn', ready ? '✓' : '!');
         var pill = byId('runtimePill');
         if (pill) {
           pill.textContent = ready ? (sharedDemo ? 'shared runtime ready' : 'production ready') : 'not production ready';
@@ -1734,11 +2236,12 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         if (!org) {
           text('orgRole', 'none');
           text('orgDetail', 'No active enterprise organization found.');
+          text('topOrgName', 'workspace');
           return;
         }
+        text('topOrgName', org.name || 'workspace');
         text('orgRole', org.role || 'member');
         text('orgDetail', (org.name || 'Organization') + ' - ' + number(org.member_count) + ' members - ' + number(org.project_count) + ' tokens');
-        text('kpiMembersSub', (payload.sso_status && payload.sso_status.provider_status === 'configured') ? 'SSO configured' : 'SSO not fully configured');
       }
       function renderOverview(overview) {
         overview = resolveDashboardOverview(overview);
@@ -1753,6 +2256,25 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var trafficDenied = rawNumber(traffic.deniedCalls || overview.deniedCalls);
         var trafficOtherErrors = traffic.otherErrorCalls === undefined ? Math.max(trafficErrors - trafficDenied, 0) : rawNumber(traffic.otherErrorCalls);
         var trafficOk = traffic.okCalls === undefined ? Math.max(trafficTotal - trafficErrors, 0) : rawNumber(traffic.okCalls);
+        var totalProjects = rawNumber(coverage.totalProjects);
+        var needingAttention = rawNumber(coverage.needingAttention);
+        var reviewCount = Math.max(totalSlots - liveSealed, 0);
+        var alerts = Array.isArray(overview.alerts) ? overview.alerts : [];
+        var criticalAlerts = alerts.filter(function(alert) { return alert.severity === 'critical'; }).length;
+        var warningAlerts = alerts.filter(function(alert) { return alert.severity === 'warning' || alert.severity === 'warn'; }).length;
+        var incidentCount = alerts.length || needingAttention || (trafficDenied || trafficOtherErrors ? 1 : 0);
+        var postureGood = incidentCount === 0 && reviewCount === 0;
+        text('postureState', postureGood ? 'Healthy' : 'Watch');
+        text('postureSub', totalSlots ? percent(liveSealed, totalSlots) + '% keys ready' : 'waiting for protected keys');
+        setPostureTone(postureGood ? 'good' : 'warn', postureGood ? '✓' : '!');
+        text('postureScans', number(Math.max(totalProjects, totalSlots, providerUsage.length)));
+        text('postureScansSub', providerUsage.length ? number(providerUsage.length) + ' provider groups mapped' : 'no provider groups yet');
+        text('postureIncidents', number(incidentCount));
+        text('postureIncidentsSub', criticalAlerts || warningAlerts
+          ? number(criticalAlerts) + ' critical - ' + number(warningAlerts) + ' warn'
+          : (incidentCount ? 'review traffic and setup' : 'no active incidents'));
+        text('postureRotations', number(reviewCount));
+        text('postureRotationsSub', reviewCount ? 'setup review due' : 'no pending rotations');
         setDonut(slotSummary);
         renderTrafficBreakdown({
           totalCalls: trafficTotal,
@@ -1770,7 +2292,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
         var review = overview.pilotReview || {};
         text('projectHealthMeta', review.headline || '');
         text('activityMeta', number((overview.recentActivity || []).length) + ' recent events');
-        var alerts = Array.isArray(overview.alerts) ? overview.alerts : [];
         var operationList = byId('operationSummaryList');
         if (operationList) {
           operationList.innerHTML = alerts.length ? alerts.slice(0, 5).map(function(alert) {
@@ -1799,7 +2320,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       function renderMembers(payload) {
         var members = Array.isArray(payload && payload.members) ? payload.members : [];
         var invites = Array.isArray(payload && payload.invitations) ? payload.invitations.filter(function(invite) { return invite.status === 'pending'; }) : [];
-        text('kpiMembers', number(members.length));
         text('accessMeta', number(invites.length) + ' pending invites');
         var accessList = byId('accessList');
         if (!accessList) return;
