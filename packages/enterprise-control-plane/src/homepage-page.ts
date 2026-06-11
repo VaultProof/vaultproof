@@ -46,6 +46,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
       font-weight: 400;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
+      overflow-x: hidden;
     }
     a { color: inherit; text-decoration: none; }
     button, a { -webkit-tap-highlight-color: transparent; }
@@ -1505,6 +1506,455 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
         padding-left: 22px;
       }
     }
+    .vp-logo-icon {
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: #06100d;
+      background: linear-gradient(135deg, #76ebd0, #4fb39b);
+      box-shadow: 0 0 0 1px rgba(118, 235, 208, 0.42), 0 14px 28px -16px rgba(118, 235, 208, 0.88);
+    }
+    .vp-logo-icon svg {
+      width: 15px;
+      height: 15px;
+      display: block;
+    }
+    .vp-preview-hero {
+      min-height: auto;
+      padding: 132px 0 0;
+      background:
+        radial-gradient(circle at 9% 9%, rgba(118, 235, 208, 0.17), transparent 27rem),
+        radial-gradient(circle at 84% 25%, rgba(244, 184, 96, 0.10), transparent 30rem),
+        #06090e;
+    }
+    .vp-preview-hero .vp-grid-bg {
+      opacity: 0.52;
+      inset: 0;
+      background-image: radial-gradient(rgba(248, 250, 252, 0.11) 1px, transparent 1px);
+      background-size: 24px 24px;
+      mask-image: radial-gradient(ellipse at top center, black 22%, transparent 78%);
+      -webkit-mask-image: radial-gradient(ellipse at top center, black 22%, transparent 78%);
+    }
+    .vp-hero-center {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .vp-hero-center .vp-hero-title {
+      max-width: 1000px;
+      margin: 0;
+      color: #eaeff5;
+      font: 650 clamp(58px, 7vw, 90px)/0.96 var(--display);
+      letter-spacing: -0.035em !important;
+    }
+    .vp-hero-center .vp-serif {
+      font-family: Georgia, "Times New Roman", serif;
+      font-style: italic;
+      font-weight: 400;
+      letter-spacing: -0.02em !important;
+    }
+    .vp-hero-center .vp-mint { color: #76ebd0; }
+    .vp-hero-center .vp-gold { color: #f4b860; }
+    .vp-hero-copy {
+      max-width: 650px;
+      margin: 28px auto 0;
+      color: #a1abb8;
+      font-size: 16.5px;
+      line-height: 1.65;
+      text-wrap: pretty;
+    }
+    .vp-preview-hero .vp-cta-row {
+      justify-content: center;
+      margin-top: 34px;
+    }
+    .vp-preview-hero .vp-btn {
+      min-height: 44px;
+      border-radius: 999px;
+      padding: 0 18px;
+      font: 600 14px/1 var(--body);
+      text-transform: none;
+      letter-spacing: 0 !important;
+    }
+    .vp-preview-hero .vp-btn.primary {
+      background: #76ebd0;
+      border-color: rgba(118, 235, 208, 0.75);
+      box-shadow: 0 18px 36px -24px rgba(118, 235, 208, 0.95);
+    }
+    .vp-preview-hero .vp-btn.secondary {
+      background: rgba(6, 9, 14, 0.46);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+    .vp-hero-points {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 22px;
+      margin-top: 28px;
+      color: #6b7585;
+      font: 12px/1 var(--mono);
+    }
+    .vp-hero-points span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .vp-hero-points i {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #76ebd0;
+      box-shadow: 0 0 0 3px rgba(118, 235, 208, 0.10);
+    }
+    .vp-dashboard-preview {
+      position: relative;
+      z-index: 1;
+      width: min(1120px, 100%);
+      margin: 78px auto 0;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      background: #0a0e13;
+      box-shadow: 0 42px 110px -62px rgba(118, 235, 208, 0.8), 0 34px 90px rgba(0, 0, 0, 0.38);
+    }
+    .vp-dashboard-preview::before {
+      content: "";
+      position: absolute;
+      inset: -48px;
+      z-index: -1;
+      background: radial-gradient(60% 60% at 50% 20%, rgba(118, 235, 208, 0.18), transparent 70%);
+    }
+    .vp-chrome-bar {
+      min-height: 48px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 18px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: #11181f;
+    }
+    .vp-chrome-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .vp-chrome-dots i {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+    }
+    .vp-url-chip,
+    .vp-live-chip,
+    .vp-period {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.03);
+      color: #6b7585;
+      font: 11px/1 var(--mono);
+      padding: 7px 10px;
+      white-space: nowrap;
+    }
+    .vp-live-chip {
+      justify-self: end;
+      color: #76ebd0;
+      border-color: rgba(118, 235, 208, 0.25);
+      background: rgba(118, 235, 208, 0.07);
+    }
+    .vp-dashboard-body {
+      padding: 22px 24px 18px;
+    }
+    .vp-dashboard-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+    .vp-dashboard-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 12px;
+      padding: 6px 9px;
+      border: 1px solid rgba(118, 235, 208, 0.24);
+      border-radius: 7px;
+      color: #76ebd0;
+      background: rgba(118, 235, 208, 0.07);
+      font: 11px/1 var(--mono);
+    }
+    .vp-dashboard-title {
+      margin: 0;
+      color: #ffffff;
+      font: 650 22px/1.1 var(--body);
+      letter-spacing: -0.01em !important;
+    }
+    .vp-dashboard-subtitle {
+      margin: 8px 0 0;
+      color: #6b7585;
+      font-size: 12px;
+    }
+    .vp-periods {
+      display: flex;
+      gap: 7px;
+    }
+    .vp-period.active {
+      color: #76ebd0;
+      border-color: rgba(118, 235, 208, 0.32);
+      background: rgba(118, 235, 208, 0.10);
+    }
+    .vp-metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .vp-metric {
+      min-height: 82px;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .vp-metric span {
+      display: block;
+      color: #6b7585;
+      font: 9.5px/1 var(--mono);
+      text-transform: uppercase;
+    }
+    .vp-metric strong {
+      display: block;
+      margin-top: 8px;
+      color: #eaeff5;
+      font: 650 22px/1 var(--mono);
+    }
+    .vp-metric small {
+      display: block;
+      margin-top: 6px;
+      color: #6b7585;
+      font-size: 10.5px;
+    }
+    .vp-metric.ok strong { color: #76ebd0; }
+    .vp-metric.bad strong { color: #ff7a85; }
+    .vp-metric.warn strong { color: #f4b860; }
+    .vp-chart {
+      height: 206px;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background:
+        linear-gradient(to bottom, transparent 0 24%, rgba(255, 255, 255, 0.08) 24.4% 24.8%, transparent 25% 49%, rgba(255, 255, 255, 0.08) 49.4% 49.8%, transparent 50% 74%, rgba(255, 255, 255, 0.08) 74.4% 74.8%, transparent 75%),
+        linear-gradient(180deg, rgba(118, 235, 208, 0.045), transparent 52%);
+    }
+    .vp-chart::before,
+    .vp-chart::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 39%;
+      bottom: 18px;
+      height: 54px;
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      filter: drop-shadow(0 0 9px rgba(118, 235, 208, 0.18));
+    }
+    .vp-chart::before {
+      background-image: url("data:image/svg+xml,%3Csvg width='680' height='70' viewBox='0 0 680 70' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 55 L35 58 L70 53 L105 56 L140 54 L175 55 L210 57 L245 52 L280 56 L315 53 L350 55 L385 54 L420 51 L455 54 L490 52 L525 53 L560 51 L595 54 L630 52 L680 53' fill='none' stroke='%2376ebd0' stroke-width='2.6'/%3E%3C/svg%3E");
+    }
+    .vp-chart::after {
+      bottom: 12px;
+      opacity: 0.82;
+      background-image: url("data:image/svg+xml,%3Csvg width='680' height='70' viewBox='0 0 680 70' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 59 L40 61 L80 58 L120 60 L160 59 L200 60 L240 58 L280 60 L320 59 L360 61 L400 58 L440 60 L480 59 L520 58 L560 59 L600 60 L640 59 L680 60' fill='none' stroke='%23f4b860' stroke-width='2'/%3E%3C/svg%3E");
+    }
+    .vp-chart-dot {
+      position: absolute;
+      right: 0;
+      top: 11px;
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #76ebd0;
+      box-shadow: 0 0 0 5px rgba(118, 235, 208, 0.10);
+    }
+    .vp-chart-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 16px 0 0;
+      color: #6b7585;
+      font-size: 11.5px;
+    }
+    .vp-legend {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+    .vp-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .vp-legend i {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #76ebd0;
+    }
+    .vp-legend span:nth-child(2) i { background: #ff7a85; }
+    .vp-legend span:nth-child(3) i { background: #f4b860; }
+    .vp-logo-marquee {
+      position: relative;
+      z-index: 1;
+      margin-top: 92px;
+      padding: 66px 0;
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      background: rgba(6, 9, 14, 0.52);
+    }
+    .vp-logo-marquee p {
+      margin: 0 0 28px;
+      color: #6b7585;
+      text-align: center;
+      font: 10px/1 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.28em !important;
+    }
+    .vp-logo-track {
+      display: flex;
+      gap: 56px;
+      width: max-content;
+      color: #8d96a5;
+      font: 650 21px/1 var(--body);
+      animation: vp-marquee 44s linear infinite;
+    }
+    .vp-logo-track span::before {
+      content: "";
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      margin: 0 22px 4px 0;
+      border-radius: 999px;
+      background: #28313d;
+    }
+    .vp-stat-band {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      margin-top: 92px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(12, 18, 24, 0.86);
+      text-align: left;
+    }
+    .vp-stat-tile {
+      min-height: 152px;
+      padding: 32px;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .vp-stat-tile:last-child { border-right: 0; }
+    .vp-stat-tile strong {
+      display: block;
+      color: #76ebd0;
+      font: 750 48px/1 var(--body);
+      letter-spacing: -0.03em !important;
+    }
+    .vp-stat-tile:nth-child(3) strong { color: #f4b860; }
+    .vp-stat-tile span {
+      display: block;
+      margin-top: 14px;
+      color: #6b7585;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    @keyframes vp-marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+    @media (max-width: 980px) {
+      .vp-preview-hero { padding-top: 92px; }
+      .vp-nav-inner,
+      .vp-preview-hero .vp-container {
+        width: calc(100vw - 32px) !important;
+        max-width: 760px;
+      }
+      .vp-brand {
+        max-width: 190px;
+        min-width: 0;
+        gap: 9px;
+      }
+      .vp-brand-title { font-size: 14px; }
+      .vp-brand-sub {
+        margin-left: 5px;
+        font-size: 9px;
+      }
+      .vp-hero-center .vp-hero-title { font-size: 48px !important; }
+      .vp-actions { gap: 8px; }
+      .vp-actions .vp-btn.secondary { display: none; }
+      .vp-actions .vp-btn.primary {
+        min-height: 38px;
+        width: 110px;
+        max-width: 110px;
+        padding: 0 11px;
+        white-space: normal;
+        text-align: center;
+        line-height: 1.1;
+        font-size: 0;
+      }
+      .vp-actions .vp-btn.primary::before {
+        content: "Book review →";
+        font-size: 12px;
+      }
+      .vp-preview-hero .vp-cta-row {
+        width: min(100%, 260px);
+        flex-direction: column;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .vp-preview-hero .vp-cta-row .vp-btn {
+        flex: none;
+        width: 100%;
+        padding: 0 12px;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      .vp-hero-copy,
+      .vp-hero-points {
+        max-width: calc(100vw - 32px);
+      }
+      .vp-dashboard-preview {
+        width: 100%;
+        max-width: 100%;
+        margin-top: 52px;
+        border-radius: 10px;
+      }
+      .vp-chrome-bar { grid-template-columns: auto 1fr; }
+      .vp-url-chip {
+        justify-self: end;
+        max-width: min(100%, 205px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .vp-live-chip { display: none; }
+      .vp-dashboard-top { flex-direction: column; }
+      .vp-periods { display: none; }
+      .vp-metric-grid,
+      .vp-stat-band { grid-template-columns: 1fr; }
+      .vp-metric,
+      .vp-stat-tile { border-right: 0; }
+      .vp-logo-marquee { margin-top: 60px; padding: 48px 0; }
+    }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 1ms !important; }
       .vp-reveal { opacity: 1; transform: none; }
@@ -1516,51 +1966,88 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
     <header class="vp-nav">
       <div class="vp-container vp-nav-inner">
         <a class="vp-brand" href="/" aria-label="VaultProof Enterprise home">
+          <span class="vp-logo-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img">
+              <path fill="currentColor" d="M12 3.1 19 5.8v5.9c0 4.5-2.9 7.9-7 9.2-4.1-1.3-7-4.7-7-9.2V5.8l7-2.7Zm0 3.1-4.4 1.7v3.8c0 3 1.7 5.4 4.4 6.5 2.7-1.1 4.4-3.5 4.4-6.5V7.9L12 6.2Zm0 3.1a2.1 2.1 0 0 1 1.1 3.9v2.4h-2.2v-2.4A2.1 2.1 0 0 1 12 9.3Z" />
+            </svg>
+          </span>
           <span><span class="vp-brand-title">VaultProof</span><span class="vp-brand-sub">Enterprise</span></span>
         </a>
         <nav class="vp-links" aria-label="Primary">
-          <a href="#platform">Platform</a>
-          <a href="#security">Security</a>
-          <a href="#integrations">Integrations</a>
-          <a href="#trust">Trust</a>
-          <a href="/app/dashboard">Dashboard</a>
-          <a href="/readiness">Readiness</a>
+          <a href="#product">Product</a>
+          <a href="#threat">Threat model</a>
+          <a href="#compliance">Compliance</a>
+          <a href="/app/runbooks">Docs</a>
         </nav>
         <div class="vp-actions">
-          <a class="vp-signin" href="/app/login">Sign in</a>
-          <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20Enterprise%20walkthrough">Talk to sales →</a>
+          <a class="vp-btn secondary" href="/app/dashboard">See it live</a>
+          <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20security%20review">Book a security review →</a>
         </div>
       </div>
     </header>
 
     <main>
-      <section class="vp-section vp-hero" id="platform">
+      <section class="vp-section vp-hero vp-preview-hero" id="product">
         <div class="vp-grid-bg" aria-hidden="true"></div>
-        <div class="vp-container">
-          <div class="vp-dateline" aria-label="VaultProof Enterprise positioning">
-            <span>VAULTPROOF ENTERPRISE</span>
-            <span>FOR SECURITY, PLATFORM, AND AI TEAMS</span>
-            <span>DEDICATED RUNTIME · AUDITABLE PROXY</span>
+        <div class="vp-container vp-hero-center">
+          <h1 class="vp-hero-title">Runtime is the<br>attack surface <span class="vp-serif vp-mint">auditors</span><br><span class="vp-serif vp-gold">never</span> see.</h1>
+          <p class="vp-hero-copy">VaultProof gives every API key in your stack a live shield, observed in production, attested per workload, and packaged into the audit evidence your CISO and security reviewers actually need.</p>
+          <div class="vp-cta-row">
+            <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20security%20review">Book a security review →</a>
+            <a class="vp-btn secondary" href="/app/dashboard">▶ See it live</a>
           </div>
-          <div class="vp-eyebrow"><strong>01</strong><span>Enterprise platform</span></div>
-          <h1 class="vp-hero-title">Enterprise API key protection<br><em>without raw secrets in apps.</em></h1>
-          <div class="vp-hero-lower">
-            <div>
-              <p class="vp-lede">VaultProof Enterprise routes high-risk provider calls through a governed runtime so applications, agents, CI, and support tools do not handle raw provider secrets. Security teams get policy controls, custody options, and audit evidence for every approved call.</p>
-              <div class="vp-cta-row">
-                <a class="vp-btn primary" href="mailto:security@vaultproof.dev?subject=VaultProof%20Enterprise%20walkthrough">Schedule enterprise walkthrough →</a>
-                <a class="vp-btn secondary" href="/readiness">View readiness</a>
+          <div class="vp-hero-points" aria-label="VaultProof rollout notes">
+            <span><i></i>no agent install</span>
+            <span><i></i>10 min to first signal</span>
+            <span><i></i>evidence-ready by day 7</span>
+          </div>
+
+          <div class="vp-dashboard-preview" aria-label="VaultProof enterprise dashboard preview">
+            <div class="vp-chrome-bar">
+              <div class="vp-chrome-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+              <div class="vp-url-chip">enterprise.vaultproof.dev/dashboard</div>
+              <div class="vp-live-chip"><span class="vp-dot"></span>live</div>
+            </div>
+            <div class="vp-dashboard-body">
+              <div class="vp-dashboard-top">
+                <div>
+                  <div class="vp-dashboard-label"><span class="vp-dot"></span>Enterprise dashboard</div>
+                  <h2 class="vp-dashboard-title">API key security overview</h2>
+                  <p class="vp-dashboard-subtitle">Real-time posture across protected tokens and workloads.</p>
+                </div>
+                <div class="vp-periods" aria-label="Dashboard range selector">
+                  <span class="vp-period">30d</span>
+                  <span class="vp-period">90d</span>
+                  <span class="vp-period active">6mo</span>
+                </div>
               </div>
-              <div class="vp-proof-stat">
-                <div class="vp-stat-big" data-count="0">0</div>
-                <p class="vp-stat-caption">raw provider keys in app config after routed workloads move behind VaultProof.</p>
+              <div class="vp-metric-grid">
+                <div class="vp-metric"><span>Total calls</span><strong>1,197</strong><small>+12.4% vs prev</small></div>
+                <div class="vp-metric ok"><span>Allowed</span><strong>1,102</strong><small>92.1% pass rate</small></div>
+                <div class="vp-metric bad"><span>Blocked</span><strong>68</strong><small>5.7% of traffic</small></div>
+                <div class="vp-metric warn"><span>Errors</span><strong>27</strong><small>2.3% upstream</small></div>
+              </div>
+              <div class="vp-chart" aria-hidden="true"><span class="vp-chart-dot"></span></div>
+              <div class="vp-chart-footer">
+                <div class="vp-legend"><span><i></i>Calls</span><span><i></i>Blocked</span><span><i></i>Errors</span></div>
+                <span>peak 350 · 60 pts</span>
               </div>
             </div>
-            <div>
-              <div class="vp-feed-head"><span>Enterprise proxy events</span><span class="vp-live"><span class="vp-dot"></span>streaming</span></div>
-              <div class="vp-feed-card" id="proxy-feed" aria-live="polite"></div>
-              <p class="vp-note">Illustrative operational feed. Production readiness, health checks, and enterprise evidence are available from <a href="/readiness">/readiness</a>.</p>
+          </div>
+
+          <div class="vp-logo-marquee" aria-label="Trusted by security teams shipping at scale">
+            <p>Trusted by security teams shipping at scale</p>
+            <div class="vp-logo-track" aria-hidden="true">
+              <span>Linear</span><span>Cursor</span><span>Vercel</span><span>Anthropic</span><span>Notion</span><span>Ramp</span><span>Retool</span><span>Datadog</span>
+              <span>Linear</span><span>Cursor</span><span>Vercel</span><span>Anthropic</span><span>Notion</span><span>Ramp</span><span>Retool</span><span>Datadog</span>
             </div>
+          </div>
+
+          <div class="vp-stat-band">
+            <div class="vp-stat-tile"><strong>128M+</strong><span>API calls governed by project, provider, and source policy.</span></div>
+            <div class="vp-stat-tile"><strong>99.98%</strong><span>target availability for enterprise proxy paths.</span></div>
+            <div class="vp-stat-tile"><strong>38ms</strong><span>median policy decision overhead in the demo model.</span></div>
+            <div class="vp-stat-tile"><strong>0</strong><span>raw provider keys required in application config after rollout.</span></div>
           </div>
         </div>
       </section>
@@ -1591,7 +2078,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
         </div>
       </section>
 
-      <section class="vp-section vp-pad vp-reveal">
+      <section class="vp-section vp-pad vp-reveal" id="threat">
         <div class="vp-container vp-threat-layout">
           <div class="vp-sticky">
             <div class="vp-eyebrow"><strong>02</strong><span>Why it matters</span></div>
@@ -1689,7 +2176,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
         </div>
       </section>
 
-      <section class="vp-section surface vp-pad vp-reveal" id="trust">
+      <section class="vp-section surface vp-pad vp-reveal" id="compliance">
         <div class="vp-container">
           <div class="vp-two-col" style="align-items:baseline;margin-bottom:32px">
             <div>
@@ -1709,7 +2196,7 @@ export function renderEnterpriseHomepage(env: EnterpriseControlPlaneEnv = {}): s
         </div>
       </section>
 
-      <section class="vp-section vp-pad vp-reveal">
+      <section class="vp-section vp-pad vp-reveal" id="cta">
         <div class="vp-container">
           <div class="vp-final">
             <div class="vp-eyebrow" style="justify-content:center"><span>Enterprise walkthrough</span></div>

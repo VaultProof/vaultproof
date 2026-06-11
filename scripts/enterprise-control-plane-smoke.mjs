@@ -3361,9 +3361,12 @@ async function assertEnterpriseLoginRoute() {
     throw new Error(`Expected enterprise root homepage, got ${rootResponse.status}`);
   }
   for (const required of [
-    'Enterprise API key protection<br><em>without raw secrets in apps.</em>',
-    'VaultProof Enterprise routes high-risk provider calls through a governed runtime',
-    'Enterprise proxy events',
+    'Runtime is the<br>attack surface',
+    'VaultProof gives every API key in your stack a live shield',
+    'Book a security review',
+    'API key security overview',
+    'Trusted by security teams shipping at scale',
+    '128M+',
     'Keep provider keys out of <em>applications, agents, and build systems.</em>',
     'Keep the provider workflow. <em>Move the raw key out.</em>',
     'enterprise-homepage-business-match',
@@ -3378,6 +3381,7 @@ async function assertEnterpriseLoginRoute() {
     'gap: 16px',
     '/app/login',
     '/app/dashboard',
+    '/app/runbooks',
     '/readiness',
   ]) {
     if (!rootHtml.includes(required)) {
@@ -3387,9 +3391,14 @@ async function assertEnterpriseLoginRoute() {
   if (rootHtml.includes('https://init.vaultproof.dev') || rootHtml.includes('https://api.vaultproof.dev')) {
     throw new Error('Enterprise homepage must not reference B2C API origins');
   }
-  for (const oldThemeToken of ['background: #ffffff', '#dbe7f3', '#edf4fa', 'rgba(255, 255, 255']) {
+  for (const oldThemeToken of ['background: #ffffff', '#dbe7f3', '#edf4fa']) {
     if (rootHtml.includes(oldThemeToken)) {
       throw new Error(`Enterprise homepage must not include old light theme token ${oldThemeToken}`);
+    }
+  }
+  for (const excluded of ['Runtime · SOC2 Type II Ready', 'Runtime · SOC 2 Type II Ready', 'href="#pricing"', '>Pricing<', 'id="pricing"']) {
+    if (rootHtml.includes(excluded)) {
+      throw new Error(`Enterprise homepage must not include ${excluded}`);
     }
   }
   if (rootHtml.includes('fonts.googleapis.com') || rootHtml.includes('Newsreader') || rootHtml.includes('Inter Tight')) {
