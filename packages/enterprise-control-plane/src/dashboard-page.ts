@@ -99,7 +99,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .grid,
     .overview-primary,
     .overview-rail,
-    .visual-card,
     .coverage-grid,
     .provider-bars,
     .attention-list,
@@ -318,8 +317,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     .hero-row,
     .toolbar,
     .timeframe-toggle,
-    .trend-legend,
-    .trend-legend span,
+    .analytics-head,
+    .analytics-metric-top,
+    .analytics-panel-head,
+    .analytics-table-row,
     .coverage-top {
       display: flex;
       align-items: center;
@@ -386,93 +387,83 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       line-height: 1.45;
       margin: 0;
     }
-    .call-summary-grid,
-    .top-insight-grid,
-    .trend-detail-grid {
+    .analytics-metric-grid,
+    .analytics-board {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
       min-width: 0;
     }
-    .top-insight-grid {
+    .analytics-metric-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .analytics-board {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
-    .visual-body {
+    .analytics-panel,
+    .analytics-row,
+    .analytics-table {
       display: grid;
+      min-width: 0;
+    }
+    .analytics-list {
+      display: grid;
+      gap: 10px;
+    }
+    .analytics-panel-head,
+    .analytics-table-row {
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .analytics-panel-head h3 {
+      margin: 0;
+      color: var(--foreground);
+      font-size: 15px;
+      font-weight: 720;
+      line-height: 1.2;
+    }
+    .analytics-row {
+      grid-template-columns: minmax(0, 1fr) auto auto;
       gap: 12px;
       align-items: center;
     }
-    .donut-wrap {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 14px;
-      align-items: center;
-      justify-items: center;
+    .analytics-row-main {
+      min-width: 0;
     }
-    .donut {
-      position: relative;
-      display: grid;
-      place-items: center;
-      aspect-ratio: 1;
-      border-radius: 50%;
-      background: conic-gradient(#263241 0deg 360deg);
-      box-shadow: inset 0 0 0 1px rgba(248, 250, 252, 0.08);
+    .analytics-row-label,
+    .analytics-table-label {
+      color: var(--foreground);
+      font-size: 13px;
+      font-weight: 680;
     }
-    .donut::after {
-      content: "";
-      position: absolute;
-      inset: 26px;
-      border-radius: 50%;
-      background: var(--card);
-      box-shadow: 0 0 0 1px rgba(248, 250, 252, 0.08);
-    }
-    .donut-center {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      gap: 3px;
-      text-align: center;
-    }
-    .donut-center strong {
-      color: var(--dashboard-ink);
-      font-size: 26px;
-      line-height: 1;
-    }
-    .donut-center span {
+    .analytics-row-detail,
+    .analytics-table-detail {
       color: var(--muted-foreground);
       font-size: 12px;
+      line-height: 1.35;
+      margin-top: 3px;
     }
-    .legend {
-      display: grid;
-      gap: 8px;
-      width: 100%;
+    .analytics-row-value,
+    .analytics-table-value {
+      color: var(--foreground);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 15px;
+      font-weight: 760;
+      white-space: nowrap;
     }
-    .legend-row {
-      display: grid;
-      grid-template-columns: 10px minmax(0, 1fr) auto;
-      gap: 8px;
-      align-items: center;
-      color: var(--muted-foreground);
-      font-size: 13px;
-    }
-    .legend-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: var(--dot, var(--primary));
-    }
-    .bar-stack {
-      display: flex;
-      width: 100%;
-      min-height: 22px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
+    .analytics-table {
+      gap: 0;
       overflow: hidden;
-      background: var(--muted-bg);
     }
-    .bar-segment {
-      min-width: 0;
-      width: var(--width, 0%);
-      background: var(--fill, var(--primary));
+    .analytics-table-row {
+      min-height: 58px;
+      padding: 12px 14px;
+    }
+    .analytics-table-row:not(:last-child) {
+      border-bottom: 1px solid var(--border);
+    }
+    .analytics-share {
+      min-width: 52px;
+      text-align: right;
     }
     .provider-row,
     .coverage-item {
@@ -527,171 +518,6 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
     }
     .coverage-item .meter {
       margin-top: 8px;
-    }
-    .trend-chart {
-      overflow: hidden;
-      display: grid;
-      align-items: stretch;
-    }
-    .trend-line-chart {
-      display: grid;
-      min-width: 0;
-      min-height: 100%;
-    }
-    .trend-plot {
-      position: relative;
-      display: grid;
-      grid-template-columns: 72px minmax(0, 1fr);
-      gap: 12px;
-      align-items: stretch;
-      min-width: 0;
-    }
-    .trend-scale {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      color: var(--muted-foreground);
-      font-size: 11px;
-      line-height: 1.2;
-      text-align: right;
-      padding: 8px 0 32px;
-    }
-    .trend-svg {
-      display: block;
-      width: 100%;
-      height: 304px;
-      overflow: visible;
-    }
-    .trend-grid-line {
-      stroke: var(--chart-grid);
-      stroke-width: 1;
-      stroke-dasharray: 3 7;
-    }
-    .trend-average-line {
-      stroke: rgba(248, 250, 252, 0.34);
-      stroke-width: 1.3;
-      stroke-dasharray: 6 7;
-    }
-    .trend-area {
-      fill: url(#callTrendAreaGradient);
-    }
-    .trend-month-line {
-      stroke: rgba(148, 163, 184, 0.16);
-      stroke-width: 1;
-    }
-    .trend-line {
-      fill: none;
-      stroke: var(--color-calls);
-      stroke-width: 3;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-    .trend-line.errors {
-      stroke: var(--color-errors);
-      stroke-width: 2.2;
-    }
-    .trend-line.blocked {
-      stroke: var(--color-blocked);
-      stroke-width: 2.2;
-    }
-    .trend-marker {
-      fill: var(--card);
-      stroke: var(--color-calls);
-      stroke-width: 2;
-    }
-    .trend-marker.warn,
-    .trend-marker.errors {
-      stroke: var(--color-errors);
-    }
-    .trend-marker.bad,
-    .trend-marker.blocked {
-      stroke: var(--color-blocked);
-    }
-    .trend-legend {
-      justify-content: flex-end;
-      color: var(--muted-foreground);
-      font-size: 12px;
-      font-weight: 650;
-      line-height: 1.2;
-    }
-    .trend-legend span {
-      gap: 6px;
-      white-space: nowrap;
-    }
-    .trend-legend i {
-      display: inline-block;
-      background: var(--legend-color, var(--color-calls));
-    }
-    .trend-hit-area {
-      fill: transparent;
-      cursor: crosshair;
-      pointer-events: all;
-    }
-    .trend-tooltip {
-      position: absolute;
-      z-index: 2;
-      min-width: 168px;
-      padding: 10px 11px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: #0d1117;
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.34);
-      color: var(--foreground);
-      opacity: 0;
-      pointer-events: none;
-      transform: translate(-50%, -112%);
-      transition: opacity 120ms ease;
-    }
-    .trend-tooltip.visible {
-      opacity: 1;
-    }
-    .trend-tooltip-title {
-      color: var(--foreground);
-      font-size: 12px;
-      font-weight: 700;
-      line-height: 1.2;
-    }
-    .trend-tooltip-row {
-      display: grid;
-      grid-template-columns: 8px minmax(0, 1fr) auto;
-      gap: 7px;
-      align-items: center;
-      margin-top: 8px;
-      color: var(--muted-foreground);
-      font-size: 12px;
-      line-height: 1.2;
-    }
-    .trend-tooltip-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--tooltip-dot, var(--color-calls));
-    }
-    .trend-tooltip-row strong {
-      color: var(--foreground);
-      font-weight: 750;
-    }
-    .trend-axis {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      color: var(--chart-axis);
-      font-size: 12px;
-      grid-column: 2;
-      margin-top: -10px;
-    }
-    .trend-axis span {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .trend-axis span:not(:first-child):not(:last-child) {
-      text-align: center;
-    }
-    .trend-axis span:last-child {
-      text-align: right;
     }
     .main.enterprise-dashboard-main {
       justify-self: start;
@@ -1083,25 +909,10 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       font-size: 12px;
       line-height: 1.25;
     }
-    .metric-spark {
-      position: absolute;
-      right: 18px;
-      top: 30px;
-      width: 98px;
-      height: 54px;
-      color: var(--metric-color, #8ab4f8);
-      opacity: 0.8;
-    }
     .metric-total { --metric-color: #8ab4f8; }
     .metric-allowed { --metric-color: #4ade80; }
     .metric-blocked { --metric-color: #f87171; }
     .metric-errors { --metric-color: #fbbf24; }
-    .call-overview-card {
-      padding: 22px !important;
-    }
-    .call-overview-head {
-      margin-bottom: 20px;
-    }
     .section-kicker,
     .card-kicker {
       display: block;
@@ -1138,88 +949,77 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       border-color: #303640 !important;
       box-shadow: none !important;
     }
-    .trend-chart {
-      min-height: 492px;
-      padding: 0;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-      --color-calls: #5b8cff;
-      --color-errors: #c98222;
-      --color-blocked: #cf5566;
-      --chart-grid: rgba(148, 163, 184, 0.12);
-      --chart-axis: #747b86;
+    .shadcn-analytics-card {
+      padding: 22px !important;
     }
-    .trend-line-chart {
+    .analytics-head {
+      justify-content: space-between;
+      align-items: flex-start;
       gap: 18px;
+      margin-bottom: 18px;
     }
-    .trend-legend {
-      justify-content: flex-end;
+    .analytics-metric-grid {
+      margin-bottom: 12px;
+    }
+    .analytics-metric {
+      position: relative;
+      display: grid;
       gap: 8px;
-      margin: 0;
-    }
-    .trend-legend span {
-      min-height: 28px;
-      padding: 0 10px;
+      min-height: 126px;
+      overflow: hidden;
+      padding: 18px;
       border: 1px solid #242830;
-      border-radius: 7px;
+      border-radius: 8px;
+      background: #171b22;
+      color: #f8fafc;
+    }
+    .analytics-metric::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: var(--metric-color, #8ab4f8);
+      opacity: 0.86;
+    }
+    .analytics-metric-top {
+      justify-content: space-between;
+      gap: 12px;
+      min-width: 0;
+    }
+    .analytics-board {
+      margin-top: 12px;
+    }
+    .analytics-panel,
+    .analytics-table {
+      border: 1px solid #242830;
+      border-radius: 8px;
       background: #0d1117;
     }
-    .trend-legend i {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
+    .analytics-panel {
+      gap: 14px;
+      padding: 14px;
     }
-    .trend-plot {
-      min-height: 318px;
-      padding-top: 8px;
+    .analytics-row {
+      min-height: 70px;
+      padding: 12px;
+      border: 1px solid #242830;
+      border-radius: 8px;
+      background: #171b22;
     }
-    .trend-detail-grid {
-      gap: 0;
-      padding-top: 18px;
-      border-top: 1px solid #242830;
+    .analytics-row .tag {
+      justify-self: end;
     }
-    .trend-detail {
-      display: grid;
-      gap: 5px;
-      min-width: 0;
-      border: 0;
-      border-radius: 0;
-      padding: 0 18px;
-      background: transparent;
+    .analytics-table {
+      margin-top: 12px;
     }
-    .trend-detail:first-child {
-      padding-left: 0;
+    .analytics-table-value {
+      justify-self: end;
     }
-    .trend-detail:not(:last-child) {
-      border-right: 1px solid #242830;
+    .analytics-share {
+      color: #8b8d93;
+      font-size: 12px;
+      white-space: nowrap;
     }
-    .trend-detail span {
-      color: #747b86;
-    }
-    .trend-detail strong {
-      color: #f8fafc;
-      font-size: 24px;
-    }
-    .trend-detail em {
-      color: #747b86;
-    }
-    .top-insight-grid {
-      gap: 12px;
-    }
-    .visual-card {
-      min-height: 285px;
-    }
-    .visual-card .section-title {
-      align-items: flex-start;
-    }
-    .donut {
-      width: 170px;
-    }
-    .donut::after {
-      background: #11161c;
-    }
-    .legend-row,
     .coverage-label,
     .provider-meta,
     .mini,
@@ -1249,15 +1049,11 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       .enterprise-dashboard-main .tabbar { margin: 0 -16px 22px; padding: 0 24px; }
       .dashboard-hero { align-items: flex-start; flex-direction: column; }
       .toolbar { justify-content: flex-start; }
-      .two, .dashboard-overview-grid, .intent-grid, .action-grid, .top-insight-grid, .call-summary-grid, .posture-grid { grid-template-columns: 1fr; }
-      .call-overview-head { align-items: stretch; }
+      .two, .dashboard-overview-grid, .intent-grid, .action-grid, .analytics-board, .analytics-metric-grid, .posture-grid { grid-template-columns: 1fr; }
+      .analytics-head { align-items: stretch; flex-direction: column; }
       .timeframe-toggle { width: 100%; }
       .timeframe-button { flex: 1; }
       .overview-rail { grid-template-columns: 1fr; }
-      .trend-plot { grid-template-columns: 1fr; }
-      .trend-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .trend-scale { display: none; }
-      .trend-axis { grid-column: 1; }
     }
     @media (max-width: 640px) {
       .shell,
@@ -1276,19 +1072,15 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       .hero-toolbar { width: 100%; justify-content: stretch; }
       .hero-toolbar .action,
       .hero-toolbar button { flex: 1; justify-content: center; text-align: center; }
-      .trend-chart { min-height: 390px; padding: 12px; }
-      .call-overview-card { padding: 16px !important; }
-      .metric-spark { display: none; }
-      .trend-detail-grid { grid-template-columns: 1fr; }
-      .trend-detail { padding: 10px 0; }
-      .trend-detail:not(:last-child) { border-right: 0; border-bottom: 1px solid #242830; }
-      .trend-svg { height: 250px; }
-      .trend-plot { min-height: 264px; }
-      .trend-axis { font-size: 11px; }
+      .shadcn-analytics-card { padding: 16px !important; }
+      .analytics-table-row,
+      .analytics-row { grid-template-columns: 1fr; align-items: start; }
+      .analytics-row .tag,
+      .analytics-table-value { justify-self: start; }
     }
     @media (min-width: 981px) and (max-width: 1220px) {
-      .intent-grid, .action-grid, .top-insight-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .posture-grid, .call-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .intent-grid, .action-grid, .analytics-board { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .posture-grid, .analytics-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .overview-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
@@ -1309,11 +1101,11 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           <kbd>⌘K</kbd>
         </label>
         <button class="dashboard-icon-button" type="button" aria-label="Notifications">•</button>
-        <div class="dashboard-user" aria-label="Signed-in enterprise user">
-          <span class="dashboard-avatar" aria-hidden="true">MC</span>
+        <div class="dashboard-user" aria-label="Customer business workspace">
+          <span id="topBusinessAvatar" class="dashboard-avatar" aria-hidden="true">NV</span>
           <div>
-            <strong>Mia Chen</strong>
-            <span>Security owner</span>
+            <strong id="topBusinessName">NVIDIA</strong>
+            <span>Customer business</span>
           </div>
         </div>
       </header>
@@ -1386,51 +1178,12 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
 
         <section class="dashboard-overview-grid" aria-label="Dashboard overview workspace">
           <div class="overview-primary">
-            <section class="call-summary-grid" aria-label="Selected API call window">
-              <div class="call-summary-item metric-total">
-                <span class="call-summary-label">Total calls</span>
-                <div class="metric-value-row">
-                  <strong id="callWindowTotal" class="call-summary-value">...</strong>
-                  <span id="callWindowTotalDelta" class="metric-delta">+12.4%</span>
-                </div>
-                <span id="callWindowTotalSub" class="call-summary-sub">180d window</span>
-                <svg class="metric-spark" viewBox="0 0 100 54" aria-hidden="true"><path d="M4 39 C22 38 28 39 42 34 C60 28 68 24 80 13 C88 7 92 10 96 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M4 53 L4 40 C22 38 28 39 42 34 C60 28 68 24 80 13 C88 7 92 10 96 6 L96 53 Z" fill="currentColor" opacity="0.12"></path></svg>
-              </div>
-              <div class="call-summary-item metric-allowed">
-                <span class="call-summary-label">Allowed</span>
-                <div class="metric-value-row">
-                  <strong id="callWindowAllowed" class="call-summary-value">...</strong>
-                  <span id="callWindowAllowedDelta" class="metric-delta">+11.8%</span>
-                </div>
-                <span id="callWindowAllowedSub" class="call-summary-sub">92.1% pass rate</span>
-                <svg class="metric-spark" viewBox="0 0 100 54" aria-hidden="true"><path d="M4 39 C24 38 34 38 48 33 C62 28 70 18 82 10 C88 6 93 8 96 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M4 53 L4 40 C24 38 34 38 48 33 C62 28 70 18 82 10 C88 6 93 8 96 5 L96 53 Z" fill="currentColor" opacity="0.12"></path></svg>
-              </div>
-              <div class="call-summary-item metric-blocked">
-                <span class="call-summary-label">Blocked</span>
-                <div class="metric-value-row">
-                  <strong id="callWindowBlocked" class="call-summary-value">...</strong>
-                  <span id="callWindowBlockedDelta" class="metric-delta bad">-3.2%</span>
-                </div>
-                <span id="callWindowBlockedSub" class="call-summary-sub">5.7% of traffic</span>
-                <svg class="metric-spark" viewBox="0 0 100 54" aria-hidden="true"><path d="M4 36 C14 35 18 38 28 35 C40 31 52 32 66 23 C78 16 84 10 94 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M4 53 L4 36 C14 35 18 38 28 35 C40 31 52 32 66 23 C78 16 84 10 94 20 L96 53 Z" fill="currentColor" opacity="0.12"></path></svg>
-              </div>
-              <div class="call-summary-item metric-errors">
-                <span class="call-summary-label">Errors</span>
-                <div class="metric-value-row">
-                  <strong id="callWindowErrors" class="call-summary-value">...</strong>
-                  <span id="callWindowErrorsDelta" class="metric-delta warn">+1.1%</span>
-                </div>
-                <span id="callWindowErrorsSub" class="call-summary-sub">2.3% upstream</span>
-                <svg class="metric-spark" viewBox="0 0 100 54" aria-hidden="true"><path d="M4 37 C20 37 32 37 44 37 C56 28 64 33 72 20 C82 12 88 6 96 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M4 53 L4 37 C20 37 32 37 44 37 C56 28 64 33 72 20 C82 12 88 6 96 14 L96 53 Z" fill="currentColor" opacity="0.12"></path></svg>
-              </div>
-            </section>
-
-            <section class="card call-overview-card" aria-label="API calls overview">
-              <div class="section-title call-overview-head">
+            <section class="card shadcn-analytics-card" aria-label="Traffic and key readiness" data-ui-kit="shadcn-analytics">
+              <div class="section-title analytics-head">
                 <div>
-                  <span class="section-kicker">API traffic</span>
-                  <h2>API Calls, blocked and errors over time</h2>
-                  <p><span id="trendMeta" class="call-chart-meta">Selected window: 6mo</span> · <span id="trendWindowHint">Daily protected API traffic</span></p>
+                  <span class="section-kicker">Traffic and readiness</span>
+                  <h2>Protected API operations</h2>
+                  <p><span id="trendMeta" class="traffic-window-meta">Selected window: 6mo</span> · <span id="trendWindowHint">Daily protected API traffic</span></p>
                 </div>
                 <div class="timeframe-toggle" role="group" aria-label="API call time range">
                   <button class="timeframe-button" type="button" data-call-range="30">30d</button>
@@ -1438,49 +1191,54 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
                   <button class="timeframe-button active" type="button" data-call-range="180">6mo</button>
                 </div>
               </div>
-              <div id="callTrendChart" class="trend-chart"><div class="empty">Loading API calls...</div></div>
-            </section>
-
-            <section class="top-insight-grid" aria-label="API key organization picture">
-              <div class="card visual-card">
-                <div class="section-title">
-                  <div>
-                    <span class="card-kicker">Key readiness</span>
-                    <h2>Protected API keys</h2>
-                    <p>Real-traffic vs demo-only vs missing setup.</p>
-                  </div>
+              <div class="analytics-metric-grid" aria-label="Selected API call window">
+                <div class="analytics-metric metric-total">
+                  <div class="analytics-metric-top"><span class="call-summary-label">Total calls</span><span id="callWindowTotalDelta" class="metric-delta">+12.4%</span></div>
+                  <strong id="callWindowTotal" class="call-summary-value">...</strong>
+                  <span id="callWindowTotalSub" class="call-summary-sub">180d window</span>
                 </div>
-                <div class="donut-wrap">
-                  <div id="materialDonut" class="donut"><div class="donut-center"><strong>0%</strong><span>ready</span></div></div>
-                  <div id="materialLegend" class="legend"></div>
+                <div class="analytics-metric metric-allowed">
+                  <div class="analytics-metric-top"><span class="call-summary-label">Allowed</span><span id="callWindowAllowedDelta" class="metric-delta">+11.8%</span></div>
+                  <strong id="callWindowAllowed" class="call-summary-value">...</strong>
+                  <span id="callWindowAllowedSub" class="call-summary-sub">92.1% pass rate</span>
                 </div>
-              </div>
-
-              <div class="card visual-card">
-                <div class="section-title">
-                  <div>
-                    <span class="card-kicker">API call results</span>
-                    <h2>Allowed vs blocked vs errors</h2>
-                    <p>Distribution across the selected window.</p>
-                  </div>
-                  <span id="trafficMeta" class="mini">0 calls</span>
+                <div class="analytics-metric metric-blocked">
+                  <div class="analytics-metric-top"><span class="call-summary-label">Blocked</span><span id="callWindowBlockedDelta" class="metric-delta bad">-3.2%</span></div>
+                  <strong id="callWindowBlocked" class="call-summary-value">...</strong>
+                  <span id="callWindowBlockedSub" class="call-summary-sub">5.7% of traffic</span>
                 </div>
-                <div class="visual-body">
-                  <div id="trafficOutcomeBar" class="bar-stack" aria-label="API call results chart"></div>
-                  <div id="trafficLegend" class="legend"></div>
+                <div class="analytics-metric metric-errors">
+                  <div class="analytics-metric-top"><span class="call-summary-label">Errors</span><span id="callWindowErrorsDelta" class="metric-delta warn">+1.1%</span></div>
+                  <strong id="callWindowErrors" class="call-summary-value">...</strong>
+                  <span id="callWindowErrorsSub" class="call-summary-sub">2.3% upstream</span>
                 </div>
               </div>
 
-              <div class="card visual-card">
-                <div class="section-title">
-                  <div>
-                    <span class="card-kicker">Token coverage</span>
-                    <h2>Organization rollout</h2>
-                    <p>How much of the org has tokens, key slots and observed runtime activity.</p>
+              <div class="analytics-board" aria-label="Enterprise operations summary">
+                <div class="analytics-panel">
+                  <div class="analytics-panel-head">
+                    <div><span class="card-kicker">Outcome mix</span><h3>Allowed, blocked, errors</h3></div>
+                    <span id="trafficMeta" class="mini">0 calls</span>
                   </div>
+                  <div id="trafficOutcomeList" class="analytics-list"><div class="empty">Loading traffic outcomes...</div></div>
                 </div>
-                <div id="projectCoverageList" class="coverage-grid"><div class="empty">Loading coverage...</div></div>
+                <div class="analytics-panel">
+                  <div class="analytics-panel-head">
+                    <div><span class="card-kicker">Key readiness</span><h3>Protected API keys</h3></div>
+                    <span id="keyReadinessMeta" class="mini">loading</span>
+                  </div>
+                  <div id="keyReadinessList" class="analytics-list"><div class="empty">Loading key readiness...</div></div>
+                </div>
+                <div class="analytics-panel">
+                  <div class="analytics-panel-head">
+                    <div><span class="card-kicker">Rollout</span><h3>Organization coverage</h3></div>
+                    <span id="coverageMeta" class="mini">loading</span>
+                  </div>
+                  <div id="projectCoverageList" class="analytics-list"><div class="empty">Loading coverage...</div></div>
+                </div>
               </div>
+
+              <div id="trendSummaryTable" class="analytics-table" aria-label="Protected traffic summary"><div class="empty">Loading protected traffic summary...</div></div>
             </section>
 
             <section class="card attention-card" aria-label="Dashboard attention items">
@@ -1663,7 +1421,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       var ACTIVE_ORG_STORAGE_KEY = 'vaultproof_active_org';
       var currentOrgId = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY) || '';
       var loadSequence = 0;
-      var latestCallTrend = [];
+      var latestDashboardOverview = {};
       var callTrendRangeDays = 180;
       function byId(id) { return document.getElementById(id); }
       function text(id, value) { var el = byId(id); if (el) el.textContent = value == null ? '' : String(value); }
@@ -1679,6 +1437,15 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       function number(value) {
         var n = Number(value || 0);
         return Number.isFinite(n) ? n.toLocaleString() : '0';
+      }
+      function businessInitials(value) {
+        var words = String(value || '')
+          .trim()
+          .split(/\\s+/)
+          .filter(Boolean);
+        if (!words.length) return 'NV';
+        if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+        return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
       }
       function rawNumber(value) {
         var n = Number(value || 0);
@@ -1721,64 +1488,116 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       function resolveDashboardOverview(overview) {
         return overview || {};
       }
-      function setDonut(summary) {
+      function analyticsToneClass(tone) {
+        return tone === 'bad' ? 'bad' : tone === 'warn' ? 'warn' : tone === 'good' ? 'good' : '';
+      }
+      function analyticsRow(label, value, detail, tone, shareLabel) {
+        var tagClass = analyticsToneClass(tone);
+        return '<div class="analytics-row">' +
+          '<div class="analytics-row-main"><div class="analytics-row-label">' + escapeHtml(label) + '</div><div class="analytics-row-detail">' + escapeHtml(detail || '') + '</div></div>' +
+          '<div><div class="analytics-row-value">' + escapeHtml(value) + '</div>' + (shareLabel ? '<div class="analytics-share">' + escapeHtml(shareLabel) + '</div>' : '') + '</div>' +
+          (tagClass ? '<span class="tag ' + tagClass + '">' + escapeHtml(tagClass) + '</span>' : '') +
+        '</div>';
+      }
+      function analyticsTableRow(label, value, detail) {
+        return '<div class="analytics-table-row"><div><div class="analytics-table-label">' + escapeHtml(label) + '</div><div class="analytics-table-detail">' + escapeHtml(detail || '') + '</div></div><div class="analytics-table-value">' + escapeHtml(value) + '</div></div>';
+      }
+      function shortDateLabel(value) {
+        var date = new Date(String(value || '') + 'T00:00:00.000Z');
+        if (!Number.isFinite(date.getTime())) return String(value || '').slice(5) || 'n/a';
+        var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return monthNames[date.getUTCMonth()] + ' ' + date.getUTCDate() + ', ' + date.getUTCFullYear();
+      }
+      function selectedTrafficStats(trend, days, fallbackTraffic) {
+        days = rawNumber(days) || 180;
+        var list = Array.isArray(trend) ? trend.slice(-days) : [];
+        var hasTrend = list.length > 0;
+        var total = hasTrend ? sumTrend(list, function(item) { return item.calls; }) : rawNumber(fallbackTraffic.totalCalls);
+        var deniedTotal = hasTrend ? sumTrend(list, function(item) { return item.denied; }) : rawNumber(fallbackTraffic.deniedCalls);
+        var errorTotal = hasTrend ? sumTrend(list, function(item) { return item.errors; }) : rawNumber(fallbackTraffic.errorCalls);
+        var otherErrorTotal = hasTrend ? Math.max(errorTotal - deniedTotal, 0) : rawNumber(fallbackTraffic.otherErrorCalls);
+        var allowedTotal = hasTrend ? Math.max(total - errorTotal, 0) : rawNumber(fallbackTraffic.okCalls);
+        if (!hasTrend && !allowedTotal && total) allowedTotal = Math.max(total - deniedTotal - otherErrorTotal, 0);
+        var splitIndex = Math.max(1, Math.floor(list.length / 2));
+        var previousWindow = list.slice(0, splitIndex);
+        var currentWindow = list.slice(splitIndex);
+        if (!currentWindow.length) currentWindow = previousWindow;
+        var previousTotal = sumTrend(previousWindow, function(item) { return item.calls; });
+        var currentTotal = sumTrend(currentWindow, function(item) { return item.calls; });
+        var previousAllowed = sumTrend(previousWindow, function(item) { return Math.max(rawNumber(item.calls) - rawNumber(item.errors), 0); });
+        var currentAllowed = sumTrend(currentWindow, function(item) { return Math.max(rawNumber(item.calls) - rawNumber(item.errors), 0); });
+        var previousBlocked = sumTrend(previousWindow, function(item) { return item.denied; });
+        var currentBlocked = sumTrend(currentWindow, function(item) { return item.denied; });
+        var previousOtherErrors = sumTrend(previousWindow, function(item) { return Math.max(rawNumber(item.errors) - rawNumber(item.denied), 0); });
+        var currentOtherErrors = sumTrend(currentWindow, function(item) { return Math.max(rawNumber(item.errors) - rawNumber(item.denied), 0); });
+        var averageCalls = Math.round(total / Math.max(list.length || days, 1));
+        var peakPoint = list.reduce(function(peak, item) {
+          return rawNumber(item.calls) > rawNumber(peak && peak.calls) ? item : peak;
+        }, list[0] || null);
+        return {
+          days: days,
+          listLength: list.length,
+          total: total,
+          allowed: allowedTotal,
+          denied: deniedTotal,
+          otherErrors: otherErrorTotal,
+          averageCalls: averageCalls,
+          peakPoint: peakPoint,
+          previousTotal: previousTotal,
+          currentTotal: currentTotal,
+          previousAllowed: previousAllowed,
+          currentAllowed: currentAllowed,
+          previousBlocked: previousBlocked,
+          currentBlocked: currentBlocked,
+          previousOtherErrors: previousOtherErrors,
+          currentOtherErrors: currentOtherErrors,
+        };
+      }
+      function renderTrafficOutcomeRows(stats) {
+        var total = rawNumber(stats.total);
+        var rows = [
+          analyticsRow('Allowed', number(stats.allowed), 'Requests approved by policy and routed through VaultProof.', 'good', percent(stats.allowed, total) + '% of traffic'),
+          analyticsRow('Blocked', number(stats.denied), 'Requests denied by caller-lock, provider scope, path, or rate policy.', stats.denied ? 'bad' : 'good', percent(stats.denied, total) + '% of traffic'),
+          analyticsRow('Errors', number(stats.otherErrors), 'Upstream or system errors after denied traffic is excluded.', stats.otherErrors ? 'warn' : 'good', percent(stats.otherErrors, total) + '% of traffic'),
+        ];
+        var list = byId('trafficOutcomeList');
+        if (list) list.innerHTML = rows.join('');
+        text('trafficMeta', number(total) + ' ' + plural(total, 'call'));
+      }
+      function renderKeyReadinessRows(summary) {
         summary = summary || {};
         var total = rawNumber(summary.totalSlots);
         var live = rawNumber(summary.liveSealedSlots);
         var placeholder = rawNumber(summary.placeholderSlots);
-        var mixed = rawNumber(summary.mixedSlots);
-        var missing = rawNumber(summary.missingSlots);
-        var values = [
-          { label: 'Ready for traffic', value: live, color: '#4ade80' },
-          { label: 'Demo only', value: placeholder, color: '#fbbf24' },
-          { label: 'Partial setup', value: mixed, color: '#93c5fd' },
-          { label: 'Missing', value: missing, color: '#f87171' },
+        var incomplete = rawNumber(summary.mixedSlots) + rawNumber(summary.missingSlots);
+        var rows = [
+          analyticsRow('Ready for traffic', number(live), 'Real provider keys are sealed and usable for upstream dispatch.', 'good', percent(live, total) + '% ready'),
+          analyticsRow('Demo only', number(placeholder), 'Placeholder keys need real sealed setup before production use.', placeholder ? 'warn' : 'good', percent(placeholder, total) + '% demo'),
+          analyticsRow('Incomplete', number(incomplete), 'Setup is partial or missing for these provider slots.', incomplete ? 'bad' : 'good', percent(incomplete, total) + '% incomplete'),
         ];
-        var cursor = 0;
-        var stops = values.map(function(item) {
-          var size = total > 0 ? (item.value / total) * 360 : 0;
-          var stop = item.color + ' ' + cursor.toFixed(2) + 'deg ' + (cursor + size).toFixed(2) + 'deg';
-          cursor += size;
-          return stop;
-        });
-        var donut = byId('materialDonut');
-        if (donut) {
-          donut.style.background = total > 0 ? 'conic-gradient(' + stops.join(', ') + ')' : 'conic-gradient(#263241 0deg 360deg)';
-          donut.innerHTML = '<div class="donut-center"><strong>' + percent(live, total) + '%</strong><span>ready</span></div>';
-        }
-        var legend = byId('materialLegend');
-        if (legend) {
-          legend.innerHTML = values.map(function(item) {
-            return '<div class="legend-row"><span class="legend-dot" style="--dot:' + item.color + '"></span><span>' + item.label + '</span><strong>' + number(item.value) + '</strong></div>';
-          }).join('');
-        }
+        var list = byId('keyReadinessList');
+        if (list) list.innerHTML = rows.join('');
+        text('keyReadinessMeta', number(total) + ' ' + plural(total, 'slot'));
       }
-      function renderTrafficBreakdown(traffic) {
-        traffic = traffic || {};
-        var total = rawNumber(traffic.totalCalls);
-        var ok = rawNumber(traffic.okCalls);
-        var denied = rawNumber(traffic.deniedCalls);
-        var otherErrors = rawNumber(traffic.otherErrorCalls);
-        var segments = [
-          { label: 'Allowed', value: ok, color: '#4ade80' },
-          { label: 'Blocked', value: denied, color: '#fbbf24' },
-          { label: 'Errors', value: otherErrors, color: '#f87171' },
+      function renderDashboardCoverageRows(coverage, summary) {
+        coverage = coverage || {};
+        summary = summary || {};
+        var totalProjects = rawNumber(coverage.totalProjects);
+        var withSlots = rawNumber(coverage.withProviderSlots);
+        var withTraffic = rawNumber(coverage.withTraffic);
+        var withoutSlots = rawNumber(coverage.withoutProviderSlots);
+        var needingAttention = rawNumber(coverage.needingAttention);
+        var totalSlots = rawNumber(summary.totalSlots);
+        var live = rawNumber(summary.liveSealedSlots);
+        var rows = [
+          analyticsRow('Tokens with key slots', number(withSlots) + '/' + number(totalProjects), number(withoutSlots) + ' tokens without active slots.', withSlots === totalProjects && totalProjects ? 'good' : 'warn', percent(withSlots, totalProjects) + '% covered'),
+          analyticsRow('Tokens with traffic', number(withTraffic) + '/' + number(totalProjects), 'Proxy activity observed in the selected health window.', withTraffic ? 'good' : 'warn', percent(withTraffic, totalProjects) + '% active'),
+          analyticsRow('Keys ready', number(live) + '/' + number(totalSlots), 'Protected keys ready for upstream dispatch.', live === totalSlots && totalSlots ? 'good' : 'warn', percent(live, totalSlots) + '% ready'),
+          analyticsRow('Needs attention', number(needingAttention), 'Tokens with denied or error traffic.', needingAttention ? 'bad' : 'good', totalProjects ? percent(needingAttention, totalProjects) + '% review' : '0% review'),
         ];
-        var bar = byId('trafficOutcomeBar');
-        if (bar) {
-          bar.innerHTML = total > 0
-            ? segments.map(function(item) {
-                return '<span class="bar-segment" style="--width:' + percent(item.value, total) + '%;--fill:' + item.color + '"></span>';
-              }).join('')
-            : '<span class="bar-segment" style="--width:100%;--fill:#263241"></span>';
-        }
-        text('trafficMeta', number(total) + ' ' + plural(total, 'call'));
-        var legend = byId('trafficLegend');
-        if (legend) {
-          legend.innerHTML = segments.map(function(item) {
-            return '<div class="legend-row"><span class="legend-dot" style="--dot:' + item.color + '"></span><span>' + item.label + '</span><strong>' + number(item.value) + '</strong></div>';
-          }).join('');
-        }
+        var list = byId('projectCoverageList');
+        if (list) list.innerHTML = rows.join('');
+        text('coverageMeta', number(totalProjects) + ' ' + plural(totalProjects, 'token'));
       }
       function coverageItem(label, value, detail, width, tone) {
         var color = tone === 'bad' ? '#f87171' : tone === 'warn' ? '#fbbf24' : tone === 'blue' ? '#8ab4f8' : '#4ade80';
@@ -1866,275 +1685,55 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           button.setAttribute('aria-pressed', active ? 'true' : 'false');
         });
       }
-      function renderCallTrend(trend, days) {
+      function renderDashboardAnalytics(overview, days) {
+        overview = resolveDashboardOverview(overview);
         days = rawNumber(days) || 180;
-        var list = Array.isArray(trend) ? trend.slice(-days) : [];
-        var chart = byId('callTrendChart');
         updateCallRangeButtons(days);
-        if (!chart) return;
-        if (!list.length) {
-          chart.innerHTML = '<div class="empty">No trend data yet.</div>';
-          text('trendMeta', 'no data');
-          text('callWindowTotal', '0');
-          text('callWindowAllowed', '0');
-          text('callWindowBlocked', '0');
-          text('callWindowErrors', '0');
-          text('callWindowTotalSub', days + 'd window');
-          text('callWindowAllowedSub', '0% pass rate');
-          text('callWindowBlockedSub', '0% of traffic');
-          text('callWindowErrorsSub', '0% upstream');
-          setMetricDelta('callWindowTotalDelta', 0);
-          setMetricDelta('callWindowAllowedDelta', 0);
-          setMetricDelta('callWindowBlockedDelta', 0, true);
-          setMetricDelta('callWindowErrorsDelta', 0, true);
-          text('trendWindowHint', 'No traffic data');
-          return;
-        }
-        var maxCalls = list.reduce(function(max, item) {
-          return Math.max(max, rawNumber(item.calls));
-        }, 1);
-        var total = list.reduce(function(sum, item) {
-          return sum + rawNumber(item.calls);
-        }, 0);
-        var deniedTotal = list.reduce(function(sum, item) {
-          return sum + rawNumber(item.denied);
-        }, 0);
-        var errorTotal = list.reduce(function(sum, item) {
-          return sum + rawNumber(item.errors);
-        }, 0);
-        var otherErrorTotal = Math.max(errorTotal - deniedTotal, 0);
-        var allowedTotal = Math.max(total - errorTotal, 0);
-        var averageCalls = Math.round(total / Math.max(list.length, 1));
-        var allowedRate = total ? Math.round((allowedTotal / total) * 1000) / 10 : 0;
-        var blockedRate = total ? Math.round((deniedTotal / total) * 1000) / 10 : 0;
-        var errorRate = total ? Math.round((otherErrorTotal / total) * 1000) / 10 : 0;
-        var splitIndex = Math.max(1, Math.floor(list.length / 2));
-        var previousWindow = list.slice(0, splitIndex);
-        var currentWindow = list.slice(splitIndex);
-        if (!currentWindow.length) currentWindow = previousWindow;
-        var previousTotal = sumTrend(previousWindow, function(item) { return item.calls; });
-        var currentTotal = sumTrend(currentWindow, function(item) { return item.calls; });
-        var previousAllowed = sumTrend(previousWindow, function(item) { return Math.max(rawNumber(item.calls) - rawNumber(item.errors), 0); });
-        var currentAllowed = sumTrend(currentWindow, function(item) { return Math.max(rawNumber(item.calls) - rawNumber(item.errors), 0); });
-        var previousBlocked = sumTrend(previousWindow, function(item) { return item.denied; });
-        var currentBlocked = sumTrend(currentWindow, function(item) { return item.denied; });
-        var previousOtherErrors = sumTrend(previousWindow, function(item) { return Math.max(rawNumber(item.errors) - rawNumber(item.denied), 0); });
-        var currentOtherErrors = sumTrend(currentWindow, function(item) { return Math.max(rawNumber(item.errors) - rawNumber(item.denied), 0); });
-        var maxEvents = list.reduce(function(max, item) {
-          var denied = rawNumber(item.denied);
-          var otherErrors = Math.max(rawNumber(item.errors) - denied, 0);
-          return Math.max(max, denied, otherErrors);
-        }, 1);
-        var width = 960;
-        var height = 300;
-        var top = 18;
-        var right = 22;
-        var bottom = 254;
-        var left = 12;
-        var plotWidth = width - left - right;
-        var plotHeight = bottom - top;
-        var points = list.map(function(item, index) {
-          var calls = rawNumber(item.calls);
-          var denied = rawNumber(item.denied);
-          var errors = Math.max(rawNumber(item.errors) - denied, 0);
-          var x = list.length === 1 ? left + plotWidth / 2 : left + (index * plotWidth / (list.length - 1));
-          var callY = top + (1 - (calls / maxCalls)) * plotHeight;
-          var blockedY = top + (1 - (denied / maxEvents)) * plotHeight;
-          var errorY = top + (1 - (errors / maxEvents)) * plotHeight;
-          return {
-            x: Math.round(x * 100) / 100,
-            y: Math.round(callY * 100) / 100,
-            callY: Math.round(callY * 100) / 100,
-            blockedY: Math.round(blockedY * 100) / 100,
-            errorY: Math.round(errorY * 100) / 100,
-            calls: calls,
-            day: item.day,
-            denied: denied,
-            errors: errors,
-          };
-        });
-        var peakPoint = points.reduce(function(peak, point) {
-          return point.calls > peak.calls ? point : peak;
-        }, points[0]);
-        var peakBlockedPoint = points.reduce(function(peak, point) {
-          return point.denied > peak.denied ? point : peak;
-        }, points[0]);
-        var peakErrorPoint = points.reduce(function(peak, point) {
-          return point.errors > peak.errors ? point : peak;
-        }, points[0]);
-        var averageY = Math.round((top + (1 - (averageCalls / maxCalls)) * plotHeight) * 100) / 100;
-        function smoothPath(pointList, yField) {
-          if (!pointList.length) return '';
-          var path = 'M ' + pointList[0].x + ' ' + pointList[0][yField];
-          if (pointList.length === 1) return path;
-          for (var i = 1; i < pointList.length; i += 1) {
-            var previous = pointList[i - 1];
-            var current = pointList[i];
-            var midX = Math.round(((previous.x + current.x) / 2) * 100) / 100;
-            path += ' C ' + midX + ' ' + previous[yField] + ' ' + midX + ' ' + current[yField] + ' ' + current.x + ' ' + current[yField];
-          }
-          return path;
-        }
-        var linePath = smoothPath(points, 'callY');
-        var errorLinePath = smoothPath(points, 'errorY');
-        var blockedLinePath = smoothPath(points, 'blockedY');
-        var areaPath = points.length
-          ? linePath + ' L ' + points[points.length - 1].x + ' ' + bottom + ' L ' + points[0].x + ' ' + bottom + ' Z'
-          : '';
-        var gridLines = [top, top + plotHeight / 2, bottom].map(function(y) {
-          y = Math.round(y * 100) / 100;
-          return '<line class="trend-grid-line" x1="' + left + '" x2="' + (width - right) + '" y1="' + y + '" y2="' + y + '"></line>';
-        }).join('');
-        function monthName(value) {
-          var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-          var date = new Date(String(value || '') + 'T00:00:00.000Z');
-          if (!Number.isFinite(date.getTime())) return String(value || '').slice(5) || 'n/a';
-          return monthNames[date.getUTCMonth()] + (list.length <= 45 ? ' ' + date.getUTCDate() : '');
-        }
-        function shortDay(value) {
-          var date = new Date(String(value || '') + 'T00:00:00.000Z');
-          if (!Number.isFinite(date.getTime())) return String(value || '').slice(5) || 'n/a';
-          return monthName(value) + ', ' + date.getUTCFullYear();
-        }
-        function axisTicks() {
-          if (!points.length) return [];
-          if (points.length > 60) {
-            var monthly = [];
-            var lastMonth = '';
-            points.forEach(function(point, index) {
-              var month = String(point.day || '').slice(0, 7);
-              if (index === 0 || index === points.length - 1 || month !== lastMonth) {
-                monthly.push({ point: point, label: monthName(point.day) });
-                lastMonth = month;
-              }
-            });
-            if (monthly.length <= 7) return monthly;
-            var step = Math.ceil(monthly.length / 7);
-            return monthly.filter(function(_, index) {
-              return index === 0 || index === monthly.length - 1 || index % step === 0;
-            });
-          }
-          var count = Math.min(points.length, 6);
-          var ticks = [];
-          for (var index = 0; index < count; index += 1) {
-            var pointIndex = count === 1 ? 0 : Math.round(index * (points.length - 1) / (count - 1));
-            var point = points[pointIndex];
-            ticks.push({ point: point, label: monthName(point.day) });
-          }
-          return ticks;
-        }
-        var ticks = axisTicks();
-        var monthLines = ticks.slice(1, -1).map(function(tick) {
-          return '<line class="trend-month-line" x1="' + tick.point.x + '" x2="' + tick.point.x + '" y1="' + top + '" y2="' + bottom + '"></line>';
-        }).join('');
-        var markers = points.map(function(point, index) {
-          var isLast = index === points.length - 1;
-          var isPeak = peakPoint && point.x === peakPoint.x && point.y === peakPoint.y;
-          if (!isLast && !isPeak) return '';
-          var className = 'trend-marker';
-          var radius = isLast || isPeak ? 5 : 3.6;
-          var title = number(point.calls) + ' calls on ' + shortDay(point.day);
-          return '<circle class="' + className + '" cx="' + point.x + '" cy="' + point.y + '" r="' + radius + '"><title>' + escapeHtml(title) + '</title></circle>';
-        }).join('');
-        function eventMarker(point, field, yField, className, label) {
-          if (!point || !point[field]) return '';
-          return '<circle class="trend-marker ' + className + '" cx="' + point.x + '" cy="' + point[yField] + '" r="4"><title>' + escapeHtml(number(point[field]) + ' ' + label + ' on ' + shortDay(point.day)) + '</title></circle>';
-        }
-        function trendDetail(label, value, detail) {
-          return '<div class="trend-detail"><span>' + escapeHtml(label) + '</span><strong>' + escapeHtml(value) + '</strong><em>' + escapeHtml(detail) + '</em></div>';
-        }
-        function attachTrendTooltip() {
-          var plot = chart.querySelector('.trend-plot');
-          var svg = chart.querySelector('.trend-svg');
-          var tooltip = chart.querySelector('.trend-tooltip');
-          if (!plot || !svg || !tooltip || !points.length) return;
-          function nearestPoint(clientX) {
-            var svgRect = svg.getBoundingClientRect();
-            var svgX = ((clientX - svgRect.left) / Math.max(svgRect.width, 1)) * width;
-            return points.reduce(function(nearest, point) {
-              return Math.abs(point.x - svgX) < Math.abs(nearest.x - svgX) ? point : nearest;
-            }, points[0]);
-          }
-          function showTooltip(event) {
-            var point = nearestPoint(event.clientX);
-            var svgRect = svg.getBoundingClientRect();
-            var plotRect = plot.getBoundingClientRect();
-            var x = (point.x / width) * svgRect.width + svgRect.left - plotRect.left;
-            var yAnchor = Math.min(point.callY, point.blockedY, point.errorY);
-            var y = (yAnchor / height) * svgRect.height + svgRect.top - plotRect.top;
-            tooltip.style.left = Math.max(88, Math.min(x, plotRect.width - 88)) + 'px';
-            tooltip.style.top = Math.max(88, y) + 'px';
-            tooltip.innerHTML =
-              '<div class="trend-tooltip-title">' + escapeHtml(shortDay(point.day)) + '</div>' +
-              '<div class="trend-tooltip-row"><span class="trend-tooltip-dot"></span><span>Total calls</span><strong>' + number(point.calls) + '</strong></div>' +
-              '<div class="trend-tooltip-row"><span class="trend-tooltip-dot" style="--tooltip-dot: var(--green)"></span><span>Allowed</span><strong>' + number(Math.max(point.calls - point.denied - point.errors, 0)) + '</strong></div>' +
-              '<div class="trend-tooltip-row"><span class="trend-tooltip-dot" style="--tooltip-dot: var(--color-blocked)"></span><span>Blocked</span><strong>' + number(point.denied) + '</strong></div>' +
-              '<div class="trend-tooltip-row"><span class="trend-tooltip-dot" style="--tooltip-dot: var(--color-errors)"></span><span>Errors</span><strong>' + number(point.errors) + '</strong></div>';
-            tooltip.classList.add('visible');
-          }
-          function hideTooltip() {
-            tooltip.classList.remove('visible');
-          }
-          svg.addEventListener('pointermove', showTooltip);
-          svg.addEventListener('pointerleave', hideTooltip);
-          svg.addEventListener('focusout', hideTooltip);
-        }
         var selectedWindowLabel = days >= 180 ? '6mo' : days + 'd';
-        var detailGrid =
-          '<div class="trend-detail-grid" aria-label="Protected traffic details">' +
-            trendDetail('Average per day', number(averageCalls), 'Across the selected ' + days + 'd window') +
-            trendDetail('Peak day', number(peakPoint ? peakPoint.calls : 0), shortDay(peakPoint && peakPoint.day)) +
-            trendDetail('Blocked', blockedRate + '%', number(deniedTotal) + ' blocked requests') +
-            trendDetail('Errors', errorRate + '%', number(otherErrorTotal) + ' upstream or system errors') +
-          '</div>';
-        var legend =
-          '<div class="trend-legend" aria-label="Chart legend">' +
-            '<span><i style="--legend-color: var(--color-calls)"></i>Calls</span>' +
-            '<span><i style="--legend-color: var(--color-errors)"></i>Errors</span>' +
-            '<span><i style="--legend-color: var(--color-blocked)"></i>Blocked</span>' +
-          '</div>';
-        var axis = '<div class="trend-axis">' + ticks.map(function(tick) {
-          return '<span>' + escapeHtml(tick.label) + '</span>';
-        }).join('') + '</div>';
-        chart.innerHTML =
-          '<div class="trend-line-chart">' +
-            legend +
-            '<div class="trend-plot">' +
-              '<div class="trend-scale"><span>Peak ' + number(maxCalls) + '</span><span>Events ' + number(maxEvents) + '</span><span>0</span></div>' +
-              '<svg class="trend-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Daily API calls, errors, and blocked requests over the selected window">' +
-                '<defs><linearGradient id="callTrendAreaGradient" x1="0" y1="' + top + '" x2="0" y2="' + bottom + '" gradientUnits="userSpaceOnUse"><stop offset="5%" stop-color="var(--color-calls)" stop-opacity="0.38"></stop><stop offset="95%" stop-color="var(--color-calls)" stop-opacity="0.04"></stop></linearGradient></defs>' +
-                gridLines +
-                monthLines +
-                '<line class="trend-average-line" x1="' + left + '" x2="' + (width - right) + '" y1="' + averageY + '" y2="' + averageY + '"><title>Average ' + number(averageCalls) + ' calls per day</title></line>' +
-                '<path class="trend-area" d="' + areaPath + '"></path>' +
-                '<path class="trend-line" d="' + linePath + '"></path>' +
-                '<path class="trend-line errors" d="' + errorLinePath + '"></path>' +
-                '<path class="trend-line blocked" d="' + blockedLinePath + '"></path>' +
-                markers +
-                eventMarker(peakErrorPoint, 'errors', 'errorY', 'errors', 'errors') +
-                eventMarker(peakBlockedPoint, 'denied', 'blockedY', 'blocked', 'blocked') +
-                '<rect class="trend-hit-area" x="' + left + '" y="' + top + '" width="' + plotWidth + '" height="' + plotHeight + '"></rect>' +
-              '</svg>' +
-              axis +
-              '<div class="trend-tooltip" aria-hidden="true"></div>' +
-            '</div>' +
-            detailGrid +
-          '</div>';
-        attachTrendTooltip();
+        var slotSummary = overview.providerSlotSummary || {};
+        var coverage = overview.projectCoverage || {};
+        var traffic = overview.trafficBreakdown || {};
+        var trafficTotal = rawNumber(traffic.totalCalls || overview.totalCalls);
+        var trafficErrors = rawNumber(traffic.errorCalls || overview.errorCalls);
+        var trafficDenied = rawNumber(traffic.deniedCalls || overview.deniedCalls);
+        var trafficOtherErrors = traffic.otherErrorCalls === undefined ? Math.max(trafficErrors - trafficDenied, 0) : rawNumber(traffic.otherErrorCalls);
+        var trafficOk = traffic.okCalls === undefined ? Math.max(trafficTotal - trafficErrors, 0) : rawNumber(traffic.okCalls);
+        var stats = selectedTrafficStats(Array.isArray(overview.callTrend) ? overview.callTrend : [], days, {
+          totalCalls: trafficTotal,
+          okCalls: trafficOk,
+          deniedCalls: trafficDenied,
+          errorCalls: trafficErrors,
+          otherErrorCalls: trafficOtherErrors,
+        });
+        var allowedRate = stats.total ? Math.round((stats.allowed / stats.total) * 1000) / 10 : 0;
+        var blockedRate = stats.total ? Math.round((stats.denied / stats.total) * 1000) / 10 : 0;
+        var errorRate = stats.total ? Math.round((stats.otherErrors / stats.total) * 1000) / 10 : 0;
         text('trendMeta', 'Selected window: ' + selectedWindowLabel);
-        text('trendWindowHint', number(total) + ' calls - ' + allowedRate + '% allowed - ' + number(list.length) + ' daily points');
-        text('callWindowTotal', number(total));
-        text('callWindowAllowed', number(allowedTotal));
-        text('callWindowBlocked', number(deniedTotal));
-        text('callWindowErrors', number(otherErrorTotal));
+        text('trendWindowHint', number(stats.total) + ' calls - ' + allowedRate + '% allowed - ' + number(stats.listLength) + ' daily points');
+        text('callWindowTotal', number(stats.total));
+        text('callWindowAllowed', number(stats.allowed));
+        text('callWindowBlocked', number(stats.denied));
+        text('callWindowErrors', number(stats.otherErrors));
         text('callWindowTotalSub', selectedWindowLabel + ' window');
         text('callWindowAllowedSub', allowedRate + '% pass rate');
         text('callWindowBlockedSub', blockedRate + '% of traffic');
         text('callWindowErrorsSub', errorRate + '% upstream');
-        setMetricDelta('callWindowTotalDelta', percentChange(previousTotal, currentTotal));
-        setMetricDelta('callWindowAllowedDelta', percentChange(previousAllowed, currentAllowed));
-        setMetricDelta('callWindowBlockedDelta', percentChange(previousBlocked, currentBlocked), true);
-        setMetricDelta('callWindowErrorsDelta', percentChange(previousOtherErrors, currentOtherErrors), true);
+        setMetricDelta('callWindowTotalDelta', percentChange(stats.previousTotal, stats.currentTotal));
+        setMetricDelta('callWindowAllowedDelta', percentChange(stats.previousAllowed, stats.currentAllowed));
+        setMetricDelta('callWindowBlockedDelta', percentChange(stats.previousBlocked, stats.currentBlocked), true);
+        setMetricDelta('callWindowErrorsDelta', percentChange(stats.previousOtherErrors, stats.currentOtherErrors), true);
+        renderTrafficOutcomeRows(stats);
+        renderKeyReadinessRows(slotSummary);
+        renderDashboardCoverageRows(coverage, slotSummary);
+        var table = byId('trendSummaryTable');
+        if (table) {
+          var peak = stats.peakPoint;
+          table.innerHTML =
+            analyticsTableRow('Average per day', number(stats.averageCalls), 'Across the selected ' + days + 'd window') +
+            analyticsTableRow('Peak day', number(peak ? peak.calls : 0), peak ? shortDateLabel(peak.day) : 'No daily trend points yet') +
+            analyticsTableRow('Blocked rate', blockedRate + '%', number(stats.denied) + ' blocked requests') +
+            analyticsTableRow('Error rate', errorRate + '%', number(stats.otherErrors) + ' upstream or system errors');
+        }
       }
       function relativeTime(value) {
         if (!value) return 'never';
@@ -2237,9 +1836,14 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           text('orgRole', 'none');
           text('orgDetail', 'No active enterprise organization found.');
           text('topOrgName', 'workspace');
+          text('topBusinessName', 'NVIDIA');
+          text('topBusinessAvatar', 'NV');
           return;
         }
+        var businessName = org.name || 'NVIDIA';
         text('topOrgName', org.name || 'workspace');
+        text('topBusinessName', businessName);
+        text('topBusinessAvatar', businessInitials(businessName));
         text('orgRole', org.role || 'member');
         text('orgDetail', (org.name || 'Organization') + ' - ' + number(org.member_count) + ' members - ' + number(org.project_count) + ' tokens');
       }
@@ -2275,20 +1879,12 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
           : (incidentCount ? 'review traffic and setup' : 'no active incidents'));
         text('postureRotations', number(reviewCount));
         text('postureRotationsSub', reviewCount ? 'setup review due' : 'no pending rotations');
-        setDonut(slotSummary);
-        renderTrafficBreakdown({
-          totalCalls: trafficTotal,
-          okCalls: trafficOk,
-          deniedCalls: trafficDenied,
-          otherErrorCalls: trafficOtherErrors,
-        });
-        renderCoverageRows('projectCoverageList', coverage, slotSummary);
         renderCoverageRows('keyCoverageRows', coverage, slotSummary);
         renderMaterialRows(slotSummary);
         renderProviderUsageList('keyMapProviderList', providerUsage, totalSlots);
         renderAttentionItems(overview, totalSlots, liveSealed, coverage, traffic);
-        latestCallTrend = Array.isArray(overview.callTrend) ? overview.callTrend : [];
-        renderCallTrend(latestCallTrend, callTrendRangeDays);
+        latestDashboardOverview = overview;
+        renderDashboardAnalytics(latestDashboardOverview, callTrendRangeDays);
         var review = overview.pilotReview || {};
         text('projectHealthMeta', review.headline || '');
         text('activityMeta', number((overview.recentActivity || []).length) + ' recent events');
@@ -2374,7 +1970,7 @@ export function renderEnterpriseDashboardPage(env: EnterpriseControlPlaneEnv = {
       document.querySelectorAll('[data-call-range]').forEach(function(button) {
         button.addEventListener('click', function() {
           callTrendRangeDays = rawNumber(button.getAttribute('data-call-range')) || 180;
-          renderCallTrend(latestCallTrend, callTrendRangeDays);
+          renderDashboardAnalytics(latestDashboardOverview, callTrendRangeDays);
         });
       });
       selectDashboardTab('overview');
