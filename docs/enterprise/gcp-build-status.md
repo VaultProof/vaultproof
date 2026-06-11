@@ -1,6 +1,6 @@
 # VaultProof GCP Build Status
 
-Last updated: 2026-06-08T04:50:36.742Z
+Last updated: 2026-06-11T07:03:52.907Z
 
 This file is the living inventory of what has been built for VaultProof on Google Cloud. It is refreshed after every successful enterprise image build by `infra/gcp/enterprise-secure-runtime/build-images.sh`.
 
@@ -39,11 +39,11 @@ Status: `partially verified live on 2026-05-22; strict session proof still block
 
 For the final demo go/no-go run, use `LOGIN_QA_REQUIRE_SESSION=true npm run qa:enterprise-login` with Supabase service-role env loaded. That strict mode generates a temporary magic-link session for `ken@vaultproof.dev`, which also proves the Supabase Auth redirect allowlist accepts `https://enterprise.vaultproof.dev/app/login`, then calls `/api/v1/enterprise/orgs`, `/orgs/current`, and `/projects/bootstrap` with the generated browser session. To verify a specific external provider redirect, add `LOGIN_QA_OAUTH_PROVIDER=google` after the provider is configured.
 
-Latest live check on 2026-06-08:
+Latest live check on 2026-06-11:
 
 - `npm run qa:enterprise-live-app` passed against `https://enterprise.vaultproof.dev`: `production_ready: true`, `security_profile: google-confidential-production`, 26 app paths, 7 staff-only paths, and the discovered enterprise links checked.
-- `npm run verify:gcp-enterprise-edge` passed after deploying build `03b6d40d`. The verifier confirmed edge IP `34.102.179.105`, active managed TLS for `enterprise.vaultproof.dev`, healthy backend `vaultproof-enterprise-runtime-1:3001`, `/health`, and `/readiness`.
-- `npm run verify:gcp-enterprise-cloud-armor` passed after deploying build `03b6d40d`. The verifier confirmed `vaultproof-enterprise-armor` is attached to `vaultproof-enterprise-backend`, `/health` returns `200`, and the `/.env` scanner probe returns `403`.
+- `npm run verify:gcp-enterprise-edge` passed after deploying build `2ccff7d6`. The verifier confirmed edge IP `34.102.179.105`, active managed TLS for `enterprise.vaultproof.dev`, healthy backend `vaultproof-enterprise-runtime-1:3001`, `/health`, and `/readiness`.
+- `npm run verify:gcp-enterprise-cloud-armor` passed after deploying build `2ccff7d6`. The verifier confirmed `vaultproof-enterprise-armor` is attached to `vaultproof-enterprise-backend`, `/health` returns `200`, and the `/.env` scanner probe returns `403`.
 - `RUN_LIVE_EDGE=true RUN_LIVE_APP_QA=true RUN_CLOUD_ARMOR_QA=true npm run gate:gcp-customer-launch` returned `status: ok` with no blockers. Strict Supabase session proof is still skipped until `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SERVICE_KEY` is loaded in the local shell.
 
 ## Cloud Armor Edge Guardrail
@@ -54,7 +54,7 @@ Status: `attached and enforced`
 
 ## App Shell Notes
 
-- Build `03b6d40d` is the current deployed GCP image tag for both control plane and executor containers.
+- Build `2ccff7d6` is the current deployed GCP image tag for both control plane and executor containers.
 - Homepage hero headline is `Active Key Protection for every API call.`
 - Customer-facing enterprise pages live under `https://enterprise.vaultproof.dev`; staff-only operator pages live under `https://admin.vaultproof.dev`.
 - `https://admin.vaultproof.dev/app/launch` is the staff-only go/no-go launch board. `https://enterprise.vaultproof.dev/app/launch` is intentionally removed from the customer enterprise host and should return 404.
@@ -299,14 +299,14 @@ Cost note: the current fixed estimate is above the existing `VaultProof Producti
 
 ## Build Pointer
 
-- Build tag: `03b6d40d`
+- Build tag: `2ccff7d6`
 - Registry: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof`
-- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:03b6d40d`
-- Control plane digest: `sha256:0eb151089f74c1fa2bc1ac37e11049c97180176710b9b29126ed8210286dfcc5`
-- Control plane built at: `2026-06-08T04:49:55.769504773Z`
-- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:03b6d40d`
-- Executor digest: `sha256:e657019586517616110ec715066df4c7c85c3e3d87d093659b3bce9518f8f996`
-- Executor built at: `2026-06-08T04:50:11.037871762Z`
+- Control plane image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-control-plane:2ccff7d6`
+- Control plane digest: `sha256:d14c4d9fe5eba40b76003c5707cfd7759107bfd4fd973e76c75f8cb6012c0f4e`
+- Control plane built at: `2026-06-11T06:58:30.805076797Z`
+- Executor image: `us-central1-docker.pkg.dev/vaultproof-prod/vaultproof/enterprise-secure-executor:2ccff7d6`
+- Executor digest: `sha256:6bcd69d754255296e601510050083effd1083dd8d347c0e333902715261d6898`
+- Executor built at: `2026-06-11T06:58:43.252671771Z`
 
 ## Project
 
